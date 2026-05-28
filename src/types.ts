@@ -1,0 +1,80 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+export interface User {
+  id: string;
+  email: string;
+  password?: string;
+  role: 'admin' | 'tot' | 'data_entry' | 'district_coordinator' | 'viewer';
+  name: string;
+  district: string | null;
+  avatar: string;
+  status: 'active' | 'pending' | 'inactive';
+  clusterId?: number;
+}
+
+export interface Report {
+  id: number;
+  school: string;
+  district: string;
+  zone: string;
+  boys: number;
+  girls: number;
+  curriculum: string;
+  session: string;
+  status: 'approved' | 'pending' | 'rejected' | 'forwarded';
+  submitted_by: string;
+  submitted_at: string;
+  challenges: string;
+  success: string;
+  sentTo?: string;
+  sentToLabel?: string;
+  workflow_status?: string;
+  submitted_role?: string;
+}
+
+export interface Cluster {
+  id: number;
+  name: string;
+  district: string;
+  lead: string;
+  leadPhone?: string;
+  schools: number;
+  students: number;
+  progress: number;
+  trained: number;
+}
+
+export interface District {
+  name: string;
+  r: 'Northern' | 'Central' | 'Southern';
+  s: 'Active' | 'Planned';
+  tots: number;
+  schools: number;
+  cov: number;
+  population: string;
+  zones: number;
+  teachersTrained: number;
+}
+
+export interface Training {
+  name: string;
+  loc: string;
+  venue: string;
+  trainers: string;
+  dates: string;
+  pax: number;
+  day: number | null;
+  s: 'active' | 'upcoming' | 'completed';
+}
+
+export interface Session {
+  num: string;
+  title: string;
+  dur: string;
+  desc: string;
+  pledge: string | null;
+  objectives: string[];
+}
