@@ -1169,12 +1169,12 @@ export default function App() {
 
           {/* Desktop permanent side navigation deck */}
           {!isLoginPage && (
-            <aside className="hidden md:flex w-64 border-r border-slate-200 dark:border-slate-800 shrink-0 p-5 flex-col justify-between overflow-y-auto bg-white/40 dark:bg-slate-950/40">
+            <aside className="hidden md:flex w-64 border-r border-slate-800 shrink-0 p-5 flex-col justify-between overflow-y-auto bg-[#0f1623]">
               <div className="space-y-5">
                 <div className="space-y-4 text-xs font-semibold">
                   {activeNavGroups.map(group => (
                     <div key={group.title} className="space-y-1">
-                      <div className="text-[9.5px] text-slate-500 dark:text-slate-400 font-extrabold uppercase tracking-widest px-2 mb-2 select-none">
+                      <div className="text-[9.5px] text-slate-500 font-extrabold uppercase tracking-widest px-2 mb-2 select-none">
                         {group.title}
                       </div>
                       {group.items.map(item => {
@@ -1186,8 +1186,8 @@ export default function App() {
                             onClick={() => setPage(item.id)}
                             className={`flex items-center gap-2.5 px-3 py-2 rounded-xl cursor-pointer transition ${
                               isActive
-                                ? 'bg-orange-500/10 text-orange-600 dark:text-orange-400 font-bold border-l-2 border-orange-500 pl-2 rounded-l-none'
-                                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-200'
+                                ? 'bg-orange-500/20 text-orange-400 font-bold border-l-2 border-orange-500 pl-2 rounded-l-none'
+                                : 'text-slate-400 hover:bg-white/5 hover:text-white'
                             }`}
                           >
                             <Icon size={13.5} />
@@ -1200,10 +1200,10 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-1.5 text-xs text-slate-500 dark:text-slate-400 leading-normal">
-                <div className="text-[10px] font-extrabold uppercase text-slate-400 dark:text-slate-500 tracking-wider">Helplines alignment</div>
-                <div>Child Helpline: <b>116</b></div>
-                <div>VSU Police Desk: <b>997</b></div>
+              <div className="pt-4 border-t border-slate-800 space-y-1.5 text-xs leading-normal">
+                <div className="text-[10px] font-extrabold uppercase text-slate-600 tracking-wider">Helplines alignment</div>
+                <div className="text-slate-400">Child Helpline: <b className="text-white">116</b></div>
+                <div className="text-slate-400">VSU Police Desk: <b className="text-white">997</b></div>
               </div>
             </aside>
           )}
