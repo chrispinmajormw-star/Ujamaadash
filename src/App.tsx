@@ -970,10 +970,10 @@ export default function App() {
           title: "ScaleUp Public Deck",
           items: [
             { id: "dashboard", label: "National Hub", icon: LayoutDashboard },
-            { id: "maps", label: "Clusters Map", icon: Map },
+            { id: "maps", label: "Intervention Maps", icon: Map },
             { id: "districts", label: "Malawi Districts", icon: MapPin },
-            { id: "trainings", label: "Certs & TOTs", icon: GraduationCap },
-            { id: "curriculum", label: "Empower curriculums", icon: BookOpen },
+            { id: "trainings", label: "Trainings", icon: GraduationCap },
+            { id: "curriculum", label: "Digital curriculums", icon: BookOpen },
             { id: "ett", label: "ETT Standards", icon: Layers }
           ]
         },
