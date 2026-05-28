@@ -346,23 +346,41 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
               {
-                title: "Boys Transformation (HIM)",
-                text: "Empowers boys to challenge harmful gender norms, embrace positive masculinity, respect women, and step up as allies to defend school security.",
-                accent: "#0f1623",
-              },
-              {
+                icon: (
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6" style={{ color: "#e85d04" }}>
+                    <circle cx="12" cy="9" r="4" />
+                    <path d="M8.5 7C7 6.5 6.5 7 6 8.5s.5 2.5 1.5 1" />
+                    <path d="M15.5 7c1.5-.5 2-.0 2.5 1.5s-.5 2.5-1.5 1" />
+                    <path d="M6 20c0-3.5 3-5 6-5s6 1.5 6 5" />
+                  </svg>
+                ),
+                iconBg: "#fff4ee",
                 title: "Girls Empowerment (GESD)",
                 text: "Age-appropriate boundary assertiveness training. Equips girls to detect danger early, voice boundaries, and implement physical protection maneuvers.",
-                accent: "#e85d04",
               },
               {
+                icon: (
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6" style={{ color: "#0f1623" }}>
+                    <circle cx="12" cy="9" r="4.5" />
+                    <path d="M8.5 7.5c.5-1.5 2-2.5 3.5-2.5s3 1 3.5 2.5" />
+                    <path d="M6 20c0-3.5 3-5 6-5s6 1.5 6 5" />
+                  </svg>
+                ),
+                iconBg: "#f3f4f6",
+                title: "Boys Transformation (HIM)",
+                text: "Empowers boys to challenge harmful gender norms, embrace positive masculinity, respect women, and step up as allies to defend school security.",
+              },
+              {
+                icon: <Heart size={22} style={{ color: "#e85d04" }} />,
+                iconBg: "#fff4ee",
                 title: "Survivors Support (SASA)",
                 text: "Provides trauma-informed safe paths, psychological linkage channels, and responsive SGBV reporting pathways to support student recovery.",
-                accent: "#e85d04",
               },
             ].map((item, i) => (
               <div key={i} className="border border-gray-100 rounded-2xl p-5 hover:shadow-md transition-shadow">
-                <div style={{ background: item.accent, width: 4 }} className="h-10 rounded-full mb-4" />
+                <div style={{ background: item.iconBg }} className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4">
+                  {item.icon}
+                </div>
                 <h4 className="text-sm font-bold text-gray-900 mb-2">{item.title}</h4>
                 <p className="text-xs text-gray-500 leading-relaxed m-0">{item.text}</p>
               </div>
