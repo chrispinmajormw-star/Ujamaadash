@@ -26,17 +26,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     const saved = safeStorage.getItem('scaleup_notif_training');
     return saved !== null ? saved === 'true' : true;
   });
-
   const [notifyMeetings, setNotifyMeetings] = React.useState(() => {
     const saved = safeStorage.getItem('scaleup_notif_meetings');
     return saved !== null ? saved === 'true' : true;
   });
-
   const [weekStartMonday, setWeekStartMonday] = React.useState(() => {
     const saved = safeStorage.getItem('scaleup_week_monday');
     return saved !== null ? saved === 'true' : false;
   });
-
   const [taskReminders, setTaskReminders] = React.useState(() => {
     const saved = safeStorage.getItem('scaleup_task_reminders');
     return saved !== null ? saved === 'true' : true;
@@ -47,28 +44,24 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     setDarkMode(nextVal);
     showToast(`🌙 Dark mode turned ${nextVal ? 'ON' : 'OFF'}`);
   };
-
   const handleToggleTraining = () => {
     const next = !notifyTraining;
     setNotifyTraining(next);
     safeStorage.setItem('scaleup_notif_training', String(next));
     showToast(`🔔 Training event alerts turned ${next ? 'ON' : 'OFF'}`);
   };
-
   const handleToggleMeetings = () => {
     const next = !notifyMeetings;
     setNotifyMeetings(next);
     safeStorage.setItem('scaleup_notif_meetings', String(next));
     showToast(`🔔 Meeting alerts turned ${next ? 'ON' : 'OFF'}`);
   };
-
   const handleToggleWeekStart = () => {
     const next = !weekStartMonday;
     setWeekStartMonday(next);
     safeStorage.setItem('scaleup_week_monday', String(next));
-    showToast(`📅 Calendar week start preference set to ${next ? 'Monday' : 'Sunday'}`);
+    showToast(`📅 Week start set to ${next ? 'Monday' : 'Sunday'}`);
   };
-
   const handleToggleReminders = () => {
     const next = !taskReminders;
     setTaskReminders(next);
@@ -76,302 +69,241 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     showToast(`⏰ Task reminders turned ${next ? 'ON' : 'OFF'}`);
   };
 
+  // ── Reusable toggle rows ──────────────────────────────────────
+  const ToggleRow = ({
+    icon, label, sub, value, onChange, border = true
+  }: {
+    icon: React.ReactNode;
+    label: string;
+    sub: string;
+    value: boolean;
+    onChange: () => void;
+    border?: boolean;
+  }) => (
+    <div className={`flex items-center justify-between py-3 ${border ? 'border-b border-orange-100 dark:border-slate-800' : ''}`}>
+      <div className="flex items-start gap-3">
+        <span className="p-2 rounded-xl bg-orange-50 dark:bg-orange-950/20 text-orange-500 mt-0.5 flex-shrink-0">
+          {icon}
+        </span>
+        <div>
+          <div className="text-sm font-bold text-gray-900 dark:text-slate-100">{label}</div>
+          <div className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{sub}</div>
+        </div>
+      </div>
+      <button
+        onClick={onChange}
+        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500/30 ml-4 ${
+          value ? 'bg-orange-500' : 'bg-gray-200 dark:bg-slate-700'
+        }`}
+      >
+        <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition duration-200 ${value ? 'translate-x-5' : 'translate-x-0'}`} />
+      </button>
+    </div>
+  );
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+
+      {/* Page Header */}
       <div>
         <Kicker text="Application Preferences" />
-        <h1 className="text-2xl sm:text-3xl font-black text-gray-900 leading-tight">
+        <h1 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-slate-50 leading-tight">
           System Settings
         </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Customize display parameters, interface layout options, and review account capabilities.
+        <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
+          Customize display, alerts, and review account capabilities.
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Main preferences column */}
         <div className="md:col-span-2 space-y-5">
-          {/* Theme card */}
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="p-2 rounded-xl bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400">
-                <Sparkles size={20} />
+
+          {/* ── Appearance Card ── */}
+          <div className="bg-white dark:bg-slate-900 border border-orange-100 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+
+            {/* Card Header */}
+            <div className="flex items-center gap-3 mb-5">
+              <span className="p-2.5 rounded-xl bg-orange-500 text-white shadow-sm shadow-orange-200">
+                <Sparkles size={18} />
               </span>
               <div>
-                <h3 className="text-base font-bold text-gray-900 m-0">
-                  Appearance Theme
-                </h3>
-                <p className="text-xs text-slate-400 dark:text-slate-500 m-0">
-                  Set the background contrast mode of the ScaleUp Dashboard.
-                </p>
+                <h3 className="text-base font-bold text-gray-900 dark:text-slate-100 m-0">Appearance Theme</h3>
+                <p className="text-xs text-gray-400 dark:text-slate-500 m-0">Set the background contrast mode.</p>
               </div>
             </div>
 
-            <hr className="border-gray-100 my-4" />
+            <div className="h-px bg-orange-100 dark:bg-slate-800 mb-5" />
 
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-gray-50 border border-gray-200">
-              <div className="flex items-center gap-3.5">
-                {darkMode ? (
-                  <Moon className="text-violet-400" size={18} />
-                ) : (
-                  <Sun className="text-amber-500" size={18} />
-                )}
+            {/* Active mode row */}
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-orange-50 dark:bg-slate-800 border border-orange-200 dark:border-slate-700 mb-4">
+              <div className="flex items-center gap-3">
+                {darkMode
+                  ? <Moon className="text-violet-400" size={20} />
+                  : <Sun className="text-orange-500" size={20} />
+                }
                 <div>
-                  <div className="text-xs sm:text-sm font-bold text-gray-900">
-                    Dark Slate Environment
+                  <div className="text-sm font-bold text-gray-900 dark:text-slate-100">
+                    {darkMode ? 'Dark Mode Active' : 'Light Mode Active'}
                   </div>
-                  <div className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500">
-                    Saves energy, reduces eye fatigue in dimly lit classrooms.
+                  <div className="text-xs text-gray-500 dark:text-slate-400">
+                    {darkMode
+                      ? 'Dark slate background — easy on the eyes at night.'
+                      : 'Clean white & orange — sharp and professional.'}
                   </div>
                 </div>
               </div>
-
-              {/* Beautiful custom Toggle Switch Component */}
               <button
                 onClick={toggleDarkMode}
-                id="theme-toggler-btn"
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-1 focus:ring-orange-500/30 ${
-                  darkMode ? 'bg-orange-500' : 'bg-slate-200 dark:bg-slate-700'
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500/30 ${
+                  darkMode ? 'bg-orange-500' : 'bg-gray-200'
                 }`}
               >
-                <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                    darkMode ? 'translate-x-5' : 'translate-x-0'
-                  }`}
-                />
+                <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition duration-200 ${darkMode ? 'translate-x-5' : 'translate-x-0'}`} />
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mt-4">
+            {/* Light / Dark selector tiles */}
+            <div className="grid grid-cols-2 gap-3">
               <div
                 onClick={() => { if (darkMode) setDarkMode(false); }}
-                className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                className={`flex flex-col items-center justify-center p-5 rounded-xl border-2 cursor-pointer transition-all ${
                   !darkMode
-                    ? 'border-orange-500 bg-orange-50/25 dark:bg-orange-900/5'
-                    : 'border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30'
+                    ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/10'
+                    : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-orange-200'
                 }`}
               >
-                <Sun size={24} className={!darkMode ? 'text-orange-500' : 'text-slate-400'} />
-                <span className="text-xs font-bold mt-2 text-slate-700 dark:text-slate-300">Light Slate</span>
+                <Sun size={26} className={!darkMode ? 'text-orange-500' : 'text-gray-300 dark:text-slate-500'} />
+                <span className={`text-xs font-bold mt-2 ${!darkMode ? 'text-orange-600' : 'text-gray-400 dark:text-slate-500'}`}>
+                  Light Mode
+                </span>
+                {!darkMode && (
+                  <span className="text-[10px] text-orange-400 font-semibold mt-0.5">Active</span>
+                )}
               </div>
               <div
                 onClick={() => { if (!darkMode) setDarkMode(true); }}
-                className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                className={`flex flex-col items-center justify-center p-5 rounded-xl border-2 cursor-pointer transition-all ${
                   darkMode
-                    ? 'border-orange-500 bg-orange-50/25 dark:bg-orange-900/5'
-                    : 'border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30'
+                    ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/10'
+                    : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-orange-200'
                 }`}
               >
-                <Moon size={24} className={darkMode ? 'text-violet-400' : 'text-slate-400'} />
-                <span className="text-xs font-bold mt-2 text-slate-700 dark:text-slate-300">Midnight Dark</span>
+                <Moon size={26} className={darkMode ? 'text-orange-500' : 'text-gray-300 dark:text-slate-500'} />
+                <span className={`text-xs font-bold mt-2 ${darkMode ? 'text-orange-600 dark:text-orange-400' : 'text-gray-400 dark:text-slate-500'}`}>
+                  Dark Mode
+                </span>
+                {darkMode && (
+                  <span className="text-[10px] text-orange-400 font-semibold mt-0.5">Active</span>
+                )}
               </div>
             </div>
-          </Card>
+          </div>
 
-          {/* Operations & Alerts Card */}
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="p-2 rounded-xl bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400">
-                <Bell size={20} />
+          {/* ── Alerts Card ── */}
+          <div className="bg-white dark:bg-slate-900 border border-orange-100 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-5">
+              <span className="p-2.5 rounded-xl bg-orange-500 text-white shadow-sm shadow-orange-200">
+                <Bell size={18} />
               </span>
               <div>
-                <h3 className="text-base font-bold text-gray-900 m-0">
-                  Operations & Calendar Alerts
-                </h3>
-                <p className="text-xs text-slate-400 dark:text-slate-500 m-0">
-                  Set triggers for your scheduled school visits, events, and agenda layouts.
-                </p>
+                <h3 className="text-base font-bold text-gray-900 dark:text-slate-100 m-0">Operations & Calendar Alerts</h3>
+                <p className="text-xs text-gray-400 dark:text-slate-500 m-0">Set triggers for visits, events, and agenda layouts.</p>
               </div>
             </div>
+            <div className="h-px bg-orange-100 dark:bg-slate-800 mb-2" />
+            <ToggleRow
+              icon={<Calendar size={15} />}
+              label="Training Events Alerts"
+              sub="Get notifications for scheduled Trainer TOT and curriculum sessions."
+              value={notifyTraining}
+              onChange={handleToggleTraining}
+            />
+            <ToggleRow
+              icon={<Clock size={15} />}
+              label="Meeting Alerts"
+              sub="Receive reminders for regional officer coordinate syncs."
+              value={notifyMeetings}
+              onChange={handleToggleMeetings}
+            />
+            <ToggleRow
+              icon={<Calendar size={15} />}
+              label="Week starts on Monday"
+              sub="Arrange the Operation Calendar with Monday as the first day."
+              value={weekStartMonday}
+              onChange={handleToggleWeekStart}
+            />
+            <ToggleRow
+              icon={<ListTodo size={15} />}
+              label="Task Reminders"
+              sub="Sync dashboard badges for pending operations list actions."
+              value={taskReminders}
+              onChange={handleToggleReminders}
+              border={false}
+            />
+          </div>
 
-            <hr className="border-gray-100 my-4" />
-
-            <div className="space-y-4">
-              {/* Training Events Alert Toggle */}
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <div className="flex items-start gap-3">
-                  <span className="p-1.5 rounded-lg bg-orange-50/50 dark:bg-orange-950/20 text-orange-500 mt-0.5">
-                    <Calendar size={15} />
-                  </span>
-                  <div>
-                    <div className="text-xs sm:text-sm font-bold text-gray-900">
-                      Training Events Alerts
-                    </div>
-                    <div className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500">
-                      Get alert notifications for scheduled Trainer TOT and curriculum sessions.
-                    </div>
-                  </div>
-                </div>
-                <button
-                  onClick={handleToggleTraining}
-                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-1 focus:ring-orange-500/30 ${
-                    notifyTraining ? 'bg-orange-500' : 'bg-slate-200 dark:bg-slate-700'
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                      notifyTraining ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
-              </div>
-
-              {/* Weekly Meetings Alert Toggle */}
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <div className="flex items-start gap-3">
-                  <span className="p-1.5 rounded-lg bg-orange-50/50 dark:bg-orange-950/20 text-orange-500 mt-0.5">
-                    <Clock size={15} />
-                  </span>
-                  <div>
-                    <div className="text-xs sm:text-sm font-bold text-gray-900">
-                      Meeting Alerts
-                    </div>
-                    <div className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500">
-                      Receive early reminders for regional officer coordinate syncs.
-                    </div>
-                  </div>
-                </div>
-                <button
-                  onClick={handleToggleMeetings}
-                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-1 focus:ring-orange-500/30 ${
-                    notifyMeetings ? 'bg-orange-500' : 'bg-slate-200 dark:bg-slate-700'
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                      notifyMeetings ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
-              </div>
-
-              {/* Week Starts on Monday Toggle */}
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <div className="flex items-start gap-3">
-                  <span className="p-1.5 rounded-lg bg-orange-50/50 dark:bg-orange-950/20 text-orange-500 mt-0.5">
-                    <Calendar size={15} />
-                  </span>
-                  <div>
-                    <div className="text-xs sm:text-sm font-bold text-gray-900">
-                      Week starts on Monday
-                    </div>
-                    <div className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500">
-                      Arrange the Operation Calendar layout with Monday as the first day.
-                    </div>
-                  </div>
-                </div>
-                <button
-                  onClick={handleToggleWeekStart}
-                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-1 focus:ring-orange-500/30 ${
-                    weekStartMonday ? 'bg-orange-500' : 'bg-slate-200 dark:bg-slate-700'
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                      weekStartMonday ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
-              </div>
-
-              {/* Task Reminders Toggle */}
-              <div className="flex items-center justify-between py-2">
-                <div className="flex items-start gap-3">
-                  <span className="p-1.5 rounded-lg bg-orange-50/50 dark:bg-orange-950/20 text-orange-500 mt-0.5">
-                    <ListTodo size={15} />
-                  </span>
-                  <div>
-                    <div className="text-xs sm:text-sm font-bold text-gray-900">
-                      Task Reminders
-                    </div>
-                    <div className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500">
-                      Sync push or dashboard badges for pending operations list actions.
-                    </div>
-                  </div>
-                </div>
-                <button
-                  onClick={handleToggleReminders}
-                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-1 focus:ring-orange-500/30 ${
-                    taskReminders ? 'bg-orange-500' : 'bg-slate-200 dark:bg-slate-700'
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                      taskReminders ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
-          </Card>
-
-          {/* Diagnostics Card */}
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-3">
-              <span className="p-2 rounded-xl bg-violet-50 dark:bg-violet-950/20 text-violet-600 dark:text-violet-400">
-                <Monitor size={20} />
+          {/* ── Diagnostics Card ── */}
+          <div className="bg-white dark:bg-slate-900 border border-orange-100 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-5">
+              <span className="p-2.5 rounded-xl bg-[#0f1623] dark:bg-slate-700 text-white shadow-sm">
+                <Monitor size={18} />
               </span>
               <div>
-                <h3 className="text-base font-bold text-gray-900 m-0">
-                  Platform Diagnostics
-                </h3>
-                <p className="text-xs text-slate-400 dark:text-slate-500 m-0">
-                  Synchronous system settings and workspace local stats.
-                </p>
+                <h3 className="text-base font-bold text-gray-900 dark:text-slate-100 m-0">Platform Diagnostics</h3>
+                <p className="text-xs text-gray-400 dark:text-slate-500 m-0">System settings and workspace local stats.</p>
               </div>
             </div>
-
-            <hr className="border-gray-100 my-4" />
-
-            <div className="space-y-3 text-xs">
-              <div className="flex justify-between py-1 border-b border-gray-50">
-                <span className="text-slate-400">Application Frame Type</span>
-                <span className="font-bold text-gray-700">React 19 + Vite Container</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-gray-50">
-                <span className="text-slate-400">Local Stored Cache</span>
-                <span className="font-bold text-gray-700">Active ({reportsCount} reports)</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-gray-50">
-                <span className="text-slate-400">Service Environment</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">● LIVE RUNNING</span>
-              </div>
-              <div className="flex justify-between py-1">
-                <span className="text-slate-400">Persistent Storage Engine</span>
-                <span className="font-bold text-gray-700">Local Storage Hook API</span>
-              </div>
+            <div className="h-px bg-orange-100 dark:bg-slate-800 mb-4" />
+            <div className="space-y-0 rounded-xl border border-orange-100 dark:border-slate-800 overflow-hidden text-xs">
+              {[
+                ['Application Frame', 'React 19 + Vite Container'],
+                ['Local Stored Cache', `Active (${reportsCount} reports)`],
+                ['Service Environment', '● LIVE RUNNING'],
+                ['Storage Engine', 'Local Storage Hook API'],
+              ].map(([label, value], i, arr) => (
+                <div
+                  key={label}
+                  className={`flex justify-between items-center px-4 py-3 ${
+                    i < arr.length - 1 ? 'border-b border-orange-50 dark:border-slate-800' : ''
+                  } ${i % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-orange-50/40 dark:bg-slate-800/30'}`}
+                >
+                  <span className="text-gray-500 dark:text-slate-400 font-medium">{label}</span>
+                  <span className={`font-bold ${value.startsWith('●') ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-900 dark:text-slate-200'}`}>
+                    {value}
+                  </span>
+                </div>
+              ))}
             </div>
-
-            <Btn
-              variant="secondary"
-              size="sm"
-              className="mt-5 w-full"
+            <button
               onClick={() => {
                 safeStorage.clear();
-                showToast("♻️ Cached fields restored to factory defaults. Please refresh page.");
+                showToast('♻️ Cache cleared. Please refresh page.');
               }}
+              className="mt-4 w-full py-2.5 rounded-xl border-2 border-orange-200 dark:border-slate-700 text-orange-600 dark:text-slate-300 font-bold text-sm hover:bg-orange-50 dark:hover:bg-slate-800 transition-colors"
             >
               Clear Local Application Cache
-            </Btn>
-          </Card>
+            </button>
+          </div>
+
         </div>
 
-        {/* Profile / Permission details block */}
+        {/* ── Right Column ── */}
         <div className="space-y-5">
-          {/* User profile details */}
-          <Card className="p-6 text-center">
-            <h3 className="text-sm font-extrabold text-gray-400 uppercase tracking-wider mb-4">
+
+          {/* Profile Card */}
+          <div className="bg-white dark:bg-slate-900 border border-orange-100 dark:border-slate-800 rounded-2xl p-6 text-center shadow-sm">
+            <div className="text-[10px] font-extrabold text-orange-500 uppercase tracking-widest mb-4">
               Session Profile
-            </h3>
+            </div>
             {user ? (
               <div className="flex flex-col items-center">
-                <div className="w-16 h-16 rounded-full bg-orange-500 text-white font-black text-2xl flex items-center justify-center shadow-lg shadow-orange-500/10 mb-3">
+                <div className="w-16 h-16 rounded-full bg-orange-500 text-white font-black text-2xl flex items-center justify-center shadow-lg shadow-orange-200 dark:shadow-orange-950/30 mb-3">
                   {user.avatar}
                 </div>
-                <div className="font-extrabold text-gray-900 text-base">
+                <div className="font-extrabold text-gray-900 dark:text-slate-100 text-base mb-0.5">
                   {user.name}
                 </div>
-                <div className="text-xs text-slate-400 dark:text-slate-400 mb-3">{user.email}</div>
+                <div className="text-xs text-gray-400 dark:text-slate-500 mb-3">{user.email}</div>
                 {rc && (
                   <span
                     className="px-3 py-1 rounded-full text-xs font-bold"
@@ -381,39 +313,56 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                   </span>
                 )}
                 {user.district && (
-                  <div className="text-xs text-gray-500 mt-2 font-medium">
-                    📍 Align: {user.district} Region
+                  <div className="text-xs text-gray-500 dark:text-slate-400 mt-2 font-medium">
+                    📍 {user.district} Region
                   </div>
                 )}
+                {/* Divider */}
+                <div className="w-full h-px bg-orange-100 dark:bg-slate-800 my-4" />
+                <div className="w-full text-left space-y-2">
+                  {[
+                    ['Role', rc?.label || '—'],
+                    ['Access', 'Portal Authenticated'],
+                  ].map(([k, v]) => (
+                    <div key={k} className="flex justify-between text-xs">
+                      <span className="text-gray-400 dark:text-slate-500">{k}</span>
+                      <span className="font-bold text-gray-800 dark:text-slate-200">{v}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : (
               <div className="flex flex-col items-center py-4">
-                <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mb-3">
+                <div className="w-14 h-14 rounded-full bg-orange-50 dark:bg-slate-800 text-orange-300 flex items-center justify-center mb-3 border-2 border-orange-100 dark:border-slate-700">
                   <UserIcon size={24} />
                 </div>
-                <div className="font-extrabold text-slate-700 dark:text-slate-300 text-sm">
+                <div className="font-extrabold text-gray-700 dark:text-slate-300 text-sm">
                   Public Guest Access
                 </div>
-                <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-                  Log in with credentials provided by your district lead as a Trainer or Officer.
+                <p className="text-xs text-gray-400 dark:text-slate-500 mt-2 leading-relaxed">
+                  Log in with credentials from your district lead.
                 </p>
               </div>
             )}
-          </Card>
+          </div>
 
-          {/* Quick instructions card */}
-          <Card className="p-5 bg-gradient-to-br from-orange-500/5 to-rose-500/5 border-orange-100 dark:border-orange-950/10 relative overflow-hidden">
-            <div className="flex items-center gap-2 text-orange-600 dark:text-orange-400 mb-2">
-              <HelpCircle size={16} />
-              <span className="text-xs font-extrabold uppercase tracking-wide">Safeguarding Contact</span>
+          {/* Support Card */}
+          <div className="bg-orange-500 rounded-2xl p-5 relative overflow-hidden shadow-md shadow-orange-200 dark:shadow-orange-950/30">
+            <div className="absolute top-0 right-0 w-24 h-24 rounded-full bg-white/10 -translate-y-8 translate-x-8" />
+            <div className="relative">
+              <div className="flex items-center gap-2 text-white mb-2">
+                <HelpCircle size={16} />
+                <span className="text-xs font-extrabold uppercase tracking-wide">Safeguarding Contact</span>
+              </div>
+              <p className="text-xs text-orange-100 leading-relaxed m-0">
+                Need help using the Digital ScaleUp program? Contact the system admin via:
+              </p>
+              <div className="text-xs font-bold text-white mt-3 bg-white/15 rounded-lg px-3 py-2 break-all">
+                support.pamodzi@ujamaa-africa.org
+              </div>
             </div>
-            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed m-0">
-              Need assistance using the Digital ScaleUp program? Contact the system admin or report issues via email:
-            </p>
-            <div className="text-xs font-bold text-orange-600 dark:text-orange-400 mt-2 hover:underline">
-              support.pamodzi@ujamaa-africa.org
-            </div>
-          </Card>
+          </div>
+
         </div>
       </div>
     </div>
