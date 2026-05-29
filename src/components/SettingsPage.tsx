@@ -80,7 +80,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
         <Kicker text="Application Preferences" />
-        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-50 leading-tight">
+        <h1 className="text-2xl sm:text-3xl font-black text-gray-900 leading-tight">
           System Settings
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -98,7 +98,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 <Sparkles size={20} />
               </span>
               <div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 m-0">
+                <h3 className="text-base font-bold text-gray-900 m-0">
                   Appearance Theme
                 </h3>
                 <p className="text-xs text-slate-400 dark:text-slate-500 m-0">
@@ -107,9 +107,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               </div>
             </div>
 
-            <hr className="border-slate-100 dark:border-slate-800 my-4" />
+            <hr className="border-gray-100 my-4" />
 
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-150 dark:border-slate-800">
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-gray-50 border border-gray-200">
               <div className="flex items-center gap-3.5">
                 {darkMode ? (
                   <Moon className="text-violet-400" size={18} />
@@ -117,7 +117,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                   <Sun className="text-amber-500" size={18} />
                 )}
                 <div>
-                  <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
+                  <div className="text-xs sm:text-sm font-bold text-gray-900">
                     Dark Slate Environment
                   </div>
                   <div className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500">
@@ -175,7 +175,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 <Bell size={20} />
               </span>
               <div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 m-0">
+                <h3 className="text-base font-bold text-gray-900 m-0">
                   Operations & Calendar Alerts
                 </h3>
                 <p className="text-xs text-slate-400 dark:text-slate-500 m-0">
@@ -184,17 +184,17 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               </div>
             </div>
 
-            <hr className="border-slate-100 dark:border-slate-800 my-4" />
+            <hr className="border-gray-100 my-4" />
 
             <div className="space-y-4">
               {/* Training Events Alert Toggle */}
-              <div className="flex items-center justify-between py-2 border-b border-slate-50 dark:border-slate-800/40">
+              <div className="flex items-center justify-between py-2 border-b border-gray-100">
                 <div className="flex items-start gap-3">
                   <span className="p-1.5 rounded-lg bg-orange-50/50 dark:bg-orange-950/20 text-orange-500 mt-0.5">
                     <Calendar size={15} />
                   </span>
                   <div>
-                    <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
+                    <div className="text-xs sm:text-sm font-bold text-gray-900">
                       Training Events Alerts
                     </div>
                     <div className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500">
@@ -217,13 +217,13 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               </div>
 
               {/* Weekly Meetings Alert Toggle */}
-              <div className="flex items-center justify-between py-2 border-b border-slate-50 dark:border-slate-800/40">
+              <div className="flex items-center justify-between py-2 border-b border-gray-100">
                 <div className="flex items-start gap-3">
                   <span className="p-1.5 rounded-lg bg-orange-50/50 dark:bg-orange-950/20 text-orange-500 mt-0.5">
                     <Clock size={15} />
                   </span>
                   <div>
-                    <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
+                    <div className="text-xs sm:text-sm font-bold text-gray-900">
                       Meeting Alerts
                     </div>
                     <div className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500">
@@ -246,13 +246,13 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               </div>
 
               {/* Week Starts on Monday Toggle */}
-              <div className="flex items-center justify-between py-2 border-b border-slate-50 dark:border-slate-800/40">
+              <div className="flex items-center justify-between py-2 border-b border-gray-100">
                 <div className="flex items-start gap-3">
                   <span className="p-1.5 rounded-lg bg-orange-50/50 dark:bg-orange-950/20 text-orange-500 mt-0.5">
                     <Calendar size={15} />
                   </span>
                   <div>
-                    <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
+                    <div className="text-xs sm:text-sm font-bold text-gray-900">
                       Week starts on Monday
                     </div>
                     <div className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500">
@@ -281,7 +281,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                     <ListTodo size={15} />
                   </span>
                   <div>
-                    <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
+                    <div className="text-xs sm:text-sm font-bold text-gray-900">
                       Task Reminders
                     </div>
                     <div className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500">
@@ -312,7 +312,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 <Monitor size={20} />
               </span>
               <div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 m-0">
+                <h3 className="text-base font-bold text-gray-900 m-0">
                   Platform Diagnostics
                 </h3>
                 <p className="text-xs text-slate-400 dark:text-slate-500 m-0">
@@ -321,24 +321,24 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               </div>
             </div>
 
-            <hr className="border-slate-100 dark:border-slate-800 my-4" />
+            <hr className="border-gray-100 my-4" />
 
             <div className="space-y-3 text-xs">
-              <div className="flex justify-between py-1 border-b border-slate-50 dark:border-slate-800/40">
+              <div className="flex justify-between py-1 border-b border-gray-50">
                 <span className="text-slate-400">Application Frame Type</span>
-                <span className="font-bold text-slate-700 dark:text-slate-300">React 19 + Vite Container</span>
+                <span className="font-bold text-gray-700">React 19 + Vite Container</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-slate-50 dark:border-slate-800/40">
+              <div className="flex justify-between py-1 border-b border-gray-50">
                 <span className="text-slate-400">Local Stored Cache</span>
-                <span className="font-bold text-slate-700 dark:text-slate-300">Active ({reportsCount} reports)</span>
+                <span className="font-bold text-gray-700">Active ({reportsCount} reports)</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-slate-50 dark:border-slate-800/40">
+              <div className="flex justify-between py-1 border-b border-gray-50">
                 <span className="text-slate-400">Service Environment</span>
                 <span className="font-bold text-emerald-600 dark:text-emerald-400">● LIVE RUNNING</span>
               </div>
               <div className="flex justify-between py-1">
                 <span className="text-slate-400">Persistent Storage Engine</span>
-                <span className="font-bold text-slate-700 dark:text-slate-300">Local Storage Hook API</span>
+                <span className="font-bold text-gray-700">Local Storage Hook API</span>
               </div>
             </div>
 
@@ -360,7 +360,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         <div className="space-y-5">
           {/* User profile details */}
           <Card className="p-6 text-center">
-            <h3 className="text-sm font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">
+            <h3 className="text-sm font-extrabold text-gray-400 uppercase tracking-wider mb-4">
               Session Profile
             </h3>
             {user ? (
@@ -368,7 +368,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 <div className="w-16 h-16 rounded-full bg-orange-500 text-white font-black text-2xl flex items-center justify-center shadow-lg shadow-orange-500/10 mb-3">
                   {user.avatar}
                 </div>
-                <div className="font-extrabold text-slate-900 dark:text-slate-100 text-base">
+                <div className="font-extrabold text-gray-900 text-base">
                   {user.name}
                 </div>
                 <div className="text-xs text-slate-400 dark:text-slate-400 mb-3">{user.email}</div>
@@ -381,7 +381,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                   </span>
                 )}
                 {user.district && (
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-2 font-medium">
+                  <div className="text-xs text-gray-500 mt-2 font-medium">
                     📍 Align: {user.district} Region
                   </div>
                 )}
