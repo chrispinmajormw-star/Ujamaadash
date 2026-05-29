@@ -158,12 +158,12 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
     <div className="space-y-4 flex flex-col h-full animate-fade-in-up">
       <div>
         <Kicker text="Malawi Interactive coverage map" />
-        <h1 className="text-2xl font-black text-slate-900 dark:text-slate-50 leading-tight">
+        <h1 className="text-2xl font-black text-gray-900 leading-tight">
           School Clusters & Hubs
         </h1>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-t-2xl p-4 flex flex-wrap items-center gap-4 text-xs font-semibold text-slate-600 dark:text-slate-300">
+      <div className="bg-white border border-gray-200 rounded-t-2xl p-4 flex flex-wrap items-center gap-4 text-xs font-semibold text-gray-600">
         {[
           { color: "bg-emerald-600", label: "Active District" },
           { color: "bg-slate-400 dark:bg-slate-600", label: "Planned Expansion" },
@@ -180,11 +180,11 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
         </span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 border border-slate-200 dark:border-slate-800/80 rounded-b-2xl overflow-hidden h-[60vh] sm:h-[65vh]">
+      <div className="grid grid-cols-1 md:grid-cols-4 border border-gray-200 rounded-b-2xl overflow-hidden h-[60vh] sm:h-[65vh]">
         {/* Navigation Rail */}
-        <div className="bg-slate-50 dark:bg-slate-900/60 border-r border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden max-h-[160px] md:max-h-none md:col-span-1">
-          <div className="p-3 border-b border-slate-200 dark:border-slate-800 shrink-0">
-            <div className="text-[10px] font-extrabold text-slate-400 dark:text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1">
+        <div className="bg-white border-r border-gray-200 flex flex-col overflow-hidden max-h-[160px] md:max-h-none md:col-span-1">
+          <div className="p-3 border-b border-gray-100 shrink-0">
+            <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5 flex items-center gap-1">
               <Sliders size={12} /> Region scope
             </div>
             <div className="flex flex-wrap gap-1">
@@ -195,7 +195,7 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
                   className={`px-2.5 py-1 rounded-full text-[10.5px] font-bold cursor-pointer transition-all ${
                     selectedRegion === r
                       ? "bg-slate-900 text-white dark:bg-orange-600"
-                      : "bg-slate-200/50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                   }`}
                 >
                   {r}
@@ -205,7 +205,7 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
           </div>
 
           <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
-            <div className="text-[9.5px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-2 py-1 select-none">
+            <div className="text-[9.5px] font-extrabold text-gray-400 uppercase tracking-wider px-2 py-1 select-none">
               Clusters ({filteredClusters.length})
             </div>
             {filteredClusters.map(c => {
@@ -217,11 +217,11 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
                   className={`p-2.5 rounded-lg border text-left cursor-pointer transition-all ${
                     isActive
                       ? "border-orange-500 bg-orange-50/20 dark:bg-orange-950/15"
-                      : "border-slate-200/40 dark:border-slate-800 bg-white/40 dark:bg-slate-950/20 hover:border-slate-300"
+                      : "border-gray-100 bg-white hover:border-orange-200"
                   }`}
                 >
-                  <div className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">{c.name}</div>
-                  <div className="text-[10px] text-slate-400 dark:text-slate-400 mt-0.5">
+                  <div className="font-bold text-xs text-gray-900 truncate">{c.name}</div>
+                  <div className="text-[10px] text-gray-400 mt-0.5">
                     📍 {c.district} · {c.schools.length} schools
                   </div>
                 </div>
@@ -247,9 +247,9 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
               ["Trained Teachers", selectedCluster.trained],
               ["Cluster Coordinator", selectedCluster.lead],
             ].map(([l, v]) => (
-              <div key={l} className="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-100 dark:border-slate-850">
-                <div className="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">{l}</div>
-                <div className="font-bold text-slate-800 dark:text-slate-100">{v}</div>
+              <div key={l} className="bg-orange-50 p-2.5 rounded-xl border border-orange-100">
+                <div className="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">{l}</div>
+                <div className="font-bold text-gray-800">{v}</div>
               </div>
             ))}
           </div>
@@ -260,7 +260,7 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
             </div>
             <div className="space-y-1">
               {selectedCluster.schools.map((s, i) => (
-                <div key={i} className="flex items-center gap-2 py-1.5 border-b border-slate-50 dark:border-slate-800/40 text-xs text-slate-700 dark:text-slate-300">
+                <div key={i} className="flex items-center gap-2 py-1.5 border-b border-gray-50 text-xs text-gray-700">
                   <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
                   <span>{s.name}</span>
                 </div>
