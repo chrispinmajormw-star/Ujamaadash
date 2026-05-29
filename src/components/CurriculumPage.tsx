@@ -21,7 +21,7 @@ export const CurriculumPage: React.FC = () => {
     <div className="space-y-6 max-w-5xl mx-auto animate-fade-in-up">
       <div>
         <Kicker text="Digital Educational Panel" />
-        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-50 leading-tight">
+        <h1 className="text-2xl sm:text-3xl font-black text-gray-900 leading-tight">
           Student Curriculums
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
