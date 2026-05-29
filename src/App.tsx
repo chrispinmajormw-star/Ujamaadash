@@ -738,7 +738,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers, showTo
             <option value="data_entry">Data Entry Officer</option>
             <option value="viewer">Basic View Inspector</option>
           </FSelect>
-          <FSelect label="Assigned Region Hub" value={nf.district} onChange={sn("district")}>
+          <FSelect label="Assigned Region" value={nf.district} onChange={sn("district")}>
             <option value="">Choose District (None/National)</option>
             {DISTRICT_LIST.map(d => <option key={d}>{d}</option>)}
           </FSelect>
@@ -950,8 +950,8 @@ export default function App() {
           items: [
             { id: "maps", label: "Clusters Map", icon: Map },
             { id: "districts", label: "Malawi Districts", icon: MapPin },
-            { id: "trainings", label: "Certs & TOTs", icon: GraduationCap },
-            { id: "curriculum", label: "Empower curriculums", icon: BookOpen },
+            { id: "trainings", label: "Trainings", icon: GraduationCap },
+            { id: "curriculum", label: "Digital curriculums", icon: BookOpen },
             { id: "ett", label: "ETT Standards", icon: Layers }
           ]
         },
@@ -972,8 +972,8 @@ export default function App() {
             { id: "dashboard", label: "National Hub", icon: LayoutDashboard },
             { id: "maps", label: "Clusters Map", icon: Map },
             { id: "districts", label: "Malawi Districts", icon: MapPin },
-            { id: "trainings", label: "Certs & TOTs", icon: GraduationCap },
-            { id: "curriculum", label: "Empower curriculums", icon: BookOpen },
+            { id: "trainings", label: "Trainings", icon: GraduationCap },
+            { id: "curriculum", label: "Digital curriculums", icon: BookOpen },
             { id: "ett", label: "ETT Standards", icon: Layers }
           ]
         },
@@ -981,9 +981,9 @@ export default function App() {
           title: "Portal Controls",
           items: [
             { id: "analytics", label: "Analytics Trends", icon: BarChart2 },
-            { id: "impact", label: "Transformations", icon: Heart },
-            { id: "submit", label: user ? "Submit session file" : "Report SGBV Incident", icon: FilePlus },
-            { id: "settings", label: "Settings pref", icon: Settings }
+            { id: "impact", label: "Impact Stories", icon: Heart },
+            { id: "submit", label: user ? "Submit session file" : "Report a Case", icon: FilePlus },
+            { id: "settings", label: "Settings", icon: Settings }
           ]
         }
       ];
@@ -1227,10 +1227,10 @@ export default function App() {
                 <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[11px] font-semibold text-slate-500">
                   <span>Child Helpline: <b>116</b></span>
                   <span>VSU Police Desk: <b>997</b></span>
-                  <span>Other Helpline: <b>0984 110 288</b></span>
+                  <span>Ujamaa Helpline: <b>0984 110 288</b></span>
                 </div>
                 <div className="text-[10px] text-slate-400 mt-2 font-medium">
-                  © 2026 Ujamaa Africa Protection. All rights reserved. Registered Malawi NGOs Association network.
+                  © 2026 Ujamaa Africa Protection. All rights reserved.
                 </div>
               </footer>
             )}
