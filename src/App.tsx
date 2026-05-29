@@ -456,7 +456,7 @@ const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, onOpenMap }) => {
         <p className="text-xs text-slate-400 dark:text-slate-500">Review 15 active districts and 13 future development regions across Malawi.</p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-slate-50 dark:bg-slate-950 p-4 border border-slate-100 dark:border-slate-800 rounded-2xl">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-[#0f1623] p-4 border border-slate-800 rounded-2xl">
         {[
           ["Active Spheres", "15 Districts"],
           ["Training Coverage", "54% Target reached"],
@@ -484,8 +484,8 @@ const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, onOpenMap }) => {
             <div
               key={d.name}
               onClick={() => onOpenMap({ type: "district", name: d.name, ts: Date.now() })}
-              className={`p-5 rounded-2xl border cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 bg-white dark:bg-slate-900 ${
-                isActive ? 'border-orange-100 dark:border-orange-550/10' : 'border-slate-150 dark:border-slate-850 opacity-75'
+              className={`p-5 rounded-2xl border cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 bg-white ${
+                isActive ? 'border-orange-200' : 'border-gray-200 opacity-75'
               }`}
             >
               <div className="flex justify-between items-start mb-3">
@@ -501,17 +501,17 @@ const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, onOpenMap }) => {
               {isActive ? (
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="bg-slate-50 dark:bg-slate-950 p-2 rounded-xl">
-                      <div className="text-[9px] text-slate-400 font-bold mb-0.5">TOTs Certified</div>
-                      <div className="text-sm font-black text-slate-800 dark:text-slate-100">{d.tots}</div>
+                    <div className="bg-orange-50 border border-orange-100 p-2 rounded-xl">
+                      <div className="text-[9px] text-orange-400 font-bold mb-0.5">TOTs Certified</div>
+                      <div className="text-sm font-black text-gray-900">{d.tots}</div>
                     </div>
-                    <div className="bg-slate-50 dark:bg-slate-950 p-2 rounded-xl">
-                      <div className="text-[9px] text-slate-400 font-bold mb-0.5">Teachers Trained</div>
-                      <div className="text-sm font-black text-slate-800 dark:text-slate-100">{d.teachersTrained}</div>
+                    <div className="bg-orange-50 border border-orange-100 p-2 rounded-xl">
+                      <div className="text-[9px] text-orange-400 font-bold mb-0.5">Teachers Trained</div>
+                      <div className="text-sm font-black text-gray-900">{d.teachersTrained}</div>
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <div className="flex justify-between text-[11px] text-slate-400 dark:text-slate-300 font-bold">
+                    <div className="flex justify-between text-[11px] text-gray-500 font-bold">
                       <span>Schools coverage</span>
                       <span>{d.cov}/{d.schools} ({pct}%)</span>
                     </div>
@@ -519,7 +519,7 @@ const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, onOpenMap }) => {
                   </div>
                 </div>
               ) : (
-                <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-4 text-center text-xs text-slate-400 font-semibold italic">
+                <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 text-center text-xs text-gray-400 font-semibold italic">
                   Expansion assessment planned.
                 </div>
               )}
@@ -970,10 +970,10 @@ export default function App() {
           title: "ScaleUp Public Deck",
           items: [
             { id: "dashboard", label: "National Hub", icon: LayoutDashboard },
-            { id: "maps", label: "Intervention Maps", icon: Map },
+            { id: "maps", label: "Clusters Map", icon: Map },
             { id: "districts", label: "Malawi Districts", icon: MapPin },
-            { id: "trainings", label: "Trainings", icon: GraduationCap },
-            { id: "curriculum", label: "Digital curriculums", icon: BookOpen },
+            { id: "trainings", label: "Certs & TOTs", icon: GraduationCap },
+            { id: "curriculum", label: "Empower curriculums", icon: BookOpen },
             { id: "ett", label: "ETT Standards", icon: Layers }
           ]
         },
