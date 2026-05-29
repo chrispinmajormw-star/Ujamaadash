@@ -14,8 +14,8 @@ export const CurriculumPage: React.FC = () => {
   const abg = tab === "him" ? "bg-blue-50 dark:bg-blue-950/20" : "bg-pink-50 dark:bg-pink-950/20";
   const badgeCol = tab === "him" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-350" : "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-350";
   const cardGradient = tab === "him"
-    ? "from-[#111e35] to-[#122e5a] text-slate-100"
-    : "from-[#281125] to-[#4c1240] text-slate-100";
+    ? "from-[#e85d04] to-[#c44d00] text-white"
+    : "from-[#0f1623] to-[#1a2540] text-white";
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto animate-fade-in-up">
@@ -24,12 +24,12 @@ export const CurriculumPage: React.FC = () => {
         <h1 className="text-2xl sm:text-3xl font-black text-gray-900 leading-tight">
           Student Curriculums
         </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        <p className="text-sm text-gray-500 mt-1">
           Explore structured lessons designed to empower girls and build constructive peer leadership among boys.
         </p>
       </div>
 
-      <div className="flex border-b border-slate-200 dark:border-slate-800">
+      <div className="flex border-b border-gray-200">
         {[
           ["him", "Hero in Me (HIM) — Boys"],
           ["gesd", "GESD — Girls"]
@@ -40,7 +40,7 @@ export const CurriculumPage: React.FC = () => {
             className={`px-5 py-3 text-xs sm:text-sm font-bold cursor-pointer transition-all border-b-[3px] -mb-[2px] ${
               tab === k
                 ? `${ac} border-orange-500`
-                : "text-slate-400 border-transparent hover:text-slate-600 dark:hover:text-slate-200"
+                : "text-slate-400 border-transparent hover:text-slate-600"
             }`}
           >
             {l}
@@ -76,7 +76,7 @@ export const CurriculumPage: React.FC = () => {
           <div
             key={i}
             onClick={() => setSel(s)}
-            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col justify-between overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-md hover:-translate-y-1"
+            className="bg-white border border-gray-100 rounded-2xl flex flex-col justify-between overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-md hover:-translate-y-1"
           >
             <div className="h-1 bg-slate-900 dark:bg-slate-950" style={{ backgroundColor: tab === 'him' ? '#185fa5' : '#a82563' }} />
             
@@ -93,7 +93,7 @@ export const CurriculumPage: React.FC = () => {
                 </p>
               </div>
 
-              <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800 text-[10.5px]">
+              <div className="flex items-center justify-between pt-3 border-t border-gray-100 text-[10.5px]">
                 <span className="text-slate-400 font-medium">Duration: {s.dur}</span>
                 <span className={`px-2.5 py-0.5 rounded font-bold hover:opacity-90 ${badgeCol}`}>
                   Details →
@@ -107,7 +107,7 @@ export const CurriculumPage: React.FC = () => {
       {sel && (
         <Modal title={`${sel.num}: ${sel.title}`} onClose={() => setSel(null)}>
           <div className="space-y-4 text-xs sm:text-sm">
-            <div className={`${abg} p-4 rounded-xl border border-slate-100 dark:border-slate-800`}>
+            <div className={`${abg} p-4 rounded-xl border border-orange-100`}>
               <div className="text-[10px] font-extrabold text-slate-400 dark:text-slate-400 uppercase tracking-widest mb-1">
                 Lesson Concept Summary
               </div>
@@ -120,7 +120,7 @@ export const CurriculumPage: React.FC = () => {
               <span className={`text-xs font-bold px-3 py-1 rounded-full ${badgeCol}`}>
                 Duration: {sel.dur}
               </span>
-              <span className="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+              <span className="text-xs font-bold px-3 py-1 rounded-full bg-gray-100 text-gray-600">
                 Type: Age-Appropriate GBV Prevention
               </span>
             </div>
@@ -130,7 +130,7 @@ export const CurriculumPage: React.FC = () => {
                 <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">
                   Classroom Pledge / Chant
                 </div>
-                <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border-l-[3px] border-orange-500 font-medium italic text-slate-700 dark:text-slate-300 space-y-1">
+                <div className="bg-orange-50 p-4 rounded-xl border-l-[3px] border-orange-500 font-medium italic text-gray-700 space-y-1">
                   {sel.pledge.split("/").map((line, idx) => (
                     <div key={idx} className="leading-snug">{line.trim()}</div>
                   ))}
