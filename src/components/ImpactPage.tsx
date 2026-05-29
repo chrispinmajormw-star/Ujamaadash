@@ -127,7 +127,7 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       {/* Banner */}
-      <div className="bg-slate-900 dark:bg-slate-950 border border-slate-800 rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-xl shadow-slate-950/5 p-4">
+      <div className="bg-[#0f1623] border border-slate-800 rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-xl p-4">
         <div className="absolute -top-10 -right-10 w-44 h-44 rounded-full bg-orange-600/10" />
         <div className="relative space-y-4">
           <div>
@@ -139,7 +139,7 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
               Every data point in our system represents an active young person. Read how communities are resisting GBV and building confidence.
             </p>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-950/40 p-3 rounded-2xl border border-slate-800/40 text-center">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-black/30 p-3 rounded-2xl border border-white/10 text-center">
             {[
               ["592,200+", "Learners Reached"],
               ["665+", "TOTs Trained"],
@@ -158,7 +158,7 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
       <div className="flex flex-wrap items-center justify-between gap-4 mt-8">
         <div>
           <Kicker text="Voices From Active Zones" />
-          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 m-0">Stories of Transformation</h2>
+          <h2 className="text-xl font-bold text-gray-900 m-0">Stories of Transformation</h2>
         </div>
         <Btn onClick={() => setShowForm(true)} className="px-5">
           <Heart size={15} /> Link Your Story
@@ -176,7 +176,7 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
             >
               <div>
                 <div className="flex items-start justify-between mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-white/80 dark:bg-slate-900/40 flex items-center justify-center text-xl shadow-sm border border-slate-100 dark:border-slate-800/20">
+                  <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-xl shadow-sm border border-gray-100">
                     {s.emoji}
                   </div>
                   <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${s.accentBg} ${s.accent}`}>
@@ -184,20 +184,20 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
                   </span>
                 </div>
                 
-                <h3 className="text-base font-bold text-slate-900 dark:text-slate-50 leading-tight mb-2">
+                <h3 className="text-base font-bold text-gray-900 leading-tight mb-2">
                   {s.title}
                 </h3>
                 
                 <div className={`border-l-2 p-3 pl-3.5 mb-4 my-2 italic`} style={{ borderColor: 'currentColor' }}>
-                  <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-200 leading-relaxed font-medium">
+                  <p className="text-xs sm:text-sm text-gray-700 leading-relaxed font-medium">
                     "{s.quote}"
                   </p>
                 </div>
 
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 font-bold mb-3">— {s.who}</div>
+                <div className="text-[11px] text-gray-500 font-bold mb-3">— {s.who}</div>
 
                 {isExp && (
-                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mt-3 pt-3 border-t border-slate-200/20 mb-3 block">
+                  <p className="text-xs text-gray-600 leading-relaxed mt-3 pt-3 border-t border-gray-200 mb-3 block">
                     {s.full}
                   </p>
                 )}
@@ -224,7 +224,7 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
             <span className="p-2 rounded-xl bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400">
               <Star size={18} />
             </span>
-            <h3 className="text-base font-bold text-slate-900 dark:text-slate-50 m-0">ScaleUp Program Milestones</h3>
+            <h3 className="text-base font-bold text-gray-900 m-0">ScaleUp Program Milestones</h3>
           </div>
 
           <div className="relative pl-6 space-y-5">
@@ -233,11 +233,11 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
               const isLast = i === MILESTONES.length - 1;
               return (
                 <div key={i} className="relative flex gap-4 items-start text-xs sm:text-sm">
-                  <div className={`absolute -left-[23px] top-1 w-3 h-3 rounded-full border-2 border-orange-500 ${isLast ? 'bg-orange-500' : 'bg-white dark:bg-slate-900'}`} />
-                  <div className={`p-3 rounded-xl border w-full flex items-center justify-between ${isLast ? 'border-orange-150 bg-orange-50/10 dark:border-orange-900/20 dark:bg-orange-950/10' : 'border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-950/20'}`}>
+                  <div className={`absolute -left-[23px] top-1 w-3 h-3 rounded-full border-2 border-orange-500 ${isLast ? 'bg-orange-500' : 'bg-white'}`} />
+                  <div className={`p-3 rounded-xl border w-full flex items-center justify-between ${isLast ? 'border-orange-200 bg-orange-50' : 'border-gray-100 bg-gray-50/40'}`}>
                     <div className="flex gap-3">
                       <span className="font-extrabold text-orange-600 dark:text-orange-400 text-xs">{m.year}</span>
-                      <span className="text-slate-700 dark:text-slate-300 text-xs leading-normal">{m.event}</span>
+                      <span className="text-gray-700 text-xs leading-normal">{m.event}</span>
                     </div>
                     {isLast && <span className="bg-orange-600 text-white font-bold text-[9px] uppercase px-1.5 py-0.5 rounded scale-90">Current</span>}
                   </div>
@@ -253,17 +253,17 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
             <span className="p-2 rounded-xl bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400">
               <Newspaper size={18} />
             </span>
-            <h3 className="text-base font-bold text-slate-900 dark:text-slate-50 m-0">State Recognition & Press</h3>
+            <h3 className="text-base font-bold text-gray-900 m-0">State Recognition & Press</h3>
           </div>
 
           <div className="space-y-3.5">
             {PRESS.map((p, i) => (
-              <div key={i} className="flex gap-3.5 items-center p-3 rounded-xl border border-slate-100 dark:border-slate-800/60 bg-slate-50/30 dark:bg-slate-950/10">
+              <div key={i} className="flex gap-3.5 items-center p-3 rounded-xl border border-gray-100 bg-gray-50/30">
                 <div className="w-9 h-9 text-lg rounded-xl bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center shrink-0">
                   📰
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="font-bold text-slate-950 dark:text-slate-50 text-xs leading-snug truncate" title={p.headline}>
+                  <div className="font-bold text-gray-900 text-xs leading-snug truncate" title={p.headline}>
                     {p.headline}
                   </div>
                   <div className="text-[10px] text-slate-400 mt-1 font-semibold uppercase">{p.outlet} · {p.date}</div>
@@ -279,8 +279,8 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
           {submitted ? (
             <div className="text-center py-6 space-y-4">
               <span className="text-5xl block">💖</span>
-              <h3 className="text-lg font-bold text-slate-950 dark:text-slate-50 m-0">We Received Your Voice!</h3>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-sm mx-auto">
+              <h3 className="text-lg font-bold text-gray-900 m-0">We Received Your Voice!</h3>
+              <p className="text-xs sm:text-sm text-gray-500 leading-relaxed max-w-sm mx-auto">
                 Thank you! Your submission is handled per high confidentiality protocols. We only publish records after explicit district administrator authentication.
               </p>
               <Btn onClick={() => { setShowForm(false); setSubmitted(false); }} className="px-5 mt-4">
@@ -289,7 +289,7 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
             </div>
           ) : (
             <div className="space-y-4 text-xs">
-              <p className="text-slate-500 dark:text-slate-400 m-0 leading-relaxed text-xs">
+              <p className="text-gray-500 m-0 leading-relaxed text-xs">
                 Share any milestone or successful intervention. You can choose to be anonymous or select an alternative alias.
               </p>
               <FInput label="First Name (or 'Anonymous') *" placeholder="e.g. Samuel or Anonymous" value={storyForm.name} onChange={e => setStoryForm(p => ({ ...p, name: e.target.value }))} />
