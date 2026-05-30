@@ -51,7 +51,7 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export const Card: React.FC<CardProps> = ({ children, className = "", style, ...props }) => (
   <div
-    className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 shadow-sm hover:shadow-md dark:shadow-black/20 transition-all duration-200 ${className}`}
+    className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 ${className}`}
     style={style}
     {...props}
   >
@@ -60,8 +60,24 @@ export const Card: React.FC<CardProps> = ({ children, className = "", style, ...
 );
 
 export const Kicker: React.FC<{ text: string }> = ({ text }) => (
-  <div className="text-[11px] font-extrabold tracking-widest uppercase text-orange-600 mb-1">
+  <div className="text-[10px] font-semibold tracking-wide uppercase text-slate-400 dark:text-slate-500 mb-0.5">
     {text}
+  </div>
+);
+
+interface PageHeaderProps {
+  title: string;
+  subtitle?: string;
+  actions?: React.ReactNode;
+}
+
+export const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, actions }) => (
+  <div className="flex flex-wrap items-start justify-between gap-3 mb-4 pb-3 border-b border-slate-200 dark:border-slate-800">
+    <div>
+      <h1 className="text-base font-bold text-slate-900 dark:text-slate-50 m-0">{title}</h1>
+      {subtitle && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 m-0">{subtitle}</p>}
+    </div>
+    {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
   </div>
 );
 

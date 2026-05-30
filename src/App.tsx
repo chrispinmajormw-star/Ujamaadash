@@ -137,12 +137,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onPublicView, onRegister
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4 transition-colors">
-      <Card className="w-full max-w-md p-8 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl">
-        <div className="mb-6 flex flex-col items-center">
-          <AfricaLogo size={42} variant="full" className="mb-3" />
-          <h1 className="text-xl font-black text-slate-900 dark:text-slate-50 mt-2 m-0">ETT Malawi Program Portal</h1>
-          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Ujamaa Pamodzi Africa GBV Prevention</p>
+    <div className="min-h-full bg-slate-100 dark:bg-slate-950 flex items-center justify-center p-4">
+      <Card className="w-full max-w-sm p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+        <div className="mb-5 flex flex-col items-center">
+          <AfricaLogo size={36} variant="full" className="mb-2" />
+          <h1 className="text-base font-bold text-slate-900 dark:text-slate-50 m-0">ETT Malawi Portal</h1>
+          <p className="text-[11px] text-slate-400 mt-1 m-0">Staff sign-in</p>
         </div>
 
         {mode === 'choice' && (
@@ -183,7 +183,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onPublicView, onRegister
             <FInput label="Associated School Hub" placeholder="e.g. Mbayani Primary" value={reg.school} onChange={e => setReg({ ...reg, school: e.target.value })} />
             <FInput label="Current Password *" type="password" value={reg.password} onChange={e => setReg({ ...reg, password: e.target.value })} />
             {err && (
-              <div className="bg-red-500/5 text-red-650 text-red-600 p-2 border border-red-500/10 rounded text-xs">
+              <div className="bg-red-500/5 text-red-600 p-2 border border-red-500/10 rounded text-xs">
                 {err}
               </div>
             )}
@@ -678,7 +678,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers, showTo
                   <tr key={u.id} className="border-b border-slate-100 dark:border-slate-800/40">
                     <td className="p-3">
                       <div className="flex items-center gap-3">
-                        <span className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 flex items-center justify-center font-bold text-xs text-orange-600">
+                        <span className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-bold text-xs text-orange-600">
                           {u.avatar}
                         </span>
                         <div>
@@ -750,6 +750,24 @@ const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers, showTo
       )}
     </div>
   );
+};
+
+const PAGE_LABELS: Record<string, string> = {
+  dashboard: "Overview",
+  submit: "Submit Report",
+  reports: "Reports",
+  my_reports: "My Reports",
+  maps: "Clusters Map",
+  districts: "Districts",
+  trainings: "Trainings",
+  curriculum: "Curriculum",
+  ett: "ETT Standards",
+  analytics: "Analytics",
+  users: "Staff Directory",
+  impact: "Impact Stories",
+  calendar: "Calendar",
+  tasks: "Tasks",
+  settings: "Settings",
 };
 
 // ─── APPS MAIN CONTAINER / CORE ENGINE ────────
@@ -913,7 +931,7 @@ export default function App() {
       case "analytics":
         return <AnalyticsPage reports={reports} />;
       case "users":
-        return isStaff ? <UsersPage user={cu => cu} users={users} setUsers={setUsers} showToast={showToast} /> : null;
+        return user?.role === 'admin' ? <UsersPage user={user} users={users} setUsers={setUsers} showToast={showToast} /> : null;
       case "impact":
         return <ImpactPage reports={reports} showToast={showToast} user={user} />;
       case "calendar":
@@ -931,312 +949,257 @@ export default function App() {
   const activeNavGroups = isStaff
     ? [
         {
-          title: "Dashboard Workspace",
+          title: "Workspace",
           items: [
-            { id: "dashboard", label: "National Hub", icon: LayoutDashboard },
-            { id: "submit", label: "Submit session file", icon: FilePlus },
-            { id: "reports", label: "Oversight folder", icon: FileText }
+            { id: "dashboard", label: "Overview", icon: LayoutDashboard },
+            { id: "submit", label: "Submit report", icon: FilePlus },
+            { id: "reports", label: "Reports", icon: FileText }
           ]
         },
         {
-          title: "Planning & Actions",
+          title: "Planning",
           items: [
-            { id: "calendar", label: "Operations Calendar", icon: Calendar },
-            { id: "tasks", label: "Operations Tasks", icon: ListTodo }
+            { id: "calendar", label: "Calendar", icon: Calendar },
+            { id: "tasks", label: "Tasks", icon: ListTodo }
           ]
         },
         {
-          title: "Educational & Operations",
+          title: "Program",
           items: [
-            { id: "maps", label: "Clusters Map", icon: Map },
-            { id: "districts", label: "Malawi Districts", icon: MapPin },
+            { id: "maps", label: "Clusters map", icon: Map },
+            { id: "districts", label: "Districts", icon: MapPin },
             { id: "trainings", label: "Trainings", icon: GraduationCap },
-            { id: "curriculum", label: "Digital curriculums", icon: BookOpen },
-            { id: "ett", label: "ETT Standards", icon: Layers }
+            { id: "curriculum", label: "Curriculum", icon: BookOpen },
+            { id: "ett", label: "ETT standards", icon: Layers }
           ]
         },
         {
-          title: "Portal Controls",
+          title: "Admin",
           items: [
-            { id: "analytics", label: "Analytics Trends", icon: BarChart2 },
-            { id: "impact", label: "Transformations", icon: Heart },
-            ...(user?.role === 'admin' ? [{ id: "users", label: "Staff Directory", icon: Users }] : []),
-            { id: "settings", label: "Settings pref", icon: Settings }
+            { id: "analytics", label: "Analytics", icon: BarChart2 },
+            { id: "impact", label: "Impact stories", icon: Heart },
+            ...(user?.role === 'admin' ? [{ id: "users", label: "Staff", icon: Users }] : []),
+            { id: "settings", label: "Settings", icon: Settings }
           ]
         }
       ]
     : [
         {
-          title: "ScaleUp Public Deck",
+          title: "Overview",
           items: [
-            { id: "dashboard", label: "National Hub", icon: LayoutDashboard },
-            { id: "maps", label: "Clusters Map", icon: Map },
-            { id: "districts", label: "Malawi Districts", icon: MapPin },
+            { id: "dashboard", label: "Overview", icon: LayoutDashboard },
+            { id: "maps", label: "Clusters map", icon: Map },
+            { id: "districts", label: "Districts", icon: MapPin },
             { id: "trainings", label: "Trainings", icon: GraduationCap },
-            { id: "curriculum", label: "Digital curriculums", icon: BookOpen },
-            { id: "ett", label: "ETT Standards", icon: Layers }
+            { id: "curriculum", label: "Curriculum", icon: BookOpen },
+            { id: "ett", label: "ETT standards", icon: Layers }
           ]
         },
         {
-          title: "Portal Controls",
+          title: "Data",
           items: [
-            { id: "analytics", label: "Analytics Trends", icon: BarChart2 },
-            { id: "impact", label: "Impact Stories", icon: Heart },
-            { id: "submit", label: user ? "Submit session file" : "Report a Case", icon: FilePlus },
+            { id: "analytics", label: "Analytics", icon: BarChart2 },
+            { id: "impact", label: "Impact stories", icon: Heart },
+            { id: "submit", label: user ? "Submit report" : "Report a case", icon: FilePlus },
             { id: "settings", label: "Settings", icon: Settings }
           ]
         }
       ];
 
+  const renderNav = (onNavigate?: () => void) => (
+    activeNavGroups.map(group => (
+      <div key={group.title} className="space-y-0.5 mb-3">
+        <div className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide px-2 mb-1">{group.title}</div>
+        {group.items.map(item => {
+          const Icon = item.icon;
+          const isActive = page === item.id;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => { setPage(item.id); onNavigate?.(); }}
+              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium transition ${
+                isActive
+                  ? 'bg-orange-600/15 text-orange-400'
+                  : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
+              }`}
+            >
+              <Icon size={14} />
+              <span>{item.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    ))
+  );
+
   return (
     <>
-      <div className={`min-h-screen text-slate-800 dark:text-slate-200 flex flex-col transition-colors ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-800'}`}>
-        
-        {/* ── TOP NAVIGATION BAR ── */}
-        {!isLoginPage && (
-          <header className="sticky top-0 bg-slate-900 border-b border-slate-800 text-white h-16 z-40 flex items-center justify-center px-4 shadow-md">
-            <div className="w-full max-w-7xl flex items-center justify-between">
-              
-              <div className="flex items-center gap-3">
-                {page === "dashboard" ? (
-                  <button
-                    onClick={() => setSidebarOpen(!sidebarOpen)}
-                    className="p-1.5 rounded-lg border border-slate-800 bg-slate-950/40 hover:bg-slate-800/40 cursor-pointer transition text-slate-200"
-                    aria-label="Toggle Side Deck"
+      <div className={`h-screen flex overflow-hidden transition-colors ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-800'}`}>
+        {isLoginPage ? (
+          <div className="flex-1 overflow-y-auto">{renderPageContent()}</div>
+        ) : (
+          <>
+            <AnimatePresence>
+              {sidebarOpen && (
+                <>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 0.5 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => setSidebarOpen(false)}
+                    className="fixed inset-0 bg-black z-30 md:hidden"
+                  />
+                  <motion.aside
+                    initial={{ x: -224 }}
+                    animate={{ x: 0 }}
+                    exit={{ x: -224 }}
+                    transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+                    className="fixed top-0 bottom-0 left-0 w-56 bg-[#0f1623] border-r border-slate-800 z-40 p-3 flex flex-col md:hidden"
                   >
-                    <Sliders size={18} />
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => setPage("dashboard")}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-950/40 hover:bg-slate-800/40 cursor-pointer text-xs font-bold transition text-slate-200"
-                  >
-                    <ArrowLeft size={13} /> Back
-                  </button>
-                )}
-
-                <div className="flex items-center gap-2 select-none">
-                  <AfricaLogo size={28} />
-                  <span className="font-extrabold text-sm sm:text-base leading-none tracking-tight">ETT Malawi</span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                {/* Notification bell and status */}
-                {user && (
-                  <div className="relative">
-                    <button
-                      onClick={() => setNotifOpen(!notifOpen)}
-                      className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/5 border border-slate-800 hover:bg-white/10 cursor-pointer relative transition"
-                      title={`${pendingCount} pending reviews`}
-                    >
-                      <Bell size={15} className="text-slate-200" />
-                      {pendingCount > 0 && (
-                        <span className="absolute -top-1 right-[-2px] bg-red-550 bg-red-600 border border-slate-900 text-white font-extrabold text-[9px] w-4.5 h-4.5 rounded-full flex items-center justify-center p-0.5">
-                          {pendingCount}
-                        </span>
-                      )}
-                    </button>
-
-                    {notifOpen && (
-                      <div className="absolute right-0 top-11 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl p-4 w-72 text-slate-800 dark:text-slate-100 z-50 animate-fade-in-up">
-                        <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 mb-2">
-                          <span className="font-extrabold text-xs">Review Folder Alerts</span>
-                          {pendingCount > 0 && <span className="bg-amber-100 text-amber-800 text-[9px] px-1.5 rounded">Action required</span>}
-                        </div>
-                        <div className="max-h-[220px] overflow-y-auto space-y-2">
-                          {reports.filter(r => r.status === "pending" && (user.role === "district_coordinator" ? r.district === user.district : true)).length === 0 ? (
-                            <p className="text-xs text-slate-400 py-4 text-center m-0">No active pending reviewed files found.</p>
-                          ) : (
-                            reports.filter(r => r.status === "pending" && (user.role === "district_coordinator" ? r.district === user.district : true)).map(r => (
-                              <div key={r.id} onClick={() => { setPage("reports"); setNotifOpen(false); }} className="p-2 bg-slate-50 dark:bg-slate-950 rounded border border-slate-100 dark:border-slate-850 hover:border-slate-300 cursor-pointer transition text-left text-[11.5px] font-semibold space-y-0.5">
-                                <div className="text-slate-900 dark:text-slate-50 truncate">{r.school}</div>
-                                <div className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">{r.district} · {r.submitted_at}</div>
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Direct Preference toggle cog */}
-                <button
-                  onClick={() => setPage("settings")}
-                  className={`w-9 h-9 flex items-center justify-center rounded-lg bg-white/5 border hover:bg-white/10 cursor-pointer transition ${
-                    page === 'settings' ? 'border-orange-500 bg-orange-600/10 text-orange-400' : 'border-slate-800 text-slate-200'
-                  }`}
-                  title="Configure System theme and preferences"
-                >
-                  <Settings size={15} />
-                </button>
-
-                {/* Quick login pill */}
-                {user ? (
-                  <div className="flex items-center gap-2">
-                    <span className="hidden sm:inline-block px-3 py-1 bg-white/5 border border-slate-800 font-bold text-xs rounded-full">
-                      <Users size={12} className="inline mr-1 text-slate-300" /> {user.name}
-                    </span>
-                    <button
-                      onClick={() => { setUser(null); setPage("dashboard"); showToast("Signed Out of ETT Malawi."); }}
-                      className="px-3 py-1.5 rounded-lg bg-red-650 hover:bg-red-700 bg-red-600 text-white font-bold text-xs cursor-pointer border-none transition"
-                      title="Deauthorize session credentials"
-                    >
-                      Sign Out
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setPage("login")}
-                    className="px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white font-black text-xs cursor-pointer rounded-lg border-none transition"
-                  >
-                    Staff Gate
-                  </button>
-                )}
-              </div>
-
-            </div>
-          </header>
-        )}
-
-        {/* ── CENTRAL LAYOUT GRID ── */}
-        <div className="flex-1 flex flex-col md:flex-row relative">
-          
-          {/* Static / Mobile slide deck */}
-          <AnimatePresence>
-            {sidebarOpen && !isLoginPage && (
-              <>
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 0.5 }}
-                  exit={{ opacity: 0 }}
-                  onClick={() => setSidebarOpen(false)}
-                  className="fixed inset-0 bg-black z-30 md:hidden"
-                />
-                <motion.aside
-                  initial={{ x: -280 }}
-                  animate={{ x: 0 }}
-                  exit={{ x: -280 }}
-                  transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-                  className="fixed top-0 bottom-0 left-0 w-64 bg-slate-950 text-slate-100 z-40 p-5 flex flex-col justify-between overflow-y-auto"
-                >
-                  <div className="space-y-6">
-                    <div className="flex justify-between items-center pb-4 border-b border-white/5">
+                    <div className="flex justify-between items-center pb-3 mb-2 border-b border-slate-800">
                       <div className="flex items-center gap-2">
-                        <AfricaLogo size={28} />
-                        <span className="font-extrabold text-base">ETT Portal Menu</span>
+                        <AfricaLogo size={22} />
+                        <span className="font-bold text-sm text-white">ETT Malawi</span>
                       </div>
-                      <button onClick={() => setSidebarOpen(false)} className="text-white hover:opacity-60 cursor-pointer">
-                        <X size={18} />
+                      <button type="button" onClick={() => setSidebarOpen(false)} className="text-slate-400 hover:text-white">
+                        <X size={16} />
                       </button>
                     </div>
-
-                    <div className="space-y-4 text-xs font-semibold">
-                      {activeNavGroups.map(group => (
-                        <div key={group.title} className="space-y-1.5">
-                          <div className="text-[10px] text-white/30 tracking-wider uppercase font-bold px-2">{group.title}</div>
-                          {group.items.map(item => {
-                            const Icon = item.icon;
-                            const isActive = page === item.id;
-                            return (
-                              <div
-                                key={item.id}
-                                onClick={() => { setPage(item.id); setSidebarOpen(false); }}
-                                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition ${
-                                  isActive ? 'bg-orange-600 text-white' : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                                }`}
-                              >
-                                <Icon size={14} />
-                                <span>{item.label}</span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ))}
+                    <div className="flex-1 overflow-y-auto">{renderNav(() => setSidebarOpen(false))}</div>
+                    <div className="pt-2 border-t border-slate-800 text-[10px] text-slate-500">
+                      Helpline <b className="text-slate-300">116</b> · VSU <b className="text-slate-300">997</b>
                     </div>
-                  </div>
+                  </motion.aside>
+                </>
+              )}
+            </AnimatePresence>
 
-                  <div className="pt-4 border-t border-white/5 space-y-2 text-xs">
-                    <div className="text-white/40 block text-[10px] uppercase font-bold">Hotlines alignment</div>
-                    <div className="font-semibold text-white/80">Child Helpline: 116</div>
-                    <div className="font-semibold text-white/80">Police: 997</div>
-                  </div>
-                </motion.aside>
-              </>
-            )}
-          </AnimatePresence>
-
-          {/* Desktop permanent side navigation deck */}
-          {!isLoginPage && (
-            <aside className="hidden md:flex w-64 border-r border-slate-800 shrink-0 p-5 flex-col justify-between overflow-y-auto bg-[#0f1623]">
-              <div className="space-y-5">
-                <div className="space-y-4 text-xs font-semibold">
-                  {activeNavGroups.map(group => (
-                    <div key={group.title} className="space-y-1">
-                      <div className="text-[9.5px] text-slate-500 font-extrabold uppercase tracking-widest px-2 mb-2 select-none">
-                        {group.title}
-                      </div>
-                      {group.items.map(item => {
-                        const Icon = item.icon;
-                        const isActive = page === item.id;
-                        return (
-                          <div
-                            key={item.id}
-                            onClick={() => setPage(item.id)}
-                            className={`flex items-center gap-2.5 px-3 py-2 rounded-xl cursor-pointer transition ${
-                              isActive
-                                ? 'bg-orange-500/20 text-orange-400 font-bold border-l-2 border-orange-500 pl-2 rounded-l-none'
-                                : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                            }`}
-                          >
-                            <Icon size={13.5} />
-                            <span>{item.label}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ))}
-                </div>
+            <aside className="hidden md:flex w-56 shrink-0 flex-col bg-[#0f1623] border-r border-slate-800">
+              <div className="h-12 flex items-center gap-2 px-3 border-b border-slate-800 shrink-0">
+                <AfricaLogo size={22} />
+                <span className="font-bold text-sm text-white truncate">ETT Malawi</span>
               </div>
-
-              <div className="pt-4 border-t border-slate-800 space-y-1.5 text-xs leading-normal">
-                <div className="text-[10px] font-extrabold uppercase text-slate-600 tracking-wider">Helplines alignment</div>
-                <div className="text-slate-400">Child Helpline: <b className="text-white">116</b></div>
-                <div className="text-slate-400">VSU Police Desk: <b className="text-white">997</b></div>
+              <div className="flex-1 overflow-y-auto p-2">{renderNav()}</div>
+              <div className="p-3 border-t border-slate-800 text-[10px] text-slate-500 shrink-0">
+                Helpline <b className="text-slate-300">116</b> · VSU <b className="text-slate-300">997</b>
               </div>
             </aside>
-          )}
 
-          {/* Main workspace container where children display */}
-          <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
-            <div className="w-full max-w-7xl mx-auto min-h-[75vh]">
-              {renderPageContent()}
+            <div className="flex-1 flex flex-col min-w-0">
+              <header className="h-12 shrink-0 flex items-center justify-between gap-3 px-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                <div className="flex items-center gap-2 min-w-0">
+                  <button
+                    type="button"
+                    onClick={() => setSidebarOpen(true)}
+                    className="md:hidden p-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
+                    aria-label="Open menu"
+                  >
+                    <Sliders size={16} />
+                  </button>
+                  <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50 truncate m-0">
+                    {PAGE_LABELS[page] || "Overview"}
+                  </h2>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {user && (
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setNotifOpen(!notifOpen)}
+                        className="w-8 h-8 flex items-center justify-center rounded-md border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 relative"
+                        title={`${pendingCount} pending reviews`}
+                      >
+                        <Bell size={14} />
+                        {pendingCount > 0 && (
+                          <span className="absolute -top-1 -right-1 bg-red-600 text-white font-bold text-[9px] min-w-[16px] h-4 rounded-full flex items-center justify-center px-0.5">
+                            {pendingCount}
+                          </span>
+                        )}
+                      </button>
+
+                      {notifOpen && (
+                        <div className="absolute right-0 top-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-lg p-3 w-64 z-50">
+                          <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 mb-2">
+                            <span className="font-semibold text-xs">Pending reviews</span>
+                            {pendingCount > 0 && <span className="bg-amber-100 text-amber-800 text-[9px] px-1.5 rounded">Action required</span>}
+                          </div>
+                          <div className="max-h-[200px] overflow-y-auto space-y-1.5">
+                            {reports.filter(r => r.status === "pending" && (user.role === "district_coordinator" ? r.district === user.district : true)).length === 0 ? (
+                              <p className="text-xs text-slate-400 py-3 text-center m-0">No pending files.</p>
+                            ) : (
+                              reports.filter(r => r.status === "pending" && (user.role === "district_coordinator" ? r.district === user.district : true)).map(r => (
+                                <button
+                                  key={r.id}
+                                  type="button"
+                                  onClick={() => { setPage("reports"); setNotifOpen(false); }}
+                                  className="w-full text-left p-2 bg-slate-50 dark:bg-slate-950 rounded border border-slate-100 dark:border-slate-800 hover:border-slate-300 text-[11px]"
+                                >
+                                  <div className="font-semibold text-slate-900 dark:text-slate-50 truncate">{r.school}</div>
+                                  <div className="text-[10px] text-slate-400">{r.district} · {r.submitted_at}</div>
+                                </button>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => setDarkMode(!darkMode)}
+                    className="w-8 h-8 flex items-center justify-center rounded-md border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+                    title="Toggle theme"
+                  >
+                    {darkMode ? <Sun size={14} /> : <Moon size={14} />}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPage("settings")}
+                    className={`w-8 h-8 flex items-center justify-center rounded-md border hover:bg-slate-50 dark:hover:bg-slate-800 ${
+                      page === 'settings' ? 'border-orange-500 text-orange-500' : 'border-slate-200 dark:border-slate-700'
+                    }`}
+                    title="Settings"
+                  >
+                    <Settings size={14} />
+                  </button>
+
+                  {user ? (
+                    <>
+                      <span className="hidden sm:inline text-xs font-medium text-slate-600 dark:text-slate-300 max-w-[120px] truncate">
+                        {user.name}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => { setUser(null); setPage("dashboard"); showToast("Signed out."); }}
+                        className="px-2.5 py-1 rounded-md bg-red-600 hover:bg-red-700 text-white font-semibold text-xs"
+                      >
+                        Sign out
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setPage("login")}
+                      className="px-2.5 py-1 bg-orange-600 hover:bg-orange-700 text-white font-semibold text-xs rounded-md"
+                    >
+                      Sign in
+                    </button>
+                  )}
+                </div>
+              </header>
+
+              <main className="flex-1 overflow-y-auto p-4">
+                <div className="max-w-7xl mx-auto">
+                  {renderPageContent()}
+                </div>
+              </main>
             </div>
-
-            {/* Standard aligned footer */}
-            {!isLoginPage && (
-              <footer className="w-full max-w-7xl mx-auto border-t border-slate-200 dark:border-slate-800/80 mt-12 pt-6 pb-6 text-center text-xs text-slate-400 space-y-4">
-                <div className="flex items-center justify-center gap-2">
-                  <AfricaLogo size={20} />
-                  <span className="font-extrabold text-slate-800 dark:text-slate-100">Ujamaa Pamodzi Africa</span>
-                </div>
-                <p className="m-0 leading-relaxed max-w-xl mx-auto">
-                  Country Wide ScaleUp Program adapted to prevent GBV, support disclosures, and enforce child protections.
-                </p>
-                <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[11px] font-semibold text-slate-500">
-                  <span>Child Helpline: <b>116</b></span>
-                  <span>VSU Police Desk: <b>997</b></span>
-                  <span>Ujamaa Helpline: <b>0984 110 288</b></span>
-                </div>
-                <div className="text-[10px] text-slate-400 mt-2 font-medium">
-                  © 2026 Ujamaa Africa Protection. All rights reserved.
-                </div>
-              </footer>
-            )}
-          </main>
-
-        </div>
+          </>
+        )}
       </div>
 
       {toast && <Toast msg={toast} onClose={() => setToast(null)} />}
@@ -1275,7 +1238,7 @@ export default function App() {
             <p className="text-slate-500 m-0 leading-relaxed text-xs">
               This action transmits the approved school record of <b>{forwardModal.school}</b> ({forwardModal.district}) to the <b>National Administrator</b> database log folder.
             </p>
-            <div className="bg-orange-50 dark:bg-orange-950/20 text-orange-700 dark:text-orange-450 p-2.5 rounded-lg text-xs border border-orange-100 dark:border-orange-900/30">
+            <div className="bg-orange-50 dark:bg-orange-950/20 text-orange-700 dark:text-orange-400 p-2.5 rounded-lg text-xs border border-orange-100 dark:border-orange-900/30">
               📨 Route state: Central DC Verified → National Administrator aligned
             </div>
             <div className="flex gap-2 justify-end pt-2">
