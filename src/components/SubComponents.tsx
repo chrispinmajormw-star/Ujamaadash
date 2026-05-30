@@ -180,7 +180,7 @@ export const Modal: React.FC<ModalProps> = ({ title, children, onClose, width = 
   return (
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-      className="fixed inset-0 w-full h-full bg-slate-950/70 z-[99000] flex items-center justify-center p-4 backdrop-blur-sm transition-all duration-300"
+      className="fixed inset-0 w-full h-full bg-black/50 z-[99000] flex items-center justify-center p-4 backdrop-blur-sm transition-all duration-300"
     >
       <div
         className="bg-white dark:bg-[#1a0a05] rounded-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-200 dark:border-[#821F0C]/60 position-relative animate-fade-in-up"
