@@ -37,7 +37,7 @@ export const Pill: React.FC<{ s: string }> = ({ s }) => {
 };
 
 export const ProgBar: React.FC<{ pct: number; color?: string }> = ({ pct, color = OR }) => (
-  <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+  <div className="h-1.5 w-full bg-neutral-200 dark:bg-slate-800 rounded-full overflow-hidden">
     <div
       className="h-full rounded-full transition-all duration-500 ease"
       style={{ width: `${Math.max(0, Math.min(pct, 100))}%`, backgroundColor: color }}
@@ -51,7 +51,7 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export const Card: React.FC<CardProps> = ({ children, className = "", style, ...props }) => (
   <div
-    className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 ${className}`}
+    className={`bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg p-4 text-black dark:text-white ${className}`}
     style={style}
     {...props}
   >
@@ -60,7 +60,7 @@ export const Card: React.FC<CardProps> = ({ children, className = "", style, ...
 );
 
 export const Kicker: React.FC<{ text: string }> = ({ text }) => (
-  <div className="text-[10px] font-semibold tracking-wide uppercase text-slate-400 dark:text-slate-500 mb-0.5">
+  <div className="text-[10px] font-semibold tracking-wide uppercase text-black dark:text-white mb-0.5 opacity-70">
     {text}
   </div>
 );
@@ -72,10 +72,10 @@ interface PageHeaderProps {
 }
 
 export const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, actions }) => (
-  <div className="flex flex-wrap items-start justify-between gap-3 mb-4 pb-3 border-b border-slate-200 dark:border-slate-800">
+  <div className="flex flex-wrap items-start justify-between gap-3 mb-4 pb-3 border-b border-neutral-200 dark:border-slate-800">
     <div>
-      <h1 className="text-base font-bold text-slate-900 dark:text-slate-50 m-0">{title}</h1>
-      {subtitle && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 m-0">{subtitle}</p>}
+      <h1 className="text-base font-bold text-black dark:text-white m-0">{title}</h1>
+      {subtitle && <p className="text-xs text-black dark:text-white mt-0.5 m-0 opacity-80">{subtitle}</p>}
     </div>
     {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
   </div>
@@ -101,13 +101,13 @@ export const Btn: React.FC<BtnProps> = ({
   const baseStyle = "font-sans font-bold rounded-xl cursor-pointer inline-flex items-center gap-2 transform active:scale-95 transition-all justify-center whitespace-nowrap";
   
   const variants = {
-    primary: "bg-orange-600 hover:bg-orange-700 text-white shadow-sm hover:shadow-orange-600/20 shadow-orange-600/10 border-none",
-    secondary: "bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/80",
+    primary: "bg-orange-600 hover:bg-orange-700 text-white shadow-sm border-none",
+    secondary: "bg-white dark:bg-[#0f1623] text-black dark:text-white border border-neutral-200 dark:border-slate-700 hover:border-orange-400 dark:hover:border-orange-600",
     danger: "bg-red-600 hover:bg-red-700 text-white shadow-sm border-none",
-    ghost: "bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/50 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800",
-    orange_ghost: "bg-orange-50 dark:bg-orange-950/20 hover:bg-orange-100/50 dark:hover:bg-orange-950/45 text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-900/40",
+    ghost: "bg-white hover:bg-orange-50 dark:bg-[#0f1623] dark:hover:bg-slate-800 text-black dark:text-white border border-neutral-200 dark:border-slate-800",
+    orange_ghost: "bg-white dark:bg-orange-950/20 hover:bg-orange-50 dark:hover:bg-orange-950/45 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-900/40",
     success: "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm border-none",
-    dark: "bg-slate-900 dark:bg-slate-950 hover:bg-black dark:hover:bg-black text-white shadow-sm border-none"
+    dark: "bg-[#0f1623] hover:bg-black text-white shadow-sm border-none"
   };
 
   const sizes = {
@@ -135,11 +135,11 @@ interface FInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 
 export const FInput: React.FC<FInputProps> = ({ label, value, onChange, className = "", ...props }) => (
   <div className="mb-3 text-left">
-    {label && <label className="block text-xs font-semibold mb-1.5 text-slate-600 dark:text-slate-400">{label}</label>}
+    {label && <label className="block text-xs font-semibold mb-1.5 text-black dark:text-white">{label}</label>}
     <input
       value={value}
       onChange={onChange}
-      className={`w-full px-3 py-2 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 border border-slate-200 dark:border-slate-800 rounded-lg text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 ${className}`}
+      className={`w-full px-3 py-2 bg-white dark:bg-[#0f1623] text-black dark:text-white border border-neutral-200 dark:border-slate-800 rounded-lg text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none transition-all placeholder:text-black/40 dark:placeholder:text-white/40 ${className}`}
       {...props}
     />
   </div>
@@ -151,11 +151,11 @@ interface FSelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
 
 export const FSelect: React.FC<FSelectProps> = ({ label, value, onChange, children, className = "", ...p }) => (
   <div className="mb-3 text-left">
-    {label && <label className="block text-xs font-semibold mb-1.5 text-slate-600 dark:text-slate-400">{label}</label>}
+    {label && <label className="block text-xs font-semibold mb-1.5 text-black dark:text-white">{label}</label>}
     <select
       value={value}
       onChange={onChange}
-      className={`w-full px-3 py-2.5 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 border border-slate-200 dark:border-slate-800 rounded-lg text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none transition-all cursor-pointer ${className}`}
+      className={`w-full px-3 py-2.5 bg-white dark:bg-[#0f1623] text-black dark:text-white border border-neutral-200 dark:border-slate-800 rounded-lg text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none transition-all cursor-pointer ${className}`}
       {...p}
     >
       {children}
@@ -169,11 +169,11 @@ interface FAreaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
 
 export const FArea: React.FC<FAreaProps> = ({ label, value, onChange, className = "", ...p }) => (
   <div className="mb-3 text-left">
-    {label && <label className="block text-xs font-semibold mb-1.5 text-slate-600 dark:text-slate-300">{label}</label>}
+    {label && <label className="block text-xs font-semibold mb-1.5 text-black dark:text-white">{label}</label>}
     <textarea
       value={value}
       onChange={onChange}
-      className={`w-full px-3 py-2 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 border border-slate-200 dark:border-slate-800 rounded-lg text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none resize-y min-height-[80px] transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 ${className}`}
+      className={`w-full px-3 py-2 bg-white dark:bg-[#0f1623] text-black dark:text-white border border-neutral-200 dark:border-slate-800 rounded-lg text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none resize-y min-height-[80px] transition-all placeholder:text-black/40 dark:placeholder:text-white/40 ${className}`}
       {...p}
     />
   </div>
@@ -199,14 +199,14 @@ export const Modal: React.FC<ModalProps> = ({ title, children, onClose, width = 
       className="fixed inset-0 w-full h-full bg-slate-950/70 z-[99000] flex items-center justify-center p-4 backdrop-blur-sm transition-all duration-300"
     >
       <div
-        className="bg-white dark:bg-slate-900 rounded-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 dark:border-slate-800 position-relative animate-fade-in-up"
+        className="bg-white dark:bg-[#0f1623] rounded-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-neutral-200 dark:border-slate-800 position-relative animate-fade-in-up"
         style={{ maxWidth: `${width}px` }}
       >
-        <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between sticky top-0 bg-white/95 dark:bg-slate-950/95 backdrop-blur-sm z-10">
-          <h3 className="m-0 text-base font-bold text-slate-900 dark:text-slate-50">{title}</h3>
+        <div className="px-5 py-4 border-b border-neutral-200 dark:border-slate-800 flex items-center justify-between sticky top-0 bg-white dark:bg-[#0f1623] z-10">
+          <h3 className="m-0 text-base font-bold text-black dark:text-white">{title}</h3>
           <button
             onClick={onClose}
-            className="bg-slate-100 dark:bg-slate-800 border-none w-8 h-8 rounded-lg text-sm cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center font-bold"
+            className="bg-white dark:bg-slate-800 border border-neutral-200 dark:border-slate-700 w-8 h-8 rounded-lg text-sm cursor-pointer hover:border-orange-400 text-black dark:text-white flex items-center justify-center font-bold"
           >
             ✕
           </button>
@@ -238,22 +238,22 @@ export const StatCard: React.FC<StatCardProps> = ({ icon, label, value, color = 
       <div className="w-9 h-9 rounded-xl bg-orange-50 dark:bg-orange-950/30 flex items-center justify-center mb-3 text-lg">
         {icon}
       </div>
-      <div className="text-2xl font-black leading-tight tracking-tight text-slate-950 dark:text-slate-50" style={{ color: color }}>
+      <div className="text-2xl font-black leading-tight tracking-tight text-black dark:text-white" style={{ color: color }}>
         {value}
       </div>
-      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-semibold">{label}</div>
+      <div className="text-xs text-black dark:text-white mt-1 font-semibold opacity-80">{label}</div>
     </div>
-    {sub && <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-2">{sub}</div>}
+    {sub && <div className="text-[10px] text-black dark:text-white mt-2 opacity-60">{sub}</div>}
   </Card>
 );
 
 export const TH: React.FC<{ cols: string[] }> = ({ cols }) => (
   <thead>
-    <tr className="bg-slate-50 dark:bg-slate-900/80">
+    <tr className="bg-white dark:bg-[#0f1623]">
       {cols.map(c => (
         <th
           key={c}
-          className="px-4 py-2.5 text-left text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 whitespace-nowrap"
+          className="px-4 py-2.5 text-left text-[10px] font-extrabold text-black dark:text-white uppercase tracking-wider border-b border-neutral-200 dark:border-slate-800 whitespace-nowrap opacity-70"
         >
           {c}
         </th>
@@ -287,7 +287,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         className={`px-3.5 py-1.5 rounded-full border text-xs font-bold cursor-pointer transition-all ${
           active === o.v
             ? "border-orange-500 bg-orange-500 text-white"
-            : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700"
+            : "border-neutral-200 dark:border-slate-800 bg-white dark:bg-[#0f1623] text-black dark:text-white hover:border-orange-400 dark:hover:border-orange-600"
         }`}
       >
         {o.l}
@@ -298,7 +298,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         placeholder={searchPlaceholder}
         value={search || ""}
         onChange={e => onSearch(e.target.value)}
-        className="ml-auto px-3.5 py-1.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-50 text-xs rounded-full outline-none focus:border-orange-500 w-full sm:w-48 transition-all"
+        className="ml-auto px-3.5 py-1.5 bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 text-black dark:text-white text-xs rounded-full outline-none focus:border-orange-500 w-full sm:w-48 transition-all"
       />
     )}
   </div>

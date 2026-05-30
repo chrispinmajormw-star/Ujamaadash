@@ -240,8 +240,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
               { icon: <TrendingUp size={16} className="text-orange-600" />, label: "Coverage", value: "54%" },
             ].map((s, i) => (
               <Card key={i} className="p-3">
-                <div className="flex items-center gap-2 mb-1">{s.icon}<span className="text-[10px] text-slate-500 font-medium">{s.label}</span></div>
-                <div className="text-lg font-bold text-slate-900 dark:text-slate-50">{s.value}</div>
+                <div className="flex items-center gap-2 mb-1">{s.icon}<span className="text-[10px] text-black dark:text-white opacity-80 font-medium">{s.label}</span></div>
+                <div className="text-lg font-bold text-black dark:text-white">{s.value}</div>
               </Card>
             ))}
           </>
@@ -254,8 +254,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
               { icon: <Users size={16} className="text-orange-600" />, label: "Learners", value: students },
             ].map((s, i) => (
               <Card key={i} className="p-3">
-                <div className="flex items-center gap-2 mb-1">{s.icon}<span className="text-[10px] text-slate-500 font-medium">{s.label}</span></div>
-                <div className="text-lg font-bold text-slate-900 dark:text-slate-50">{s.value}</div>
+                <div className="flex items-center gap-2 mb-1">{s.icon}<span className="text-[10px] text-black dark:text-white opacity-80 font-medium">{s.label}</span></div>
+                <div className="text-lg font-bold text-black dark:text-white">{s.value}</div>
               </Card>
             ))}
           </>
@@ -265,8 +265,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Recent submissions / activity */}
         <Card className="lg:col-span-2 p-0 overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-            <h3 className="text-xs font-semibold text-slate-900 dark:text-slate-50 m-0">
+          <div className="px-4 py-3 border-b border-neutral-200 dark:border-slate-800 flex items-center justify-between">
+            <h3 className="text-xs font-semibold text-black dark:text-white m-0">
               {isStaff ? "Recent submissions" : "Program milestones"}
             </h3>
             {isStaff && (
@@ -279,25 +279,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-left text-xs">
                 <thead>
-                  <tr className="bg-slate-50 dark:bg-slate-900/80">
+                  <tr className="bg-white dark:bg-[#0f1623]">
                     {["School", "District", "Curriculum", "Learners", "Status", "Date"].map(c => (
-                      <th key={c} className="px-3 py-2 text-[10px] font-semibold text-slate-500 uppercase">{c}</th>
+                      <th key={c} className="px-3 py-2 text-[10px] font-semibold text-black dark:text-white uppercase opacity-70">{c}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {my.slice(0, 6).map(r => (
-                    <tr key={r.id} className="border-t border-slate-100 dark:border-slate-800">
+                    <tr key={r.id} className="border-t border-neutral-200 dark:border-slate-800 text-black dark:text-white">
                       <td className="px-3 py-2 font-medium">{r.school}</td>
-                      <td className="px-3 py-2 text-slate-500">{r.district}</td>
+                      <td className="px-3 py-2 text-black dark:text-white opacity-80">{r.district}</td>
                       <td className="px-3 py-2"><span className="text-[10px] font-semibold text-orange-600">{r.curriculum}</span></td>
                       <td className="px-3 py-2">{r.boys + r.girls}</td>
                       <td className="px-3 py-2"><Pill s={r.status} /></td>
-                      <td className="px-3 py-2 text-slate-400">{r.submitted_at}</td>
+                      <td className="px-3 py-2 opacity-60">{r.submitted_at}</td>
                     </tr>
                   ))}
                   {my.length === 0 && (
-                    <tr><td colSpan={6} className="px-3 py-8 text-center text-slate-400">No reports yet.</td></tr>
+                    <tr><td colSpan={6} className="px-3 py-8 text-center text-black dark:text-white opacity-50">No reports yet.</td></tr>
                   )}
                 </tbody>
               </table>
@@ -305,13 +305,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
           ) : (
             <div className="p-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
               {YEARLY_DATA.filter(d => !d.planned).map(d => (
-                <div key={d.year} className={`p-2.5 rounded-md border text-xs ${d.current ? 'border-orange-300 bg-orange-50/50 dark:bg-orange-950/20' : 'border-slate-200 dark:border-slate-800'}`}>
+                <div key={d.year} className={`p-2.5 rounded-md border text-xs bg-white dark:bg-[#0f1623] text-black dark:text-white ${d.current ? 'border-orange-400' : 'border-neutral-200 dark:border-slate-800'}`}>
                   <div className="flex justify-between font-semibold mb-1">
                     <span>{d.year}</span>
                     {d.current && <span className="text-[9px] text-orange-600">Current</span>}
                   </div>
                   <div className="text-sm font-bold">{d.learners > 0 ? d.learners.toLocaleString() : "—"}</div>
-                  <div className="text-[10px] text-slate-400">learners · {d.schools} schools</div>
+                  <div className="text-[10px] opacity-60">learners · {d.schools} schools</div>
                 </div>
               ))}
             </div>
@@ -320,7 +320,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
 
         {/* Quick links */}
         <Card>
-          <h3 className="text-xs font-semibold text-slate-900 dark:text-slate-50 mb-3 m-0">Quick links</h3>
+          <h3 className="text-xs font-semibold text-black dark:text-white mb-3 m-0">Quick links</h3>
           <div className="space-y-1.5">
             {[
               { label: "Clusters map", page: "maps", icon: Map },
@@ -332,7 +332,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
                 key={p}
                 type="button"
                 onClick={() => setPage(p)}
-                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
+                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium text-black dark:text-white hover:bg-orange-50 dark:hover:bg-slate-800 hover:text-orange-600 border border-transparent hover:border-orange-200 dark:hover:border-orange-900/40"
               >
                 <Icon size={14} className="text-orange-600" /> {label}
               </button>
@@ -344,7 +344,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
       {/* Map + charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card className="p-0 overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <div className="px-4 py-3 border-b border-neutral-200 dark:border-slate-800 flex items-center justify-between">
             <h3 className="text-xs font-semibold m-0">Coverage map</h3>
             <button type="button" onClick={() => setPage("maps")} className="text-[10px] font-semibold text-orange-600 hover:underline">Expand</button>
           </div>

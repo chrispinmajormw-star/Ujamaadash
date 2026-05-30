@@ -137,12 +137,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onPublicView, onRegister
   };
 
   return (
-    <div className="min-h-full bg-slate-100 dark:bg-slate-950 flex items-center justify-center p-4">
-      <Card className="w-full max-w-sm p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+    <div className="min-h-full bg-white dark:bg-[#0f1623] flex items-center justify-center p-4">
+      <Card className="w-full max-w-sm p-6">
         <div className="mb-5 flex flex-col items-center">
           <AfricaLogo size={36} variant="full" className="mb-2" />
-          <h1 className="text-base font-bold text-slate-900 dark:text-slate-50 m-0">ETT Malawi Portal</h1>
-          <p className="text-[11px] text-slate-400 mt-1 m-0">Staff sign-in</p>
+          <h1 className="text-base font-bold text-black dark:text-white m-0">ETT Malawi Portal</h1>
+          <p className="text-[11px] text-black dark:text-white mt-1 m-0 opacity-60">Staff sign-in</p>
         </div>
 
         {mode === 'choice' && (
@@ -233,8 +233,8 @@ const SubmitReport: React.FC<SubmitReportProps> = ({ user, onSubmit, showToast }
   if (done) return (
     <div className="max-w-md mx-auto text-center py-10 space-y-4">
       <span className="text-5xl block">✅</span>
-      <h2 className="text-xl font-bold text-slate-900 dark:text-slate-50">Report Logged Successfully</h2>
-      <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+      <h2 className="text-xl font-bold text-black dark:text-white">Report Logged Successfully</h2>
+      <p className="text-xs sm:text-sm text-black dark:text-white opacity-80 leading-relaxed">
         {isPublic ? "Thank you. Confidential caseworkers will align support immediately." : "Aligned under pending review states."}
       </p>
       <div className="flex gap-2 justify-center">
@@ -248,10 +248,10 @@ const SubmitReport: React.FC<SubmitReportProps> = ({ user, onSubmit, showToast }
     <div className="max-w-2xl mx-auto space-y-5 animate-fade-in-up">
       <div>
         <Kicker text={isPublic ? "Case Submission Portal" : "Primary Field Reporting"} />
-        <h1 className="text-base font-bold text-slate-900 dark:text-slate-50 m-0">
+        <h1 className="text-base font-bold text-black dark:text-white m-0">
           {isPublic ? "Report an Incident" : "Submit Session Record"}
         </h1>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 m-0">
+        <p className="text-xs text-black dark:text-white opacity-80 mt-1 m-0">
           {isPublic ? "Report SGBV, harassment, defilement, or child protection concerns securely." : "Submit certified teacher checklist records."}
         </p>
       </div>
@@ -326,8 +326,8 @@ const TrainingsPage: React.FC = () => {
     <div className="space-y-5 animate-fade-in-up">
       <div>
         <Kicker text="Capacity Engineering" />
-        <h1 className="text-base font-bold text-slate-900 dark:text-slate-50 m-0">ETT Certified Trainings</h1>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 m-0">Certify and track teachers, community leaders, and safety champions.</p>
+        <h1 className="text-base font-bold text-black dark:text-white m-0">ETT Certified Trainings</h1>
+        <p className="text-xs text-black dark:text-white opacity-80 mt-1 m-0">Certify and track teachers, community leaders, and safety champions.</p>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
@@ -345,7 +345,7 @@ const TrainingsPage: React.FC = () => {
             <Card key={idx} className="flex flex-col justify-between">
               <div className="space-y-1.5 mb-4">
                 <div className="flex justify-between items-start gap-4">
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 m-0">{t.name}</h3>
+                  <h3 className="text-sm font-bold text-black dark:text-white m-0">{t.name}</h3>
                   <Badge text={t.s} className="uppercase shrink-0 text-[10px]" />
                 </div>
                 <p className="text-xs text-slate-400">📅 {t.dates} · pax: {t.pax} teachers</p>
@@ -391,8 +391,8 @@ const ETTPage: React.FC = () => (
   <div className="space-y-6 max-w-4xl mx-auto animate-fade-in-up">
     <div>
       <Kicker text="Standard Operating Procedures" />
-      <h1 className="text-base font-bold text-slate-900 dark:text-slate-50 m-0">ETT Malawi Standards</h1>
-      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 m-0">Governance parameters mapping safety, code of conduct, and reporting timelines.</p>
+      <h1 className="text-base font-bold text-black dark:text-white m-0">ETT Malawi Standards</h1>
+      <p className="text-xs text-black dark:text-white opacity-80 mt-1 m-0">Governance parameters mapping safety, code of conduct, and reporting timelines.</p>
     </div>
 
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -403,8 +403,8 @@ const ETTPage: React.FC = () => (
       ].map((item) => (
         <Card key={item.title} className="p-5 space-y-2">
           <div className="h-9 flex items-center">{item.icon}</div>
-          <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 m-0">{item.title}</h4>
-          <p className="text-[11.5px] leading-relaxed text-slate-500 dark:text-slate-400 m-0">{item.text}</p>
+          <h4 className="text-xs sm:text-sm font-bold text-black dark:text-white m-0">{item.title}</h4>
+          <p className="text-[11.5px] leading-relaxed text-black dark:text-white opacity-80 m-0">{item.text}</p>
         </Card>
       ))}
     </div>
@@ -425,8 +425,8 @@ const ETTPage: React.FC = () => (
               {n}
             </span>
             <div>
-              <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 mb-1">{title}</h4>
-              <p className="text-[11.5px] leading-relaxed text-slate-500 dark:text-slate-400 m-0">{desc}</p>
+              <h4 className="text-xs sm:text-sm font-bold text-black dark:text-white mb-1">{title}</h4>
+              <p className="text-[11.5px] leading-relaxed text-black dark:text-white opacity-80 m-0">{desc}</p>
             </div>
           </div>
         ))}
@@ -452,8 +452,8 @@ const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, onOpenMap }) => {
     <div className="space-y-5 animate-fade-in-up">
       <div>
         <Kicker text="Demographic Coverage" />
-        <h1 className="text-base font-bold text-slate-900 dark:text-slate-50">Implementing Districts</h1>
-        <p className="text-xs text-slate-500 dark:text-slate-400">Review 15 active districts and 13 future development regions across Malawi.</p>
+        <h1 className="text-base font-bold text-black dark:text-white">Implementing Districts</h1>
+        <p className="text-xs text-black dark:text-white opacity-80">Review 15 active districts and 13 future development regions across Malawi.</p>
       </div>
 
       <Card className="grid grid-cols-2 md:grid-cols-4 gap-3 !p-4">
@@ -464,8 +464,8 @@ const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, onOpenMap }) => {
           ["Teachers trained", `${DISTRICTS.reduce((acc, d) => acc + d.teachersTrained, 0).toLocaleString()} Trained`]
         ].map(([l, v]) => (
           <div key={l} className="space-y-1">
-            <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wide">{l}</div>
-            <div className="text-base font-bold text-slate-900 dark:text-slate-50">{v}</div>
+            <div className="text-[10px] text-black dark:text-white opacity-80 uppercase tracking-wide">{l}</div>
+            <div className="text-base font-bold text-black dark:text-white">{v}</div>
           </div>
         ))}
       </Card>
@@ -484,13 +484,13 @@ const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, onOpenMap }) => {
             <div
               key={d.name}
               onClick={() => onOpenMap({ type: "district", name: d.name, ts: Date.now() })}
-              className={`p-4 rounded-lg border cursor-pointer transition-colors bg-white dark:bg-slate-900 ${
-                isActive ? 'border-orange-200 dark:border-orange-900/50' : 'border-slate-200 dark:border-slate-800 opacity-75'
+              className={`p-4 rounded-lg border cursor-pointer transition-colors bg-white dark:bg-[#0f1623] text-black dark:text-white ${
+                isActive ? 'border-orange-300 dark:border-orange-900/50' : 'border-neutral-200 dark:border-slate-800 opacity-75'
               }`}
             >
               <div className="flex justify-between items-start mb-3">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-950 dark:text-slate-50 m-0">{d.name}</h3>
+                  <h3 className="text-sm font-bold text-black dark:text-white m-0">{d.name}</h3>
                   <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold mt-1 inline-block`} style={{ color: rcColors[d.r]?.c || '#4b5563', backgroundColor: rcColors[d.r]?.bg || '#f3f4f6' }}>
                     {d.r}
                   </span>
@@ -501,17 +501,17 @@ const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, onOpenMap }) => {
               {isActive ? (
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-100 dark:border-orange-900/40 p-2 rounded-lg">
-                      <div className="text-[9px] text-orange-600 dark:text-orange-400 font-semibold mb-0.5">TOTs Certified</div>
-                      <div className="text-sm font-bold text-slate-900 dark:text-slate-50">{d.tots}</div>
+                    <div className="bg-white dark:bg-[#0f1623] border border-orange-200 dark:border-orange-900/40 p-2 rounded-lg">
+                      <div className="text-[9px] text-orange-600 font-semibold mb-0.5">TOTs Certified</div>
+                      <div className="text-sm font-bold text-black dark:text-white">{d.tots}</div>
                     </div>
-                    <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-100 dark:border-orange-900/40 p-2 rounded-lg">
-                      <div className="text-[9px] text-orange-600 dark:text-orange-400 font-semibold mb-0.5">Teachers Trained</div>
-                      <div className="text-sm font-bold text-slate-900 dark:text-slate-50">{d.teachersTrained}</div>
+                    <div className="bg-white dark:bg-[#0f1623] border border-orange-200 dark:border-orange-900/40 p-2 rounded-lg">
+                      <div className="text-[9px] text-orange-600 font-semibold mb-0.5">Teachers Trained</div>
+                      <div className="text-sm font-bold text-black dark:text-white">{d.teachersTrained}</div>
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <div className="flex justify-between text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                    <div className="flex justify-between text-[11px] text-black dark:text-white opacity-80 font-medium">
                       <span>Schools coverage</span>
                       <span>{d.cov}/{d.schools} ({pct}%)</span>
                     </div>
@@ -519,7 +519,7 @@ const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, onOpenMap }) => {
                   </div>
                 </div>
               ) : (
-                <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-4 text-center text-xs text-slate-500 dark:text-slate-400 font-medium italic">
+                <div className="bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-700 rounded-lg p-4 text-center text-xs text-black dark:text-white opacity-60 font-medium italic">
                   Expansion assessment planned.
                 </div>
               )}
@@ -563,7 +563,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ reports }) => {
     <div className="space-y-5 animate-fade-in-up">
       <div>
         <Kicker text="Statistical Ledger" />
-        <h1 className="text-base font-bold text-slate-900 dark:text-slate-50 m-0">Operational Analytics</h1>
+        <h1 className="text-base font-bold text-black dark:text-white m-0">Operational Analytics</h1>
         <p className="text-xs text-slate-400">Audited session summaries compiled directly from local database records.</p>
       </div>
 
@@ -576,21 +576,21 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ reports }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <Card className="p-5">
-          <h4 className="text-xs font-extrabold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-4">File State distribution</h4>
+          <h4 className="text-xs font-extrabold uppercase text-black dark:text-white opacity-80 tracking-wider mb-4">File State distribution</h4>
           {Object.entries(byStatus).map(([k, v]) => (
             <Bar key={k} label={k.toUpperCase()} value={v} max={reports.length} color={k === 'approved' ? '#059669' : k === 'rejected' ? '#dc2626' : OR} />
           ))}
         </Card>
         
         <Card className="p-5">
-          <h4 className="text-xs font-extrabold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-4">Curriculum usage</h4>
+          <h4 className="text-xs font-extrabold uppercase text-black dark:text-white opacity-80 tracking-wider mb-4">Curriculum usage</h4>
           {Object.entries(byCurr).map(([k, v]) => (
             <Bar key={k} label={k} value={v} max={reports.length} />
           ))}
         </Card>
 
         <Card className="p-5">
-          <h4 className="text-xs font-extrabold uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-4">Submission activity by location</h4>
+          <h4 className="text-xs font-extrabold uppercase text-black dark:text-white opacity-80 tracking-wider mb-4">Submission activity by location</h4>
           {Object.entries(byDist).map(([k, v]) => (
             <Bar key={k} label={k} value={v} max={Math.max(...Object.values(byDist), 1)} />
           ))}
@@ -649,8 +649,8 @@ const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers, showTo
       <div className="flex justify-between items-end">
         <div>
           <Kicker text="Staff Alignment" />
-          <h1 className="text-base font-bold text-slate-900 dark:text-slate-50 m-0">Personnel Directory</h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 m-0">Deploy district coordinators, certified TOTs, and alignment advocates.</p>
+          <h1 className="text-base font-bold text-black dark:text-white m-0">Personnel Directory</h1>
+          <p className="text-xs text-black dark:text-white opacity-80 mt-1 m-0">Deploy district coordinators, certified TOTs, and alignment advocates.</p>
         </div>
         <Btn onClick={() => setShowAdd(true)}><Plus size={14} className="inline mr-1" /> Add User</Btn>
       </div>
@@ -682,7 +682,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers, showTo
                           {u.avatar}
                         </span>
                         <div>
-                          <div className="font-bold text-slate-950 dark:text-slate-50">{u.name}</div>
+                          <div className="font-bold text-black dark:text-white">{u.name}</div>
                           <div className="text-[10.5px] text-slate-400 mt-0.5">{u.email}</div>
                         </div>
                       </div>
@@ -1009,7 +1009,7 @@ export default function App() {
   const renderNav = (onNavigate?: () => void) => (
     activeNavGroups.map(group => (
       <div key={group.title} className="space-y-0.5 mb-3">
-        <div className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wide px-2 mb-1">{group.title}</div>
+        <div className="text-[10px] text-black dark:text-white font-semibold uppercase tracking-wide px-2 mb-1 opacity-60">{group.title}</div>
         {group.items.map(item => {
           const Icon = item.icon;
           const isActive = page === item.id;
@@ -1020,8 +1020,8 @@ export default function App() {
               onClick={() => { setPage(item.id); onNavigate?.(); }}
               className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium transition ${
                 isActive
-                  ? 'bg-orange-50 text-orange-700 dark:bg-orange-600/15 dark:text-orange-400'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200'
+                  ? 'bg-orange-50 text-orange-600 dark:bg-orange-600/15 dark:text-orange-400'
+                  : 'text-black hover:bg-orange-50 hover:text-orange-600 dark:text-white dark:hover:bg-slate-800 dark:hover:text-orange-400'
               }`}
             >
               <Icon size={14} />
@@ -1035,7 +1035,7 @@ export default function App() {
 
   return (
     <>
-      <div className="h-screen flex overflow-hidden bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
+      <div className="h-screen flex overflow-hidden bg-white dark:bg-[#0f1623] text-black dark:text-white transition-colors">
         {isLoginPage ? (
           <div className="flex-1 overflow-y-auto">{renderPageContent()}</div>
         ) : (
@@ -1055,49 +1055,49 @@ export default function App() {
                     animate={{ x: 0 }}
                     exit={{ x: -224 }}
                     transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-                    className="fixed top-0 bottom-0 left-0 w-56 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-40 p-3 flex flex-col md:hidden shadow-lg"
+                    className="fixed top-0 bottom-0 left-0 w-56 bg-white dark:bg-[#0f1623] border-r border-neutral-200 dark:border-slate-800 z-40 p-3 flex flex-col md:hidden shadow-lg"
                   >
-                    <div className="flex justify-between items-center pb-3 mb-2 border-b border-slate-200 dark:border-slate-800">
+                    <div className="flex justify-between items-center pb-3 mb-2 border-b border-neutral-200 dark:border-slate-800">
                       <div className="flex items-center gap-2">
                         <AfricaLogo size={22} />
-                        <span className="font-bold text-sm text-slate-900 dark:text-white">ETT Malawi</span>
+                        <span className="font-bold text-sm text-black dark:text-white">ETT Malawi</span>
                       </div>
-                      <button type="button" onClick={() => setSidebarOpen(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-white">
+                      <button type="button" onClick={() => setSidebarOpen(false)} className="text-black dark:text-white opacity-60 hover:opacity-100">
                         <X size={16} />
                       </button>
                     </div>
                     <div className="flex-1 overflow-y-auto">{renderNav(() => setSidebarOpen(false))}</div>
-                    <div className="pt-2 border-t border-slate-200 dark:border-slate-800 text-[10px] text-slate-500">
-                      Helpline <b className="text-slate-700 dark:text-slate-300">116</b> · VSU <b className="text-slate-700 dark:text-slate-300">997</b>
+                    <div className="pt-2 border-t border-neutral-200 dark:border-slate-800 text-[10px] text-black dark:text-white opacity-60">
+                      Helpline <b className="text-orange-600 dark:text-orange-400">116</b> · VSU <b className="text-orange-600 dark:text-orange-400">997</b>
                     </div>
                   </motion.aside>
                 </>
               )}
             </AnimatePresence>
 
-            <aside className="hidden md:flex w-56 shrink-0 flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800">
-              <div className="h-12 flex items-center gap-2 px-3 border-b border-slate-200 dark:border-slate-800 shrink-0">
+            <aside className="hidden md:flex w-56 shrink-0 flex-col bg-white dark:bg-[#0f1623] border-r border-neutral-200 dark:border-slate-800">
+              <div className="h-12 flex items-center gap-2 px-3 border-b border-neutral-200 dark:border-slate-800 shrink-0">
                 <AfricaLogo size={22} />
-                <span className="font-bold text-sm text-slate-900 dark:text-white truncate">ETT Malawi</span>
+                <span className="font-bold text-sm text-black dark:text-white truncate">ETT Malawi</span>
               </div>
               <div className="flex-1 overflow-y-auto p-2">{renderNav()}</div>
-              <div className="p-3 border-t border-slate-200 dark:border-slate-800 text-[10px] text-slate-500 shrink-0">
-                Helpline <b className="text-slate-700 dark:text-slate-300">116</b> · VSU <b className="text-slate-700 dark:text-slate-300">997</b>
+              <div className="p-3 border-t border-neutral-200 dark:border-slate-800 text-[10px] text-black dark:text-white opacity-60 shrink-0">
+                Helpline <b className="text-orange-600 dark:text-orange-400">116</b> · VSU <b className="text-orange-600 dark:text-orange-400">997</b>
               </div>
             </aside>
 
-            <div className="flex-1 flex flex-col min-w-0 bg-slate-100 dark:bg-slate-950">
-              <header className="h-12 shrink-0 flex items-center justify-between gap-3 px-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#0f1623]">
+              <header className="h-12 shrink-0 flex items-center justify-between gap-3 px-3 border-b border-neutral-200 dark:border-slate-800 bg-white dark:bg-[#0f1623]">
                 <div className="flex items-center gap-2 min-w-0">
                   <button
                     type="button"
                     onClick={() => setSidebarOpen(true)}
-                    className="md:hidden p-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
+                    className="md:hidden p-1.5 rounded-md border border-neutral-200 dark:border-slate-700 text-black dark:text-white"
                     aria-label="Open menu"
                   >
                     <Sliders size={16} />
                   </button>
-                  <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50 truncate m-0">
+                  <h2 className="text-sm font-semibold text-black dark:text-white truncate m-0">
                     {PAGE_LABELS[page] || "Overview"}
                   </h2>
                 </div>
@@ -1108,7 +1108,7 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => setNotifOpen(!notifOpen)}
-                        className="w-8 h-8 flex items-center justify-center rounded-md border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 relative"
+                        className="w-8 h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-slate-700 hover:border-orange-400 text-black dark:text-white relative"
                         title={`${pendingCount} pending reviews`}
                       >
                         <Bell size={14} />
@@ -1120,24 +1120,24 @@ export default function App() {
                       </button>
 
                       {notifOpen && (
-                        <div className="absolute right-0 top-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-lg p-3 w-64 z-50">
+                        <div className="absolute right-0 top-10 bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg shadow-lg p-3 w-64 z-50 text-black dark:text-white">
                           <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 mb-2">
                             <span className="font-semibold text-xs">Pending reviews</span>
                             {pendingCount > 0 && <span className="bg-amber-100 text-amber-800 text-[9px] px-1.5 rounded">Action required</span>}
                           </div>
                           <div className="max-h-[200px] overflow-y-auto space-y-1.5">
                             {reports.filter(r => r.status === "pending" && (user.role === "district_coordinator" ? r.district === user.district : true)).length === 0 ? (
-                              <p className="text-xs text-slate-400 py-3 text-center m-0">No pending files.</p>
+                              <p className="text-xs py-3 text-center m-0 opacity-60">No pending files.</p>
                             ) : (
                               reports.filter(r => r.status === "pending" && (user.role === "district_coordinator" ? r.district === user.district : true)).map(r => (
                                 <button
                                   key={r.id}
                                   type="button"
                                   onClick={() => { setPage("reports"); setNotifOpen(false); }}
-                                  className="w-full text-left p-2 bg-white dark:bg-slate-950 rounded border border-slate-200 dark:border-slate-800 hover:border-orange-300 text-[11px] text-slate-700 dark:text-slate-300"
+                                  className="w-full text-left p-2 bg-white dark:bg-[#0f1623] rounded border border-neutral-200 dark:border-slate-800 hover:border-orange-400 text-[11px] text-black dark:text-white"
                                 >
-                                  <div className="font-semibold text-slate-900 dark:text-slate-50 truncate">{r.school}</div>
-                                  <div className="text-[10px] text-slate-400">{r.district} · {r.submitted_at}</div>
+                                  <div className="font-semibold truncate">{r.school}</div>
+                                  <div className="text-[10px] opacity-60">{r.district} · {r.submitted_at}</div>
                                 </button>
                               ))
                             )}
@@ -1150,7 +1150,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setDarkMode(!darkMode)}
-                    className="w-8 h-8 flex items-center justify-center rounded-md border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+                    className="w-8 h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-slate-700 hover:border-orange-400 text-black dark:text-white"
                     title="Toggle theme"
                   >
                     {darkMode ? <Sun size={14} /> : <Moon size={14} />}
@@ -1159,8 +1159,8 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setPage("settings")}
-                    className={`w-8 h-8 flex items-center justify-center rounded-md border hover:bg-slate-50 dark:hover:bg-slate-800 ${
-                      page === 'settings' ? 'border-orange-500 text-orange-500' : 'border-slate-200 dark:border-slate-700'
+                    className={`w-8 h-8 flex items-center justify-center rounded-md border hover:border-orange-400 text-black dark:text-white ${
+                      page === 'settings' ? 'border-orange-500 text-orange-600' : 'border-neutral-200 dark:border-slate-700'
                     }`}
                     title="Settings"
                   >
@@ -1169,7 +1169,7 @@ export default function App() {
 
                   {user ? (
                     <>
-                      <span className="hidden sm:inline text-xs font-medium text-slate-600 dark:text-slate-300 max-w-[120px] truncate">
+                      <span className="hidden sm:inline text-xs font-medium text-black dark:text-white max-w-[120px] truncate">
                         {user.name}
                       </span>
                       <button
