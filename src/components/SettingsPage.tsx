@@ -80,14 +80,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     onChange: () => void;
     border?: boolean;
   }) => (
-    <div className={`flex items-center justify-between py-3 ${border ? 'border-b border-orange-100 dark:border-slate-800' : ''}`}>
+    <div className={`flex items-center justify-between py-3 ${border ? 'border-b border-slate-200 dark:border-slate-800' : ''}`}>
       <div className="flex items-start gap-3">
         <span className="p-2 rounded-xl bg-orange-50 dark:bg-orange-950/20 text-orange-500 mt-0.5 flex-shrink-0">
           {icon}
         </span>
         <div>
-          <div className="text-sm font-bold text-gray-900 dark:text-slate-100">{label}</div>
-          <div className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{sub}</div>
+          <div className="text-sm font-bold text-slate-900 dark:text-slate-100">{label}</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{sub}</div>
         </div>
       </div>
       <button
@@ -107,10 +107,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       {/* Page Header */}
       <div>
         <Kicker text="Application Preferences" />
-        <h1 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-slate-50 leading-tight">
+        <h1 className="text-base font-bold text-slate-900 dark:text-slate-50 m-0">
           System Settings
         </h1>
-        <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 m-0">
           Customize display, alerts, and review account capabilities.
         </p>
       </div>
@@ -119,7 +119,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         <div className="md:col-span-2 space-y-5">
 
           {/* ── Appearance Card ── */}
-          <div className="bg-white dark:bg-slate-900 border border-orange-100 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6">
 
             {/* Card Header */}
             <div className="flex items-center gap-3 mb-5">
@@ -127,12 +127,12 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 <Sparkles size={18} />
               </span>
               <div>
-                <h3 className="text-base font-bold text-gray-900 dark:text-slate-100 m-0">Appearance Theme</h3>
-                <p className="text-xs text-gray-400 dark:text-slate-500 m-0">Set the background contrast mode.</p>
+                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 m-0">Appearance Theme</h3>
+                <p className="text-xs text-slate-400 dark:text-slate-500 m-0">Set the background contrast mode.</p>
               </div>
             </div>
 
-            <div className="h-px bg-orange-100 dark:bg-slate-800 mb-5" />
+            <div className="h-px bg-slate-200 dark:bg-slate-800 mb-5" />
 
             {/* Active mode row */}
             <div className="flex items-center justify-between p-4 rounded-2xl bg-orange-50 dark:bg-slate-800 border border-orange-200 dark:border-slate-700 mb-4">
@@ -142,10 +142,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                   : <Sun className="text-orange-500" size={20} />
                 }
                 <div>
-                  <div className="text-sm font-bold text-gray-900 dark:text-slate-100">
+                  <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
                     {darkMode ? 'Dark Mode Active' : 'Light Mode Active'}
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-slate-400">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
                     {darkMode
                       ? 'Dark slate background — easy on the eyes at night.'
                       : 'Clean white & orange — sharp and professional.'}
@@ -173,7 +173,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 }`}
               >
                 <Sun size={26} className={!darkMode ? 'text-orange-500' : 'text-gray-300 dark:text-slate-500'} />
-                <span className={`text-xs font-bold mt-2 ${!darkMode ? 'text-orange-600' : 'text-gray-400 dark:text-slate-500'}`}>
+                <span className={`text-xs font-bold mt-2 ${!darkMode ? 'text-orange-600' : 'text-slate-400 dark:text-slate-500'}`}>
                   Light Mode
                 </span>
                 {!darkMode && (
@@ -189,7 +189,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 }`}
               >
                 <Moon size={26} className={darkMode ? 'text-orange-500' : 'text-gray-300 dark:text-slate-500'} />
-                <span className={`text-xs font-bold mt-2 ${darkMode ? 'text-orange-600 dark:text-orange-400' : 'text-gray-400 dark:text-slate-500'}`}>
+                <span className={`text-xs font-bold mt-2 ${darkMode ? 'text-orange-600 dark:text-orange-400' : 'text-slate-400 dark:text-slate-500'}`}>
                   Dark Mode
                 </span>
                 {darkMode && (
@@ -200,17 +200,17 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           </div>
 
           {/* ── Alerts Card ── */}
-          <div className="bg-white dark:bg-slate-900 border border-orange-100 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6">
             <div className="flex items-center gap-3 mb-5">
               <span className="p-2.5 rounded-xl bg-orange-500 text-white shadow-sm shadow-orange-200">
                 <Bell size={18} />
               </span>
               <div>
-                <h3 className="text-base font-bold text-gray-900 dark:text-slate-100 m-0">Operations & Calendar Alerts</h3>
-                <p className="text-xs text-gray-400 dark:text-slate-500 m-0">Set triggers for visits, events, and agenda layouts.</p>
+                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 m-0">Operations & Calendar Alerts</h3>
+                <p className="text-xs text-slate-400 dark:text-slate-500 m-0">Set triggers for visits, events, and agenda layouts.</p>
               </div>
             </div>
-            <div className="h-px bg-orange-100 dark:bg-slate-800 mb-2" />
+            <div className="h-px bg-slate-200 dark:bg-slate-800 mb-2" />
             <ToggleRow
               icon={<Calendar size={15} />}
               label="Training Events Alerts"
@@ -243,18 +243,18 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           </div>
 
           {/* ── Diagnostics Card ── */}
-          <div className="bg-white dark:bg-slate-900 border border-orange-100 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6">
             <div className="flex items-center gap-3 mb-5">
-              <span className="p-2.5 rounded-xl bg-[#0f1623] dark:bg-slate-700 text-white shadow-sm">
+              <span className="p-2.5 rounded-lg bg-orange-500 text-white">
                 <Monitor size={18} />
               </span>
               <div>
-                <h3 className="text-base font-bold text-gray-900 dark:text-slate-100 m-0">Platform Diagnostics</h3>
-                <p className="text-xs text-gray-400 dark:text-slate-500 m-0">System settings and workspace local stats.</p>
+                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 m-0">Platform Diagnostics</h3>
+                <p className="text-xs text-slate-400 dark:text-slate-500 m-0">System settings and workspace local stats.</p>
               </div>
             </div>
-            <div className="h-px bg-orange-100 dark:bg-slate-800 mb-4" />
-            <div className="space-y-0 rounded-xl border border-orange-100 dark:border-slate-800 overflow-hidden text-xs">
+            <div className="h-px bg-slate-200 dark:bg-slate-800 mb-4" />
+            <div className="space-y-0 rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden text-xs">
               {[
                 ['Application Frame', 'React 19 + Vite Container'],
                 ['Local Stored Cache', `Active (${reportsCount} reports)`],
@@ -267,8 +267,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                     i < arr.length - 1 ? 'border-b border-orange-50 dark:border-slate-800' : ''
                   } ${i % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-orange-50/40 dark:bg-slate-800/30'}`}
                 >
-                  <span className="text-gray-500 dark:text-slate-400 font-medium">{label}</span>
-                  <span className={`font-bold ${value.startsWith('●') ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-900 dark:text-slate-200'}`}>
+                  <span className="text-slate-500 dark:text-slate-400 font-medium">{label}</span>
+                  <span className={`font-bold ${value.startsWith('●') ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-slate-200'}`}>
                     {value}
                   </span>
                 </div>
@@ -291,7 +291,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         <div className="space-y-5">
 
           {/* Profile Card */}
-          <div className="bg-white dark:bg-slate-900 border border-orange-100 dark:border-slate-800 rounded-2xl p-6 text-center shadow-sm">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 text-center">
             <div className="text-[10px] font-extrabold text-orange-500 uppercase tracking-widest mb-4">
               Session Profile
             </div>
@@ -300,10 +300,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 <div className="w-16 h-16 rounded-full bg-orange-500 text-white font-black text-2xl flex items-center justify-center shadow-lg shadow-orange-200 dark:shadow-orange-950/30 mb-3">
                   {user.avatar}
                 </div>
-                <div className="font-extrabold text-gray-900 dark:text-slate-100 text-base mb-0.5">
+                <div className="font-extrabold text-slate-900 dark:text-slate-100 text-base mb-0.5">
                   {user.name}
                 </div>
-                <div className="text-xs text-gray-400 dark:text-slate-500 mb-3">{user.email}</div>
+                <div className="text-xs text-slate-400 dark:text-slate-500 mb-3">{user.email}</div>
                 {rc && (
                   <span
                     className="px-3 py-1 rounded-full text-xs font-bold"
@@ -313,33 +313,33 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                   </span>
                 )}
                 {user.district && (
-                  <div className="text-xs text-gray-500 dark:text-slate-400 mt-2 font-medium">
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-2 font-medium">
                     📍 {user.district} Region
                   </div>
                 )}
                 {/* Divider */}
-                <div className="w-full h-px bg-orange-100 dark:bg-slate-800 my-4" />
+                <div className="w-full h-px bg-slate-200 dark:bg-slate-800 my-4" />
                 <div className="w-full text-left space-y-2">
                   {[
                     ['Role', rc?.label || '—'],
                     ['Access', 'Portal Authenticated'],
                   ].map(([k, v]) => (
                     <div key={k} className="flex justify-between text-xs">
-                      <span className="text-gray-400 dark:text-slate-500">{k}</span>
-                      <span className="font-bold text-gray-800 dark:text-slate-200">{v}</span>
+                      <span className="text-slate-400 dark:text-slate-500">{k}</span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200">{v}</span>
                     </div>
                   ))}
                 </div>
               </div>
             ) : (
               <div className="flex flex-col items-center py-4">
-                <div className="w-14 h-14 rounded-full bg-orange-50 dark:bg-slate-800 text-orange-300 flex items-center justify-center mb-3 border-2 border-orange-100 dark:border-slate-700">
+                <div className="w-14 h-14 rounded-full bg-orange-50 dark:bg-slate-800 text-orange-400 flex items-center justify-center mb-3 border-2 border-orange-100 dark:border-slate-700">
                   <UserIcon size={24} />
                 </div>
-                <div className="font-extrabold text-gray-700 dark:text-slate-300 text-sm">
+                <div className="font-extrabold text-slate-700 dark:text-slate-300 text-sm">
                   Public Guest Access
                 </div>
-                <p className="text-xs text-gray-400 dark:text-slate-500 mt-2 leading-relaxed">
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-2 leading-relaxed">
                   Log in with credentials from your district lead.
                 </p>
               </div>

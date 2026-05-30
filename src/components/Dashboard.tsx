@@ -279,7 +279,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-left text-xs">
                 <thead>
-                  <tr className="bg-slate-50 dark:bg-slate-950/50">
+                  <tr className="bg-slate-50 dark:bg-slate-900/80">
                     {["School", "District", "Curriculum", "Learners", "Status", "Date"].map(c => (
                       <th key={c} className="px-3 py-2 text-[10px] font-semibold text-slate-500 uppercase">{c}</th>
                     ))}

@@ -5,6 +5,24 @@
   --font-sans: "Plus Jakarta Sans", "DM Sans", system-ui, sans-serif;
 }
 
+:root {
+  --app-bg: #f1f5f9;
+  --surface: #ffffff;
+  --surface-border: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+}
+
+.dark {
+  --app-bg: #020617;
+  --surface: #0f172a;
+  --surface-border: #1e293b;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+}
+
 /* Global transitions and layout adjustments */
 * {
   box-sizing: border-box;
@@ -13,6 +31,8 @@
 body {
   font-family: var(--font-sans);
   margin: 0;
+  background-color: var(--app-bg);
+  color: var(--text-primary);
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 

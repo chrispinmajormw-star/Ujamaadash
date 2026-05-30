@@ -139,7 +139,7 @@ export const FInput: React.FC<FInputProps> = ({ label, value, onChange, classNam
     <input
       value={value}
       onChange={onChange}
-      className={`w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none transition-all placeholder-slate-400 dark:placeholder-slate-500 ${className}`}
+      className={`w-full px-3 py-2 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 border border-slate-200 dark:border-slate-800 rounded-lg text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 ${className}`}
       {...props}
     />
   </div>
@@ -155,7 +155,7 @@ export const FSelect: React.FC<FSelectProps> = ({ label, value, onChange, childr
     <select
       value={value}
       onChange={onChange}
-      className={`w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none transition-all cursor-pointer ${className}`}
+      className={`w-full px-3 py-2.5 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 border border-slate-200 dark:border-slate-800 rounded-lg text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none transition-all cursor-pointer ${className}`}
       {...p}
     >
       {children}
@@ -173,7 +173,7 @@ export const FArea: React.FC<FAreaProps> = ({ label, value, onChange, className 
     <textarea
       value={value}
       onChange={onChange}
-      className={`w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none resize-y min-height-[80px] transition-all placeholder-slate-400 dark:placeholder-slate-500 ${className}`}
+      className={`w-full px-3 py-2 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 border border-slate-200 dark:border-slate-800 rounded-lg text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none resize-y min-height-[80px] transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 ${className}`}
       {...p}
     />
   </div>
@@ -249,7 +249,7 @@ export const StatCard: React.FC<StatCardProps> = ({ icon, label, value, color = 
 
 export const TH: React.FC<{ cols: string[] }> = ({ cols }) => (
   <thead>
-    <tr className="bg-slate-50 dark:bg-slate-900">
+    <tr className="bg-slate-50 dark:bg-slate-900/80">
       {cols.map(c => (
         <th
           key={c}

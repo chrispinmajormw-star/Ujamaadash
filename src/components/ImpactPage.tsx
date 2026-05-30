@@ -128,8 +128,8 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
     <div className="space-y-4 max-w-5xl">
       <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <h1 className="text-base font-bold text-slate-900 dark:text-slate-50 m-0">Impact stories</h1>
-          <p className="text-xs text-slate-500 mt-0.5 m-0">Field outcomes from active districts and clusters.</p>
+        <h1 className="text-base font-bold text-slate-900 dark:text-slate-50 m-0">Impact stories</h1>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 m-0">Field outcomes from active districts and clusters.</p>
         </div>
         <Btn size="sm" onClick={() => setShowForm(true)}>
           <Plus size={14} /> Submit story
@@ -173,20 +173,20 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
                   </span>
                 </div>
                 
-                <h3 className="text-base font-bold text-gray-900 leading-tight mb-2">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50 leading-tight mb-2">
                   {s.title}
                 </h3>
                 
                 <div className={`border-l-2 p-3 pl-3.5 mb-4 my-2 italic`} style={{ borderColor: 'currentColor' }}>
-                  <p className="text-xs sm:text-sm text-gray-700 leading-relaxed font-medium">
+                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
                     "{s.quote}"
                   </p>
                 </div>
 
-                <div className="text-[11px] text-gray-500 font-bold mb-3">— {s.who}</div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mb-3">— {s.who}</div>
 
                 {isExp && (
-                  <p className="text-xs text-gray-600 leading-relaxed mt-3 pt-3 border-t border-gray-200 mb-3 block">
+                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 mb-3 block">
                     {s.full}
                   </p>
                 )}
