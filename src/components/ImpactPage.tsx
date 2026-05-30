@@ -47,7 +47,7 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
     {
       id: 3,
       emoji: "👩‍🏫",
-      color: "bg-emerald-500/5 border-emerald-100 dark:border-emerald-900/30",
+      color: "bg-emerald-505 bg-emerald-500/5 border-emerald-100 dark:border-emerald-900/30",
       accent: "text-emerald-600 dark:text-emerald-400",
       accentBg: "bg-emerald-100/60 dark:bg-emerald-950/40",
       title: "Teacher Training Transforms a School",
@@ -63,7 +63,7 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
       emoji: "🌟",
       color: "bg-amber-500/5 border-amber-100 dark:border-amber-900/30",
       accent: "text-amber-600 dark:text-amber-400",
-      accentBg: "bg-amber-100/60 dark:bg-amber-950/40",
+      accentBg: "bg-amber-100/60 dark:bg-amber-955 dark:bg-amber-950/40",
       title: "Girls Lead the Way in Blantyre",
       quote: "We are not victims — we are leaders.",
       who: "Grace, 15 — GESD Graduate & Peer Mentor",
@@ -125,33 +125,44 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
   };
 
   return (
-    <div className="space-y-4 max-w-5xl">
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-neutral-200 dark:border-slate-800">
-        <div>
-        <h1 className="text-base font-bold text-black dark:text-white m-0">Impact stories</h1>
-        <p className="text-xs text-black dark:text-white opacity-80 mt-0.5 m-0">Field outcomes from active districts and clusters.</p>
+    <div className="space-y-6 max-w-5xl mx-auto">
+      {/* Banner */}
+      <div className="bg-[#0f1623] border border-gray-200 rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-xl p-4">
+        <div className="absolute -top-10 -right-10 w-44 h-44 rounded-full bg-orange-600/10" />
+        <div className="relative space-y-4">
+          <div>
+            <span className="text-xs font-bold bg-orange-600/15 border border-orange-500/20 text-orange-500 rounded-full px-3 py-1 font-semibold spacing-wider uppercase">
+              Real Impact · Empowering Lives
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-black mt-3">Malawi Field Impact</h1>
+            <p className="text-sm text-[#A4A4A9] mt-1 max-w-xl">
+              Every data point in our system represents an active young person. Read how communities are resisting GBV and building confidence.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-black/30 p-3 rounded-2xl border border-white/10 text-center">
+            {[
+              ["592,200+", "Learners Reached"],
+              ["665+", "TOTs Trained"],
+              ["396", "Clusters Engaged"],
+              ["15", "Active Regions"]
+            ].map(([v, l]) => (
+              <div key={l} className="space-y-0.5">
+                <div className="text-xl sm:text-2xl font-black text-orange-500">{v}</div>
+                <div className="text-[9px] text-[#A4A4A9] font-bold uppercase tracking-wide">{l}</div>
+              </div>
+            ))}
+          </div>
         </div>
-        <Btn size="sm" onClick={() => setShowForm(true)}>
-          <Plus size={14} /> Submit story
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-4 mt-8">
+        <div>
+          <Kicker text="Voices From Active Zones" />
+          <h2 className="text-xl font-bold text-gray-900 m-0">Stories of Transformation</h2>
+        </div>
+        <Btn onClick={() => setShowForm(true)} className="px-5">
+          <Heart size={15} /> Link Your Story
         </Btn>
-      </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[
-          ["592,200+", "Learners"],
-          ["665+", "TOTs"],
-          ["396", "Clusters"],
-          ["15", "Districts"]
-        ].map(([v, l]) => (
-          <Card key={l} className="p-3 text-center">
-            <div className="text-lg font-bold text-orange-600">{v}</div>
-            <div className="text-[10px] text-slate-500 font-medium">{l}</div>
-          </Card>
-        ))}
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h2 className="text-sm font-semibold text-black dark:text-white m-0">Stories</h2>
       </div>
 
       {/* Grid of Stories */}
@@ -161,7 +172,7 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
           return (
             <div
               key={s.id}
-              className={`p-4 rounded-lg border flex flex-col justify-between ${s.color}`}
+              className={`p-6 rounded-2xl border flex flex-col justify-between ${s.color} transition-all duration-200 hover:shadow-md hover:-translate-y-1`}
             >
               <div>
                 <div className="flex items-start justify-between mb-4">
@@ -173,30 +184,30 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
                   </span>
                 </div>
                 
-                <h3 className="text-sm font-semibold text-black dark:text-white leading-tight mb-2">
+                <h3 className="text-base font-bold text-gray-900 leading-tight mb-2">
                   {s.title}
                 </h3>
                 
                 <div className={`border-l-2 p-3 pl-3.5 mb-4 my-2 italic`} style={{ borderColor: 'currentColor' }}>
-                  <p className="text-xs text-black dark:text-white leading-relaxed font-medium">
+                  <p className="text-xs sm:text-sm text-gray-700 leading-relaxed font-medium">
                     "{s.quote}"
                   </p>
                 </div>
 
-                <div className="text-[11px] text-black dark:text-white opacity-80 font-medium mb-3">— {s.who}</div>
+                <div className="text-[11px] text-gray-500 font-bold mb-3">— {s.who}</div>
 
                 {isExp && (
-                  <p className="text-xs text-black dark:text-white leading-relaxed mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 mb-3 block">
+                  <p className="text-xs text-gray-600 leading-relaxed mt-3 pt-3 border-t border-gray-200 mb-3 block">
                     {s.full}
                   </p>
                 )}
               </div>
 
-              <div className="flex items-center justify-between text-[10px] text-slate-400 mt-4">
+              <div className="flex items-center justify-between text-[10px] text-[#A4A4A9] mt-4">
                 <span>📍 {s.district} · 📅 {s.date}</span>
                 <button
                   onClick={() => setExpanded(isExp ? null : s.id)}
-                  className={`px-2.5 py-1 rounded bg-white hover:bg-slate-50 border border-neutral-200 dark:border-slate-800 hover:border-slate-300 dark:bg-slate-900 text-xs font-bold cursor-pointer transition-colors ${s.accent}`}
+                  className={`px-2.5 py-1 rounded bg-white hover:bg-[#F6F6F6] border border-gray-200 dark:border-slate-800 hover:border-gray-300 dark:bg-slate-900 text-xs font-bold cursor-pointer transition-colors ${s.accent}`}
                 >
                   {isExp ? "Hide Info ▲" : "Read Full ▼"}
                 </button>
@@ -255,7 +266,7 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
                   <div className="font-bold text-gray-900 text-xs leading-snug truncate" title={p.headline}>
                     {p.headline}
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-1 font-semibold uppercase">{p.outlet} · {p.date}</div>
+                  <div className="text-[10px] text-[#A4A4A9] mt-1 font-semibold uppercase">{p.outlet} · {p.date}</div>
                 </div>
               </div>
             ))}
