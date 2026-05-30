@@ -86,7 +86,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
           </span>
         )}
         {user.role === "data_entry" && (
-          <span className="ml-auto text-slate-500 dark:text-slate-400 font-medium text-[11px] bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
+          <span className="ml-auto text-gray-500 dark:text-slate-400 font-medium text-[11px] bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
             ✏️ Data Officer: Permissions enabled to modify files
           </span>
         )}
@@ -106,7 +106,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
         />
 
         <div className="overflow-x-auto rounded-xl border border-gray-100">
-          <table className="w-full border-collapse text-left text-xs text-slate-700 dark:text-slate-300">
+          <table className="w-full border-collapse text-left text-xs text-gray-700 dark:text-slate-300">
             <TH cols={["School", "District", "Curriculum", "Session Conducted", "Students", "Status", "Sent To Alignment", "Actions"]} />
             <tbody>
               {visible.map(r => (
@@ -115,20 +115,20 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
                   className="border-b border-gray-100 hover:bg-orange-50/30 transition-colors"
                 >
                   <td className="p-3 font-bold text-gray-900 whitespace-nowrap">{r.school}</td>
-                  <td className="p-3 text-slate-500 dark:text-slate-400">{r.district}</td>
+                  <td className="p-3 text-gray-500 dark:text-slate-400">{r.district}</td>
                   <td className="p-3">
                     <Badge text={r.curriculum} bg="rgba(232,93,4,0.12)" color={OR} />
                   </td>
-                  <td className="p-3 text-slate-500 dark:text-slate-400 max-w-[200px] truncate" title={r.session}>
+                  <td className="p-3 text-gray-500 dark:text-slate-400 max-w-[200px] truncate" title={r.session}>
                     {r.session}
                   </td>
-                  <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">
-                    {r.boys + r.girls} <span className="text-[10px] text-slate-400 font-normal">({r.boys}B / {r.girls}G)</span>
+                  <td className="p-3 font-semibold text-gray-800 dark:text-slate-200">
+                    {r.boys + r.girls} <span className="text-[10px] text-[#A4A4A9] font-normal">({r.boys}B / {r.girls}G)</span>
                   </td>
                   <td className="p-3">
                     <Pill s={r.status} />
                   </td>
-                  <td className="p-3 text-[10.5px] text-slate-500 dark:text-slate-400 font-semibold italic">
+                  <td className="p-3 text-[10.5px] text-gray-500 dark:text-slate-400 font-semibold italic">
                     {r.sentToLabel || "In Progress"}
                   </td>
                   <td className="p-3">
@@ -183,7 +183,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
               ))}
               {visible.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="p-12 text-center text-slate-400 dark:text-slate-500">
+                  <td colSpan={8} className="p-12 text-center text-[#A4A4A9] dark:text-slate-500">
                     <FileText className="mx-auto mb-2 opacity-30" size={32} />
                     No reports match the active state filters.
                   </td>
@@ -210,21 +210,21 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
               ["Recipient Target", sel.sentToLabel || "Final Station"]
             ].map(([l, v]) => (
               <div key={l} className="space-y-0.5">
-                <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">{l}</div>
-                <div className="font-bold text-slate-800 dark:text-slate-100">{v}</div>
+                <div className="text-[10px] font-extrabold text-[#A4A4A9] uppercase tracking-widest">{l}</div>
+                <div className="font-bold text-gray-800 dark:text-slate-100">{v}</div>
               </div>
             ))}
           </div>
 
           <div className="space-y-4">
             <div>
-              <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Executed Work details</div>
+              <div className="text-[10px] font-extrabold text-[#A4A4A9] uppercase tracking-widest mb-1.5">Executed Work details</div>
               <div className="text-xs text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">{sel.session}</div>
             </div>
 
             {sel.challenges && (
               <div>
-                <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Challenges Identified</div>
+                <div className="text-[10px] font-extrabold text-[#A4A4A9] uppercase tracking-widest mb-1.5">Challenges Identified</div>
                 <div className="text-xs text-amber-700 dark:text-amber-400 bg-amber-50/30 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/40 p-3 rounded-xl">
                   {sel.challenges}
                 </div>
@@ -233,7 +233,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
 
             {sel.success && (
               <div>
-                <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Field Success Records</div>
+                <div className="text-[10px] font-extrabold text-[#A4A4A9] uppercase tracking-widest mb-1.5">Field Success Records</div>
                 <div className="text-xs text-emerald-700 dark:text-emerald-400 bg-emerald-50/30 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 p-3 rounded-xl">
                   {sel.success}
                 </div>
