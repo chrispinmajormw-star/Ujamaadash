@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Shield, FilePlus, MapPin, GraduationCap, School, BookOpen, TrendingUp, FileText, Clock, CheckSquare, Users, Map } from 'lucide-react';
 import { User, Report } from '../types';
 import { ROLE_CFG, can, DISTRICTS, DISTRICT_INFO, MAP_CLUSTERS } from '../data';
-import { Card, Btn, Pill } from './SubComponents';
+import { Card, PageHeader, Btn, Pill } from './SubComponents';
 
 interface DashboardProps {
   user: User | null;
@@ -207,30 +207,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
   return (
     <div className="space-y-4">
 
-      {/* Page header */}
-      <div className="flex items-center justify-between gap-3 pb-2 border-b border-neutral-200 dark:border-[#821F0C]">
-        <div>
-          <h1 className="text-base font-bold text-black dark:text-white m-0">
-            {user ? `Welcome, ${currentUser.name}` : "Program overview"}
-          </h1>
-          <p className="text-[11px] text-black dark:text-white opacity-60 m-0 mt-0.5">
-            {user ? `${ROLE_CFG[user.role]?.label}${currentUser.district ? ` · ${currentUser.district}` : ''}` : "ETT Malawi · Ujamaa Pamodzi Africa"}
-          </p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Btn size="sm" onClick={() => setPage("submit")}>
-            <FilePlus size={13} /> {user ? "Submit report" : "Report case"}
-          </Btn>
-          {isStaff && can(user!.role, "approveReport") && pending > 0 && (
-            <Btn size="sm" variant="secondary" onClick={() => setPage("reports")}>
-              Pending ({pending})
+      <PageHeader
+        title={user ? `Welcome, ${currentUser.name}` : "Program overview"}
+        subtitle={user ? `${ROLE_CFG[user.role]?.label}${currentUser.district ? ` · ${currentUser.district}` : ''}` : "ETT Malawi · Ujamaa Pamodzi Africa"}
+        actions={
+          <>
+            <Btn size="sm" onClick={() => setPage("submit")}>
+              <FilePlus size={13} /> {user ? "Submit report" : "Report case"}
             </Btn>
-          )}
-          {!user && (
-            <Btn size="sm" variant="secondary" onClick={() => setPage("login")}>Sign in</Btn>
-          )}
-        </div>
-      </div>
+            {isStaff && can(user!.role, "approveReport") && pending > 0 && (
+              <Btn size="sm" variant="secondary" onClick={() => setPage("reports")}>
+                Pending ({pending})
+              </Btn>
+            )}
+            {!user && (
+              <Btn size="sm" variant="secondary" onClick={() => setPage("login")}>Sign in</Btn>
+            )}
+          </>
+        }
+      />
 
       {/* KPI row */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -270,7 +265,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Recent submissions / activity */}
         <Card className="lg:col-span-2 p-0 overflow-hidden">
-          <div className="px-4 py-3 border-b border-neutral-200 dark:border-[#821F0C] flex items-center justify-between">
+          <div className="px-4 py-3 border-b border-neutral-200 dark:border-slate-800 flex items-center justify-between">
             <h3 className="text-xs font-semibold text-black dark:text-white m-0">
               {isStaff ? "Recent submissions" : "Program milestones"}
             </h3>
@@ -284,7 +279,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-left text-xs">
                 <thead>
-                  <tr className="bg-[#F6F6F6] dark:bg-[#460C04]">
+                  <tr className="bg-white dark:bg-[#0f1623]">
                     {["School", "District", "Curriculum", "Learners", "Status", "Date"].map(c => (
                       <th key={c} className="px-3 py-2 text-[10px] font-semibold text-black dark:text-white uppercase opacity-70">{c}</th>
                     ))}
@@ -292,7 +287,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
                 </thead>
                 <tbody>
                   {my.slice(0, 6).map(r => (
-                    <tr key={r.id} className="border-t border-neutral-200 dark:border-[#821F0C] text-black dark:text-white">
+                    <tr key={r.id} className="border-t border-neutral-200 dark:border-slate-800 text-black dark:text-white">
                       <td className="px-3 py-2 font-medium">{r.school}</td>
                       <td className="px-3 py-2 text-black dark:text-white opacity-80">{r.district}</td>
                       <td className="px-3 py-2"><span className="text-[10px] font-semibold text-orange-600">{r.curriculum}</span></td>
@@ -310,7 +305,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
           ) : (
             <div className="p-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
               {YEARLY_DATA.filter(d => !d.planned).map(d => (
-                <div key={d.year} className={`p-2.5 rounded-md border text-xs bg-white dark:bg-[#1a0a05] text-black dark:text-white ${d.current ? 'border-orange-400' : 'border-neutral-200 dark:border-[#821F0C]'}`}>
+                <div key={d.year} className={`p-2.5 rounded-md border text-xs bg-white dark:bg-[#0f1623] text-black dark:text-white ${d.current ? 'border-orange-400' : 'border-neutral-200 dark:border-slate-800'}`}>
                   <div className="flex justify-between font-semibold mb-1">
                     <span>{d.year}</span>
                     {d.current && <span className="text-[9px] text-orange-600">Current</span>}
@@ -337,7 +332,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
                 key={p}
                 type="button"
                 onClick={() => setPage(p)}
-                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium text-black dark:text-white hover:bg-orange-50 dark:hover:bg-[#821F0C]/30 hover:text-orange-600 border border-transparent hover:border-orange-200 dark:hover:border-[#FF5206]/30"
+                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium text-black dark:text-white hover:bg-orange-50 dark:hover:bg-slate-800 hover:text-orange-600 border border-transparent hover:border-orange-200 dark:hover:border-orange-900/40"
               >
                 <Icon size={14} className="text-orange-600" /> {label}
               </button>
@@ -349,7 +344,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
       {/* Map + charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card className="p-0 overflow-hidden">
-          <div className="px-4 py-3 border-b border-neutral-200 dark:border-[#821F0C] flex items-center justify-between">
+          <div className="px-4 py-3 border-b border-neutral-200 dark:border-slate-800 flex items-center justify-between">
             <h3 className="text-xs font-semibold m-0">Coverage map</h3>
             <button type="button" onClick={() => setPage("maps")} className="text-[10px] font-semibold text-orange-600 hover:underline">Expand</button>
           </div>
