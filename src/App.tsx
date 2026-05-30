@@ -137,7 +137,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onPublicView, onRegister
   };
 
   return (
-    <div className="min-h-full bg-white dark:bg-[#0f1623] flex items-center justify-center p-4">
+    <div className="min-h-full bg-[#F6F6F6] dark:bg-[#460C04] flex items-center justify-center p-4">
       <Card className="w-full max-w-sm p-6">
         <div className="mb-5 flex flex-col items-center">
           <AfricaLogo size={36} variant="full" className="mb-2" />
@@ -155,7 +155,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onPublicView, onRegister
 
         {mode === 'login' && (
           <div className="space-y-4">
-            <h2 className="text-sm font-bold text-slate-800 dark:text-white mb-4 block">Sign In</h2>
+            <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-4 block">Sign In</h2>
             <FInput label="Email address *" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="coordinator@ujamaa.mw" />
             <FInput label="Password *" type="password" value={pass} onChange={e => setPass(e.target.value)} placeholder="••••••••" />
             {err && (
@@ -164,7 +164,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onPublicView, onRegister
               </div>
             )}
             <Btn full onClick={doLogin} disabled={loading}>{loading ? "Signing In..." : "Confirm Sign In"}</Btn>
-            <button onClick={() => { setMode('choice'); setErr(''); }} className="mt-2 text-xs font-bold text-slate-400 hover:text-slate-600 block mx-auto">
+            <button onClick={() => { setMode('choice'); setErr(''); }} className="mt-2 text-xs font-bold text-[#A4A4A9] hover:text-gray-700 block mx-auto">
               ← Back
             </button>
           </div>
@@ -172,7 +172,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onPublicView, onRegister
 
         {mode === 'register' && (
           <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
-            <h2 className="text-sm font-bold text-slate-800 dark:text-white mb-2 block">Account Registration</h2>
+            <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-2 block">Account Registration</h2>
             <FInput label="Full Name *" value={reg.name} onChange={e => setReg({ ...reg, name: e.target.value })} />
             <FSelect label="Malawian District Match *" value={reg.district} onChange={e => setReg({ ...reg, district: e.target.value })}>
               <option value="">Choose District...</option>
@@ -188,7 +188,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onPublicView, onRegister
               </div>
             )}
             <Btn full onClick={createAccount}>Register Account</Btn>
-            <button onClick={() => { setMode('choice'); setErr(''); }} className="mt-2 text-xs font-bold text-slate-400 hover:text-slate-600 block mx-auto">
+            <button onClick={() => { setMode('choice'); setErr(''); }} className="mt-2 text-xs font-bold text-[#A4A4A9] hover:text-gray-700 block mx-auto">
               ← Back
             </button>
           </div>
@@ -368,7 +368,7 @@ const TrainingsPage: React.FC = () => {
                         <span
                           key={n}
                           className={`w-6 h-6 text-[10px] rounded-full flex items-center justify-center font-bold ${
-                            done ? 'bg-orange-500 text-white' : isToday ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
+                            done ? 'bg-[#FF5206] text-white' : isToday ? 'bg-[#FF5206]/80 text-white' : 'bg-gray-100 dark:bg-[#821F0C]/40 text-[#A4A4A9]'
                           }`}
                         >
                           {n}
@@ -420,7 +420,7 @@ const ETTPage: React.FC = () => (
           ["5", "District authorities alignment", "Form safety partnerships with VSU Police and Child protection officers in the clusters."],
           ["6", "Field file logging", "Always export reports to the ETT Portal for District Coordinator verification."]
         ].map(([n, title, desc]) => (
-          <div key={n} className="flex gap-4 p-3 bg-slate-50/50 dark:bg-slate-950/20 rounded-xl border border-slate-100 dark:border-slate-800">
+          <div key={n} className="flex gap-4 p-3 bg-orange-50/50 dark:bg-[#821F0C]/20 rounded-xl border border-orange-100 dark:border-[#821F0C]/40">
             <span className="w-7 h-7 bg-orange-500 text-white rounded-full font-bold text-xs shrink-0 flex items-center justify-center">
               {n}
             </span>
@@ -484,7 +484,7 @@ const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, onOpenMap }) => {
             <div
               key={d.name}
               onClick={() => onOpenMap({ type: "district", name: d.name, ts: Date.now() })}
-              className={`p-4 rounded-lg border cursor-pointer transition-colors bg-white dark:bg-[#0f1623] text-black dark:text-white ${
+              className={`p-4 rounded-lg border cursor-pointer transition-colors bg-white dark:bg-[#1a0a05] text-black dark:text-white ${
                 isActive ? 'border-orange-300 dark:border-orange-900/50' : 'border-neutral-200 dark:border-slate-800 opacity-75'
               }`}
             >
@@ -501,11 +501,11 @@ const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, onOpenMap }) => {
               {isActive ? (
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="bg-white dark:bg-[#0f1623] border border-orange-200 dark:border-orange-900/40 p-2 rounded-lg">
+                    <div className="bg-white dark:bg-[#821F0C]/20 border border-orange-200 dark:border-[#FF5206]/20 p-2 rounded-lg">
                       <div className="text-[9px] text-orange-600 font-semibold mb-0.5">TOTs Certified</div>
                       <div className="text-sm font-bold text-black dark:text-white">{d.tots}</div>
                     </div>
-                    <div className="bg-white dark:bg-[#0f1623] border border-orange-200 dark:border-orange-900/40 p-2 rounded-lg">
+                    <div className="bg-white dark:bg-[#821F0C]/20 border border-orange-200 dark:border-[#FF5206]/20 p-2 rounded-lg">
                       <div className="text-[9px] text-orange-600 font-semibold mb-0.5">Teachers Trained</div>
                       <div className="text-sm font-bold text-black dark:text-white">{d.teachersTrained}</div>
                     </div>
@@ -519,7 +519,7 @@ const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, onOpenMap }) => {
                   </div>
                 </div>
               ) : (
-                <div className="bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-700 rounded-lg p-4 text-center text-xs text-black dark:text-white opacity-60 font-medium italic">
+                <div className="bg-gray-50 dark:bg-[#821F0C]/20 border border-gray-200 dark:border-[#821F0C]/40 rounded-lg p-4 text-center text-xs text-black dark:text-white opacity-60 font-medium italic">
                   Expansion assessment planned.
                 </div>
               )}
@@ -708,7 +708,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers, showTo
                           </Btn>
                         )}
                         {u.status === "active" && u.id !== cu.id && (
-                          <Btn size="sm" variant="secondary" className="text-red-600 bg-red-50 dark:bg-red-950/20" onClick={() => {
+                          <Btn size="sm" variant="secondary" className="text-red-600 bg-red-50 dark:bg-red-900/30" onClick={() => {
                             setUsers(prev => prev.map(x => x.id === u.id ? { ...x, status: "pending" as const } : x));
                             showToast(`Suspended profile credentials`);
                           }}>
@@ -774,7 +774,7 @@ const PAGE_LABELS: Record<string, string> = {
 export default function App() {
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     const saved = safeStorage.getItem("ett_theme");
-    return saved !== "light";
+    return saved === "dark";
   });
 
   const [user, setUser] = useState<User | null>(() => {
@@ -1021,7 +1021,7 @@ export default function App() {
               className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium transition ${
                 isActive
                   ? 'bg-orange-50 text-orange-600 dark:bg-orange-600/15 dark:text-orange-400'
-                  : 'text-black hover:bg-orange-50 hover:text-orange-600 dark:text-white dark:hover:bg-slate-800 dark:hover:text-orange-400'
+                  : 'text-black hover:bg-orange-50 hover:text-orange-600 dark:text-white dark:hover:bg-[#821F0C]/40 dark:hover:text-orange-400'
               }`}
             >
               <Icon size={14} />
@@ -1035,7 +1035,7 @@ export default function App() {
 
   return (
     <>
-      <div className="h-screen flex overflow-hidden bg-white dark:bg-[#0f1623] text-black dark:text-white transition-colors">
+      <div className="h-screen flex overflow-hidden bg-[#F6F6F6] dark:bg-[#460C04] text-gray-900 dark:text-white transition-colors">
         {isLoginPage ? (
           <div className="flex-1 overflow-y-auto">{renderPageContent()}</div>
         ) : (
@@ -1055,9 +1055,9 @@ export default function App() {
                     animate={{ x: 0 }}
                     exit={{ x: -224 }}
                     transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-                    className="fixed top-0 bottom-0 left-0 w-56 bg-white dark:bg-[#0f1623] border-r border-neutral-200 dark:border-slate-800 z-40 p-3 flex flex-col md:hidden shadow-lg"
+                    className="fixed top-0 bottom-0 left-0 w-56 bg-white dark:bg-[#460C04] border-r border-neutral-200 dark:border-[#821F0C] z-40 p-3 flex flex-col md:hidden shadow-lg"
                   >
-                    <div className="flex justify-between items-center pb-3 mb-2 border-b border-neutral-200 dark:border-slate-800">
+                    <div className="flex justify-between items-center pb-3 mb-2 border-b border-neutral-200 dark:border-[#821F0C]">
                       <div className="flex items-center gap-2">
                         <AfricaLogo size={22} />
                         <span className="font-bold text-sm text-black dark:text-white">ETT Malawi</span>
@@ -1067,7 +1067,7 @@ export default function App() {
                       </button>
                     </div>
                     <div className="flex-1 overflow-y-auto">{renderNav(() => setSidebarOpen(false))}</div>
-                    <div className="pt-2 border-t border-neutral-200 dark:border-slate-800 text-[10px] text-black dark:text-white opacity-60">
+                    <div className="pt-2 border-t border-neutral-200 dark:border-[#821F0C] text-[10px] text-black dark:text-white opacity-60">
                       Helpline <b className="text-orange-600 dark:text-orange-400">116</b> · VSU <b className="text-orange-600 dark:text-orange-400">997</b>
                     </div>
                   </motion.aside>
@@ -1075,24 +1075,24 @@ export default function App() {
               )}
             </AnimatePresence>
 
-            <aside className="hidden md:flex w-56 shrink-0 flex-col bg-white dark:bg-[#0f1623] border-r border-neutral-200 dark:border-slate-800">
-              <div className="h-12 flex items-center gap-2 px-3 border-b border-neutral-200 dark:border-slate-800 shrink-0">
+            <aside className="hidden md:flex w-56 shrink-0 flex-col bg-white dark:bg-[#460C04] border-r border-neutral-200 dark:border-[#821F0C]">
+              <div className="h-12 flex items-center gap-2 px-3 border-b border-neutral-200 dark:border-[#821F0C] shrink-0">
                 <AfricaLogo size={22} />
                 <span className="font-bold text-sm text-black dark:text-white truncate">ETT Malawi</span>
               </div>
               <div className="flex-1 overflow-y-auto p-2">{renderNav()}</div>
-              <div className="p-3 border-t border-neutral-200 dark:border-slate-800 text-[10px] text-black dark:text-white opacity-60 shrink-0">
+              <div className="p-3 border-t border-neutral-200 dark:border-[#821F0C] text-[10px] text-black dark:text-white opacity-60 shrink-0">
                 Helpline <b className="text-orange-600 dark:text-orange-400">116</b> · VSU <b className="text-orange-600 dark:text-orange-400">997</b>
               </div>
             </aside>
 
-            <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#0f1623]">
-              <header className="h-12 shrink-0 flex items-center justify-between gap-3 px-3 border-b border-neutral-200 dark:border-slate-800 bg-white dark:bg-[#0f1623]">
+            <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#1a0a05]">
+              <header className="h-12 shrink-0 flex items-center justify-between gap-3 px-3 border-b border-neutral-200 dark:border-[#821F0C] bg-white dark:bg-[#460C04]">
                 <div className="flex items-center gap-2 min-w-0">
                   <button
                     type="button"
                     onClick={() => setSidebarOpen(true)}
-                    className="md:hidden p-1.5 rounded-md border border-neutral-200 dark:border-slate-700 text-black dark:text-white"
+                    className="md:hidden p-1.5 rounded-md border border-neutral-200 dark:border-[#821F0C] text-black dark:text-white"
                     aria-label="Open menu"
                   >
                     <Sliders size={16} />
@@ -1108,7 +1108,7 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => setNotifOpen(!notifOpen)}
-                        className="w-8 h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-slate-700 hover:border-orange-400 text-black dark:text-white relative"
+                        className="w-8 h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-[#821F0C] hover:border-orange-400 text-black dark:text-white relative"
                         title={`${pendingCount} pending reviews`}
                       >
                         <Bell size={14} />
@@ -1120,8 +1120,8 @@ export default function App() {
                       </button>
 
                       {notifOpen && (
-                        <div className="absolute right-0 top-10 bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg shadow-lg p-3 w-64 z-50 text-black dark:text-white">
-                          <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 mb-2">
+                        <div className="absolute right-0 top-10 bg-white dark:bg-[#460C04] border border-neutral-200 dark:border-[#821F0C] rounded-lg shadow-lg p-3 w-64 z-50 text-black dark:text-white">
+                          <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-[#821F0C] mb-2">
                             <span className="font-semibold text-xs">Pending reviews</span>
                             {pendingCount > 0 && <span className="bg-amber-100 text-amber-800 text-[9px] px-1.5 rounded">Action required</span>}
                           </div>
@@ -1134,7 +1134,7 @@ export default function App() {
                                   key={r.id}
                                   type="button"
                                   onClick={() => { setPage("reports"); setNotifOpen(false); }}
-                                  className="w-full text-left p-2 bg-white dark:bg-[#0f1623] rounded border border-neutral-200 dark:border-slate-800 hover:border-orange-400 text-[11px] text-black dark:text-white"
+                                  className="w-full text-left p-2 bg-white dark:bg-[#821F0C]/30 rounded border border-neutral-200 dark:border-[#821F0C] hover:border-orange-400 text-[11px] text-black dark:text-white"
                                 >
                                   <div className="font-semibold truncate">{r.school}</div>
                                   <div className="text-[10px] opacity-60">{r.district} · {r.submitted_at}</div>
@@ -1150,7 +1150,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setDarkMode(!darkMode)}
-                    className="w-8 h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-slate-700 hover:border-orange-400 text-black dark:text-white"
+                    className="w-8 h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-[#821F0C] hover:border-orange-400 text-black dark:text-white"
                     title="Toggle theme"
                   >
                     {darkMode ? <Sun size={14} /> : <Moon size={14} />}
@@ -1160,7 +1160,7 @@ export default function App() {
                     type="button"
                     onClick={() => setPage("settings")}
                     className={`w-8 h-8 flex items-center justify-center rounded-md border hover:border-orange-400 text-black dark:text-white ${
-                      page === 'settings' ? 'border-orange-500 text-orange-600' : 'border-neutral-200 dark:border-slate-700'
+                      page === 'settings' ? 'border-orange-500 text-orange-600' : 'border-neutral-200 dark:border-[#821F0C]'
                     }`}
                     title="Settings"
                   >
@@ -1238,7 +1238,7 @@ export default function App() {
             <p className="text-slate-500 m-0 leading-relaxed text-xs">
               This action transmits the approved school record of <b>{forwardModal.school}</b> ({forwardModal.district}) to the <b>National Administrator</b> database log folder.
             </p>
-            <div className="bg-orange-50 dark:bg-orange-950/20 text-orange-700 dark:text-orange-400 p-2.5 rounded-lg text-xs border border-orange-100 dark:border-orange-900/30">
+            <div className="bg-orange-50 dark:bg-[#FF5206]/10 text-orange-700 dark:text-orange-300 p-2.5 rounded-lg text-xs border border-orange-100 dark:border-[#FF5206]/20">
               📨 Route state: Central DC Verified → National Administrator aligned
             </div>
             <div className="flex gap-2 justify-end pt-2">
