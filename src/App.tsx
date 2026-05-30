@@ -137,7 +137,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onPublicView, onRegister
   };
 
   return (
-    <div className="min-h-full bg-[#F6F6F6] dark:bg-[#460C04] flex items-center justify-center p-4">
+    <div className="min-h-full bg-white dark:bg-[#460C04] flex items-center justify-center p-4">
       <Card className="w-full max-w-sm p-6">
         <div className="mb-5 flex flex-col items-center">
           <AfricaLogo size={36} variant="full" className="mb-2" />
@@ -1035,7 +1035,7 @@ export default function App() {
 
   return (
     <>
-      <div className="h-screen flex overflow-hidden bg-[#F6F6F6] dark:bg-[#460C04] text-gray-900 dark:text-white transition-colors">
+      <div className="h-screen flex overflow-hidden bg-white dark:bg-[#460C04] text-gray-900 dark:text-white transition-colors">
         {isLoginPage ? (
           <div className="flex-1 overflow-y-auto">{renderPageContent()}</div>
         ) : (
