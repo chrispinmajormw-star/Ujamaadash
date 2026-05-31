@@ -1,9 +1,11 @@
 import React from 'react';
-import { Moon, Sun, Monitor, Shield, Sparkles, User as UserIcon, HelpCircle, Bell, Calendar, ListTodo, Clock } from 'lucide-react';
+import { Moon, Sun, Monitor, Shield, Sparkles, User as UserIcon, HelpCircle, Bell, Calendar, ListTodo, Clock, Cloud, CloudOff, MessageSquare } from 'lucide-react';
 import { User } from '../types';
 import { Card, Kicker, Btn } from './SubComponents';
 import { ROLE_CFG } from '../data';
 import { safeStorage } from '../utils/storage';
+import { CloudSyncConfig, loadSyncConfig, saveSyncConfig, enableCloudSync, disableCloudSync } from '../utils/cloudSync';
+import { SMSConfig, loadSMSConfig as loadSMSConfigUtil, saveSMSConfig as saveSMSConfigUtil, enableSMSNotifications, disableSMSNotifications } from '../utils/sms';
 
 interface SettingsPageProps {
   user: User | null;
@@ -11,6 +13,15 @@ interface SettingsPageProps {
   setDarkMode: (val: boolean) => void;
   showToast: (msg: string) => void;
   reportsCount: number;
+  notificationPrefs?: {
+    email: boolean;
+    push: boolean;
+    pending: boolean;
+    approved: boolean;
+    rejected: boolean;
+    forwarded: boolean;
+  };
+  setNotificationPrefs?: (prefs: any) => void;
 }
 
 export const SettingsPage: React.FC<SettingsPageProps> = ({
@@ -18,7 +29,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   darkMode,
   setDarkMode,
   showToast,
-  reportsCount
+  reportsCount,
+  notificationPrefs,
+  setNotificationPrefs
 }) => {
   const rc = user ? ROLE_CFG[user.role] : null;
 
@@ -38,6 +51,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     const saved = safeStorage.getItem('scaleup_task_reminders');
     return saved !== null ? saved === 'true' : true;
   });
+  const [cloudSyncConfig, setCloudSyncConfig] = React.useState<CloudSyncConfig>(loadSyncConfig());
+  const [smsConfig, setSmsConfig] = React.useState<SMSConfig>(loadSMSConfigUtil());
 
   const toggleDarkMode = () => {
     const nextVal = !darkMode;
@@ -117,6 +132,186 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-5">
+
+          {/* ── Notifications Card ── */}
+          <div className="bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg p-6">
+            <div className="flex items-center gap-3 mb-5">
+              <span className="p-2.5 rounded-xl bg-blue-500 text-white shadow-sm shadow-blue-200">
+                <Bell size={18} />
+              </span>
+              <div>
+                <h3 className="text-base font-bold text-black dark:text-white m-0">Notification Preferences</h3>
+                <p className="text-xs text-black dark:text-white opacity-60 m-0">Configure how you receive alerts.</p>
+              </div>
+            </div>
+
+            <div className="h-px bg-slate-200 dark:bg-slate-800 mb-5" />
+
+            {notificationPrefs && setNotificationPrefs && (
+              <div className="space-y-4">
+                <SettingToggle
+                  label="Email Notifications"
+                  sub="Receive updates via email"
+                  value={notificationPrefs.email}
+                  onChange={() => setNotificationPrefs({ ...notificationPrefs, email: !notificationPrefs.email })}
+                />
+                <SettingToggle
+                  label="Push Notifications"
+                  sub="Receive in-app alerts"
+                  value={notificationPrefs.push}
+                  onChange={() => setNotificationPrefs({ ...notificationPrefs, push: !notificationPrefs.push })}
+                />
+                <div className="h-px bg-slate-200 dark:bg-slate-800 my-4" />
+                <SettingToggle
+                  label="Pending Reports"
+                  sub="Alert when reports need review"
+                  value={notificationPrefs.pending}
+                  onChange={() => setNotificationPrefs({ ...notificationPrefs, pending: !notificationPrefs.pending })}
+                />
+                <SettingToggle
+                  label="Approved Reports"
+                  sub="Alert when reports are approved"
+                  value={notificationPrefs.approved}
+                  onChange={() => setNotificationPrefs({ ...notificationPrefs, approved: !notificationPrefs.approved })}
+                />
+                <SettingToggle
+                  label="Rejected Reports"
+                  sub="Alert when reports are rejected"
+                  value={notificationPrefs.rejected}
+                  onChange={() => setNotificationPrefs({ ...notificationPrefs, rejected: !notificationPrefs.rejected })}
+                />
+                <SettingToggle
+                  label="Forwarded Reports"
+                  sub="Alert when reports are forwarded"
+                  value={notificationPrefs.forwarded}
+                  onChange={() => setNotificationPrefs({ ...notificationPrefs, forwarded: !notificationPrefs.forwarded })}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* ── Cloud Sync Card ── */}
+          <div className="bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg p-6">
+            <div className="flex items-center gap-3 mb-5">
+              <span className="p-2.5 rounded-xl bg-purple-500 text-white shadow-sm shadow-purple-200">
+                {cloudSyncConfig.enabled ? <Cloud size={18} /> : <CloudOff size={18} />}
+              </span>
+              <div>
+                <h3 className="text-base font-bold text-black dark:text-white m-0">Cloud Sync</h3>
+                <p className="text-xs text-black dark:text-white opacity-60 m-0">Backup and sync data across devices</p>
+              </div>
+            </div>
+
+            <div className="h-px bg-slate-200 dark:bg-slate-800 mb-5" />
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-bold text-black dark:text-white">Enable Cloud Sync</div>
+                  <div className="text-xs text-black dark:text-white opacity-60">Sync data to cloud for backup</div>
+                </div>
+                <button
+                  onClick={() => {
+                    if (cloudSyncConfig.enabled) {
+                      disableCloudSync();
+                      setCloudSyncConfig({ ...cloudSyncConfig, enabled: false });
+                      showToast("☁️ Cloud sync disabled");
+                    } else {
+                      enableCloudSync();
+                      setCloudSyncConfig({ ...cloudSyncConfig, enabled: true });
+                      showToast("☁️ Cloud sync enabled");
+                    }
+                  }}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500/30 ${
+                    cloudSyncConfig.enabled ? 'bg-purple-500' : 'bg-gray-200 dark:bg-slate-700'
+                  }`}
+                >
+                  <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition duration-200 ${cloudSyncConfig.enabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                </button>
+              </div>
+              {cloudSyncConfig.enabled && cloudSyncConfig.lastSync && (
+                <div className="text-xs text-slate-500">
+                  Last synced: {new Date(cloudSyncConfig.lastSync).toLocaleString()}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ── SMS Notifications Card ── */}
+          <div className="bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg p-6">
+            <div className="flex items-center gap-3 mb-5">
+              <span className="p-2.5 rounded-xl bg-green-500 text-white shadow-sm shadow-green-200">
+                {smsConfig.enabled ? <MessageSquare size={18} /> : <MessageSquare size={18} />}
+              </span>
+              <div>
+                <h3 className="text-base font-bold text-black dark:text-white m-0">SMS Notifications</h3>
+                <p className="text-xs text-black dark:text-white opacity-60 m-0">Alerts for limited internet regions</p>
+              </div>
+            </div>
+
+            <div className="h-px bg-slate-200 dark:bg-slate-800 mb-5" />
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-bold text-black dark:text-white">Enable SMS Alerts</div>
+                  <div className="text-xs text-black dark:text-white opacity-60">Receive SMS for important updates</div>
+                </div>
+                <button
+                  onClick={() => {
+                    if (smsConfig.enabled) {
+                      disableSMSNotifications();
+                      setSmsConfig({ ...smsConfig, enabled: false });
+                      showToast("📱 SMS notifications disabled");
+                    } else {
+                      enableSMSNotifications();
+                      setSmsConfig({ ...smsConfig, enabled: true });
+                      showToast("📱 SMS notifications enabled");
+                    }
+                  }}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500/30 ${
+                    smsConfig.enabled ? 'bg-green-500' : 'bg-gray-200 dark:bg-slate-700'
+                  }`}
+                >
+                  <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition duration-200 ${smsConfig.enabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                </button>
+              </div>
+              {smsConfig.enabled && (
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-bold text-black dark:text-white mb-1 block">Phone Number</label>
+                    <input
+                      type="tel"
+                      value={smsConfig.phoneNumber}
+                      onChange={(e) => {
+                        const updated = { ...smsConfig, phoneNumber: e.target.value };
+                        setSmsConfig(updated);
+                        saveSMSConfigUtil(updated);
+                      }}
+                      placeholder="+265..."
+                      className="w-full px-3 py-2 text-xs border border-gray-200 dark:border-slate-700 rounded focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-[#0f1623] text-black dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-black dark:text-white mb-1 block">SMS Provider</label>
+                    <select
+                      value={smsConfig.provider}
+                      onChange={(e) => {
+                        const updated = { ...smsConfig, provider: e.target.value as 'twilio' | 'africas_talking' | 'custom' };
+                        setSmsConfig(updated);
+                        saveSMSConfigUtil(updated);
+                      }}
+                      className="w-full px-3 py-2 text-xs border border-gray-200 dark:border-slate-700 rounded focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-[#0f1623] text-black dark:text-white"
+                    >
+                      <option value="twilio">Twilio</option>
+                      <option value="africas_talking">Africa's Talking</option>
+                      <option value="custom">Custom Provider</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* ── Appearance Card ── */}
           <div className="bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg p-6">

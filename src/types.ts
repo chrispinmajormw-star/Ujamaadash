@@ -24,7 +24,7 @@ export interface Report {
   girls: number;
   curriculum: string;
   session: string;
-  status: 'approved' | 'pending' | 'rejected' | 'forwarded';
+  status: 'approved' | 'pending' | 'rejected' | 'forwarded' | 'draft';
   submitted_by: string;
   submitted_at: string;
   challenges: string;
@@ -33,6 +33,16 @@ export interface Report {
   sentToLabel?: string;
   workflow_status?: string;
   submitted_role?: string;
+  photos?: File[];
+  comments?: Comment[];
+}
+
+export interface Comment {
+  id: number;
+  reportId: number;
+  author: string;
+  content: string;
+  timestamp: string;
 }
 
 export interface Cluster {
@@ -78,3 +88,28 @@ export interface Session {
   pledge: string | null;
   objectives: string[];
 }
+
+export interface Document {
+  id: number;
+  title: string;
+  type: 'curriculum' | 'guide' | 'template' | 'report';
+  category: string;
+  url: string;
+  uploadedAt: string;
+  uploadedBy: string;
+  size: string;
+}
+
+export interface Task {
+  id: number;
+  title: string;
+  description: string;
+  assignedTo: string;
+  assignedBy: string;
+  status: 'pending' | 'in_progress' | 'completed';
+  priority: 'low' | 'medium' | 'high';
+  dueDate: string;
+  createdAt: string;
+  reportId?: number;
+}
+

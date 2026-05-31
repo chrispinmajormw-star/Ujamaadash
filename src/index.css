@@ -10,7 +10,7 @@
   --surface: #ffffff;
   --surface-border: #e5e5e5;
   --text-primary: #000000;
-  --accent: #e85d04;
+  --accent: #c2410c; /* Darker orange for better WCAG contrast (4.5:1 ratio) */
 }
 
 .dark {
@@ -18,7 +18,7 @@
   --surface: #0f1623;
   --surface-border: #1e293b;
   --text-primary: #ffffff;
-  --accent: #e85d04;
+  --accent: #f97316; /* Lighter orange for dark mode contrast */
 }
 
 * {
@@ -97,4 +97,61 @@ body {
 .dark .leaflet-bar a:hover {
   background-color: #1e293b !important;
   color: #e85d04 !important;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  
+  .bg-white, .bg-orange-50, .bg-slate-50 {
+    background: white !important;
+  }
+  
+  .dark\:bg-\[0f1623\] {
+    background: white !important;
+  }
+  
+  .text-black, .text-slate-900, .dark\:text-slate-50 {
+    color: black !important;
+  }
+  
+  .text-white, .dark\:text-white {
+    color: black !important;
+  }
+  
+  .border, .border-gray-200, .border-slate-800 {
+    border-color: #ccc !important;
+  }
+  
+  .shadow-lg, .shadow-xl {
+    box-shadow: none !important;
+  }
+  
+  /* Hide navigation and interactive elements */
+  nav, button, input, select, textarea {
+    display: none !important;
+  }
+  
+  /* Ensure tables print correctly */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+  
+  th, td {
+    border: 1px solid #ccc !important;
+    padding: 8px !important;
+  }
+  
+  /* Page breaks */
+  .page-break {
+    page-break-after: always;
+  }
 }

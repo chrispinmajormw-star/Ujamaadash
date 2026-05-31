@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { FileText, Send, Check, X, ShieldAlert, Edit2, CornerDownRight } from 'lucide-react';
+import { FileText, Send, Check, X, ShieldAlert, Edit2, CornerDownRight, Download, Printer } from 'lucide-react';
 import { User, Report } from '../types';
 import { ROLE_CFG, can } from '../data';
-import { Card, Kicker, FilterBar, TH, Pill, Badge, Btn, Modal, FInput, FSelect, FArea, OR } from './SubComponents';
+import { Card, Kicker, FilterBar, TH, Pill, Badge, Btn, Modal, FInput, FSelect, FArea, OR, ConfirmDialog } from './SubComponents';
+import { exportReportsToCSV } from '../utils/export';
 
 // REPORT ROUTING WORKFLOW WORKER
 export const REPORT_WORKFLOW = {
@@ -24,6 +25,7 @@ interface ReportsPageProps {
   showToast: (msg: string) => void;
   onEditReport: (report: Report) => void;
   onForwardReport: (report: Report) => void;
+  onBulkSubmit?: () => void;
 }
 
 export const ReportsPage: React.FC<ReportsPageProps> = ({
@@ -32,11 +34,20 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
   onUpdateStatus,
   showToast,
   onEditReport,
-  onForwardReport
+  onForwardReport,
+  onBulkSubmit
 }) => {
   const [filt, setFilt] = useState<string>("all");
   const [search, setSearch] = useState<string>("");
   const [sel, setSel] = useState<Report | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; report: Report | null; action: 'reject' | 'suspend' }>({
+    isOpen: false,
+    report: null,
+    action: 'reject'
+  });
+  const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
+  const [selectedDistricts, setSelectedDistricts] = useState<string[]>([]);
+  const [selectedCurriculums, setSelectedCurriculums] = useState<string[]>([]);
 
   const workflow = getReportRecipient(user.role);
 
@@ -46,19 +57,58 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
     if (filt !== "all" && r.status !== filt) return false;
     const q = search.toLowerCase();
     if (q && !r.school.toLowerCase().includes(q) && !r.district.toLowerCase().includes(q)) return false;
+    
+    // Date range filter
+    if (dateRange.start && r.submitted_at < dateRange.start) return false;
+    if (dateRange.end && r.submitted_at > dateRange.end) return false;
+    
+    // District filter
+    if (selectedDistricts.length > 0 && !selectedDistricts.includes(r.district)) return false;
+    
+    // Curriculum filter
+    if (selectedCurriculums.length > 0 && !selectedCurriculums.includes(r.curriculum)) return false;
+    
     return true;
   });
 
   return (
     <div className="space-y-5 animate-fade-in-up">
-      <div>
-        <Kicker text="Reporting Log" />
-        <h1 className="text-2xl font-black text-gray-900">
-          {user.role === "data_entry" ? "My Reports Dashboard" : "All Session Reports"}
-        </h1>
-        <p className="text-xs text-gray-500">
-          Monitor primary cluster attendances, SGBV compliance files, and school records.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div>
+          <Kicker text="Reporting Log" />
+          <h1 className="text-2xl font-black text-gray-900">
+            {user.role === "data_entry" ? "My Reports Dashboard" : "All Session Reports"}
+          </h1>
+          <p className="text-xs text-gray-500">
+            Monitor primary cluster attendances, SGBV compliance files, and school records.
+          </p>
+        </div>
+        <Btn
+          variant="secondary"
+          onClick={() => exportReportsToCSV(visible, `ett-reports-${new Date().toISOString().split('T')[0]}`)}
+          className="gap-2"
+        >
+          <Download size={14} />
+          Export CSV
+        </Btn>
+        {user.role === "data_entry" && onBulkSubmit && (
+          <Btn
+            variant="secondary"
+            onClick={onBulkSubmit}
+            className="gap-2"
+          >
+            <Send size={14} />
+            Bulk Submit
+          </Btn>
+        )}
+        <Btn
+          variant="secondary"
+          onClick={() => window.print()}
+          className="gap-2"
+        >
+          <Printer size={14} />
+          Print
+        </Btn>
       </div>
 
       {/* Workflow banner */}
@@ -77,19 +127,78 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 px-2.5 py-0.5 rounded-full scale-95 font-bold">District Coordinator</span>
             <CornerDownRight size={14} className="opacity-60" />
-            <span className="bg-emerald-150 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 px-2.5 py-0.5 rounded-full scale-95 font-bold">National Admin</span>
+            <span className="bg-emerald-150 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 px-2.5 py-0.5 rounded-full scale-95 font-bold">Admin</span>
           </div>
         )}
         {user.role === "admin" && (
-          <span className="bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 px-2.5 py-0.5 rounded-full scale-95 font-bold">
-            National Admin — Full Overseer Recipient
-          </span>
+          <span className="bg-emerald-150 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 px-2.5 py-0.5 rounded-full scale-95 font-bold">Final Recipient</span>
         )}
-        {user.role === "data_entry" && (
-          <span className="ml-auto text-slate-500 dark:text-slate-400 font-medium text-[11px] bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
-            ✏️ Data Officer: Permissions enabled to modify files
-          </span>
-        )}
+      </div>
+
+      {/* Advanced Filters */}
+      <div className="bg-white dark:bg-[#0f1623] border border-gray-200 dark:border-slate-800 rounded-lg p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-bold text-black dark:text-white">Advanced Filters</h3>
+          <button
+            onClick={() => {
+              setDateRange({ start: '', end: '' });
+              setSelectedDistricts([]);
+              setSelectedCurriculums([]);
+            }}
+            className="text-[10px] text-orange-600 dark:text-orange-400 font-semibold hover:underline"
+          >
+            Clear All
+          </button>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label className="text-[10px] text-slate-600 dark:text-slate-400 font-semibold mb-1 block">Date Range</label>
+            <div className="flex gap-2">
+              <input
+                type="date"
+                value={dateRange.start}
+                onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
+                className="flex-1 px-2 py-1 text-[11px] border border-gray-200 dark:border-slate-700 rounded focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-[#0f1623] text-black dark:text-white"
+              />
+              <input
+                type="date"
+                value={dateRange.end}
+                onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
+                className="flex-1 px-2 py-1 text-[11px] border border-gray-200 dark:border-slate-700 rounded focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-[#0f1623] text-black dark:text-white"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="text-[10px] text-slate-600 dark:text-slate-400 font-semibold mb-1 block">Districts</label>
+            <select
+              multiple
+              value={selectedDistricts}
+              onChange={(e) => setSelectedDistricts(Array.from(e.target.selectedOptions, opt => opt.value))}
+              className="w-full px-2 py-1 text-[11px] border border-gray-200 dark:border-slate-700 rounded focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-[#0f1623] text-black dark:text-white h-16"
+            >
+              {Array.from(new Set(reports.map(r => r.district))).map(district => (
+                <option key={district} value={district} className="text-black dark:text-white bg-white dark:bg-[#0f1623]">
+                  {district}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-[10px] text-slate-600 dark:text-slate-400 font-semibold mb-1 block">Curriculum</label>
+            <select
+              multiple
+              value={selectedCurriculums}
+              onChange={(e) => setSelectedCurriculums(Array.from(e.target.selectedOptions, opt => opt.value))}
+              className="w-full px-2 py-1 text-[11px] border border-gray-200 dark:border-slate-700 rounded focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-[#0f1623] text-black dark:text-white h-16"
+            >
+              {Array.from(new Set(reports.map(r => r.curriculum))).map(curriculum => (
+                <option key={curriculum} value={curriculum} className="text-black dark:text-white bg-white dark:bg-[#0f1623]">
+                  {curriculum}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
 
       <Card>
@@ -106,7 +215,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
         />
 
         <div className="overflow-x-auto rounded-xl border border-gray-100">
-          <table className="w-full border-collapse text-left text-xs text-slate-700 dark:text-slate-300">
+          <table className="w-full border-collapse text-left text-xs text-slate-700 dark:text-slate-300 min-w-[800px]">
             <TH cols={["School", "District", "Curriculum", "Session Conducted", "Students", "Status", "Sent To Alignment", "Actions"]} />
             <tbody>
               {visible.map(r => (
@@ -158,7 +267,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
                             <Check size={14} />
                           </button>
                           <button
-                            onClick={() => { onUpdateStatus(r.id, "rejected"); showToast("Report rejected"); }}
+                            onClick={() => setConfirmDialog({ isOpen: true, report: r, action: 'reject' })}
                             className="bg-red-500 text-white rounded-lg p-1.5 hover:bg-red-600 cursor-pointer w-7 h-7 flex items-center justify-center transition"
                             title="Reject Report"
                           >
@@ -256,7 +365,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
                   <Btn
                     variant="danger"
                     size="sm"
-                    onClick={() => { onUpdateStatus(sel.id, "rejected"); setSel(null); showToast("Report rejected"); }}
+                    onClick={() => { setConfirmDialog({ isOpen: true, report: sel, action: 'reject' }); }}
                   >
                     Reject
                   </Btn>
@@ -284,6 +393,24 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
           </div>
         </Modal>
       )}
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title="Confirm Rejection"
+        message={`Are you sure you want to reject the report from ${confirmDialog.report?.school}? This action cannot be undone and the submitter will need to resubmit.`}
+        confirmText="Reject Report"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={() => {
+          if (confirmDialog.report) {
+            onUpdateStatus(confirmDialog.report.id, "rejected");
+            showToast("Report rejected");
+            setConfirmDialog({ isOpen: false, report: null, action: 'reject' });
+            setSel(null);
+          }
+        }}
+        onCancel={() => setConfirmDialog({ isOpen: false, report: null, action: 'reject' })}
+      />
     </div>
   );
 };

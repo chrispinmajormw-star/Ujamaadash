@@ -21,6 +21,11 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
   const [selectedCluster, setSelectedCluster] = useState<MapCluster | null>(null);
   const mapRef = useRef<any>(null);
   const regions = ["All", "Northern", "Central", "Southern"];
+  const [showDistricts, setShowDistricts] = useState(true);
+  const [showClusters, setShowClusters] = useState(true);
+  const [showSchools, setShowSchools] = useState(true);
+  const [searchLocation, setSearchLocation] = useState<string>("");
+  const [showHeatMap, setShowHeatMap] = useState(false);
 
   const clustersWithRegion = MAP_CLUSTERS.map(c => {
     const d = DISTRICTS.find(x => x.name === c.district);
@@ -79,6 +84,20 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
         offset: [0, -6]
       });
     });
+
+    // Render heat map layer if enabled
+    if (showHeatMap) {
+      filteredClusters.forEach(cluster => {
+        const heatIntensity = cluster.students / 1000; // Normalize for heat map
+        L.circle([cluster.lat, cluster.lng], {
+          radius: 15000 * (cluster.schools.length / 10), // Scale radius by school count
+          fillColor: `rgba(232, 93, 4, ${Math.min(heatIntensity, 0.8)})`,
+          color: "#e85d04",
+          weight: 1,
+          fillOpacity: 0.6
+        }).addTo(map);
+      });
+    }
 
     // Render clusters and schools connectives
     filteredClusters.forEach(cluster => {
@@ -152,7 +171,7 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
       map.remove();
       mapRef.current = null;
     };
-  }, [selectedRegion, darkMode]);
+  }, [selectedRegion, darkMode, showHeatMap]);
 
   return (
     <div className="space-y-4 flex flex-col h-full animate-fade-in-up">
@@ -175,9 +194,35 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
             <span>{item.label}</span>
           </span>
         ))}
-        <span className="ml-auto text-[11px] text-slate-400 font-medium">
-          Click any centre marker to view active statistics
-        </span>
+        <div className="ml-auto flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <label className="text-[10px] text-slate-500">Layers:</label>
+            <button
+              onClick={() => setShowDistricts(!showDistricts)}
+              className={`px-2 py-1 rounded text-[10px] font-bold ${showDistricts ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}
+            >
+              Districts
+            </button>
+            <button
+              onClick={() => setShowClusters(!showClusters)}
+              className={`px-2 py-1 rounded text-[10px] font-bold ${showClusters ? 'bg-orange-100 text-orange-700' : 'bg-slate-100 text-slate-500'}`}
+            >
+              Clusters
+            </button>
+            <button
+              onClick={() => setShowSchools(!showSchools)}
+              className={`px-2 py-1 rounded text-[10px] font-bold ${showSchools ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'}`}
+            >
+              Schools
+            </button>
+            <button
+              onClick={() => setShowHeatMap(!showHeatMap)}
+              className={`px-2 py-1 rounded text-[10px] font-bold ${showHeatMap ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-500'}`}
+            >
+              Heat Map
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 border border-gray-200 rounded-b-2xl overflow-hidden h-[60vh] sm:h-[65vh]">
@@ -187,7 +232,7 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
             <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5 flex items-center gap-1">
               <Sliders size={12} /> Region scope
             </div>
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1 mb-2">
               {regions.map(r => (
                 <button
                   key={r}
@@ -202,6 +247,16 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
                 </button>
               ))}
             </div>
+            <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5 flex items-center gap-1">
+              <MapPin size={12} /> Search location
+            </div>
+            <input
+              type="text"
+              placeholder="Search district or cluster..."
+              value={searchLocation}
+              onChange={(e) => setSearchLocation(e.target.value)}
+              className="w-full px-2 py-1.5 text-[11px] border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
           </div>
 
           <div className="flex-1 overflow-y-auto p-2 space-y-1.5">

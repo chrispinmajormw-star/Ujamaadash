@@ -43,7 +43,9 @@ import {
   Sliders,
   Calendar,
   ListTodo,
-  Play
+  Play,
+  Menu,
+  Download
 } from 'lucide-react';
 
 import { User, Report, Cluster, District, Training, Session } from './types';
@@ -80,7 +82,9 @@ import {
   AfricaLogo,
   OR,
   OR_D,
-  OR_PALE
+  OR_PALE,
+  Breadcrumbs,
+  TrendIndicator
 } from './components/SubComponents';
 
 import { Dashboard } from './components/Dashboard';
@@ -91,7 +95,11 @@ import { ImpactPage } from './components/ImpactPage';
 import { SettingsPage } from './components/SettingsPage';
 import { CalendarPage } from './components/CalendarPage';
 import { TasksPage } from './components/TasksPage';
+import { Tour } from './components/SubComponents';
 import { safeStorage } from './utils/storage';
+import { validateField, validateForm, getPasswordStrength } from './utils/validation';
+import { exportAnalyticsToCSV } from './utils/export';
+import { addAuditLog } from './utils/audit';
 
 // ─── LOGIN PANEL ─────────────────────────────
 interface LoginPageProps {
@@ -108,9 +116,21 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onPublicView, onRegister
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
   const [reg, setReg] = useState({ name: "", district: "", designation: "", email: "", school: "", cluster: "", password: "" });
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const doLogin = async () => {
-    if (!email || !pass) { setErr("Please enter email and password"); return; }
+    setErr('');
+    setFieldErrors({});
+    
+    // Validate login form
+    const emailValidation = validateField('email', email);
+    const passwordValidation = validateField('password', pass);
+    
+    if (!emailValidation.isValid || !passwordValidation.isValid) {
+      setFieldErrors({ ...emailValidation.errors, ...passwordValidation.errors });
+      return;
+    }
+    
     setLoading(true);
     await new Promise(r => setTimeout(r, 500));
     setLoading(false);
@@ -120,9 +140,20 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onPublicView, onRegister
   };
 
   const createAccount = () => {
-    if (!reg.name || !reg.district || !reg.designation || !reg.email || !reg.password) { setErr("Please fill all mandatory fields"); return; }
+    setErr('');
+    setFieldErrors({});
+    
+    // Validate registration form
+    const validation = validateForm(reg, ['name', 'district', 'designation', 'email', 'password']);
+    
+    if (!validation.isValid) {
+      setFieldErrors(validation.errors);
+      return;
+    }
+    
     const exists = users.find(u => u.email === reg.email);
     if (exists) { setErr("Account already exists"); return; }
+    
     const newUser: User = {
       id: Date.now().toString(),
       name: reg.name,
@@ -135,6 +166,22 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onPublicView, onRegister
     };
     onRegister(newUser);
   };
+
+  const handleFieldChange = (field: string, value: string) => {
+    setReg(prev => ({ ...prev, [field]: value }));
+    // Real-time validation
+    if (value) {
+      const validation = validateField(field, value);
+      setFieldErrors(prev => ({
+        ...prev,
+        [field]: validation.isValid ? '' : validation.errors[field]
+      }));
+    } else {
+      setFieldErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const passwordStrength = getPasswordStrength(reg.password);
 
   return (
     <div className="min-h-full bg-white dark:bg-[#0f1623] flex items-center justify-center p-4">
@@ -156,15 +203,21 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onPublicView, onRegister
         {mode === 'login' && (
           <div className="space-y-4">
             <h2 className="text-sm font-bold text-slate-800 dark:text-white mb-4 block">Sign In</h2>
-            <FInput label="Email address *" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="coordinator@ujamaa.mw" />
-            <FInput label="Password *" type="password" value={pass} onChange={e => setPass(e.target.value)} placeholder="••••••••" />
+            <div>
+              <FInput label="Email address *" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="coordinator@ujamaa.mw" />
+              {fieldErrors.email && <p className="text-[10px] text-red-600 mt-1">{fieldErrors.email}</p>}
+            </div>
+            <div>
+              <FInput label="Password *" type="password" value={pass} onChange={e => setPass(e.target.value)} placeholder="••••••••" />
+              {fieldErrors.password && <p className="text-[10px] text-red-600 mt-1">{fieldErrors.password}</p>}
+            </div>
             {err && (
               <div className="bg-red-500/5 text-red-600 border border-red-500/10 rounded-xl p-2.5 text-xs text-left font-bold leading-normal">
                 ⚠️ {err}
               </div>
             )}
             <Btn full onClick={doLogin} disabled={loading}>{loading ? "Signing In..." : "Confirm Sign In"}</Btn>
-            <button onClick={() => { setMode('choice'); setErr(''); }} className="mt-2 text-xs font-bold text-slate-400 hover:text-slate-600 block mx-auto">
+            <button onClick={() => { setMode('choice'); setErr(''); setFieldErrors({}); }} className="mt-2 text-xs font-bold text-slate-400 hover:text-slate-600 block mx-auto">
               ← Back
             </button>
           </div>
@@ -173,22 +226,51 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onPublicView, onRegister
         {mode === 'register' && (
           <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
             <h2 className="text-sm font-bold text-slate-800 dark:text-white mb-2 block">Account Registration</h2>
-            <FInput label="Full Name *" value={reg.name} onChange={e => setReg({ ...reg, name: e.target.value })} />
-            <FSelect label="Malawian District Match *" value={reg.district} onChange={e => setReg({ ...reg, district: e.target.value })}>
-              <option value="">Choose District...</option>
-              {DISTRICT_LIST.map(d => <option key={d}>{d}</option>)}
-            </FSelect>
-            <FInput label="Designation *" placeholder="e.g. Teacher, TOT, DC" value={reg.designation} onChange={e => setReg({ ...reg, designation: e.target.value })} />
-            <FInput label="Email address *" type="email" value={reg.email} onChange={e => setReg({ ...reg, email: e.target.value })} />
+            <div>
+              <FInput label="Full Name *" value={reg.name} onChange={e => handleFieldChange('name', e.target.value)} />
+              {fieldErrors.name && <p className="text-[10px] text-red-600 mt-1">{fieldErrors.name}</p>}
+            </div>
+            <div>
+              <FSelect label="Malawian District Match *" value={reg.district} onChange={e => handleFieldChange('district', e.target.value)}>
+                <option value="">Choose District...</option>
+                {DISTRICT_LIST.map(d => <option key={d}>{d}</option>)}
+              </FSelect>
+              {fieldErrors.district && <p className="text-[10px] text-red-600 mt-1">{fieldErrors.district}</p>}
+            </div>
+            <div>
+              <FInput label="Designation *" placeholder="e.g. Teacher, TOT, DC" value={reg.designation} onChange={e => handleFieldChange('designation', e.target.value)} />
+              {fieldErrors.designation && <p className="text-[10px] text-red-600 mt-1">{fieldErrors.designation}</p>}
+            </div>
+            <div>
+              <FInput label="Email address *" type="email" value={reg.email} onChange={e => handleFieldChange('email', e.target.value)} />
+              {fieldErrors.email && <p className="text-[10px] text-red-600 mt-1">{fieldErrors.email}</p>}
+            </div>
             <FInput label="Associated School Hub" placeholder="e.g. Mbayani Primary" value={reg.school} onChange={e => setReg({ ...reg, school: e.target.value })} />
-            <FInput label="Current Password *" type="password" value={reg.password} onChange={e => setReg({ ...reg, password: e.target.value })} />
+            <div>
+              <FInput label="Current Password *" type="password" value={reg.password} onChange={e => handleFieldChange('password', e.target.value)} />
+              {fieldErrors.password && <p className="text-[10px] text-red-600 mt-1">{fieldErrors.password}</p>}
+              {reg.password && (
+                <div className="mt-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full rounded-full transition-all duration-300" 
+                        style={{ width: `${passwordStrength.strength}%`, backgroundColor: passwordStrength.color }}
+                      />
+                    </div>
+                    <span className="text-[10px] font-semibold" style={{ color: passwordStrength.color }}>{passwordStrength.label}</span>
+                  </div>
+                  <p className="text-[9px] text-gray-500">Must contain 8+ characters, uppercase, lowercase, number, and special character</p>
+                </div>
+              )}
+            </div>
             {err && (
               <div className="bg-red-500/5 text-red-600 p-2 border border-red-500/10 rounded text-xs">
                 {err}
               </div>
             )}
             <Btn full onClick={createAccount}>Register Account</Btn>
-            <button onClick={() => { setMode('choice'); setErr(''); }} className="mt-2 text-xs font-bold text-slate-400 hover:text-slate-600 block mx-auto">
+            <button onClick={() => { setMode('choice'); setErr(''); setFieldErrors({}); }} className="mt-2 text-xs font-bold text-slate-400 hover:text-slate-600 block mx-auto">
               ← Back
             </button>
           </div>
@@ -203,8 +285,9 @@ interface SubmitReportProps {
   user: User | null;
   onSubmit: (r: any) => void;
   showToast: (msg: string) => void;
+  onSaveDraft?: (r: Partial<Report>) => void;
 }
-const SubmitReport: React.FC<SubmitReportProps> = ({ user, onSubmit, showToast }) => {
+const SubmitReport: React.FC<SubmitReportProps> = ({ user, onSubmit, showToast, onSaveDraft }) => {
   const isPublic = !user;
   const assignedCluster = user?.role === "tot" ? CLUSTERS.find(c => c.id === user.clusterId) : null;
   
@@ -214,17 +297,45 @@ const SubmitReport: React.FC<SubmitReportProps> = ({ user, onSubmit, showToast }
 
   const [f, setF] = useState(defaultFields);
   const [done, setDone] = useState(false);
-  const s = (k: string) => (e: any) => setF(p => ({ ...p, [k]: e.target.value }));
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [photos, setPhotos] = useState<File[]>([]);
+  const s = (k: string) => (e: any) => {
+    setF(p => ({ ...p, [k]: e.target.value }));
+    // Real-time validation
+    if (e.target.value) {
+      const validation = validateField(k, e.target.value);
+      setFieldErrors(prev => ({
+        ...prev,
+        [k]: validation.isValid ? '' : validation.errors[k]
+      }));
+    } else {
+      setFieldErrors(prev => ({ ...prev, [k]: '' }));
+    }
+  };
 
   const submitFile = () => {
+    setFieldErrors({});
+    
     if (isPublic) {
-      if (!f.school || !f.district || !f.session) { showToast("⚠️ Fill in coordinates for the case"); return; }
+      const validation = validateForm(f, ['school', 'district', 'session']);
+      if (!validation.isValid) {
+        setFieldErrors(validation.errors);
+        showToast("⚠️ Fill in coordinates for the case");
+        return;
+      }
       onSubmit({ ...f, boys: 0, girls: 0, zone: f.zone || "Public align", status: "pending", submitted_by: "Public report channel", submitted_at: new Date().toISOString().split("T")[0] });
       setDone(true);
       showToast("Case report sent securely");
       return;
     }
-    if (!f.school || !f.district || !f.zone || !f.session) { showToast("⚠️ Fill in mandatory fields"); return; }
+    
+    const validation = validateForm(f, ['school', 'district', 'zone', 'session']);
+    if (!validation.isValid) {
+      setFieldErrors(validation.errors);
+      showToast("⚠️ Fill in mandatory fields");
+      return;
+    }
+    
     onSubmit({ ...f, boys: parseInt(f.boys) || 0, girls: parseInt(f.girls) || 0, status: "pending", submitted_by: user.name, submitted_at: new Date().toISOString().split("T")[0] });
     setDone(true);
     showToast("✅ Report submitted for DC approval");
@@ -258,11 +369,17 @@ const SubmitReport: React.FC<SubmitReportProps> = ({ user, onSubmit, showToast }
 
       <Card>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <FInput label={isPublic ? "Incident Location *" : "School Name *"} placeholder="e.g. Kawale Primary" value={f.school} onChange={s("school")} />
-          <FSelect label="Malawian District *" value={f.district} onChange={s("district")}>
-            <option value="">Select District...</option>
-            {DISTRICT_LIST.map(d => <option key={d}>{d}</option>)}
-          </FSelect>
+          <div>
+            <FInput label={isPublic ? "Incident Location *" : "School Name *"} placeholder="e.g. Kawale Primary" value={f.school} onChange={s("school")} />
+            {fieldErrors.school && <p className="text-[10px] text-red-600 mt-1">{fieldErrors.school}</p>}
+          </div>
+          <div>
+            <FSelect label="Malawian District *" value={f.district} onChange={s("district")}>
+              <option value="">Select District...</option>
+              {DISTRICT_LIST.map(d => <option key={d}>{d}</option>)}
+            </FSelect>
+            {fieldErrors.district && <p className="text-[10px] text-red-600 mt-1">{fieldErrors.district}</p>}
+          </div>
         </div>
 
         {isPublic ? (
@@ -277,32 +394,69 @@ const SubmitReport: React.FC<SubmitReportProps> = ({ user, onSubmit, showToast }
               <option>Assigned Teacher</option>
               <option>Community Mother</option>
             </FSelect>
-            <FArea label="SGBV Case details *" placeholder="Provide details safely. Do not post names if insecure." value={f.session} onChange={s("session")} />
+            <div>
+              <FArea label="SGBV Case details *" placeholder="Provide details safely. Do not post names if insecure." value={f.session} onChange={s("session")} />
+              {fieldErrors.session && <p className="text-[10px] text-red-600 mt-1">{fieldErrors.session}</p>}
+            </div>
             <FArea label="Follow up channel details (Optional)" placeholder="Preferred contact way" value={f.challenges} onChange={s("challenges")} />
           </>
         ) : (
           <>
-            <FInput label="Education Hub / Zone *" placeholder="e.g. Kawale Area Zone" value={f.zone} onChange={s("zone")} disabled={!!assignedCluster} />
+            <div>
+              <FInput label="Education Hub / Zone *" placeholder="e.g. Kawale Area Zone" value={f.zone} onChange={s("zone")} disabled={!!assignedCluster} />
+              {fieldErrors.zone && <p className="text-[10px] text-red-600 mt-1">{fieldErrors.zone}</p>}
+            </div>
             <div className="grid grid-cols-2 gap-3">
-              <FInput label="Boys Present *" type="number" value={f.boys} onChange={s("boys")} />
-              <FInput label="Girls Present *" type="number" value={f.girls} onChange={s("girls")} />
+              <div>
+                <FInput label="Boys Present *" type="number" value={f.boys} onChange={s("boys")} />
+                {fieldErrors.boys && <p className="text-[10px] text-red-600 mt-1">{fieldErrors.boys}</p>}
+              </div>
+              <div>
+                <FInput label="Girls Present *" type="number" value={f.girls} onChange={s("girls")} />
+                {fieldErrors.girls && <p className="text-[10px] text-red-600 mt-1">{fieldErrors.girls}</p>}
+              </div>
             </div>
             <FSelect label="Active Curriculum Content *" value={f.curriculum} onChange={s("curriculum")}>
               <option value="HIM">HIM — Hero In Me (Boys)</option>
               <option value="GESD">GESD — Girls Empowerment</option>
               <option value="Combined">Topic 6: Combined session</option>
             </FSelect>
-            <FSelect label="Topic / Session Name *" value={f.session} onChange={s("session")}>
-              <option value="">Select Lesson...</option>
-              {(SESSION_LISTS[f.curriculum] || []).map(o => <option key={o}>{o}</option>)}
-            </FSelect>
+            <div>
+              <FSelect label="Topic / Session Name *" value={f.session} onChange={s("session")}>
+                <option value="">Select Lesson...</option>
+                {(SESSION_LISTS[f.curriculum] || []).map(o => <option key={o}>{o}</option>)}
+              </FSelect>
+              {fieldErrors.session && <p className="text-[10px] text-red-600 mt-1">{fieldErrors.session}</p>}
+            </div>
             <FArea label="Faced Challenges" placeholder="Resources required or bottlenecks" value={f.challenges} onChange={s("challenges")} />
             <FArea label="Memorable Success highlights" placeholder="Describe participant engagement" value={f.success} onChange={s("success")} />
+            
+            {!isPublic && (
+              <div>
+                <label className="block text-[11px] font-bold text-black dark:text-white mb-1">Training Photos (Optional)</label>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    setPhotos(files);
+                  }}
+                  className="w-full px-2 py-1.5 text-[11px] border border-gray-200 dark:border-slate-700 rounded focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-[#0f1623] text-black dark:text-white"
+                />
+                {photos.length > 0 && (
+                  <p className="text-[10px] text-slate-500 mt-1">{photos.length} photo(s) selected</p>
+                )}
+              </div>
+            )}
           </>
         )}
 
         <div className="flex gap-2 justify-end pt-3">
           <Btn variant="secondary" onClick={() => setF(defaultFields)}>Reset Sheet</Btn>
+          {onSaveDraft && (
+            <Btn variant="secondary" onClick={() => onSaveDraft(f)}>Save as Draft</Btn>
+          )}
           <Btn onClick={submitFile}>Send Record</Btn>
         </div>
       </Card>
@@ -539,6 +693,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ reports }) => {
   const byStatus = { approved: 0, pending: 0, rejected: 0, forwarded: 0 };
   const byCurr = { HIM: 0, GESD: 0, Combined: 0 };
   const byDist: Record<string, number> = {};
+  const byMonth: Record<string, number> = {};
   let boys = 0, girls = 0;
 
   reports.forEach(r => {
@@ -547,6 +702,10 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ reports }) => {
     byDist[r.district] = (byDist[r.district] || 0) + 1;
     boys += r.boys;
     girls += r.girls;
+    
+    // Track reports by month
+    const month = r.submitted_at.substring(0, 7); // YYYY-MM format
+    byMonth[month] = (byMonth[month] || 0) + 1;
   });
 
   const Bar: React.FC<{ label: string; value: number; max: number; color?: string }> = ({ label, value, max, color = OR }) => (
@@ -559,12 +718,35 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ reports }) => {
     </div>
   );
 
+  const handleExportAnalytics = () => {
+    exportAnalyticsToCSV({
+      totalReports: reports.length,
+      boysTrained: boys,
+      girlsTrained: girls,
+      totalLearners: boys + girls,
+      approved: byStatus.approved,
+      pending: byStatus.pending,
+      rejected: byStatus.rejected,
+      forwarded: byStatus.forwarded
+    }, `ett-analytics-${new Date().toISOString().split('T')[0]}`);
+  };
+
   return (
     <div className="space-y-5 animate-fade-in-up">
-      <div>
-        <Kicker text="Statistical Ledger" />
-        <h1 className="text-base font-bold text-black dark:text-white m-0">Operational Analytics</h1>
-        <p className="text-xs text-slate-400">Audited session summaries compiled directly from local database records.</p>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div>
+          <Kicker text="Statistical Ledger" />
+          <h1 className="text-base font-bold text-black dark:text-white m-0">Operational Analytics</h1>
+          <p className="text-xs text-slate-400">Audited session summaries compiled directly from local database records.</p>
+        </div>
+        <Btn
+          variant="secondary"
+          onClick={handleExportAnalytics}
+          className="gap-2"
+        >
+          <Download size={14} />
+          Export Analytics
+        </Btn>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -593,6 +775,13 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ reports }) => {
           <h4 className="text-xs font-extrabold uppercase text-black dark:text-white opacity-80 tracking-wider mb-4">Submission activity by location</h4>
           {Object.entries(byDist).map(([k, v]) => (
             <Bar key={k} label={k} value={v} max={Math.max(...Object.values(byDist), 1)} />
+          ))}
+        </Card>
+
+        <Card className="p-5">
+          <h4 className="text-xs font-extrabold uppercase text-black dark:text-white opacity-80 tracking-wider mb-4">Monthly submission trend</h4>
+          {Object.entries(byMonth).sort().map(([k, v]) => (
+            <Bar key={k} label={k} value={v} max={Math.max(...Object.values(byMonth), 1)} color="#8b5cf6" />
           ))}
         </Card>
       </div>
@@ -799,16 +988,206 @@ export default function App() {
   const [notifOpen, setNotifOpen] = useState(false);
   const [editingReport, setEditingReport] = useState<Report | null>(null);
   const [forwardModal, setForwardModal] = useState<Report | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [sessionTimeout, setSessionTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const [showSessionWarning, setShowSessionWarning] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<string>(new Date().toISOString());
+  const [notificationPrefs, setNotificationPrefs] = useState({
+    email: true,
+    push: true,
+    pending: true,
+    approved: true,
+    rejected: false,
+    forwarded: false
+  });
+  const [pinnedWidgets, setPinnedWidgets] = useState<string[]>(['kpi', 'charts', 'map']);
+  const [draftReports, setDraftReports] = useState<Report[]>([]);
+  const [bulkReports, setBulkReports] = useState<Partial<Report>[]>([]);
+  const [showTour, setShowTour] = useState(false);
+  const [tourCompleted, setTourCompleted] = useState(false);
+
+  const SESSION_TIMEOUT_MINUTES = 30; // 30 minutes of inactivity
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3800);
   }, []);
 
+  // Session timeout management
+  useEffect(() => {
+    if (!user) {
+      if (sessionTimeout) clearTimeout(sessionTimeout);
+      setSessionTimeout(null);
+      setShowSessionWarning(false);
+      return;
+    }
+
+    const resetSessionTimer = () => {
+      if (sessionTimeout) clearTimeout(sessionTimeout);
+      setShowSessionWarning(false);
+      
+      // Set timeout for auto-logout
+      const timeout = setTimeout(() => {
+        setUser(null);
+        setPage('dashboard');
+        showToast('Session expired due to inactivity');
+      }, SESSION_TIMEOUT_MINUTES * 60 * 1000);
+      
+      setSessionTimeout(timeout);
+    };
+
+    // Show warning 1 minute before timeout
+    const warningTimeout = setTimeout(() => {
+      setShowSessionWarning(true);
+    }, (SESSION_TIMEOUT_MINUTES - 1) * 60 * 1000);
+
+    resetSessionTimer();
+
+    const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+    const handleActivity = () => {
+      resetSessionTimer();
+    };
+
+    activityEvents.forEach(event => {
+      window.addEventListener(event, handleActivity);
+    });
+
+    return () => {
+      activityEvents.forEach(event => {
+        window.removeEventListener(event, handleActivity);
+      });
+      if (sessionTimeout) clearTimeout(sessionTimeout);
+      if (warningTimeout) clearTimeout(warningTimeout);
+    };
+  }, [user]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl/Cmd + K for search
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+      // Ctrl/Cmd + N for new report
+      if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+        e.preventDefault();
+        if (user) {
+          setPage('submit');
+        }
+      }
+      // Escape to close modals
+      if (e.key === 'Escape') {
+        setNotifOpen(false);
+        setSearchOpen(false);
+        setEditingReport(null);
+        setForwardModal(null);
+      }
+      // Ctrl/Cmd + / to focus search input
+      if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+        e.preventDefault();
+        // Focus on search input if available
+        const searchInput = document.querySelector('input[type="search"], input[placeholder*="search" i]') as HTMLInputElement;
+        if (searchInput) {
+          searchInput.focus();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [user, page]);
+
   // Synchronize dynamic lists to storage
   useEffect(() => {
     safeStorage.setItem("ett_reports", JSON.stringify(reports));
+    setLastUpdated(new Date().toISOString());
   }, [reports]);
+
+  // Load draft reports from local storage
+  useEffect(() => {
+    try {
+      const savedDrafts = safeStorage.getItem("ett_drafts");
+      if (savedDrafts) {
+        setDraftReports(JSON.parse(savedDrafts));
+      }
+    } catch (e) {
+      console.error("Failed to load draft reports:", e);
+    }
+  }, []);
+
+  // Check if tour should be shown for first-time users
+  useEffect(() => {
+    const tourShown = safeStorage.getItem("ett_tour_completed");
+    if (!tourShown && user) {
+      setShowTour(true);
+    }
+  }, [user]);
+
+  const tourSteps = [
+    { target: "dashboard", title: "Welcome to ETT Dashboard", content: "This is your main dashboard showing key performance indicators, charts, and maps for the ETT Malawi program." },
+    { target: "reports", title: "Reports Management", content: "View, filter, and manage all session reports. You can approve, reject, or forward reports based on your role." },
+    { target: "submit", title: "Submit Reports", content: "Submit new session records with details about learners, curriculum, and training outcomes." },
+    { target: "maps", title: "Interactive Maps", content: "View school clusters, districts, and training locations on an interactive map with layer toggles." },
+    { target: "analytics", title: "Analytics", content: "View detailed analytics and statistics about training progress and impact." },
+    { target: "settings", title: "Settings", content: "Customize your preferences including dark mode, notifications, and other app settings." }
+  ];
+
+  const handleTourComplete = () => {
+    setShowTour(false);
+    setTourCompleted(true);
+    safeStorage.setItem("ett_tour_completed", "true");
+    showToast("🎉 Tour completed!");
+  };
+
+  // Save draft reports to local storage
+  useEffect(() => {
+    safeStorage.setItem("ett_drafts", JSON.stringify(draftReports));
+  }, [draftReports]);
+
+  const saveAsDraft = (report: Partial<Report>) => {
+    const draft: Report = {
+      ...report,
+      id: Date.now(),
+      status: 'draft',
+      submitted_at: new Date().toISOString().split("T")[0],
+      submitted_by: user?.name || "Unknown",
+      boys: report.boys || 0,
+      girls: report.girls || 0,
+      school: report.school || "",
+      district: report.district || "",
+      zone: report.zone || "",
+      curriculum: report.curriculum || "",
+      session: report.session || ""
+    } as Report;
+    setDraftReports([...draftReports, draft]);
+    showToast("💾 Report saved as draft");
+  };
+
+  const submitBulkReports = () => {
+    const validReports = bulkReports.filter(r => 
+      r.school && r.district && r.session && r.boys !== undefined && r.girls !== undefined
+    );
+    
+    if (validReports.length === 0) {
+      showToast("⚠️ No valid reports to submit");
+      return;
+    }
+
+    const newReports = validReports.map(r => ({
+      ...r,
+      id: Date.now() + Math.random(),
+      status: "pending",
+      submitted_at: new Date().toISOString().split("T")[0],
+      submitted_by: user?.name || "Unknown",
+      boys: r.boys || 0,
+      girls: r.girls || 0
+    })) as Report[];
+
+    setReports([...reports, ...newReports]);
+    setBulkReports([]);
+    showToast(`✅ ${newReports.length} reports submitted successfully`);
+  };
 
   useEffect(() => {
     safeStorage.setItem("ett_users", JSON.stringify(users));
@@ -854,11 +1233,35 @@ export default function App() {
   };
 
   const updateStatus = (id: number, status: 'approved' | 'rejected' | 'forwarded') => {
+    const report = reports.find(r => r.id === id);
+    if (report && user) {
+      addAuditLog({
+        action: status,
+        entityType: 'report',
+        entityId: id,
+        entityName: report.school,
+        performedBy: user.name,
+        performedByRole: user.role,
+        details: `Report from ${report.school} in ${report.district} was ${status}`
+      });
+    }
     setReports(p => p.map(r => r.id === id ? { ...r, status } : r));
   };
 
   // DC Forward file operation
   const forwardReport = (id: number) => {
+    const report = reports.find(r => r.id === id);
+    if (report && user) {
+      addAuditLog({
+        action: 'forwarded',
+        entityType: 'report',
+        entityId: id,
+        entityName: report.school,
+        performedBy: user.name,
+        performedByRole: user.role,
+        details: `Report from ${report.school} in ${report.district} was forwarded to National Admin`
+      });
+    }
     setReports(p => p.map(r => r.id === id ? {
       ...r,
       status: "forwarded" as const,
@@ -905,7 +1308,7 @@ export default function App() {
       case "dashboard":
         return <Dashboard user={user} reports={reports} setPage={setPage} darkMode={darkMode} />;
       case "submit":
-        return <SubmitReport user={user} onSubmit={addReport} showToast={showToast} />;
+        return <SubmitReport user={user} onSubmit={addReport} showToast={showToast} onSaveDraft={saveAsDraft} />;
       case "reports":
       case "my_reports":
         return isStaff ? (
@@ -916,6 +1319,7 @@ export default function App() {
             showToast={showToast}
             onEditReport={setEditingReport}
             onForwardReport={setForwardModal}
+            onBulkSubmit={submitBulkReports}
           />
         ) : null;
       case "maps":
@@ -939,9 +1343,9 @@ export default function App() {
       case "tasks":
         return user ? <TasksPage user={user} /> : <div className="p-12 text-center text-slate-400 font-semibold italic">Sign in to view Tasks.</div>;
       case "settings":
-        return <SettingsPage user={user} darkMode={darkMode} setDarkMode={setDarkMode} showToast={showToast} reportsCount={reports.length} />;
+        return <SettingsPage user={user} darkMode={darkMode} setDarkMode={setDarkMode} showToast={showToast} reportsCount={reports.length} notificationPrefs={notificationPrefs} setNotificationPrefs={setNotificationPrefs} />;
       default:
-        return <Dashboard user={user} reports={reports} setPage={setPage} darkMode={darkMode} />;
+        return <Dashboard user={user} reports={reports} setPage={setPage} darkMode={darkMode} pinnedWidgets={pinnedWidgets} setPinnedWidgets={setPinnedWidgets} />;
     }
   };
 
@@ -1026,26 +1430,61 @@ export default function App() {
           <div className="flex-1 overflow-y-auto">{renderPageContent()}</div>
         ) : (
           <>
-            <aside className="flex w-56 shrink-0 flex-col bg-white dark:bg-[#0f1623] border-r border-neutral-200 dark:border-slate-800">
-              <div className="h-12 flex items-center gap-2 px-3 border-b border-neutral-200 dark:border-slate-800 shrink-0">
-                <AfricaLogo size={22} />
-                <span className="font-bold text-sm text-black dark:text-white truncate">ETT Malawi</span>
+            {/* Mobile menu overlay */}
+            {sidebarOpen && (
+              <div 
+                className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                onClick={() => setSidebarOpen(false)}
+              />
+            )}
+
+            {/* Mobile-responsive sidebar */}
+            <aside className={`fixed lg:relative z-50 lg:z-auto flex flex-col bg-white dark:bg-[#0f1623] border-r border-neutral-200 dark:border-slate-800 transition-transform duration-300 ease-in-out ${
+              sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+            } w-64 shrink-0 h-full`}>
+              <div className="h-14 flex items-center justify-between px-4 border-b border-neutral-200 dark:border-slate-800 shrink-0">
+                <div className="flex items-center gap-2">
+                  <AfricaLogo size={24} />
+                  <span className="font-bold text-sm text-black dark:text-white truncate">ETT Malawi</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSidebarOpen(false)}
+                  className="lg:hidden w-8 h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-slate-700 hover:border-orange-400 text-black dark:text-white"
+                >
+                  <X size={16} />
+                </button>
               </div>
-              <div className="flex-1 overflow-y-auto p-2">{renderNav()}</div>
-              <div className="p-3 border-t border-neutral-200 dark:border-slate-800 text-[10px] text-black dark:text-white opacity-60 shrink-0">
-                Helpline <b className="text-orange-600 dark:text-orange-400">116</b> · VSU <b className="text-orange-600 dark:text-orange-400">997</b>
+              <div className="flex-1 overflow-y-auto p-3">{renderNav(() => setSidebarOpen(false))}</div>
+              <div className="p-4 border-t border-neutral-200 dark:border-slate-800 text-[10px] text-black dark:text-white opacity-60 shrink-0">
+                <div className="flex items-center justify-between">
+                  <span>Helpline <b className="text-orange-600 dark:text-orange-400">116</b></span>
+                  <span>VSU <b className="text-orange-600 dark:text-orange-400">997</b></span>
+                </div>
               </div>
             </aside>
 
             <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#0f1623]">
-              <header className="h-12 shrink-0 flex items-center justify-between gap-3 px-3 border-b border-neutral-200 dark:border-slate-800 bg-white dark:bg-[#0f1623]">
+              <header className="h-14 shrink-0 flex items-center justify-between gap-3 px-3 sm:px-4 border-b border-neutral-200 dark:border-slate-800 bg-white dark:bg-[#0f1623]" role="banner">
                 <div className="flex items-center gap-2 min-w-0">
-                  <h2 className="text-sm font-semibold text-black dark:text-white truncate m-0">
-                    {PAGE_LABELS[page] || "Overview"}
-                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => setSidebarOpen(true)}
+                    className="lg:hidden w-8 h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-slate-700 hover:border-orange-400 text-black dark:text-white"
+                    aria-label="Open navigation menu"
+                    aria-expanded={sidebarOpen}
+                  >
+                    <Menu size={16} />
+                  </button>
+                  <div className="flex flex-col min-w-0">
+                    <Breadcrumbs 
+                      items={[{ label: 'Dashboard', path: 'dashboard' }]} 
+                      currentPage={PAGE_LABELS[page] || "Overview"} 
+                    />
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                   {user && (
                     <div className="relative">
                       <button
@@ -1053,39 +1492,45 @@ export default function App() {
                         onClick={() => setNotifOpen(!notifOpen)}
                         className="w-8 h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-slate-700 hover:border-orange-400 text-black dark:text-white relative"
                         title={`${pendingCount} pending reviews`}
+                        aria-label={`Notifications: ${pendingCount} pending reviews`}
+                        aria-expanded={notifOpen}
+                        aria-haspopup="true"
                       >
                         <Bell size={14} />
                         {pendingCount > 0 && (
-                          <span className="absolute -top-1 -right-1 bg-red-600 text-white font-bold text-[9px] min-w-[16px] h-4 rounded-full flex items-center justify-center px-0.5">
+                          <span className="absolute -top-1 -right-1 bg-red-600 text-white font-bold text-[9px] min-w-[16px] h-4 rounded-full flex items-center justify-center px-0.5" aria-label={`${pendingCount} pending`}>
                             {pendingCount}
                           </span>
                         )}
                       </button>
 
                       {notifOpen && (
-                        <div className="absolute right-0 top-10 bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg shadow-lg p-3 w-64 z-50 text-black dark:text-white">
-                          <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 mb-2">
-                            <span className="font-semibold text-xs">Pending reviews</span>
-                            {pendingCount > 0 && <span className="bg-amber-100 text-amber-800 text-[9px] px-1.5 rounded">Action required</span>}
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
+                          <div className="absolute right-0 top-10 sm:right-0 bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg shadow-lg p-3 w-72 sm:w-64 z-50 text-black dark:text-white">
+                            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 mb-2">
+                              <span className="font-semibold text-xs">Pending reviews</span>
+                              {pendingCount > 0 && <span className="bg-amber-100 text-amber-800 text-[9px] px-1.5 rounded">Action required</span>}
+                            </div>
+                            <div className="max-h-[200px] overflow-y-auto space-y-1.5">
+                              {reports.filter(r => r.status === "pending" && (user.role === "district_coordinator" ? r.district === user.district : true)).length === 0 ? (
+                                <p className="text-xs py-3 text-center m-0 opacity-60">No pending files.</p>
+                              ) : (
+                                reports.filter(r => r.status === "pending" && (user.role === "district_coordinator" ? r.district === user.district : true)).map(r => (
+                                  <button
+                                    key={r.id}
+                                    type="button"
+                                    onClick={() => { setPage("reports"); setNotifOpen(false); }}
+                                    className="w-full text-left p-2 bg-white dark:bg-[#0f1623] rounded border border-neutral-200 dark:border-slate-800 hover:border-orange-400 text-[11px] text-black dark:text-white"
+                                  >
+                                    <div className="font-semibold truncate">{r.school}</div>
+                                    <div className="text-[10px] opacity-60">{r.district} · {r.submitted_at}</div>
+                                  </button>
+                                ))
+                              )}
+                            </div>
                           </div>
-                          <div className="max-h-[200px] overflow-y-auto space-y-1.5">
-                            {reports.filter(r => r.status === "pending" && (user.role === "district_coordinator" ? r.district === user.district : true)).length === 0 ? (
-                              <p className="text-xs py-3 text-center m-0 opacity-60">No pending files.</p>
-                            ) : (
-                              reports.filter(r => r.status === "pending" && (user.role === "district_coordinator" ? r.district === user.district : true)).map(r => (
-                                <button
-                                  key={r.id}
-                                  type="button"
-                                  onClick={() => { setPage("reports"); setNotifOpen(false); }}
-                                  className="w-full text-left p-2 bg-white dark:bg-[#0f1623] rounded border border-neutral-200 dark:border-slate-800 hover:border-orange-400 text-[11px] text-black dark:text-white"
-                                >
-                                  <div className="font-semibold truncate">{r.school}</div>
-                                  <div className="text-[10px] opacity-60">{r.district} · {r.submitted_at}</div>
-                                </button>
-                              ))
-                            )}
-                          </div>
-                        </div>
+                        </>
                       )}
                     </div>
                   )}
@@ -1095,6 +1540,7 @@ export default function App() {
                     onClick={() => setDarkMode(!darkMode)}
                     className="w-8 h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-slate-700 hover:border-orange-400 text-black dark:text-white"
                     title="Toggle theme"
+                    aria-label={`Switch to ${darkMode ? 'light' : 'dark'} mode`}
                   >
                     {darkMode ? <Sun size={14} /> : <Moon size={14} />}
                   </button>
@@ -1106,19 +1552,21 @@ export default function App() {
                       page === 'settings' ? 'border-orange-500 text-orange-600' : 'border-neutral-200 dark:border-slate-700'
                     }`}
                     title="Settings"
+                    aria-label="Open settings"
+                    aria-current={page === 'settings' ? 'page' : undefined}
                   >
                     <Settings size={14} />
                   </button>
 
                   {user ? (
                     <>
-                      <span className="hidden sm:inline text-xs font-medium text-black dark:text-white max-w-[120px] truncate">
+                      <span className="hidden sm:inline text-xs font-medium text-black dark:text-white max-w-[100px] sm:max-w-[120px] truncate">
                         {user.name}
                       </span>
                       <button
                         type="button"
                         onClick={() => { setUser(null); setPage("dashboard"); showToast("Signed out."); }}
-                        className="px-2.5 py-1 rounded-md bg-red-600 hover:bg-red-700 text-white font-semibold text-xs"
+                        className="px-2 sm:px-2.5 py-1 rounded-md bg-red-600 hover:bg-red-700 text-white font-semibold text-xs"
                       >
                         Sign out
                       </button>
@@ -1127,7 +1575,7 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => setPage("login")}
-                      className="px-2.5 py-1 bg-orange-600 hover:bg-orange-700 text-white font-semibold text-xs rounded-md"
+                      className="px-2 sm:px-2.5 py-1 bg-orange-600 hover:bg-orange-700 text-white font-semibold text-xs rounded-md"
                     >
                       Sign in
                     </button>
@@ -1135,8 +1583,16 @@ export default function App() {
                 </div>
               </header>
 
-              <main className="flex-1 overflow-y-auto p-4">
+              <main className="flex-1 overflow-y-auto p-3 sm:p-4">
                 <div className="max-w-7xl mx-auto">
+                  {page !== 'login' && (
+                    <div className="flex items-center justify-end mb-2 text-[10px] text-slate-500 dark:text-slate-400">
+                      <span className="flex items-center gap-1">
+                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                        Last updated: {new Date(lastUpdated).toLocaleString()}
+                      </span>
+                    </div>
+                  )}
                   {renderPageContent()}
                 </div>
               </main>
@@ -1146,6 +1602,33 @@ export default function App() {
       </div>
 
       {toast && <Toast msg={toast} onClose={() => setToast(null)} />}
+
+      {/* Session timeout warning */}
+      {showSessionWarning && (
+        <div className="fixed bottom-4 right-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 rounded-lg shadow-lg p-4 z-[99999] max-w-sm">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">⏰</span>
+            <div className="flex-1">
+              <h4 className="font-bold text-amber-800 dark:text-amber-400 text-sm mb-1">Session Expiring Soon</h4>
+              <p className="text-xs text-amber-700 dark:text-amber-300">Your session will expire in 1 minute due to inactivity. Continue working to stay signed in.</p>
+            </div>
+            <button
+              onClick={() => setShowSessionWarning(false)}
+              className="text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Help/Tour for first-time users */}
+      <Tour
+        steps={tourSteps}
+        isOpen={showTour}
+        onClose={() => setShowTour(false)}
+        onComplete={handleTourComplete}
+      />
 
       {/* Persistence and forwarding models */}
       {editingReport && (
