@@ -62,14 +62,9 @@ const PdfViewer: React.FC<PdfViewerProps> = ({ url, title, subtitle, onClose }) 
         </div>
       </div>
 
-      {/* PDF iframe — presentation mode */}
+      {/* PDF viewer — iframe on desktop, Google Docs viewer on mobile */}
       <div className="flex-1 bg-[#1a1a2e] overflow-hidden">
-        <iframe
-          src={`${url}#toolbar=0&navpanes=0&scrollbar=1&view=FitH&zoom=page-fit`}
-          className="w-full h-full border-none"
-          title={title}
-          style={{ background: '#1a1a2e' }}
-        />
+        <PdfEmbed url={url} title={title} />
       </div>
     </div>
   );
