@@ -338,3 +338,18 @@ export const AfricaLogo: React.FC<{ size?: number; variant?: 'orange' | 'black' 
     />
   );
 };
+
+// ─── TREND INDICATOR ─────────────────────────
+export const TrendIndicator: React.FC<{ value: number; suffix?: string; className?: string }> = ({
+  value,
+  suffix = '%',
+  className = ''
+}) => {
+  const isPositive = value >= 0;
+  return (
+    <span className={`inline-flex items-center gap-0.5 text-xs font-bold ${isPositive ? 'text-emerald-600' : 'text-red-500'} ${className}`}>
+      <span>{isPositive ? '▲' : '▼'}</span>
+      <span>{Math.abs(value)}{suffix}</span>
+    </span>
+  );
+};
