@@ -141,7 +141,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onPublicView, onRegister
       <Card className="w-full max-w-sm p-6">
         <div className="mb-5 flex flex-col items-center">
           <AfricaLogo size={36} variant="full" className="mb-2" />
-          <h1 className="text-base font-bold text-black dark:text-white m-0">ETT Malawi Portal</h1>
+          <h1 className="text-base font-bold text-black dark:text-white m-0">Ujamaa Dashboard</h1>
           <p className="text-[11px] text-black dark:text-white mt-1 m-0 opacity-60">Staff sign-in</p>
         </div>
 
@@ -391,7 +391,7 @@ const ETTPage: React.FC = () => (
   <div className="space-y-6 max-w-4xl mx-auto animate-fade-in-up">
     <div>
       <Kicker text="Standard Operating Procedures" />
-      <h1 className="text-base font-bold text-black dark:text-white m-0">ETT Malawi Standards</h1>
+      <h1 className="text-base font-bold text-black dark:text-white m-0">ETT Standards</h1>
       <p className="text-xs text-black dark:text-white opacity-80 mt-1 m-0">Governance parameters mapping safety, code of conduct, and reporting timelines.</p>
     </div>
 
@@ -753,7 +753,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers, showTo
 };
 
 const PAGE_LABELS: Record<string, string> = {
-  dashboard: "Overview",
+  dashboard: "ETT ScaleUp Program",
   submit: "Submit Report",
   reports: "Reports",
   my_reports: "My Reports",
@@ -949,9 +949,9 @@ export default function App() {
   const PROTECTED_PAGES = ["submit", "reports", "calendar", "tasks", "analytics", "users"];
   const activeNavGroups = [
     {
-      title: "Overview",
+      title: "ETT ScaleUp Program",
       items: [
-        { id: "dashboard", label: "Overview", icon: LayoutDashboard },
+        { id: "dashboard", label: "ETT ScaleUp Program", icon: LayoutDashboard },
         { id: "maps", label: "Clusters map", icon: Map },
         { id: "districts", label: "Districts", icon: MapPin },
         { id: "trainings", label: "Trainings", icon: GraduationCap },
@@ -1046,7 +1046,7 @@ export default function App() {
                     <div className="flex justify-between items-center pb-3 mb-2 border-b border-neutral-200 dark:border-slate-800">
                       <div className="flex items-center gap-2">
                         <AfricaLogo size={22} />
-                        <span className="font-bold text-sm text-black dark:text-white">ETT Malawi</span>
+                        <span className="font-bold text-sm text-black dark:text-white">Ujamaa Dashboard</span>
                       </div>
                       <button type="button" onClick={() => setSidebarOpen(false)} className="text-black dark:text-white opacity-60 hover:opacity-100">
                         <X size={16} />
@@ -1064,7 +1064,7 @@ export default function App() {
             <aside className="hidden md:flex w-56 shrink-0 flex-col bg-white dark:bg-[#0f1623] border-r border-neutral-200 dark:border-slate-800">
               <div className="h-12 flex items-center gap-2 px-3 border-b border-neutral-200 dark:border-slate-800 shrink-0">
                 <AfricaLogo size={22} />
-                <span className="font-bold text-sm text-black dark:text-white truncate">ETT Malawi</span>
+                <span className="font-bold text-sm text-black dark:text-white truncate">Ujamaa Dashboard</span>
               </div>
               <div className="flex-1 overflow-y-auto p-2">{renderNav()}</div>
               <div className="p-3 border-t border-neutral-200 dark:border-slate-800 text-[10px] text-black dark:text-white opacity-60 shrink-0">
@@ -1084,7 +1084,7 @@ export default function App() {
                     <Sliders size={16} />
                   </button>
                   <h2 className="text-sm font-semibold text-black dark:text-white truncate m-0">
-                    {PAGE_LABELS[page] || "Overview"}
+                    {PAGE_LABELS[page] || "ETT ScaleUp Program"}
                   </h2>
                 </div>
 

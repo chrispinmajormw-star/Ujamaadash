@@ -1,23 +1,19 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Shield, FilePlus, MapPin, GraduationCap, School, BookOpen, TrendingUp, FileText, Clock, CheckSquare, Users, Map, Pin, PinOff } from 'lucide-react';
+import React, { useEffect, useRef } from 'react';
+import { Shield, FilePlus, MapPin, GraduationCap, School, BookOpen, TrendingUp, FileText, Clock, CheckSquare, Users, Map } from 'lucide-react';
 import { User, Report } from '../types';
 import { ROLE_CFG, can, DISTRICTS, DISTRICT_INFO, MAP_CLUSTERS } from '../data';
-import { Card, PageHeader, Btn, Pill, TrendIndicator } from './SubComponents';
+import { Card, PageHeader, Btn, Pill } from './SubComponents';
 
 interface DashboardProps {
   user: User | null;
   reports: Report[];
   setPage: (p: string) => void;
   darkMode: boolean;
-  pinnedWidgets?: string[];
-  setPinnedWidgets?: (widgets: string[]) => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, darkMode, pinnedWidgets, setPinnedWidgets }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, darkMode }) => {
   const currentUser = user || { role: "viewer" as const, name: "Public Viewer", district: null };
   const isStaff = user && ["admin", "district_coordinator", "data_entry"].includes(user.role);
-
-  const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
 
   const my = (currentUser.role === "data_entry" || currentUser.role === "tot")
     ? reports.filter(r => r.submitted_by === currentUser.name)
@@ -25,18 +21,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
       ? reports.filter(r => r.district === currentUser.district)
       : reports;
 
-  // Filter by date range
-  const filteredReports = dateRange.start || dateRange.end
-    ? my.filter(r => {
-      if (dateRange.start && r.submitted_at < dateRange.start) return false;
-      if (dateRange.end && r.submitted_at > dateRange.end) return false;
-      return true;
-    })
-    : my;
-
-  const pending = filteredReports.filter(r => r.status === "pending").length;
-  const approved = filteredReports.filter(r => r.status === "approved").length;
-  const students = filteredReports.reduce((acc, r) => acc + r.boys + r.girls, 0);
+  const pending = my.filter(r => r.status === "pending").length;
+  const approved = my.filter(r => r.status === "approved").length;
+  const students = my.reduce((acc, r) => acc + r.boys + r.girls, 0);
 
   const YEARLY_DATA = [
     { year: "2023", schools: 116, teachers: 228, learners: 45600, targetSchools: 225, targetLearners: 45000 },
@@ -222,7 +209,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
 
       <PageHeader
         title={user ? `Welcome, ${currentUser.name}` : "Program overview"}
-        subtitle={user ? `${ROLE_CFG[user.role]?.label}${currentUser.district ? ` · ${currentUser.district}` : ''}` : "ETT Malawi · Ujamaa Pamodzi Africa"}
+        subtitle={user ? `${ROLE_CFG[user.role]?.label}${currentUser.district ? ` · ${currentUser.district}` : ''}` : "Ujamaa Dashboard · Ujamaa Pamodzi Africa"}
         actions={
           <>
             <Btn size="sm" onClick={() => setPage("submit")}>
@@ -240,66 +227,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
         }
       />
 
-      {/* Date Range Filter for KPIs */}
-      {isStaff && (
-        <div className="bg-white dark:bg-[#0f1623] border border-gray-200 dark:border-slate-800 rounded-lg p-3 flex items-center gap-3">
-          <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-400">KPI Date Range:</span>
-          <input
-            type="date"
-            value={dateRange.start}
-            onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-            className="px-2 py-1 text-[11px] border border-gray-200 dark:border-slate-700 rounded focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-[#0f1623] text-black dark:text-white"
-          />
-          <span className="text-slate-400">to</span>
-          <input
-            type="date"
-            value={dateRange.end}
-            onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-            className="px-2 py-1 text-[11px] border border-gray-200 dark:border-slate-700 rounded focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-[#0f1623] text-black dark:text-white"
-          />
-          <button
-            onClick={() => setDateRange({ start: '', end: '' })}
-            className="text-[10px] text-orange-600 dark:text-orange-400 font-semibold hover:underline"
-          >
-            Clear
-          </button>
-        </div>
-      )}
-
       {/* KPI row */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {pinnedWidgets && setPinnedWidgets && (
-          <button
-            onClick={() => {
-              if (pinnedWidgets.includes('kpi')) {
-                setPinnedWidgets(pinnedWidgets.filter(w => w !== 'kpi'));
-              } else {
-                setPinnedWidgets([...pinnedWidgets, 'kpi']);
-              }
-            }}
-            className="flex items-center gap-1 text-[10px] text-slate-500 hover:text-orange-600 transition-colors"
-            title="Toggle KPI widget"
-          >
-            {pinnedWidgets.includes('kpi') ? <PinOff size={14} /> : <Pin size={14} />}
-            {pinnedWidgets.includes('kpi') ? 'Unpin KPIs' : 'Pin KPIs'}
-          </button>
-        )}
         {!isStaff ? (
           <>
             {[
-              { icon: <GraduationCap size={16} className="text-orange-600" />, label: "Learners", value: "592,200+", previous: 395000 },
-              { icon: <School size={16} className="text-orange-600" />, label: "Schools", value: "2,964", previous: 1482 },
-              { icon: <MapPin size={16} className="text-orange-600" />, label: "Districts", value: "15", previous: 12 },
-              { icon: <Shield size={16} className="text-orange-600" />, label: "TOTs", value: "665", previous: 540 },
-              { icon: <BookOpen size={16} className="text-orange-600" />, label: "Lessons", value: "17,784+", previous: 12000 },
-              { icon: <TrendingUp size={16} className="text-orange-600" />, label: "Coverage", value: "54%", previous: 42 },
+              { icon: <GraduationCap size={16} className="text-orange-600" />, label: "Learners", value: "592,200+" },
+              { icon: <School size={16} className="text-orange-600" />, label: "Schools", value: "2,964" },
+              { icon: <MapPin size={16} className="text-orange-600" />, label: "Districts", value: "15" },
+              { icon: <Shield size={16} className="text-orange-600" />, label: "TOTs", value: "665" },
+              { icon: <BookOpen size={16} className="text-orange-600" />, label: "Lessons", value: "17,784+" },
+              { icon: <TrendingUp size={16} className="text-orange-600" />, label: "Coverage", value: "54%" },
             ].map((s, i) => (
               <Card key={i} className="p-3">
                 <div className="flex items-center gap-2 mb-1">{s.icon}<span className="text-[10px] text-black dark:text-white opacity-80 font-medium">{s.label}</span></div>
-                <div className="flex items-center justify-between">
-                  <div className="text-lg font-bold text-black dark:text-white">{s.value}</div>
-                  <TrendIndicator value={parseInt(s.value.replace(/[^0-9]/g, '')) || 0} previousValue={s.previous} />
-                </div>
+                <div className="text-lg font-bold text-black dark:text-white">{s.value}</div>
               </Card>
             ))}
           </>
