@@ -1075,7 +1075,7 @@ export default function App() {
               )}
             </AnimatePresence>
 
-            <aside className="hidden md:flex w-56 shrink-0 flex-col bg-white dark:bg-[#0f1623] border-r border-neutral-200 dark:border-slate-800">
+            <aside className="hidden md:flex w-56 shrink-0 flex-col bg-white dark:bg-[#0f1623] border-r border-neutral-200 dark:border-slate-800 overflow-hidden">
               <div className="h-12 flex items-center gap-2 px-3 border-b border-neutral-200 dark:border-slate-800 shrink-0">
                 <AfricaLogo size={22} />
                 <span className="font-bold text-sm text-black dark:text-white truncate">ETT Malawi</span>
