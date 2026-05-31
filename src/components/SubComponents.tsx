@@ -353,3 +353,104 @@ export const TrendIndicator: React.FC<{ value: number; suffix?: string; classNam
     </span>
   );
 };
+
+// ─── CONFIRM DIALOG ──────────────────────────
+interface ConfirmDialogProps {
+  title: string;
+  message: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+  variant?: 'danger' | 'warning' | 'info';
+}
+export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
+  title,
+  message,
+  confirmLabel = 'Confirm',
+  cancelLabel = 'Cancel',
+  onConfirm,
+  onCancel,
+  variant = 'danger'
+}) => {
+  const colors = {
+    danger: { btn: 'bg-red-600 hover:bg-red-700', icon: '⚠️' },
+    warning: { btn: 'bg-amber-500 hover:bg-amber-600', icon: '⚡' },
+    info: { btn: 'bg-blue-600 hover:bg-blue-700', icon: 'ℹ️' }
+  };
+  const c = colors[variant];
+  return (
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50" onClick={onCancel} />
+      <div className="relative bg-white dark:bg-[#0f1623] rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 p-6 max-w-sm w-full z-10">
+        <div className="text-2xl mb-3">{c.icon}</div>
+        <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-2">{title}</h3>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-5 leading-relaxed">{message}</p>
+        <div className="flex gap-2 justify-end">
+          <button
+            onClick={onCancel}
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+          >
+            {cancelLabel}
+          </button>
+          <button
+            onClick={onConfirm}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg text-white ${c.btn}`}
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── BREADCRUMBS ─────────────────────────────
+interface BreadcrumbsProps {
+  items: { label: string; onClick?: () => void }[];
+}
+export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items }) => (
+  <nav className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 mb-3">
+    {items.map((item, i) => (
+      <React.Fragment key={i}>
+        {i > 0 && <span>/</span>}
+        {item.onClick ? (
+          <button onClick={item.onClick} className="hover:text-orange-500 font-medium transition">
+            {item.label}
+          </button>
+        ) : (
+          <span className="text-slate-600 dark:text-slate-300 font-semibold">{item.label}</span>
+        )}
+      </React.Fragment>
+    ))}
+  </nav>
+);
+
+// ─── TOUR ────────────────────────────────────
+interface TourStep { target: string; title: string; content: string; }
+interface TourProps { steps: TourStep[]; isOpen: boolean; onClose: () => void; onComplete: () => void; }
+export const Tour: React.FC<TourProps> = ({ steps, isOpen, onClose, onComplete }) => {
+  const [step, setStep] = React.useState(0);
+  if (!isOpen) return null;
+  const current = steps[step];
+  const isLast = step === steps.length - 1;
+  return (
+    <div className="fixed bottom-6 right-6 z-[99999] bg-white dark:bg-[#0f1623] border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-5 max-w-xs w-full">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[10px] font-bold uppercase tracking-widest text-orange-500">Tour {step + 1}/{steps.length}</span>
+        <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><X size={14} /></button>
+      </div>
+      <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1">{current.title}</h4>
+      <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">{current.content}</p>
+      <div className="flex gap-2 justify-end">
+        {step > 0 && <button onClick={() => setStep(s => s - 1)} className="px-3 py-1 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">Back</button>}
+        <button
+          onClick={() => isLast ? onComplete() : setStep(s => s + 1)}
+          className="px-3 py-1 text-xs font-semibold rounded-lg bg-orange-500 hover:bg-orange-600 text-white"
+        >
+          {isLast ? 'Finish' : 'Next'}
+        </button>
+      </div>
+    </div>
+  );
+};
