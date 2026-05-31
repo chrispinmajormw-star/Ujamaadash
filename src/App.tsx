@@ -1026,7 +1026,42 @@ export default function App() {
           <div className="flex-1 overflow-y-auto">{renderPageContent()}</div>
         ) : (
           <>
-            <aside className="flex w-56 shrink-0 flex-col bg-white dark:bg-[#0f1623] border-r border-neutral-200 dark:border-slate-800">
+            <AnimatePresence>
+              {sidebarOpen && (
+                <>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 0.5 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => setSidebarOpen(false)}
+                    className="fixed inset-0 bg-black z-30 md:hidden"
+                  />
+                  <motion.aside
+                    initial={{ x: -224 }}
+                    animate={{ x: 0 }}
+                    exit={{ x: -224 }}
+                    transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+                    className="fixed top-0 bottom-0 left-0 w-56 bg-white dark:bg-[#0f1623] border-r border-neutral-200 dark:border-slate-800 z-40 p-3 flex flex-col md:hidden shadow-lg"
+                  >
+                    <div className="flex justify-between items-center pb-3 mb-2 border-b border-neutral-200 dark:border-slate-800">
+                      <div className="flex items-center gap-2">
+                        <AfricaLogo size={22} />
+                        <span className="font-bold text-sm text-black dark:text-white">ETT Malawi</span>
+                      </div>
+                      <button type="button" onClick={() => setSidebarOpen(false)} className="text-black dark:text-white opacity-60 hover:opacity-100">
+                        <X size={16} />
+                      </button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto">{renderNav(() => setSidebarOpen(false))}</div>
+                    <div className="pt-2 border-t border-neutral-200 dark:border-slate-800 text-[10px] text-black dark:text-white opacity-60">
+                      Helpline <b className="text-orange-600 dark:text-orange-400">116</b> · VSU <b className="text-orange-600 dark:text-orange-400">997</b>
+                    </div>
+                  </motion.aside>
+                </>
+              )}
+            </AnimatePresence>
+
+            <aside className="hidden md:flex w-56 shrink-0 flex-col bg-white dark:bg-[#0f1623] border-r border-neutral-200 dark:border-slate-800">
               <div className="h-12 flex items-center gap-2 px-3 border-b border-neutral-200 dark:border-slate-800 shrink-0">
                 <AfricaLogo size={22} />
                 <span className="font-bold text-sm text-black dark:text-white truncate">ETT Malawi</span>
@@ -1040,6 +1075,14 @@ export default function App() {
             <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#0f1623]">
               <header className="h-12 shrink-0 flex items-center justify-between gap-3 px-3 border-b border-neutral-200 dark:border-slate-800 bg-white dark:bg-[#0f1623]">
                 <div className="flex items-center gap-2 min-w-0">
+                  <button
+                    type="button"
+                    onClick={() => setSidebarOpen(true)}
+                    className="md:hidden p-1.5 rounded-md border border-neutral-200 dark:border-slate-700 text-black dark:text-white"
+                    aria-label="Open menu"
+                  >
+                    <Sliders size={16} />
+                  </button>
                   <h2 className="text-sm font-semibold text-black dark:text-white truncate m-0">
                     {PAGE_LABELS[page] || "Overview"}
                   </h2>
