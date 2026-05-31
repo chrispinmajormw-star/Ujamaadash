@@ -27,12 +27,18 @@ const CATEGORY_STYLES = {
   audit: { label: 'District Audit', color: '#7c3aed', bg: 'rgba(124, 58, 237, 0.1)', border: 'rgba(124, 58, 237, 0.2)' }
 };
 
+const makeDate = (dayOffset: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + dayOffset);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+};
+
 const DEFAULT_EVENTS: CalendarEvent[] = [
   {
     id: 'e1',
     title: 'Kawale Primary HIM Topic 3 Session',
     description: 'Weekly Hero In Me training focusing on assertive verbal techniques. Led by local Trainer of Trainers.',
-    date: '2026-05-15',
+    date: makeDate(2),
     category: 'training',
     district: 'Lilongwe',
     createdBy: '2',
@@ -42,7 +48,7 @@ const DEFAULT_EVENTS: CalendarEvent[] = [
     id: 'e2',
     title: 'District Coordination Progress Audit',
     description: 'Quarterly compliance and checklist audit of submissions for Lilongwe and Dedza clusters.',
-    date: '2026-05-20',
+    date: makeDate(5),
     category: 'audit',
     district: 'Lilongwe',
     createdBy: '4',
@@ -52,7 +58,7 @@ const DEFAULT_EVENTS: CalendarEvent[] = [
     id: 'e3',
     title: 'Mbayani Primary GESD Core Evaluation',
     description: 'School visit to evaluate Girls Empowerment Self-Defense trainer skills and classroom alignment.',
-    date: '2026-05-25',
+    date: makeDate(8),
     category: 'visit',
     district: 'Blantyre',
     createdBy: '4',
@@ -60,9 +66,9 @@ const DEFAULT_EVENTS: CalendarEvent[] = [
   },
   {
     id: 'e4',
-    title: 'May ETT Reports Submission Deadline',
+    title: 'ETT Reports Submission Deadline',
     description: 'All monthly data summary uploads must be completed and marked as submitted to district.',
-    date: '2026-05-28',
+    date: makeDate(12),
     category: 'deadline',
     district: 'National',
     createdBy: '1',
@@ -72,7 +78,7 @@ const DEFAULT_EVENTS: CalendarEvent[] = [
     id: 'e5',
     title: 'Zomba LEA Physical Coaching Session',
     description: 'Joint physical technique refresher course with special attention on combined session coordination.',
-    date: '2026-05-29',
+    date: makeDate(15),
     category: 'training',
     district: 'Zomba',
     createdBy: '1',
@@ -82,7 +88,7 @@ const DEFAULT_EVENTS: CalendarEvent[] = [
     id: 'e6',
     title: 'Karonga Lakeshore Cluster Kickoff',
     description: 'Planning meeting for Phase 2 expansion clusters. District coordinators and local leaders expected.',
-    date: '2026-05-30',
+    date: makeDate(20),
     category: 'visit',
     district: 'Karonga',
     createdBy: '1',
@@ -97,8 +103,10 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
   });
 
   // Keep track of current calendar navigate date
-  const [currentDate, setCurrentDate] = useState<Date>(new Date(2026, 4, 1)); // Default to May 2026 (Month index 4 is May)
-  const [selectedDateStr, setSelectedDateStr] = useState<string>('2026-05-26'); // Preselected May 26, 2026
+  const today = new Date();
+  const [currentDate, setCurrentDate] = useState<Date>(new Date(today.getFullYear(), today.getMonth(), 1));
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  const [selectedDateStr, setSelectedDateStr] = useState<string>(todayStr);
   const [showAddModal, setShowAddModal] = useState(false);
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterDistrict, setFilterDistrict] = useState<string>('all');
@@ -107,7 +115,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
   const [newEvent, setNewEvent] = useState({
     title: '',
     description: '',
-    date: '2026-05-26',
+    date: todayStr,
     category: 'training' as CalendarEvent['category'],
     district: 'National'
   });
@@ -282,10 +290,10 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
               </button>
               
               <button
-                onClick={() => setCurrentDate(new Date(2026, 4, 1))}
+                onClick={() => { setCurrentDate(new Date(today.getFullYear(), today.getMonth(), 1)); setSelectedDateStr(todayStr); }}
                 className="px-2.5 py-1 text-xs font-mono bg-slate-50 hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-500 dark:text-slate-400 font-bold transition cursor-pointer"
               >
-                May '26
+                Today
               </button>
 
               <button
@@ -323,7 +331,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
 
               const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
               const isSelected = selectedDateStr === dateStr;
-              const isToday = dateStr === '2026-05-26'; // Highlight absolute system today 
+              const isToday = dateStr === todayStr;
               const dayEvents = getEventsForDay(day);
 
               return (
@@ -409,7 +417,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                 </span>
               </div>
 
-              {selectedDateStr === '2026-05-26' && (
+              {selectedDateStr === todayStr && (
                 <Badge text="Today" color="#e85d04" bg="#fff1e6" className="text-[10px] tracking-wide" />
               )}
             </div>
