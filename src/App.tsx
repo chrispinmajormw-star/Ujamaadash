@@ -90,6 +90,7 @@ import { CurriculumPage } from './components/CurriculumPage';
 import { ImpactPage } from './components/ImpactPage';
 import { SettingsPage } from './components/SettingsPage';
 import { CalendarPage } from './components/CalendarPage';
+import { AnalyticsPage } from './components/AnalyticsPage';
 import { TasksPage } from './components/TasksPage';
 import { safeStorage } from './utils/storage';
 
@@ -531,74 +532,6 @@ const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, onOpenMap }) => {
   );
 };
 
-// ─── REGIONAL ANALYTICS VIEW ──────────────────
-interface AnalyticsPageProps {
-  reports: Report[];
-}
-const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ reports }) => {
-  const byStatus = { approved: 0, pending: 0, rejected: 0, forwarded: 0 };
-  const byCurr = { HIM: 0, GESD: 0, Combined: 0 };
-  const byDist: Record<string, number> = {};
-  let boys = 0, girls = 0;
-
-  reports.forEach(r => {
-    (byStatus as any)[r.status] = ((byStatus as any)[r.status] || 0) + 1;
-    (byCurr as any)[r.curriculum] = ((byCurr as any)[r.curriculum] || 0) + 1;
-    byDist[r.district] = (byDist[r.district] || 0) + 1;
-    boys += r.boys;
-    girls += r.girls;
-  });
-
-  const Bar: React.FC<{ label: string; value: number; max: number; color?: string }> = ({ label, value, max, color = OR }) => (
-    <div className="space-y-1 mb-3">
-      <div className="flex justify-between text-xs font-semibold">
-        <span>{label}</span>
-        <span className="font-bold whitespace-nowrap">{value} records</span>
-      </div>
-      <ProgBar pct={max > 0 ? Math.round((value / max)*100) : 0} color={color} />
-    </div>
-  );
-
-  return (
-    <div className="space-y-5 animate-fade-in-up">
-      <div>
-        <Kicker text="Statistical Ledger" />
-        <h1 className="text-base font-bold text-black dark:text-white m-0">Operational Analytics</h1>
-        <p className="text-xs text-slate-400">Audited session summaries compiled directly from local database records.</p>
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard icon={<BarChart2 size={18} className="text-orange-500" />} label="Cumulative reports" value={reports.length} />
-        <StatCard icon={<Users size={18} className="text-blue-500" />} label="Boys Trained" value={boys} color="#2563eb" />
-        <StatCard icon={<Users size={18} className="text-pink-500" />} label="Girls Trained" value={girls} color="#db2777" />
-        <StatCard icon={<Check size={18} className="text-emerald-500" />} label="Collective Learners" value={boys + girls} />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <Card className="p-5">
-          <h4 className="text-xs font-extrabold uppercase text-black dark:text-white opacity-80 tracking-wider mb-4">File State distribution</h4>
-          {Object.entries(byStatus).map(([k, v]) => (
-            <Bar key={k} label={k.toUpperCase()} value={v} max={reports.length} color={k === 'approved' ? '#059669' : k === 'rejected' ? '#dc2626' : OR} />
-          ))}
-        </Card>
-        
-        <Card className="p-5">
-          <h4 className="text-xs font-extrabold uppercase text-black dark:text-white opacity-80 tracking-wider mb-4">Curriculum usage</h4>
-          {Object.entries(byCurr).map(([k, v]) => (
-            <Bar key={k} label={k} value={v} max={reports.length} />
-          ))}
-        </Card>
-
-        <Card className="p-5">
-          <h4 className="text-xs font-extrabold uppercase text-black dark:text-white opacity-80 tracking-wider mb-4">Submission activity by location</h4>
-          {Object.entries(byDist).map(([k, v]) => (
-            <Bar key={k} label={k} value={v} max={Math.max(...Object.values(byDist), 1)} />
-          ))}
-        </Card>
-      </div>
-    </div>
-  );
-};
 
 // ─── USER DIRECTORY ──────────────────────────
 interface UsersPageProps {
