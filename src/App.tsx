@@ -880,7 +880,7 @@ export default function App() {
     setPage("maps");
   };
 
-  const isStaff = user && ["admin", "district_coordinator", "data_entry"].includes(user.role);
+  const isStaff = user && ["admin", "district_coordinator", "data_entry", "tot"].includes(user.role);
 
   const pendingCount = user && can(user.role, "approveReport")
     ? reports.filter(r => r.status === "pending" && (user.role === "district_coordinator" ? r.district === user.district : true)).length
@@ -931,13 +931,13 @@ export default function App() {
       case "analytics":
         return <AnalyticsPage reports={reports} />;
       case "users":
-        return user?.role === 'admin' ? <UsersPage user={user} users={users} setUsers={setUsers} showToast={showToast} /> : null;
+        return user?.role === 'admin' ? <UsersPage user={user} users={users} setUsers={setUsers} showToast={showToast} /> : <div className="p-12 text-center text-slate-400 font-semibold italic">Restricted to National Admin only.</div>;
       case "impact":
         return <ImpactPage reports={reports} showToast={showToast} user={user} />;
       case "calendar":
-        return isStaff ? <CalendarPage user={user} /> : null;
+        return user ? <CalendarPage user={user} /> : <div className="p-12 text-center text-slate-400 font-semibold italic">Sign in to view the Calendar.</div>;
       case "tasks":
-        return isStaff ? <TasksPage user={user} /> : null;
+        return user ? <TasksPage user={user} /> : <div className="p-12 text-center text-slate-400 font-semibold italic">Sign in to view Tasks.</div>;
       case "settings":
         return <SettingsPage user={user} darkMode={darkMode} setDarkMode={setDarkMode} showToast={showToast} reportsCount={reports.length} />;
       default:
