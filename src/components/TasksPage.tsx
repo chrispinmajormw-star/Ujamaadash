@@ -245,7 +245,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
         
         {/* Search bar */}
         <div className="md:col-span-2 relative flex items-center">
-          <Search size={14} className="absolute left-3 text-[#A4A4A9]" />
+          <Search size={14} className="absolute left-3 text-slate-400" />
           <input
             type="text"
             placeholder="Search tasks title, context summary..."
@@ -257,7 +257,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
 
         {/* Assigned role filter */}
         <div className="relative flex items-center bg-white p-1 px-3 border border-gray-200 rounded-xl">
-          <span className="text-[10px] text-[#A4A4A9] dark:text-slate-500 font-bold mr-1 whitespace-nowrap">Assigned to:</span>
+          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mr-1 whitespace-nowrap">Assigned to:</span>
           <select
             value={roleFilter}
             onChange={e => setRoleFilter(e.target.value)}
@@ -272,7 +272,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
 
         {/* Priority filter */}
         <div className="relative flex items-center bg-white p-1 px-3 border border-gray-200 rounded-xl">
-          <span className="text-[10px] text-[#A4A4A9] dark:text-slate-500 font-bold mr-1 whitespace-nowrap">Priority:</span>
+          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mr-1 whitespace-nowrap">Priority:</span>
           <select
             value={priorityFilter}
             onChange={e => setPriorityFilter(e.target.value)}
@@ -304,7 +304,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
 
           <div className="space-y-3 min-h-[420px] overflow-y-auto">
             {todoTasks.length === 0 ? (
-              <div className="py-12 text-center text-[#A4A4A9] dark:text-slate-600">
+              <div className="py-12 text-center text-slate-400 dark:text-slate-600">
                 <p className="text-xs font-semibold">No planned items</p>
                 <p className="text-[10.5px] mt-1 px-4">Create or filter differently to show operations backlogs.</p>
               </div>
@@ -328,7 +328,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
 
           <div className="space-y-3 min-h-[420px] overflow-y-auto">
             {progressTasks.length === 0 ? (
-              <div className="py-12 text-center text-[#A4A4A9] dark:text-slate-600">
+              <div className="py-12 text-center text-slate-400 dark:text-slate-600">
                 <p className="text-xs font-semibold">No active tasks</p>
                 <p className="text-[10.5px] mt-1 px-4">Move a backlog task right using controls to begin operating.</p>
               </div>
@@ -352,7 +352,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
 
           <div className="space-y-3 min-h-[420px] overflow-y-auto">
             {completedTasks.length === 0 ? (
-              <div className="py-12 text-center text-[#A4A4A9] dark:text-slate-600">
+              <div className="py-12 text-center text-slate-400 dark:text-slate-600">
                 <p className="text-xs font-semibold">No finished entries</p>
                 <p className="text-[10.5px] mt-1 px-4">Log accomplishments when database or visits are resolved.</p>
               </div>
@@ -465,10 +465,10 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
             <span className="text-[9px] font-extrabold uppercase bg-gray-50 px-2 py-0.5 rounded border border-gray-200 text-gray-500 font-mono tracking-wider">
               {t.category}
             </span>
-            <div className="flex items-center gap-1.5 text-[#A4A4A9] dark:text-slate-500">
+            <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
               <button
                 onClick={() => handleDeleteTask(t.id)}
-                className="text-[#A4A4A9] hover:text-red-500 dark:hover:text-red-400 p-1 rounded hover:bg-[#F6F6F6] dark:hover:bg-slate-800 cursor-pointer border-none bg-transparent"
+                className="text-slate-400 hover:text-red-500 dark:hover:text-red-400 p-1 rounded hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer border-none bg-transparent"
                 title="Remove task sheet"
               >
                 <Trash2 size={12} />
@@ -497,14 +497,14 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
             {t.district !== 'National' && (
               <>
                 <span>•</span>
-                <span className="text-gray-500 font-mono text-[9px]">{t.district}</span>
+                <span className="text-slate-500 font-mono text-[9px]">{t.district}</span>
               </>
             )}
           </div>
         </div>
 
         {/* BOTTOM STEP CONTROLLERS */}
-        <div className="flex items-center justify-between text-[10.5px] text-[#A4A4A9] font-bold">
+        <div className="flex items-center justify-between text-[10.5px] text-slate-400 font-bold">
           <div className="flex items-center gap-1 font-mono text-gray-400 text-[10px]">
             <Calendar size={11} />
             <span>Due: {t.dueDate}</span>
