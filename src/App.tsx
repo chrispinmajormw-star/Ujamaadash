@@ -93,6 +93,7 @@ import { MapsPage } from './components/MapsPage';
 import { CurriculumPage } from './components/CurriculumPage';
 import { ImpactPage } from './components/ImpactPage';
 import { SettingsPage } from './components/SettingsPage';
+import { NotificationsPage } from './components/NotificationsPage';
 import { CalendarPage } from './components/CalendarPage';
 import { TasksPage } from './components/TasksPage';
 import { Tour } from './components/SubComponents';
@@ -1342,6 +1343,8 @@ export default function App() {
         return user ? <CalendarPage user={user} /> : <div className="p-12 text-center text-slate-400 font-semibold italic">Sign in to view the Calendar.</div>;
       case "tasks":
         return user ? <TasksPage user={user} /> : <div className="p-12 text-center text-slate-400 font-semibold italic">Sign in to view Tasks.</div>;
+      case "notifications":
+        return user ? <NotificationsPage user={user} reports={reports} showToast={showToast} /> : <div className="p-12 text-center text-slate-400 font-semibold italic">Sign in to view Notifications.</div>;
       case "settings":
         return <SettingsPage user={user} darkMode={darkMode} setDarkMode={setDarkMode} showToast={showToast} reportsCount={reports.length} notificationPrefs={notificationPrefs} setNotificationPrefs={setNotificationPrefs} setUser={setUser} />;
       default:
@@ -1380,6 +1383,7 @@ export default function App() {
     {
       title: "More",
       items: [
+        { id: "notifications", label: "Notifications", icon: Bell, protected: true },
         { id: "analytics", label: "Analytics", icon: BarChart2 },
         { id: "impact", label: "Impact stories", icon: Heart },
         ...(user?.role === 'admin' ? [{ id: "users", label: "Staff", icon: Users, protected: true }] : []),

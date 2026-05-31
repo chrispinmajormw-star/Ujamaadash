@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Moon, Sun, Monitor, Shield, Sparkles, User as UserIcon, HelpCircle, Bell, Calendar, ListTodo, Clock, Cloud, CloudOff, MessageSquare, Lock, ChevronRight, Edit2, Save, X } from 'lucide-react';
+import { Moon, Sun, Monitor, Shield, Sparkles, User as UserIcon, HelpCircle, Bell, Calendar, ListTodo, Clock, Cloud, CloudOff, MessageSquare, Lock, ChevronRight, Edit2, Save, X, Menu, Mail, Check, ArrowRight } from 'lucide-react';
 import { User } from '../types';
 import { Card, Kicker, Btn } from './SubComponents';
 import { ROLE_CFG } from '../data';
@@ -41,6 +41,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 
   // Active section state for sidebar navigation
   const [activeSection, setActiveSection] = useState('profile');
+  
+  // Mobile sidebar toggle state
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Theme mode state
   const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
@@ -113,21 +116,26 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     showToast(`⏰ Task reminders turned ${next ? 'ON' : 'OFF'}`);
   };
 
-  // Theme mode handler
+  // Theme mode handler - override system preferences when light/dark is explicitly selected
   const handleThemeChange = (mode: ThemeMode) => {
     setThemeMode(mode);
     safeStorage.setItem('ett_theme_mode', mode);
     
-    if (mode === 'system') {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setDarkMode(prefersDark);
-      showToast('🖥️ Theme set to system preference');
+    // When light or dark is explicitly selected, override system preference
+    if (mode === 'light') {
+      setDarkMode(false);
+      safeStorage.setItem('ett_theme', 'light');
+      showToast('☀️ Light mode enabled');
     } else if (mode === 'dark') {
       setDarkMode(true);
+      safeStorage.setItem('ett_theme', 'dark');
       showToast('🌙 Dark mode enabled');
     } else {
-      setDarkMode(false);
-      showToast('☀️ Light mode enabled');
+      // System mode - respect system preference
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setDarkMode(prefersDark);
+      safeStorage.setItem('ett_theme', prefersDark ? 'dark' : 'light');
+      showToast('🖥️ Theme set to system preference');
     }
   };
 
@@ -201,8 +209,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900">
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white dark:bg-[#0f1623] border border-slate-200 dark:border-slate-800 shadow-lg"
+      >
+        <Menu size={24} className="text-slate-600 dark:text-slate-400" />
+      </button>
+
       {/* Sidebar Navigation */}
-      <div className="w-64 bg-white dark:bg-[#0f1623] border-r border-slate-200 dark:border-slate-800 p-4 flex-shrink-0">
+      <div className={`fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-[#0f1623] border-r border-slate-200 dark:border-slate-800 p-4 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="mb-6">
           <Kicker text="Settings" />
           <h2 className="text-lg font-bold text-black dark:text-white">Preferences</h2>
@@ -219,7 +235,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           ].map((item) => (
             <button
               key={item.id}
-              onClick={() => setActiveSection(item.id)}
+              onClick={() => {
+                setActiveSection(item.id);
+                setSidebarOpen(false);
+              }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                 activeSection === item.id
                   ? 'bg-orange-500 text-white'
@@ -233,6 +252,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           ))}
         </nav>
       </div>
+
+      {/* Overlay for mobile */}
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+        />
+      )}
 
       {/* Main Content Area */}
       <div className="flex-1 p-6 overflow-y-auto">
