@@ -949,9 +949,9 @@ export default function App() {
   const PROTECTED_PAGES = ["submit", "reports", "calendar", "tasks", "analytics", "users"];
   const activeNavGroups = [
     {
-      title: "ETT ScaleUp Program",
+      title: "Dashboard",
       items: [
-        { id: "dashboard", label: "ETT ScaleUp Program", icon: LayoutDashboard },
+        { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
         { id: "maps", label: "Clusters map", icon: Map },
         { id: "districts", label: "Districts", icon: MapPin },
         { id: "trainings", label: "Trainings", icon: GraduationCap },

@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Shield, FilePlus, MapPin, GraduationCap, School, BookOpen, TrendingUp, FileText, Clock, CheckSquare, Users, Map } from 'lucide-react';
 import { User, Report } from '../types';
 import { ROLE_CFG, can, DISTRICTS, DISTRICT_INFO, MAP_CLUSTERS } from '../data';
-import { Card, PageHeader, Btn, Pill } from './SubComponents';
+import { Card, PageHeader, Btn, Pill, TrendIndicator } from './SubComponents';
 
 interface DashboardProps {
   user: User | null;
@@ -248,14 +248,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
         ) : (
           <>
             {[
-              { icon: <FileText size={16} className="text-orange-600" />, label: "Total reports", value: my.length },
-              { icon: <Clock size={16} className="text-amber-600" />, label: "Pending", value: pending },
-              { icon: <CheckSquare size={16} className="text-emerald-600" />, label: "Approved", value: approved },
-              { icon: <Users size={16} className="text-orange-600" />, label: "Learners", value: students },
-            ].map((s, i) => (
+              { icon: <FileText size={16} className="text-orange-600" />, label: "Total reports", value: my.length, trend: 12 },
+              { icon: <Clock size={16} className="text-amber-600" />, label: "Pending", value: pending, trend: -5 },
+              { icon: <CheckSquare size={16} className="text-emerald-600" />, label: "Approved", value: approved, trend: 18 },
+              { icon: <Users size={16} className="text-orange-600" />, label: "Learners", value: students, trend: 8 },
+            ].map((s: any, i) => (
               <Card key={i} className="p-3">
                 <div className="flex items-center gap-2 mb-1">{s.icon}<span className="text-[10px] text-black dark:text-white opacity-80 font-medium">{s.label}</span></div>
                 <div className="text-lg font-bold text-black dark:text-white">{s.value}</div>
+                <TrendIndicator value={s.trend} className="mt-1" />
               </Card>
             ))}
           </>
