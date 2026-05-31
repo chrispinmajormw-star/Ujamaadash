@@ -312,31 +312,28 @@ export const AfricaLogo: React.FC<{ size?: number; variant?: 'orange' | 'black' 
   const base = import.meta.env.BASE_URL || '/';
   const logoSrc = `${base}africalogo.svg`;
 
+  const LogoBox = ({ s }: { s: number }) => (
+    <div
+      className="shrink-0 flex items-center justify-center rounded-lg"
+      style={{ width: s, height: s, backgroundColor: '#e85d04', padding: Math.round(s * 0.1) }}
+    >
+      <img
+        src={logoSrc}
+        alt="Ujamaa Africa Logo"
+        style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
+      />
+    </div>
+  );
+
   if (variant === "full") {
     return (
       <div className={`flex items-center gap-2 select-none ${className}`}>
-        <img
-          src={logoSrc}
-          alt="Ujamaa Africa Logo"
-          width={size}
-          height={size}
-          className="shrink-0 object-contain"
-          style={{ height: size, width: 'auto' }}
-        />
+        <LogoBox s={size} />
       </div>
     );
   }
 
-  return (
-    <img
-      src={logoSrc}
-      alt="Ujamaa Africa Logo"
-      width={size}
-      height={size}
-      className={`shrink-0 object-contain ${className}`}
-      style={{ height: size, width: 'auto' }}
-    />
-  );
+  return <LogoBox s={size} className={className} />;
 };
 
 // ─── TREND INDICATOR ─────────────────────────
