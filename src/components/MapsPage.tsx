@@ -168,14 +168,14 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
           { color: "bg-emerald-600", label: "Active District" },
           { color: "bg-slate-400 dark:bg-slate-600", label: "Planned Expansion" },
           { color: "bg-orange-500", label: "Trained School" },
-          { color: "bg-white dark:bg-slate-700 border-2 border-orange-500", label: "Cluster Centre" }
+          { color: "bg-slate-900 dark:bg-slate-700 border-2 border-orange-500", label: "Cluster Centre" }
         ].map(item => (
           <span key={item.label} className="flex items-center gap-2">
             <span className={`w-3 h-3 rounded-full ${item.color} shadow-sm`} />
             <span>{item.label}</span>
           </span>
         ))}
-        <span className="ml-auto text-[11px] text-[#A4A4A9] font-medium">
+        <span className="ml-auto text-[11px] text-slate-400 font-medium">
           Click any centre marker to view active statistics
         </span>
       </div>
@@ -194,7 +194,7 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
                   onClick={() => setSelectedRegion(r)}
                   className={`px-2.5 py-1 rounded-full text-[10.5px] font-bold cursor-pointer transition-all ${
                     selectedRegion === r
-                      ? "bg-white text-white dark:bg-orange-600"
+                      ? "bg-slate-900 text-white dark:bg-orange-600"
                       : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                   }`}
                 >
@@ -255,7 +255,7 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
           </div>
 
           <div>
-            <div className="text-[10px] font-extrabold text-[#A4A4A9] uppercase tracking-widest mb-2">
+            <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-2">
               Affiliated Schools
             </div>
             <div className="space-y-1">
