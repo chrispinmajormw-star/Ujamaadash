@@ -1430,58 +1430,23 @@ export default function App() {
           <div className="flex-1 overflow-y-auto">{renderPageContent()}</div>
         ) : (
           <>
-            {/* Mobile menu overlay */}
-            {sidebarOpen && (
-              <div 
-                className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-                onClick={() => setSidebarOpen(false)}
-              />
-            )}
-
-            {/* Mobile-responsive sidebar */}
-            <aside className={`fixed lg:relative z-50 lg:z-auto flex flex-col bg-white dark:bg-[#0f1623] border-r border-neutral-200 dark:border-slate-800 transition-transform duration-300 ease-in-out ${
-              sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-            } w-64 shrink-0 h-full`}>
-              <div className="h-14 flex items-center justify-between px-4 border-b border-neutral-200 dark:border-slate-800 shrink-0">
-                <div className="flex items-center gap-2">
-                  <AfricaLogo size={24} />
-                  <span className="font-bold text-sm text-black dark:text-white truncate">ETT Malawi</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSidebarOpen(false)}
-                  className="lg:hidden w-8 h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-slate-700 hover:border-orange-400 text-black dark:text-white"
-                >
-                  <X size={16} />
-                </button>
+            <aside className="flex w-56 shrink-0 flex-col bg-white dark:bg-[#0f1623] border-r border-neutral-200 dark:border-slate-800">
+              <div className="h-12 flex items-center gap-2 px-3 border-b border-neutral-200 dark:border-slate-800 shrink-0">
+                <AfricaLogo size={22} />
+                <span className="font-bold text-sm text-black dark:text-white truncate">ETT Malawi</span>
               </div>
-              <div className="flex-1 overflow-y-auto p-3">{renderNav(() => setSidebarOpen(false))}</div>
-              <div className="p-4 border-t border-neutral-200 dark:border-slate-800 text-[10px] text-black dark:text-white opacity-60 shrink-0">
-                <div className="flex items-center justify-between">
-                  <span>Helpline <b className="text-orange-600 dark:text-orange-400">116</b></span>
-                  <span>VSU <b className="text-orange-600 dark:text-orange-400">997</b></span>
-                </div>
+              <div className="flex-1 overflow-y-auto p-2">{renderNav()}</div>
+              <div className="p-3 border-t border-neutral-200 dark:border-slate-800 text-[10px] text-black dark:text-white opacity-60 shrink-0">
+                Helpline <b className="text-orange-600 dark:text-orange-400">116</b> · VSU <b className="text-orange-600 dark:text-orange-400">997</b>
               </div>
             </aside>
 
             <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#0f1623]">
               <header className="h-14 shrink-0 flex items-center justify-between gap-3 px-3 sm:px-4 border-b border-neutral-200 dark:border-slate-800 bg-white dark:bg-[#0f1623]" role="banner">
                 <div className="flex items-center gap-2 min-w-0">
-                  <button
-                    type="button"
-                    onClick={() => setSidebarOpen(true)}
-                    className="lg:hidden w-8 h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-slate-700 hover:border-orange-400 text-black dark:text-white"
-                    aria-label="Open navigation menu"
-                    aria-expanded={sidebarOpen}
-                  >
-                    <Menu size={16} />
-                  </button>
-                  <div className="flex flex-col min-w-0">
-                    <Breadcrumbs 
-                      items={[{ label: 'Dashboard', path: 'dashboard' }]} 
-                      currentPage={PAGE_LABELS[page] || "Overview"} 
-                    />
-                  </div>
+                  <h2 className="text-sm font-semibold text-black dark:text-white truncate m-0">
+                    {PAGE_LABELS[page] || "Overview"}
+                  </h2>
                 </div>
 
                 <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
