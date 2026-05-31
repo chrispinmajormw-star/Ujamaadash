@@ -1343,7 +1343,7 @@ export default function App() {
       case "tasks":
         return user ? <TasksPage user={user} /> : <div className="p-12 text-center text-slate-400 font-semibold italic">Sign in to view Tasks.</div>;
       case "settings":
-        return <SettingsPage user={user} darkMode={darkMode} setDarkMode={setDarkMode} showToast={showToast} reportsCount={reports.length} notificationPrefs={notificationPrefs} setNotificationPrefs={setNotificationPrefs} />;
+        return <SettingsPage user={user} darkMode={darkMode} setDarkMode={setDarkMode} showToast={showToast} reportsCount={reports.length} notificationPrefs={notificationPrefs} setNotificationPrefs={setNotificationPrefs} setUser={setUser} />;
       default:
         return <Dashboard user={user} reports={reports} setPage={setPage} darkMode={darkMode} pinnedWidgets={pinnedWidgets} setPinnedWidgets={setPinnedWidgets} />;
     }

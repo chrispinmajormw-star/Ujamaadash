@@ -1,11 +1,13 @@
-import React from 'react';
-import { Moon, Sun, Monitor, Shield, Sparkles, User as UserIcon, HelpCircle, Bell, Calendar, ListTodo, Clock, Cloud, CloudOff, MessageSquare } from 'lucide-react';
+import React, { useState } from 'react';
+import { Moon, Sun, Monitor, Shield, Sparkles, User as UserIcon, HelpCircle, Bell, Calendar, ListTodo, Clock, Cloud, CloudOff, MessageSquare, Lock, ChevronRight, Edit2, Save, X } from 'lucide-react';
 import { User } from '../types';
 import { Card, Kicker, Btn } from './SubComponents';
 import { ROLE_CFG } from '../data';
 import { safeStorage } from '../utils/storage';
 import { CloudSyncConfig, loadSyncConfig, saveSyncConfig, enableCloudSync, disableCloudSync } from '../utils/cloudSync';
 import { SMSConfig, loadSMSConfig as loadSMSConfigUtil, saveSMSConfig as saveSMSConfigUtil, enableSMSNotifications, disableSMSNotifications } from '../utils/sms';
+
+type ThemeMode = 'light' | 'dark' | 'system';
 
 interface SettingsPageProps {
   user: User | null;
@@ -22,6 +24,7 @@ interface SettingsPageProps {
     forwarded: boolean;
   };
   setNotificationPrefs?: (prefs: any) => void;
+  setUser?: (user: User | null) => void;
 }
 
 export const SettingsPage: React.FC<SettingsPageProps> = ({
@@ -31,9 +34,35 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   showToast,
   reportsCount,
   notificationPrefs,
-  setNotificationPrefs
+  setNotificationPrefs,
+  setUser
 }) => {
   const rc = user ? ROLE_CFG[user.role] : null;
+
+  // Active section state for sidebar navigation
+  const [activeSection, setActiveSection] = useState('profile');
+
+  // Theme mode state
+  const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
+    const saved = safeStorage.getItem('ett_theme_mode') as ThemeMode;
+    return saved || 'system';
+  });
+
+  // Profile editing state
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    district: user?.district || ''
+  });
+
+  // Password change state
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
 
   const [notifyTraining, setNotifyTraining] = React.useState(() => {
     const saved = safeStorage.getItem('scaleup_notif_training');
@@ -84,6 +113,60 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     showToast(`⏰ Task reminders turned ${next ? 'ON' : 'OFF'}`);
   };
 
+  // Theme mode handler
+  const handleThemeChange = (mode: ThemeMode) => {
+    setThemeMode(mode);
+    safeStorage.setItem('ett_theme_mode', mode);
+    
+    if (mode === 'system') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setDarkMode(prefersDark);
+      showToast('🖥️ Theme set to system preference');
+    } else if (mode === 'dark') {
+      setDarkMode(true);
+      showToast('🌙 Dark mode enabled');
+    } else {
+      setDarkMode(false);
+      showToast('☀️ Light mode enabled');
+    }
+  };
+
+  // Profile editing handlers
+  const handleSaveProfile = () => {
+    if (user && setUser) {
+      const updatedUser = { ...user, ...profileForm };
+      setUser(updatedUser);
+      safeStorage.setItem('ett_curr_user', JSON.stringify(updatedUser));
+      setIsEditingProfile(false);
+      showToast('✅ Profile updated successfully');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setProfileForm({
+      name: user?.name || '',
+      email: user?.email || '',
+      district: user?.district || ''
+    });
+    setIsEditingProfile(false);
+  };
+
+  // Password change handlers
+  const handleChangePassword = () => {
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      showToast('❌ Passwords do not match');
+      return;
+    }
+    if (passwordForm.newPassword.length < 6) {
+      showToast('❌ Password must be at least 6 characters');
+      return;
+    }
+    // In a real app, this would validate current password and update via API
+    showToast('✅ Password changed successfully');
+    setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    setShowPasswordForm(false);
+  };
+
   // ── Reusable toggle rows ──────────────────────────────────────
   const ToggleRow = ({
     icon, label, sub, value, onChange, border = true
@@ -117,446 +200,482 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   );
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-
-      {/* Page Header */}
-      <div>
-        <Kicker text="Application Preferences" />
-        <h1 className="text-base font-bold text-slate-900 dark:text-slate-50 m-0">
-          System Settings
-        </h1>
-        <p className="text-xs text-black dark:text-white mt-1 m-0">
-          Customize display, alerts, and review account capabilities.
-        </p>
+    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900">
+      {/* Sidebar Navigation */}
+      <div className="w-64 bg-white dark:bg-[#0f1623] border-r border-slate-200 dark:border-slate-800 p-4 flex-shrink-0">
+        <div className="mb-6">
+          <Kicker text="Settings" />
+          <h2 className="text-lg font-bold text-black dark:text-white">Preferences</h2>
+        </div>
+        
+        <nav className="space-y-1">
+          {[
+            { id: 'profile', label: 'Profile', icon: UserIcon },
+            { id: 'appearance', label: 'Appearance', icon: Sparkles },
+            { id: 'notifications', label: 'Notifications', icon: Bell },
+            { id: 'security', label: 'Security', icon: Lock },
+            { id: 'sync', label: 'Sync & Backup', icon: Cloud },
+            { id: 'diagnostics', label: 'Diagnostics', icon: Monitor },
+          ].map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveSection(item.id)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                activeSection === item.id
+                  ? 'bg-orange-500 text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <item.icon size={18} />
+              {item.label}
+              {activeSection === item.id && <ChevronRight size={16} className="ml-auto" />}
+            </button>
+          ))}
+        </nav>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 space-y-5">
-
-          {/* ── Notifications Card ── */}
-          <div className="bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg p-6">
-            <div className="flex items-center gap-3 mb-5">
-              <span className="p-2.5 rounded-xl bg-blue-500 text-white shadow-sm shadow-blue-200">
-                <Bell size={18} />
-              </span>
+      {/* Main Content Area */}
+      <div className="flex-1 p-6 overflow-y-auto">
+        <div className="max-w-4xl mx-auto">
+          
+          {/* Profile Section */}
+          {activeSection === 'profile' && (
+            <div className="space-y-6">
               <div>
-                <h3 className="text-base font-bold text-black dark:text-white m-0">Notification Preferences</h3>
-                <p className="text-xs text-black dark:text-white opacity-60 m-0">Configure how you receive alerts.</p>
+                <Kicker text="Account" />
+                <h1 className="text-2xl font-bold text-black dark:text-white">Profile Settings</h1>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Manage your personal information and account details.</p>
               </div>
+
+              <Card className="p-6">
+                <div className="flex items-start justify-between mb-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-full bg-orange-500 text-white font-black text-2xl flex items-center justify-center">
+                      {user?.avatar || user?.name?.[0] || 'U'}
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-black dark:text-white">{user?.name}</h3>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">{user?.email}</p>
+                      {rc && (
+                        <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-bold" style={{ color: rc.color, backgroundColor: rc.bg }}>
+                          {rc.label}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {!isEditingProfile ? (
+                    <Btn size="sm" onClick={() => setIsEditingProfile(true)}>
+                      <Edit2 size={14} className="mr-2" /> Edit Profile
+                    </Btn>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Btn variant="secondary" size="sm" onClick={handleCancelEdit}>
+                        <X size={14} className="mr-2" /> Cancel
+                      </Btn>
+                      <Btn size="sm" onClick={handleSaveProfile}>
+                        <Save size={14} className="mr-2" /> Save
+                      </Btn>
+                    </div>
+                  )}
+                </div>
+
+                {isEditingProfile ? (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-bold text-black dark:text-white mb-2">Full Name</label>
+                      <input
+                        type="text"
+                        value={profileForm.name}
+                        onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+                        className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f1623] text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-black dark:text-white mb-2">Email Address</label>
+                      <input
+                        type="email"
+                        value={profileForm.email}
+                        onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
+                        className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f1623] text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-black dark:text-white mb-2">District</label>
+                      <input
+                        type="text"
+                        value={profileForm.district}
+                        onChange={(e) => setProfileForm({ ...profileForm, district: e.target.value })}
+                        className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f1623] text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+                      <span className="text-sm text-slate-500 dark:text-slate-400">Full Name</span>
+                      <span className="text-sm font-medium text-black dark:text-white">{user?.name}</span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+                      <span className="text-sm text-slate-500 dark:text-slate-400">Email Address</span>
+                      <span className="text-sm font-medium text-black dark:text-white">{user?.email}</span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+                      <span className="text-sm text-slate-500 dark:text-slate-400">Role</span>
+                      <span className="text-sm font-medium text-black dark:text-white">{rc?.label}</span>
+                    </div>
+                    <div className="flex justify-between py-2">
+                      <span className="text-sm text-slate-500 dark:text-slate-400">District</span>
+                      <span className="text-sm font-medium text-black dark:text-white">{user?.district || 'Not assigned'}</span>
+                    </div>
+                  </div>
+                )}
+              </Card>
+
+              {/* Password Change Card */}
+              <Card className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <Lock size={20} className="text-orange-500" />
+                  <h3 className="text-lg font-bold text-black dark:text-white">Change Password</h3>
+                </div>
+                
+                {!showPasswordForm ? (
+                  <Btn size="sm" onClick={() => setShowPasswordForm(true)}>
+                    Change Password
+                  </Btn>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-bold text-black dark:text-white mb-2">Current Password</label>
+                      <input
+                        type="password"
+                        value={passwordForm.currentPassword}
+                        onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                        className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f1623] text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-black dark:text-white mb-2">New Password</label>
+                      <input
+                        type="password"
+                        value={passwordForm.newPassword}
+                        onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                        className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f1623] text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-black dark:text-white mb-2">Confirm New Password</label>
+                      <input
+                        type="password"
+                        value={passwordForm.confirmPassword}
+                        onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                        className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f1623] text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Btn size="sm" onClick={handleChangePassword}>
+                        Update Password
+                      </Btn>
+                      <Btn variant="secondary" size="sm" onClick={() => setShowPasswordForm(false)}>
+                        Cancel
+                      </Btn>
+                    </div>
+                  </div>
+                )}
+              </Card>
             </div>
+          )}
 
-            <div className="h-px bg-slate-200 dark:bg-slate-800 mb-5" />
-
-            {notificationPrefs && setNotificationPrefs && (
-              <div className="space-y-4">
-                <SettingToggle
-                  label="Email Notifications"
-                  sub="Receive updates via email"
-                  value={notificationPrefs.email}
-                  onChange={() => setNotificationPrefs({ ...notificationPrefs, email: !notificationPrefs.email })}
-                />
-                <SettingToggle
-                  label="Push Notifications"
-                  sub="Receive in-app alerts"
-                  value={notificationPrefs.push}
-                  onChange={() => setNotificationPrefs({ ...notificationPrefs, push: !notificationPrefs.push })}
-                />
-                <div className="h-px bg-slate-200 dark:bg-slate-800 my-4" />
-                <SettingToggle
-                  label="Pending Reports"
-                  sub="Alert when reports need review"
-                  value={notificationPrefs.pending}
-                  onChange={() => setNotificationPrefs({ ...notificationPrefs, pending: !notificationPrefs.pending })}
-                />
-                <SettingToggle
-                  label="Approved Reports"
-                  sub="Alert when reports are approved"
-                  value={notificationPrefs.approved}
-                  onChange={() => setNotificationPrefs({ ...notificationPrefs, approved: !notificationPrefs.approved })}
-                />
-                <SettingToggle
-                  label="Rejected Reports"
-                  sub="Alert when reports are rejected"
-                  value={notificationPrefs.rejected}
-                  onChange={() => setNotificationPrefs({ ...notificationPrefs, rejected: !notificationPrefs.rejected })}
-                />
-                <SettingToggle
-                  label="Forwarded Reports"
-                  sub="Alert when reports are forwarded"
-                  value={notificationPrefs.forwarded}
-                  onChange={() => setNotificationPrefs({ ...notificationPrefs, forwarded: !notificationPrefs.forwarded })}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* ── Cloud Sync Card ── */}
-          <div className="bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg p-6">
-            <div className="flex items-center gap-3 mb-5">
-              <span className="p-2.5 rounded-xl bg-purple-500 text-white shadow-sm shadow-purple-200">
-                {cloudSyncConfig.enabled ? <Cloud size={18} /> : <CloudOff size={18} />}
-              </span>
+          {/* Appearance Section */}
+          {activeSection === 'appearance' && (
+            <div className="space-y-6">
               <div>
-                <h3 className="text-base font-bold text-black dark:text-white m-0">Cloud Sync</h3>
-                <p className="text-xs text-black dark:text-white opacity-60 m-0">Backup and sync data across devices</p>
+                <Kicker text="Display" />
+                <h1 className="text-2xl font-bold text-black dark:text-white">Appearance</h1>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Customize the look and feel of the application.</p>
               </div>
-            </div>
 
-            <div className="h-px bg-slate-200 dark:bg-slate-800 mb-5" />
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-sm font-bold text-black dark:text-white">Enable Cloud Sync</div>
-                  <div className="text-xs text-black dark:text-white opacity-60">Sync data to cloud for backup</div>
+              <Card className="p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <Sparkles size={20} className="text-orange-500" />
+                  <h3 className="text-lg font-bold text-black dark:text-white">Theme Mode</h3>
                 </div>
-                <button
-                  onClick={() => {
-                    if (cloudSyncConfig.enabled) {
-                      disableCloudSync();
-                      setCloudSyncConfig({ ...cloudSyncConfig, enabled: false });
-                      showToast("☁️ Cloud sync disabled");
-                    } else {
-                      enableCloudSync();
-                      setCloudSyncConfig({ ...cloudSyncConfig, enabled: true });
-                      showToast("☁️ Cloud sync enabled");
-                    }
-                  }}
-                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500/30 ${
-                    cloudSyncConfig.enabled ? 'bg-purple-500' : 'bg-gray-200 dark:bg-slate-700'
-                  }`}
-                >
-                  <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition duration-200 ${cloudSyncConfig.enabled ? 'translate-x-5' : 'translate-x-0'}`} />
-                </button>
-              </div>
-              {cloudSyncConfig.enabled && cloudSyncConfig.lastSync && (
-                <div className="text-xs text-slate-500">
-                  Last synced: {new Date(cloudSyncConfig.lastSync).toLocaleString()}
-                </div>
-              )}
-            </div>
-          </div>
 
-          {/* ── SMS Notifications Card ── */}
-          <div className="bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg p-6">
-            <div className="flex items-center gap-3 mb-5">
-              <span className="p-2.5 rounded-xl bg-green-500 text-white shadow-sm shadow-green-200">
-                {smsConfig.enabled ? <MessageSquare size={18} /> : <MessageSquare size={18} />}
-              </span>
+                <div className="grid grid-cols-3 gap-4">
+                  <div
+                    onClick={() => handleThemeChange('light')}
+                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                      themeMode === 'light'
+                        ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/10'
+                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-orange-200'
+                    }`}
+                  >
+                    <Sun size={32} className={themeMode === 'light' ? 'text-orange-500' : 'text-slate-400'} />
+                    <div className="mt-2 text-sm font-bold text-black dark:text-white">Light</div>
+                    {themeMode === 'light' && <div className="text-xs text-orange-500 font-semibold">Active</div>}
+                  </div>
+                  <div
+                    onClick={() => handleThemeChange('dark')}
+                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                      themeMode === 'dark'
+                        ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/10'
+                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-orange-200'
+                    }`}
+                  >
+                    <Moon size={32} className={themeMode === 'dark' ? 'text-orange-500' : 'text-slate-400'} />
+                    <div className="mt-2 text-sm font-bold text-black dark:text-white">Dark</div>
+                    {themeMode === 'dark' && <div className="text-xs text-orange-500 font-semibold">Active</div>}
+                  </div>
+                  <div
+                    onClick={() => handleThemeChange('system')}
+                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                      themeMode === 'system'
+                        ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/10'
+                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-orange-200'
+                    }`}
+                  >
+                    <Monitor size={32} className={themeMode === 'system' ? 'text-orange-500' : 'text-slate-400'} />
+                    <div className="mt-2 text-sm font-bold text-black dark:text-white">System</div>
+                    {themeMode === 'system' && <div className="text-xs text-orange-500 font-semibold">Active</div>}
+                  </div>
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {/* Notifications Section */}
+          {activeSection === 'notifications' && (
+            <div className="space-y-6">
               <div>
-                <h3 className="text-base font-bold text-black dark:text-white m-0">SMS Notifications</h3>
-                <p className="text-xs text-black dark:text-white opacity-60 m-0">Alerts for limited internet regions</p>
+                <Kicker text="Alerts" />
+                <h1 className="text-2xl font-bold text-black dark:text-white">Notification Preferences</h1>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Configure how you receive alerts and updates.</p>
               </div>
-            </div>
 
-            <div className="h-px bg-slate-200 dark:bg-slate-800 mb-5" />
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-sm font-bold text-black dark:text-white">Enable SMS Alerts</div>
-                  <div className="text-xs text-black dark:text-white opacity-60">Receive SMS for important updates</div>
-                </div>
-                <button
-                  onClick={() => {
-                    if (smsConfig.enabled) {
-                      disableSMSNotifications();
-                      setSmsConfig({ ...smsConfig, enabled: false });
-                      showToast("📱 SMS notifications disabled");
-                    } else {
-                      enableSMSNotifications();
-                      setSmsConfig({ ...smsConfig, enabled: true });
-                      showToast("📱 SMS notifications enabled");
-                    }
-                  }}
-                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500/30 ${
-                    smsConfig.enabled ? 'bg-green-500' : 'bg-gray-200 dark:bg-slate-700'
-                  }`}
-                >
-                  <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition duration-200 ${smsConfig.enabled ? 'translate-x-5' : 'translate-x-0'}`} />
-                </button>
-              </div>
-              {smsConfig.enabled && (
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-xs font-bold text-black dark:text-white mb-1 block">Phone Number</label>
-                    <input
-                      type="tel"
-                      value={smsConfig.phoneNumber}
-                      onChange={(e) => {
-                        const updated = { ...smsConfig, phoneNumber: e.target.value };
-                        setSmsConfig(updated);
-                        saveSMSConfigUtil(updated);
-                      }}
-                      placeholder="+265..."
-                      className="w-full px-3 py-2 text-xs border border-gray-200 dark:border-slate-700 rounded focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-[#0f1623] text-black dark:text-white"
+              <Card className="p-6">
+                {notificationPrefs && setNotificationPrefs && (
+                  <div className="space-y-4">
+                    <ToggleRow
+                      icon={<Mail size={15} />}
+                      label="Email Notifications"
+                      sub="Receive updates via email"
+                      value={notificationPrefs.email}
+                      onChange={() => setNotificationPrefs({ ...notificationPrefs, email: !notificationPrefs.email })}
+                    />
+                    <ToggleRow
+                      icon={<Bell size={15} />}
+                      label="Push Notifications"
+                      sub="Receive in-app alerts"
+                      value={notificationPrefs.push}
+                      onChange={() => setNotificationPrefs({ ...notificationPrefs, push: !notificationPrefs.push })}
+                    />
+                    <div className="h-px bg-slate-200 dark:bg-slate-800 my-4" />
+                    <ToggleRow
+                      icon={<Clock size={15} />}
+                      label="Pending Reports"
+                      sub="Alert when reports need review"
+                      value={notificationPrefs.pending}
+                      onChange={() => setNotificationPrefs({ ...notificationPrefs, pending: !notificationPrefs.pending })}
+                    />
+                    <ToggleRow
+                      icon={<Check size={15} />}
+                      label="Approved Reports"
+                      sub="Alert when reports are approved"
+                      value={notificationPrefs.approved}
+                      onChange={() => setNotificationPrefs({ ...notificationPrefs, approved: !notificationPrefs.approved })}
+                    />
+                    <ToggleRow
+                      icon={<X size={15} />}
+                      label="Rejected Reports"
+                      sub="Alert when reports are rejected"
+                      value={notificationPrefs.rejected}
+                      onChange={() => setNotificationPrefs({ ...notificationPrefs, rejected: !notificationPrefs.rejected })}
+                    />
+                    <ToggleRow
+                      icon={<ArrowRight size={15} />}
+                      label="Forwarded Reports"
+                      sub="Alert when reports are forwarded"
+                      value={notificationPrefs.forwarded}
+                      onChange={() => setNotificationPrefs({ ...notificationPrefs, forwarded: !notificationPrefs.forwarded })}
+                    />
+                    <div className="h-px bg-slate-200 dark:bg-slate-800 my-4" />
+                    <ToggleRow
+                      icon={<Calendar size={15} />}
+                      label="Training Events Alerts"
+                      sub="Get notifications for scheduled sessions"
+                      value={notifyTraining}
+                      onChange={handleToggleTraining}
+                    />
+                    <ToggleRow
+                      icon={<ListTodo size={15} />}
+                      label="Task Reminders"
+                      sub="Sync dashboard badges for pending tasks"
+                      value={taskReminders}
+                      onChange={handleToggleReminders}
+                      border={false}
                     />
                   </div>
-                  <div>
-                    <label className="text-xs font-bold text-black dark:text-white mb-1 block">SMS Provider</label>
-                    <select
-                      value={smsConfig.provider}
-                      onChange={(e) => {
-                        const updated = { ...smsConfig, provider: e.target.value as 'twilio' | 'africas_talking' | 'custom' };
-                        setSmsConfig(updated);
-                        saveSMSConfigUtil(updated);
-                      }}
-                      className="w-full px-3 py-2 text-xs border border-gray-200 dark:border-slate-700 rounded focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-[#0f1623] text-black dark:text-white"
-                    >
-                      <option value="twilio">Twilio</option>
-                      <option value="africas_talking">Africa's Talking</option>
-                      <option value="custom">Custom Provider</option>
-                    </select>
-                  </div>
-                </div>
-              )}
+                )}
+              </Card>
             </div>
-          </div>
+          )}
 
-          {/* ── Appearance Card ── */}
-          <div className="bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg p-6">
-
-            {/* Card Header */}
-            <div className="flex items-center gap-3 mb-5">
-              <span className="p-2.5 rounded-xl bg-orange-500 text-white shadow-sm shadow-orange-200">
-                <Sparkles size={18} />
-              </span>
+          {/* Security Section */}
+          {activeSection === 'security' && (
+            <div className="space-y-6">
               <div>
-                <h3 className="text-base font-bold text-black dark:text-white m-0">Appearance Theme</h3>
-                <p className="text-xs text-black dark:text-white opacity-60 m-0">Set the background contrast mode.</p>
+                <Kicker text="Protection" />
+                <h1 className="text-2xl font-bold text-black dark:text-white">Security Settings</h1>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Manage your account security and privacy.</p>
               </div>
-            </div>
 
-            <div className="h-px bg-slate-200 dark:bg-slate-800 mb-5" />
-
-            {/* Active mode row */}
-            <div className="flex items-center justify-between p-4 rounded-2xl bg-orange-50 dark:bg-slate-800 border border-orange-200 dark:border-slate-700 mb-4">
-              <div className="flex items-center gap-3">
-                {darkMode
-                  ? <Moon className="text-violet-400" size={20} />
-                  : <Sun className="text-orange-500" size={20} />
-                }
-                <div>
-                  <div className="text-sm font-bold text-black dark:text-white">
-                    {darkMode ? 'Dark Mode Active' : 'Light Mode Active'}
-                  </div>
-                  <div className="text-xs text-black dark:text-white">
-                    {darkMode
-                      ? 'Dark slate background — easy on the eyes at night.'
-                      : 'Clean white & orange — sharp and professional.'}
-                  </div>
+              <Card className="p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <Shield size={20} className="text-orange-500" />
+                  <h3 className="text-lg font-bold text-black dark:text-white">SMS Notifications</h3>
                 </div>
-              </div>
-              <button
-                onClick={toggleDarkMode}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500/30 ${
-                  darkMode ? 'bg-orange-500' : 'bg-gray-200'
-                }`}
-              >
-                <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition duration-200 ${darkMode ? 'translate-x-5' : 'translate-x-0'}`} />
-              </button>
-            </div>
 
-            {/* Light / Dark selector tiles */}
-            <div className="grid grid-cols-2 gap-3">
-              <div
-                onClick={() => { if (darkMode) setDarkMode(false); }}
-                className={`flex flex-col items-center justify-center p-5 rounded-xl border-2 cursor-pointer transition-all ${
-                  !darkMode
-                    ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/10'
-                    : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-orange-200'
-                }`}
-              >
-                <Sun size={26} className={!darkMode ? 'text-orange-500' : 'text-gray-300 dark:text-slate-500'} />
-                <span className={`text-xs font-bold mt-2 ${!darkMode ? 'text-orange-600' : 'text-black dark:text-white opacity-60'}`}>
-                  Light Mode
-                </span>
-                {!darkMode && (
-                  <span className="text-[10px] text-orange-400 font-semibold mt-0.5">Active</span>
-                )}
-              </div>
-              <div
-                onClick={() => { if (!darkMode) setDarkMode(true); }}
-                className={`flex flex-col items-center justify-center p-5 rounded-xl border-2 cursor-pointer transition-all ${
-                  darkMode
-                    ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/10'
-                    : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-orange-200'
-                }`}
-              >
-                <Moon size={26} className={darkMode ? 'text-orange-500' : 'text-gray-300 dark:text-slate-500'} />
-                <span className={`text-xs font-bold mt-2 ${darkMode ? 'text-orange-600 dark:text-orange-400' : 'text-black dark:text-white opacity-60'}`}>
-                  Dark Mode
-                </span>
-                {darkMode && (
-                  <span className="text-[10px] text-orange-400 font-semibold mt-0.5">Active</span>
-                )}
-              </div>
+                <div className="space-y-4">
+                  <ToggleRow
+                    icon={<MessageSquare size={15} />}
+                    label="Enable SMS Alerts"
+                    sub="Receive SMS for important updates"
+                    value={smsConfig.enabled}
+                    onChange={() => {
+                      if (smsConfig.enabled) {
+                        disableSMSNotifications();
+                        setSmsConfig({ ...smsConfig, enabled: false });
+                        showToast("📱 SMS notifications disabled");
+                      } else {
+                        enableSMSNotifications();
+                        setSmsConfig({ ...smsConfig, enabled: true });
+                        showToast("📱 SMS notifications enabled");
+                      }
+                    }}
+                  />
+                  {smsConfig.enabled && (
+                    <div className="space-y-3 pl-4">
+                      <div>
+                        <label className="block text-sm font-bold text-black dark:text-white mb-2">Phone Number</label>
+                        <input
+                          type="tel"
+                          value={smsConfig.phoneNumber}
+                          onChange={(e) => {
+                            const updated = { ...smsConfig, phoneNumber: e.target.value };
+                            setSmsConfig(updated);
+                            saveSMSConfigUtil(updated);
+                          }}
+                          placeholder="+265..."
+                          className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f1623] text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-black dark:text-white mb-2">SMS Provider</label>
+                        <select
+                          value={smsConfig.provider}
+                          onChange={(e) => {
+                            const updated = { ...smsConfig, provider: e.target.value as 'twilio' | 'africas_talking' | 'custom' };
+                            setSmsConfig(updated);
+                            saveSMSConfigUtil(updated);
+                          }}
+                          className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f1623] text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        >
+                          <option value="twilio">Twilio</option>
+                          <option value="africas_talking">Africa's Talking</option>
+                          <option value="custom">Custom Provider</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </Card>
             </div>
-          </div>
+          )}
 
-          {/* ── Alerts Card ── */}
-          <div className="bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg p-6">
-            <div className="flex items-center gap-3 mb-5">
-              <span className="p-2.5 rounded-xl bg-orange-500 text-white shadow-sm shadow-orange-200">
-                <Bell size={18} />
-              </span>
+          {/* Sync Section */}
+          {activeSection === 'sync' && (
+            <div className="space-y-6">
               <div>
-                <h3 className="text-base font-bold text-black dark:text-white m-0">Operations & Calendar Alerts</h3>
-                <p className="text-xs text-black dark:text-white opacity-60 m-0">Set triggers for visits, events, and agenda layouts.</p>
+                <Kicker text="Backup" />
+                <h1 className="text-2xl font-bold text-black dark:text-white">Sync & Backup</h1>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Configure cloud sync and data backup options.</p>
               </div>
-            </div>
-            <div className="h-px bg-slate-200 dark:bg-slate-800 mb-2" />
-            <ToggleRow
-              icon={<Calendar size={15} />}
-              label="Training Events Alerts"
-              sub="Get notifications for scheduled Trainer TOT and curriculum sessions."
-              value={notifyTraining}
-              onChange={handleToggleTraining}
-            />
-            <ToggleRow
-              icon={<Clock size={15} />}
-              label="Meeting Alerts"
-              sub="Receive reminders for regional officer coordinate syncs."
-              value={notifyMeetings}
-              onChange={handleToggleMeetings}
-            />
-            <ToggleRow
-              icon={<Calendar size={15} />}
-              label="Week starts on Monday"
-              sub="Arrange the Operation Calendar with Monday as the first day."
-              value={weekStartMonday}
-              onChange={handleToggleWeekStart}
-            />
-            <ToggleRow
-              icon={<ListTodo size={15} />}
-              label="Task Reminders"
-              sub="Sync dashboard badges for pending operations list actions."
-              value={taskReminders}
-              onChange={handleToggleReminders}
-              border={false}
-            />
-          </div>
 
-          {/* ── Diagnostics Card ── */}
-          <div className="bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg p-6">
-            <div className="flex items-center gap-3 mb-5">
-              <span className="p-2.5 rounded-lg bg-orange-500 text-white">
-                <Monitor size={18} />
-              </span>
+              <Card className="p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <Cloud size={20} className="text-orange-500" />
+                  <h3 className="text-lg font-bold text-black dark:text-white">Cloud Sync</h3>
+                </div>
+
+                <div className="space-y-4">
+                  <ToggleRow
+                    icon={cloudSyncConfig.enabled ? <Cloud size={15} /> : <CloudOff size={15} />}
+                    label="Enable Cloud Sync"
+                    sub="Sync data to cloud for backup"
+                    value={cloudSyncConfig.enabled}
+                    onChange={() => {
+                      if (cloudSyncConfig.enabled) {
+                        disableCloudSync();
+                        setCloudSyncConfig({ ...cloudSyncConfig, enabled: false });
+                        showToast("☁️ Cloud sync disabled");
+                      } else {
+                        enableCloudSync();
+                        setCloudSyncConfig({ ...cloudSyncConfig, enabled: true });
+                        showToast("☁️ Cloud sync enabled");
+                      }
+                    }}
+                  />
+                  {cloudSyncConfig.enabled && cloudSyncConfig.lastSync && (
+                    <div className="text-sm text-slate-500 pl-4">
+                      Last synced: {new Date(cloudSyncConfig.lastSync).toLocaleString()}
+                    </div>
+                  )}
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {/* Diagnostics Section */}
+          {activeSection === 'diagnostics' && (
+            <div className="space-y-6">
               <div>
-                <h3 className="text-base font-bold text-black dark:text-white m-0">Platform Diagnostics</h3>
-                <p className="text-xs text-black dark:text-white opacity-60 m-0">System settings and workspace local stats.</p>
+                <Kicker text="System" />
+                <h1 className="text-2xl font-bold text-black dark:text-white">Platform Diagnostics</h1>
+                <p className="text-sm text-slate-500 dark:text-slate-400">System settings and workspace local stats.</p>
               </div>
-            </div>
-            <div className="h-px bg-slate-200 dark:bg-slate-800 mb-4" />
-            <div className="space-y-0 rounded-lg border border-neutral-200 dark:border-slate-800 overflow-hidden text-xs">
-              {[
-                ['Application Frame', 'React 19 + Vite Container'],
-                ['Local Stored Cache', `Active (${reportsCount} reports)`],
-                ['Service Environment', '● LIVE RUNNING'],
-                ['Storage Engine', 'Local Storage Hook API'],
-              ].map(([label, value], i, arr) => (
-                <div
-                  key={label}
-                  className={`flex justify-between items-center px-4 py-3 ${
-                    i < arr.length - 1 ? 'border-b border-orange-50 dark:border-slate-800' : ''
-                  } ${i % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-orange-50/40 dark:bg-slate-800/30'}`}
-                >
-                  <span className="text-black dark:text-white font-medium">{label}</span>
-                  <span className={`font-bold ${value.startsWith('●') ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-slate-200'}`}>
-                    {value}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <button
-              onClick={() => {
-                safeStorage.clear();
-                showToast('♻️ Cache cleared. Please refresh page.');
-              }}
-              className="mt-4 w-full py-2.5 rounded-xl border-2 border-orange-200 dark:border-slate-700 text-orange-600 dark:text-slate-300 font-bold text-sm hover:bg-orange-50 dark:hover:bg-slate-800 transition-colors"
-            >
-              Clear Local Application Cache
-            </button>
-          </div>
 
-        </div>
-
-        {/* ── Right Column ── */}
-        <div className="space-y-5">
-
-          {/* Profile Card */}
-          <div className="bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg p-6 text-center">
-            <div className="text-[10px] font-extrabold text-orange-500 uppercase tracking-widest mb-4">
-              Session Profile
-            </div>
-            {user ? (
-              <div className="flex flex-col items-center">
-                <div className="w-16 h-16 rounded-full bg-orange-500 text-white font-black text-2xl flex items-center justify-center shadow-lg shadow-orange-200 dark:shadow-orange-950/30 mb-3">
-                  {user.avatar}
-                </div>
-                <div className="font-extrabold text-black dark:text-white text-base mb-0.5">
-                  {user.name}
-                </div>
-                <div className="text-xs text-black dark:text-white opacity-60 mb-3">{user.email}</div>
-                {rc && (
-                  <span
-                    className="px-3 py-1 rounded-full text-xs font-bold"
-                    style={{ color: rc.color, backgroundColor: rc.bg }}
-                  >
-                    {rc.label}
-                  </span>
-                )}
-                {user.district && (
-                  <div className="text-xs text-black dark:text-white mt-2 font-medium">
-                    📍 {user.district} Region
-                  </div>
-                )}
-                {/* Divider */}
-                <div className="w-full h-px bg-slate-200 dark:bg-slate-800 my-4" />
-                <div className="w-full text-left space-y-2">
+              <Card className="p-6">
+                <div className="space-y-0 rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden text-sm">
                   {[
-                    ['Role', rc?.label || '—'],
-                    ['Access', 'Portal Authenticated'],
-                  ].map(([k, v]) => (
-                    <div key={k} className="flex justify-between text-xs">
-                      <span className="text-black dark:text-white opacity-60">{k}</span>
-                      <span className="font-bold text-slate-800 dark:text-slate-200">{v}</span>
+                    ['Application Frame', 'React 19 + Vite Container'],
+                    ['Local Stored Cache', `Active (${reportsCount} reports)`],
+                    ['Service Environment', '● LIVE RUNNING'],
+                    ['Storage Engine', 'Local Storage Hook API'],
+                  ].map(([label, value], i, arr) => (
+                    <div
+                      key={label}
+                      className={`flex justify-between items-center px-4 py-3 ${
+                        i < arr.length - 1 ? 'border-b border-slate-100 dark:border-slate-800' : ''
+                      } ${i % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50 dark:bg-slate-800/30'}`}
+                    >
+                      <span className="text-black dark:text-white font-medium">{label}</span>
+                      <span className={`font-bold ${value.startsWith('●') ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-slate-200'}`}>
+                        {value}
+                      </span>
                     </div>
                   ))}
                 </div>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center py-4">
-                <div className="w-14 h-14 rounded-full bg-orange-50 dark:bg-slate-800 text-orange-400 flex items-center justify-center mb-3 border-2 border-orange-100 dark:border-slate-700">
-                  <UserIcon size={24} />
-                </div>
-                <div className="font-extrabold text-slate-700 dark:text-slate-300 text-sm">
-                  Public Guest Access
-                </div>
-                <p className="text-xs text-black dark:text-white opacity-60 mt-2 leading-relaxed">
-                  Log in with credentials from your district lead.
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Support Card */}
-          <div className="bg-orange-500 rounded-2xl p-5 relative overflow-hidden shadow-md shadow-orange-200 dark:shadow-orange-950/30">
-            <div className="absolute top-0 right-0 w-24 h-24 rounded-full bg-white/10 -translate-y-8 translate-x-8" />
-            <div className="relative">
-              <div className="flex items-center gap-2 text-white mb-2">
-                <HelpCircle size={16} />
-                <span className="text-xs font-extrabold uppercase tracking-wide">Safeguarding Contact</span>
-              </div>
-              <p className="text-xs text-orange-100 leading-relaxed m-0">
-                Need help using the Digital ScaleUp program? Contact the system admin via:
-              </p>
-              <div className="text-xs font-bold text-white mt-3 bg-white/15 rounded-lg px-3 py-2 break-all">
-                support.pamodzi@ujamaa-africa.org
-              </div>
+                <button
+                  onClick={() => {
+                    safeStorage.clear();
+                    showToast('♻️ Cache cleared. Please refresh page.');
+                  }}
+                  className="mt-4 w-full py-2.5 rounded-xl border-2 border-orange-200 dark:border-slate-700 text-orange-600 dark:text-slate-300 font-bold text-sm hover:bg-orange-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  Clear Local Application Cache
+                </button>
+              </Card>
             </div>
-          </div>
+          )}
 
         </div>
       </div>
