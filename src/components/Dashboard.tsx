@@ -240,10 +240,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
               { icon: <BookOpen size={16} className="text-orange-600" />, label: "Lessons", value: "17,784+" },
               { icon: <TrendingUp size={16} className="text-orange-600" />, label: "Coverage", value: "54%" },
             ].map((s, i) => (
-              <Card key={i} className="p-3">
-                <div className="flex items-center gap-2 mb-1">{s.icon}<span className="text-[10px] text-black dark:text-white opacity-80 font-medium">{s.label}</span></div>
-                <div className="text-lg font-bold text-black dark:text-white">{s.value}</div>
-              </Card>
+              <div key={i} className="p-3 rounded-lg" style={{ background: "linear-gradient(135deg, #e85d04 0%, #c44d00 100%)", boxShadow: "0 4px 14px rgba(232,93,4,0.25)" }}>
+                <div className="flex items-center gap-2 mb-1">
+                  <span style={{ filter: "brightness(0) invert(1) opacity(0.85)" }}>{s.icon}</span>
+                  <span className="text-[10px] text-white opacity-85 font-medium">{s.label}</span>
+                </div>
+                <div className="text-lg font-bold text-white">{s.value}</div>
+              </div>
             ))}
           </>
         ) : (
@@ -254,11 +257,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
               { icon: <CheckSquare size={16} className="text-emerald-600" />, label: "Approved", value: approved, trend: 18 },
               { icon: <Users size={16} className="text-orange-600" />, label: "Learners", value: students, trend: 8 },
             ].map((s: any, i) => (
-              <Card key={i} className="p-3">
-                <div className="flex items-center gap-2 mb-1">{s.icon}<span className="text-[10px] text-black dark:text-white opacity-80 font-medium">{s.label}</span></div>
-                <div className="text-lg font-bold text-black dark:text-white">{s.value}</div>
-                <TrendIndicator value={s.trend} className="mt-1" />
-              </Card>
+              <div key={i} className="p-3 rounded-lg" style={{ background: "linear-gradient(135deg, #e85d04 0%, #c44d00 100%)", boxShadow: "0 4px 14px rgba(232,93,4,0.25)" }}>
+                <div className="flex items-center gap-2 mb-1">
+                  <span style={{ filter: "brightness(0) invert(1) opacity(0.85)" }}>{s.icon}</span>
+                  <span className="text-[10px] text-white opacity-85 font-medium">{s.label}</span>
+                </div>
+                <div className="text-lg font-bold text-white">{s.value}</div>
+                <TrendIndicator value={s.trend} className="mt-1 !text-white/80" />
+              </div>
             ))}
           </>
         )}

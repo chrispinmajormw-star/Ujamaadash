@@ -217,12 +217,37 @@ export const Modal: React.FC<ModalProps> = ({ title, children, onClose, width = 
   );
 };
 
-export const Toast: React.FC<{ msg: string; onClose: () => void }> = ({ msg, onClose }) => (
-  <div className="fixed bottom-5 right-5 bg-slate-900 dark:bg-slate-950 text-white px-4 py-3 rounded-xl text-sm font-semibold z-[99999] shadow-xl border-l-[4px] border-orange-500 flex items-center gap-3 animate-slide-up">
-    <span>{msg}</span>
-    <span onClick={onClose} className="cursor-pointer opacity-50 hover:opacity-105 text-base p-1">✕</span>
-  </div>
-);
+export const Toast: React.FC<{ msg: string; onClose: () => void }> = ({ msg, onClose }) => {
+  // Detect leading emoji to set accent colour; strip it from display text
+  const emojiMap: Record<string, string> = {
+    "✅": "#16a34a", "🎉": "#16a34a", "👋": "#16a34a", "💾": "#16a34a", "📋": "#16a34a",
+    "⚠️": "#d97706", "🔔": "#d97706",
+    "ℹ️": "#2563eb", "📊": "#2563eb", "🗑️": "#2563eb",
+    "❌": "#dc2626", "🚫": "#dc2626",
+  };
+  const firstEmoji = msg.match(/^(\p{Emoji_Presentation}|\p{Emoji}\uFE0F)/u)?.[0] ?? "";
+  const accentColor = emojiMap[firstEmoji] ?? "#e85d04";
+  const cleanMsg = firstEmoji ? msg.replace(firstEmoji, "").trimStart() : msg;
+  return (
+    <div
+      className="fixed bottom-5 right-5 bg-white dark:bg-[#1a2235] text-black dark:text-white px-4 py-3 rounded-xl text-sm z-[99999] shadow-2xl flex items-start gap-3 animate-slide-up max-w-xs border border-neutral-100 dark:border-slate-800"
+      style={{ borderLeft: `4px solid ${accentColor}` }}
+    >
+      <div
+        className="mt-0.5 shrink-0 w-2 h-2 rounded-full"
+        style={{ backgroundColor: accentColor, marginTop: "4px" }}
+      />
+      <span className="flex-1 font-medium leading-snug">{cleanMsg}</span>
+      <button
+        onClick={onClose}
+        className="shrink-0 w-6 h-6 rounded-md flex items-center justify-center text-black/40 dark:text-white/40 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-slate-700 transition-colors text-xs font-bold ml-1"
+        aria-label="Dismiss"
+      >
+        ✕
+      </button>
+    </div>
+  );
+};
 
 interface StatCardProps {
   icon: string | React.ReactNode;
@@ -233,18 +258,24 @@ interface StatCardProps {
 }
 
 export const StatCard: React.FC<StatCardProps> = ({ icon, label, value, color = OR, sub }) => (
-  <Card className="p-4 flex flex-col justify-between">
+  <div
+    className="p-4 flex flex-col justify-between rounded-lg"
+    style={{
+      background: "linear-gradient(135deg, #e85d04 0%, #c44d00 100%)",
+      boxShadow: "0 4px 18px rgba(232,93,4,0.28)",
+    }}
+  >
     <div>
-      <div className="w-9 h-9 rounded-xl bg-orange-50 dark:bg-orange-950/30 flex items-center justify-center mb-3 text-lg">
+      <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3 text-lg" style={{ background: "rgba(255,255,255,0.18)" }}>
         {icon}
       </div>
-      <div className="text-2xl font-black leading-tight tracking-tight text-black dark:text-white" style={{ color: color }}>
+      <div className="text-2xl font-black leading-tight tracking-tight text-white">
         {value}
       </div>
-      <div className="text-xs text-black dark:text-white mt-1 font-semibold opacity-80">{label}</div>
+      <div className="text-xs text-white mt-1 font-semibold opacity-85">{label}</div>
     </div>
-    {sub && <div className="text-[10px] text-black dark:text-white mt-2 opacity-60">{sub}</div>}
-  </Card>
+    {sub && <div className="text-[10px] text-white mt-2 opacity-70">{sub}</div>}
+  </div>
 );
 
 export const TH: React.FC<{ cols: string[] }> = ({ cols }) => (

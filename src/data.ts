@@ -1,4 +1,4 @@
-import { User, Report, Cluster, District, Session } from './types';
+import { User, Report, Cluster, District, Session, CaseReferral, SasaMonthlyReport } from './types';
 
 export const ROLE_CFG = {
   admin: { label: "National Admin", color: "#991b1b", bg: "#fee2e2", icon: "🛡️" },
@@ -6,6 +6,7 @@ export const ROLE_CFG = {
   data_entry: { label: "Data Entry Officer", color: "#c44d00", bg: "#fff4ec", icon: "📝" },
   district_coordinator: { label: "District Coordinator", color: "#065f46", bg: "#d1fae5", icon: "🏛️" },
   viewer: { label: "Viewer", color: "#1e40af", bg: "#dbeafe", icon: "👁️" },
+  sasa_officer: { label: "SASA Officer", color: "#6d28d9", bg: "#ede9fe", icon: "🛡️" },
 };
 
 export const CAN = {
@@ -26,6 +27,7 @@ export const USERS_INIT: User[] = [
   { id: "3", email: "entry@ujamaa.mw", password: "entry123", role: "data_entry", name: "Data Officer", district: "Lilongwe", avatar: "JB", status: "active" },
   { id: "4", email: "coord@ujamaa.mw", password: "coord123", role: "district_coordinator", name: "District Coordinator", district: "Blantyre", avatar: "MC", status: "active" },
   { id: "5", email: "viewer@ujamaa.mw", password: "view123", role: "viewer", name: "User 01", district: null, avatar: "TN", status: "active" },
+  { id: "6", email: "sasa@ujamaa.mw", password: "sasa123", role: "sasa_officer", name: "SASA Officer", district: "Lilongwe", avatar: "SO", status: "active" },
 ];
 
 export const REPORTS_INIT: Report[] = [
@@ -307,5 +309,45 @@ export const MAP_CLUSTERS: MapCluster[] = [
       { name: "Namwera Primary", lat: -14.492, lng: 35.282 },
       { name: "Monkey Bay Primary", lat: -14.472, lng: 35.292 },
     ]
+  },
+];
+
+// ─── SASA OFFICER CONSTANTS ───────────────────────────────────────────────────
+
+export const REFERRAL_AGENCIES = [
+  { id: "police",          label: "Police Station" },
+  { id: "hospital",        label: "Hospital / Health Centre" },
+  { id: "social_welfare",  label: "Social Welfare Office" },
+  { id: "child_protection",label: "Child Protection Services" },
+  { id: "legal_aid",       label: "Legal Aid Bureau" },
+  { id: "safe_house",      label: "Safe House / Shelter" },
+];
+
+export const REFERRAL_STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
+  pending:     { label: "Pending",     color: "#92400e", bg: "#fef9c3" },
+  in_progress: { label: "In Progress", color: "#1e40af", bg: "#dbeafe" },
+  resolved:    { label: "Resolved",    color: "#065f46", bg: "#dcfce7" },
+};
+
+export const CASE_REFERRALS_INIT: CaseReferral[] = [
+  { id: 1, caseId: 1, caseSchool: "Kawale Primary", caseDistrict: "Lilongwe", agency: "police", agencyLabel: "Police Station", referredBy: "SASA Officer", referredAt: "2026-05-02", status: "resolved", outcome: "Perpetrator cautioned", notes: "Case closed after mediation." },
+  { id: 2, caseId: 3, caseSchool: "Zomba LEA School", caseDistrict: "Zomba", agency: "hospital", agencyLabel: "Hospital / Health Centre", referredBy: "SASA Officer", referredAt: "2026-05-05", status: "in_progress", notes: "Awaiting medical report." },
+  { id: 3, caseId: 2, caseSchool: "Mbayani Primary", caseDistrict: "Blantyre", agency: "social_welfare", agencyLabel: "Social Welfare Office", referredBy: "SASA Officer", referredAt: "2026-05-08", status: "pending", notes: "Family counselling to be scheduled." },
+];
+
+export const SASA_REPORTS_INIT: SasaMonthlyReport[] = [
+  {
+    id: 1,
+    month: "2026-04",
+    submittedBy: "SASA Officer",
+    submittedAt: "2026-05-01",
+    totalCases: 5,
+    publicCases: 2,
+    referrals: 3,
+    resolvedReferrals: 2,
+    highlights: "Increased community awareness following school assemblies in Lilongwe.",
+    challenges: "Limited transport to follow up referred cases in rural zones.",
+    recommendations: "Allocate motorbike fuel allowance for field visits.",
+    status: "submitted",
   },
 ];

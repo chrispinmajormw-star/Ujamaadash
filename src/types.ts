@@ -7,7 +7,7 @@ export interface User {
   id: string;
   email: string;
   password?: string;
-  role: 'admin' | 'tot' | 'data_entry' | 'district_coordinator' | 'viewer';
+  role: 'admin' | 'tot' | 'data_entry' | 'district_coordinator' | 'viewer' | 'sasa_officer';
   name: string;
   district: string | null;
   avatar: string;
@@ -113,3 +113,32 @@ export interface Task {
   reportId?: number;
 }
 
+
+export interface CaseReferral {
+  id: number;
+  caseId: number;
+  caseSchool: string;
+  caseDistrict: string;
+  agency: string;
+  agencyLabel: string;
+  referredBy: string;
+  referredAt: string;
+  status: 'pending' | 'in_progress' | 'resolved';
+  outcome?: string;
+  notes?: string;
+}
+
+export interface SasaMonthlyReport {
+  id: number;
+  month: string;
+  submittedBy: string;
+  submittedAt: string;
+  totalCases: number;
+  publicCases: number;
+  referrals: number;
+  resolvedReferrals: number;
+  highlights: string;
+  challenges: string;
+  recommendations: string;
+  status: 'draft' | 'submitted';
+}

@@ -94,6 +94,7 @@ import { SettingsPage } from './components/SettingsPage';
 import { CalendarPage } from './components/CalendarPage';
 import { AnalyticsPage } from './components/AnalyticsPage';
 import { TasksPage } from './components/TasksPage';
+import { SasaPage } from './components/SasaPage';
 import { safeStorage } from './utils/storage';
 
 // ─── LOGIN PANEL ─────────────────────────────
@@ -940,6 +941,8 @@ export default function App() {
         return user?.role === 'admin' ? <UsersPage user={user} users={users} setUsers={setUsers} showToast={showToast} /> : <div className="p-12 text-center text-slate-400 font-semibold italic">Restricted to National Admin only.</div>;
       case "impact":
         return <ImpactPage reports={reports} showToast={showToast} user={user} />;
+      case 'sasa':
+        return <SasaPage user={user} reports={reports} showToast={showToast} />;
       case "calendar":
         return user ? <CalendarPage user={user} /> : <div className="p-12 text-center text-slate-400 font-semibold italic">Sign in to view the Calendar.</div>;
       case "tasks":
@@ -983,6 +986,7 @@ export default function App() {
       title: "More",
       items: [
         { id: "analytics", label: "Analytics", icon: BarChart2 },
+        ...(user?.role === 'sasa_officer' || user?.role === 'admin' ? [{ id: "sasa", label: "SASA Workspace", icon: Shield, protected: true }] : []),
         { id: "impact", label: "Impact stories", icon: Heart },
         ...(user?.role === 'admin' ? [{ id: "users", label: "Staff", icon: Users, protected: true }] : []),
         { id: "settings", label: "Settings", icon: Settings }
