@@ -353,23 +353,35 @@ export const TrendIndicator: React.FC<{ value: number; suffix?: string; classNam
 
 // ─── CONFIRM DIALOG ──────────────────────────
 interface ConfirmDialogProps {
+  isOpen?: boolean;
   title: string;
   message: string;
   confirmLabel?: string;
   cancelLabel?: string;
+  confirmText?: string;  // alias for confirmLabel
+  cancelText?: string;   // alias for cancelLabel
   onConfirm: () => void;
   onCancel: () => void;
   variant?: 'danger' | 'warning' | 'info';
 }
 export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
+  isOpen = true,
   title,
   message,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel,
+  cancelLabel,
+  confirmText,
+  cancelText,
   onConfirm,
   onCancel,
   variant = 'danger'
 }) => {
+  // Support both confirmLabel/cancelLabel and confirmText/cancelText
+  const confirmBtn = confirmLabel || confirmText || 'Confirm';
+  const cancelBtn = cancelLabel || cancelText || 'Cancel';
+
+  if (!isOpen) return null;
+
   const colors = {
     danger: { btn: 'bg-red-600 hover:bg-red-700', icon: '⚠️' },
     warning: { btn: 'bg-amber-500 hover:bg-amber-600', icon: '⚡' },
@@ -388,13 +400,13 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             onClick={onCancel}
             className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
           >
-            {cancelLabel}
+            {cancelBtn}
           </button>
           <button
             onClick={onConfirm}
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg text-white ${c.btn}`}
           >
-            {confirmLabel}
+            {confirmBtn}
           </button>
         </div>
       </div>
