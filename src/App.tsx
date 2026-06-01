@@ -756,6 +756,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers, showTo
             <option value="tot">Trainer of Trainers (TOT)</option>
             <option value="district_coordinator">District Coordinator (DC)</option>
             <option value="data_entry">Data Entry Officer</option>
+            <option value="sasa officer">Sasa Officer</option>
             <option value="viewer">Basic View Inspector</option>
           </FSelect>
           <FSelect label="Assigned Region" value={nf.district} onChange={sn("district")}>
