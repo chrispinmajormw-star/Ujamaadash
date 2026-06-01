@@ -208,7 +208,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
     <div className="space-y-4">
 
       <PageHeader
-        title={user ? `Welcome, ${currentUser.name}` : "Program overview"}
+        title={
+          <span className="border-l-[4px] border-orange-500 pl-2.5 py-0.5 inline-block">
+            {user ? `Welcome, ${currentUser.name}` : "Program overview"}
+          </span>
+        }
         subtitle={user ? `${ROLE_CFG[user.role]?.label}${currentUser.district ? ` · ${currentUser.district}` : ''}` : "Ujamaa Dashboard · Ujamaa Pamodzi Africa"}
         actions={
           <>
@@ -219,9 +223,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
               <Btn size="sm" variant="secondary" onClick={() => setPage("reports")}>
                 Pending ({pending})
               </Btn>
-            )}
-            {!user && (
-              <Btn size="sm" variant="secondary" onClick={() => setPage("login")}>Sign in</Btn>
             )}
           </>
         }

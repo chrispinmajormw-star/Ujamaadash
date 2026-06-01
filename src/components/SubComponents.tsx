@@ -66,8 +66,8 @@ export const Kicker: React.FC<{ text: string }> = ({ text }) => (
 );
 
 interface PageHeaderProps {
-  title: string;
-  subtitle?: string;
+  title: React.ReactNode;
+  subtitle?: React.ReactNode;
   actions?: React.ReactNode;
 }
 
