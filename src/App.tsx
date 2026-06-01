@@ -244,7 +244,7 @@ const SubmitReport: React.FC<SubmitReportProps> = ({ user, onSubmit, showToast }
       <div>
         <Kicker text={isPublic ? "Case Submission Portal" : "Primary Field Reporting"} />
         <h1 className="text-base font-bold text-black dark:text-white m-0">
-          {isPublic ? "Report an Incident" : "Submit Session Record"}
+          {isPublic ? "Submit a Case" : "Submit Session Record"}
         </h1>
         <p className="text-xs text-black dark:text-white opacity-80 mt-1 m-0">
           {isPublic ? "Report SGBV, harassment, defilement, or child protection concerns securely." : "Submit certified teacher checklist records."}
@@ -681,7 +681,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers, showTo
 
 const PAGE_LABELS: Record<string, string> = {
   dashboard: "ETT ScaleUp Program",
-  submit: "Submit Report",
+  submit: "Submit a Case",
   reports: "Reports",
   my_reports: "My Reports",
   maps: "Clusters Map",
@@ -860,7 +860,7 @@ export default function App() {
   };
 
   // Unified nav — same for all users. protected=true items redirect to login if not signed in.
-  const PROTECTED_PAGES = ["submit", "reports", "calendar", "tasks", "analytics", "users"];
+  const PROTECTED_PAGES = ["reports", "calendar", "tasks", "analytics", "users"];
   const activeNavGroups = [
     {
       title: "Dashboard",
@@ -883,7 +883,7 @@ export default function App() {
     {
       title: "Reports",
       items: [
-        { id: "submit", label: "Submit report", icon: FilePlus, protected: true },
+        { id: "submit", label: "Submit a Case", icon: FilePlus },
         { id: "reports", label: "Reports", icon: FileText, protected: true }
       ]
     },
