@@ -95,14 +95,13 @@ import { TasksPage } from './components/TasksPage';
 import { safeStorage } from './utils/storage';
 
 // ─── LOGIN PANEL ─────────────────────────────
-interface LoginPageProps {
+interface LoginModalProps {
   onLogin: (u: User) => void;
-  onPublicView: () => void;
+  onClose: () => void;
   onRegister: (u: User) => void;
   users: User[];
-  darkMode: boolean;
 }
-const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onPublicView, onRegister, users, darkMode }) => {
+const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onRegister, users }) => {
   const [mode, setMode] = useState<'choice' | 'login' | 'register'>('choice');
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
@@ -138,64 +137,59 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onPublicView, onRegister
   };
 
   return (
-    <div className="min-h-full bg-white dark:bg-[#0f1623] flex items-center justify-center p-4">
-      <Card className="w-full max-w-sm p-6">
-        <div className="mb-5 flex flex-col items-center">
-          <AfricaLogo size={36} variant="full" className="mb-2" />
-          <h1 className="text-base font-bold text-black dark:text-white m-0">Ujamaa Dashboard</h1>
-          <p className="text-[11px] text-black dark:text-white mt-1 m-0 opacity-60">Staff sign-in</p>
+    <Modal title="Sign In" onClose={onClose} width={400}>
+      <div className="mb-5 flex flex-col items-center">
+        <AfricaLogo size={36} variant="full" className="mb-2" />
+        <h1 className="text-base font-bold text-black dark:text-white m-0">Ujamaa Dashboard</h1>
+        <p className="text-[11px] text-black dark:text-white mt-1 m-0 opacity-60">Staff sign-in</p>
+      </div>
+
+      {mode === 'choice' && (
+        <div className="space-y-2.5">
+          <Btn full onClick={() => setMode('login')}>Use login</Btn>
+          <Btn full variant="secondary" onClick={() => setMode('register')}>Signup</Btn>
         </div>
+      )}
 
-        {mode === 'choice' && (
-          <div className="space-y-2.5">
-            <Btn full onClick={() => setMode('login')}>Sign In</Btn>
-            <Btn full variant="secondary" onClick={() => setMode('register')}>Create Staff Account</Btn>
-            <Btn full variant="ghost" onClick={onPublicView}>View Public Dashboard</Btn>
-          </div>
-        )}
+      {mode === 'login' && (
+        <div className="space-y-4">
+          <FInput label="Email address *" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="coordinator@ujamaa.mw" />
+          <FInput label="Password *" type="password" value={pass} onChange={e => setPass(e.target.value)} placeholder="••••••••" />
+          {err && (
+            <div className="bg-red-500/5 text-red-600 border border-red-500/10 rounded-xl p-2.5 text-xs text-left font-bold leading-normal">
+              ⚠️ {err}
+            </div>
+          )}
+          <Btn full onClick={doLogin} disabled={loading}>{loading ? "Signing In..." : "Use login"}</Btn>
+          <button onClick={() => { setMode('choice'); setErr(''); }} className="mt-2 text-xs font-bold text-slate-400 hover:text-slate-600 block mx-auto">
+            ← Back
+          </button>
+        </div>
+      )}
 
-        {mode === 'login' && (
-          <div className="space-y-4">
-            <h2 className="text-sm font-bold text-slate-800 dark:text-white mb-4 block">Sign In</h2>
-            <FInput label="Email address *" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="coordinator@ujamaa.mw" />
-            <FInput label="Password *" type="password" value={pass} onChange={e => setPass(e.target.value)} placeholder="••••••••" />
-            {err && (
-              <div className="bg-red-500/5 text-red-600 border border-red-500/10 rounded-xl p-2.5 text-xs text-left font-bold leading-normal">
-                ⚠️ {err}
-              </div>
-            )}
-            <Btn full onClick={doLogin} disabled={loading}>{loading ? "Signing In..." : "Confirm Sign In"}</Btn>
-            <button onClick={() => { setMode('choice'); setErr(''); }} className="mt-2 text-xs font-bold text-slate-400 hover:text-slate-600 block mx-auto">
-              ← Back
-            </button>
-          </div>
-        )}
-
-        {mode === 'register' && (
-          <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
-            <h2 className="text-sm font-bold text-slate-800 dark:text-white mb-2 block">Account Registration</h2>
-            <FInput label="Full Name *" value={reg.name} onChange={e => setReg({ ...reg, name: e.target.value })} />
-            <FSelect label="Malawian District Match *" value={reg.district} onChange={e => setReg({ ...reg, district: e.target.value })}>
-              <option value="">Choose District...</option>
-              {DISTRICT_LIST.map(d => <option key={d}>{d}</option>)}
-            </FSelect>
-            <FInput label="Designation *" placeholder="e.g. Teacher, TOT, DC" value={reg.designation} onChange={e => setReg({ ...reg, designation: e.target.value })} />
-            <FInput label="Email address *" type="email" value={reg.email} onChange={e => setReg({ ...reg, email: e.target.value })} />
-            <FInput label="Associated School Hub" placeholder="e.g. Mbayani Primary" value={reg.school} onChange={e => setReg({ ...reg, school: e.target.value })} />
-            <FInput label="Current Password *" type="password" value={reg.password} onChange={e => setReg({ ...reg, password: e.target.value })} />
-            {err && (
-              <div className="bg-red-500/5 text-red-600 p-2 border border-red-500/10 rounded text-xs">
-                {err}
-              </div>
-            )}
-            <Btn full onClick={createAccount}>Register Account</Btn>
-            <button onClick={() => { setMode('choice'); setErr(''); }} className="mt-2 text-xs font-bold text-slate-400 hover:text-slate-600 block mx-auto">
-              ← Back
-            </button>
-          </div>
-        )}
-      </Card>
-    </div>
+      {mode === 'register' && (
+        <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
+          <FInput label="Full Name *" value={reg.name} onChange={e => setReg({ ...reg, name: e.target.value })} />
+          <FSelect label="Malawian District Match *" value={reg.district} onChange={e => setReg({ ...reg, district: e.target.value })}>
+            <option value="">Choose District...</option>
+            {DISTRICT_LIST.map(d => <option key={d}>{d}</option>)}
+          </FSelect>
+          <FInput label="Designation *" placeholder="e.g. Teacher, TOT, DC" value={reg.designation} onChange={e => setReg({ ...reg, designation: e.target.value })} />
+          <FInput label="Email address *" type="email" value={reg.email} onChange={e => setReg({ ...reg, email: e.target.value })} />
+          <FInput label="Associated School Hub" placeholder="e.g. Mbayani Primary" value={reg.school} onChange={e => setReg({ ...reg, school: e.target.value })} />
+          <FInput label="Current Password *" type="password" value={reg.password} onChange={e => setReg({ ...reg, password: e.target.value })} />
+          {err && (
+            <div className="bg-red-500/5 text-red-600 p-2 border border-red-500/10 rounded text-xs">
+              {err}
+            </div>
+          )}
+          <Btn full onClick={createAccount}>Signup</Btn>
+          <button onClick={() => { setMode('choice'); setErr(''); }} className="mt-2 text-xs font-bold text-slate-400 hover:text-slate-600 block mx-auto">
+            ← Back
+          </button>
+        </div>
+      )}
+    </Modal>
   );
 };
 
@@ -732,6 +726,7 @@ export default function App() {
   const [notifOpen, setNotifOpen] = useState(false);
   const [editingReport, setEditingReport] = useState<Report | null>(null);
   const [forwardModal, setForwardModal] = useState<Report | null>(null);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -819,21 +814,7 @@ export default function App() {
     ? reports.filter(r => r.status === "pending" && (user.role === "district_coordinator" ? r.district === user.district : true)).length
     : 0;
 
-  const isLoginPage = page === "login" || (!user && !["dashboard", "submit", "maps", "districts", "trainings", "curriculum", "ett", "analytics", "impact", "settings"].includes(page));
-
   const renderPageContent = () => {
-    if (page === "login") {
-      return (
-        <LoginPage
-          onLogin={u => { setUser(u); setPage("dashboard"); showToast(`👋 Welcome back, ${u.name}`); }}
-          onRegister={u => { setUsers(prev => [u, ...prev]); setUser(u); setPage("dashboard"); showToast(`🎉 Account certified! Welcome, ${u.name}`); }}
-          onPublicView={() => { setUser(null); setPage("dashboard"); }}
-          users={users}
-          darkMode={darkMode}
-        />
-      );
-    }
-
     switch (page) {
       case "dashboard":
         return <Dashboard user={user} reports={reports} setPage={setPage} darkMode={darkMode} />;
@@ -930,7 +911,7 @@ export default function App() {
               key={item.id}
               type="button"
               onClick={() => {
-                if (isLocked) { setPage("login"); onNavigate?.(); return; }
+                if (isLocked) { setIsLoginModalOpen(true); onNavigate?.(); return; }
                 setPage(item.id); onNavigate?.();
               }}
               className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium transition ${
@@ -955,12 +936,8 @@ export default function App() {
   return (
     <>
       <div className="h-screen flex overflow-hidden bg-white dark:bg-[#0f1623] text-black dark:text-white transition-colors">
-        {isLoginPage ? (
-          <div className="flex-1 overflow-y-auto">{renderPageContent()}</div>
-        ) : (
-          <>
-            <AnimatePresence>
-              {sidebarOpen && (
+        <AnimatePresence>
+          {sidebarOpen && (
                 <>
                   <motion.div
                     initial={{ opacity: 0 }}
@@ -1008,6 +985,14 @@ export default function App() {
             <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#0f1623]">
               <header className="h-12 shrink-0 flex items-center justify-between gap-3 px-3 border-b border-neutral-200 dark:border-slate-800 bg-white dark:bg-[#0f1623]">
                 <div className="flex items-center gap-2 min-w-0">
+                  <button
+                    type="button"
+                    onClick={() => setPage("dashboard")}
+                    className="p-1.5 rounded-md text-black dark:text-white hover:bg-neutral-100 dark:hover:bg-slate-800 mr-1"
+                    aria-label="Back to dashboard"
+                  >
+                    <ArrowLeft size={16} />
+                  </button>
                   <button
                     type="button"
                     onClick={() => setSidebarOpen(true)}
@@ -1105,7 +1090,7 @@ export default function App() {
                   ) : (
                     <button
                       type="button"
-                      onClick={() => setPage("login")}
+                      onClick={() => setIsLoginModalOpen(true)}
                       className="px-2.5 py-1 bg-orange-600 hover:bg-orange-700 text-white font-semibold text-xs rounded-md"
                     >
                       Sign in
@@ -1120,8 +1105,6 @@ export default function App() {
                 </div>
               </main>
             </div>
-          </>
-        )}
       </div>
 
       {toast && <Toast msg={toast} onClose={() => setToast(null)} />}
@@ -1169,6 +1152,15 @@ export default function App() {
             </div>
           </div>
         </Modal>
+      )}
+
+      {isLoginModalOpen && (
+        <LoginModal
+          onLogin={u => { setUser(u); setIsLoginModalOpen(false); setPage("dashboard"); showToast(`👋 Welcome back, ${u.name}`); }}
+          onRegister={u => { setUsers(prev => [u, ...prev]); setUser(u); setIsLoginModalOpen(false); setPage("dashboard"); showToast(`🎉 Account certified! Welcome, ${u.name}`); }}
+          onClose={() => setIsLoginModalOpen(false)}
+          users={users}
+        />
       )}
     </>
   );
