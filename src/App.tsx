@@ -1039,7 +1039,9 @@ export default function App() {
                       </button>
 
                       {notifOpen && (
-                        <div className="absolute right-0 top-10 bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg shadow-lg p-3 w-64 z-50 text-black dark:text-white">
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
+                          <div className="absolute right-0 top-10 bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg shadow-lg p-3 w-64 z-50 text-black dark:text-white">
                           <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 mb-2">
                             <span className="font-semibold text-xs">Pending reviews</span>
                             {pendingCount > 0 && <span className="bg-amber-100 text-amber-800 text-[9px] px-1.5 rounded">Action required</span>}
@@ -1061,7 +1063,8 @@ export default function App() {
                               ))
                             )}
                           </div>
-                        </div>
+                          </div>
+                        </>
                       )}
                     </div>
                   )}
