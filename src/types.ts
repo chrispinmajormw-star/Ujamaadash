@@ -7,7 +7,7 @@ export interface User {
   id: string;
   email: string;
   password?: string;
-  role: 'admin' | 'tot' | 'data_entry' | 'district_coordinator' | 'viewer' | 'sasa_officer';
+  role: 'admin' | 'tot' | 'data_entry' | 'district_coordinator' | 'viewer' | 'sasa_officer' | 'manager' | 'admin_officer' | 'staff' | 'cartographer';
   name: string;
   district: string | null;
   avatar: string;
