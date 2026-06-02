@@ -7,13 +7,20 @@ export const ROLE_CFG = {
   district_coordinator: { label: "District Coordinator", color: "#065f46", bg: "#d1fae5", icon: "🏛️" },
   viewer: { label: "Viewer", color: "#1e40af", bg: "#dbeafe", icon: "👁️" },
   sasa_officer: { label: "SASA Officer", color: "#6d28d9", bg: "#ede9fe", icon: "🛡️" },
+  manager: { label: "Program Manager", color: "#0e4a7a", bg: "#e0f2fe", icon: "📊" },
+  admin_officer: { label: "Admin Officer", color: "#5b21b6", bg: "#f5f3ff", icon: "⚙️" },
+  staff: { label: "Staff", color: "#374151", bg: "#f3f4f6", icon: "👤" },
+  cartographer: { label: "Cartographer", color: "#0f766e", bg: "#ccfbf1", icon: "🗺️" },
 };
 
 export const CAN = {
-  submitReport: ["admin", "tot", "data_entry", "district_coordinator"],
-  approveReport: ["admin", "district_coordinator"],
-  manageUsers: ["admin"],
-  exportData: ["admin", "district_coordinator"],
+  submitReport: ["admin", "tot", "data_entry", "district_coordinator", "staff"],
+  approveReport: ["admin", "district_coordinator", "manager"],
+  manageUsers: ["admin", "admin_officer"],
+  exportData: ["admin", "district_coordinator", "manager"],
+  viewSasa: ["admin", "sasa_officer", "manager", "district_coordinator"],
+  editMaps: ["admin", "cartographer"],
+  viewAnalytics: ["admin", "manager", "district_coordinator"],
 };
 
 export const can = (role: string, act: keyof typeof CAN) => {
@@ -28,6 +35,10 @@ export const USERS_INIT: User[] = [
   { id: "4", email: "coord@ujamaa.mw", password: "coord123", role: "district_coordinator", name: "District Coordinator", district: "Blantyre", avatar: "MC", status: "active" },
   { id: "5", email: "viewer@ujamaa.mw", password: "view123", role: "viewer", name: "User 01", district: null, avatar: "TN", status: "active" },
   { id: "6", email: "sasa@ujamaa.mw", password: "sasa123", role: "sasa_officer", name: "SASA Officer", district: "Lilongwe", avatar: "SO", status: "active" },
+  { id: "7", email: "manager@ujamaa.mw", password: "manager123", role: "manager", name: "Program Manager", district: null, avatar: "PM", status: "active" },
+  { id: "8", email: "officer@ujamaa.mw", password: "officer123", role: "admin_officer", name: "Admin Officer", district: null, avatar: "AO", status: "active" },
+  { id: "9", email: "staff@ujamaa.mw", password: "staff123", role: "staff", name: "Field Staff", district: "Mzimba", avatar: "FS", status: "active" },
+  { id: "10", email: "gis@ujamaa.mw", password: "gis123", role: "cartographer", name: "GIS Cartographer", district: null, avatar: "GC", status: "active" },
 ];
 
 export const REPORTS_INIT: Report[] = [
