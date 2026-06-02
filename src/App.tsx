@@ -546,9 +546,9 @@ const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, onOpenMap }) => {
 
       <Card className="grid grid-cols-2 md:grid-cols-4 gap-3 !p-4">
         {[
-          ["Active Spheres", "15 Districts"],
+          ["Active Districts", "15 Districts"],
           ["Training Coverage", "54% Target reached"],
-          ["Certified TOTs Certified", "665 Certs"],
+          ["Certified TOTs", "665 Certs"],
           ["Teachers trained", `${DISTRICTS.reduce((acc, d) => acc + d.teachersTrained, 0).toLocaleString()} Trained`]
         ].map(([l, v]) => (
           <div key={l} className="space-y-1">
@@ -677,7 +677,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers, showTo
 
       <Card>
         <FilterBar
-          options={["all", "admin", "tot", "data_entry", "district_coordinator"].map(x => ({
+          options={["all", "admin", "tot", "data_entry", "district_coordinator","sasa_officer"].map(x => ({
             v: x,
             l: x === 'all' ? 'ALL STAFF' : ROLE_CFG[x as keyof typeof ROLE_CFG]?.label.toUpperCase() || x
           }))}
@@ -756,7 +756,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers, showTo
             <option value="tot">Trainer of Trainers (TOT)</option>
             <option value="district_coordinator">District Coordinator (DC)</option>
             <option value="data_entry">Data Entry Officer</option>
-            <option value="sasa officer">Sasa Officer</option>
+            <option value="sasa_officer">Sasa Officer</option>
             <option value="viewer">Basic View Inspector</option>
           </FSelect>
           <FSelect label="Assigned Region" value={nf.district} onChange={sn("district")}>
@@ -902,7 +902,7 @@ export default function App() {
     setPage("maps");
   };
 
-  const isStaff = user && ["admin", "district_coordinator", "data_entry", "tot"].includes(user.role);
+  const isStaff = user && ["admin", "district_coordinator", "data_entry", "tot","sasa_officer"].includes(user.role);
 
   const pendingCount = user && can(user.role, "approveReport")
     ? reports.filter(r => r.status === "pending" && (user.role === "district_coordinator" ? r.district === user.district : true)).length
