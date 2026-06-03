@@ -38,6 +38,7 @@ import {
   Sun,
   Lock,
   Compass,
+  Navigation,
   Layers,
   Heart,
   Sliders,
@@ -95,6 +96,10 @@ import { CalendarPage } from './components/CalendarPage';
 import { AnalyticsPage } from './components/AnalyticsPage';
 import { TasksPage } from './components/TasksPage';
 import { SasaPage } from './components/SasaPage';
+import { ProgramManagerPage } from './components/ProgramManagerPage';
+import { FieldOfficerPage } from './components/FieldOfficerPage';
+import { ProgramStaffPage } from './components/ProgramStaffPage';
+import { CartographerPage } from './components/CartographerPage';
 import { safeStorage } from './utils/storage';
 
 // ─── LOGIN PANEL ─────────────────────────────
@@ -546,9 +551,9 @@ const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, onOpenMap }) => {
 
       <Card className="grid grid-cols-2 md:grid-cols-4 gap-3 !p-4">
         {[
-          ["Active Districts", "15 Districts"],
+          ["Active Spheres", "15 Districts"],
           ["Training Coverage", "54% Target reached"],
-          ["Certified TOTs", "665 Certs"],
+          ["Certified TOTs Certified", "665 Certs"],
           ["Teachers trained", `${DISTRICTS.reduce((acc, d) => acc + d.teachersTrained, 0).toLocaleString()} Trained`]
         ].map(([l, v]) => (
           <div key={l} className="space-y-1">
@@ -633,7 +638,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers, showTo
   const [search, setSearch] = useState("");
   const [nf, setNf] = useState({ first: "", last: "", email: "", role: "data_entry" as any, district: "" });
 
-  if (cu.role !== 'admin' && cu.role !== 'admin_officer') {
+  if (cu.role !== 'admin') {
     return <div className="p-12 text-center text-slate-400 font-semibold italic">Restricted to Central National Admin only.</div>;
   }
 
@@ -677,7 +682,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers, showTo
 
       <Card>
         <FilterBar
-          options={["all", "admin", "manager", "district_coordinator", "tot", "data_entry", "sasa_officer", "cartographer", "admin_officer", "staff", "viewer"].map(x => ({
+          options={["all", "admin", "tot", "data_entry", "district_coordinator"].map(x => ({
             v: x,
             l: x === 'all' ? 'ALL STAFF' : ROLE_CFG[x as keyof typeof ROLE_CFG]?.label.toUpperCase() || x
           }))}
@@ -753,15 +758,10 @@ const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers, showTo
           </div>
           <FInput label="Email address *" type="email" value={nf.email} onChange={sn("email")} placeholder="champion@ujamaa.mw" />
           <FSelect label="Certified ETT Position *" value={nf.role} onChange={sn("role")}>
-            <option value="manager">Program Manager</option>
-            <option value="district_coordinator">District Coordinator (DC)</option>
             <option value="tot">Trainer of Trainers (TOT)</option>
+            <option value="district_coordinator">District Coordinator (DC)</option>
             <option value="data_entry">Data Entry Officer</option>
-            <option value="sasa_officer">SASA Officer</option>
-            <option value="cartographer">Cartographer (GIS)</option>
-            <option value="admin_officer">Admin Officer</option>
-            <option value="staff">Staff</option>
-            <option value="viewer">Stakeholder / Viewer</option>
+            <option value="viewer">Basic View Inspector</option>
           </FSelect>
           <FSelect label="Assigned Region" value={nf.district} onChange={sn("district")}>
             <option value="">Choose District (None/National)</option>
@@ -776,77 +776,6 @@ const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers, showTo
     </div>
   );
 };
-
-// ─── ROLE-SPECIFIC DASHBOARD ─────────────────────────────────────────────
-interface RoleDashboardProps {
-  user: User;
-  reports: Report[];
-  setPage: (p: string) => void;
-  darkMode: boolean;
-}
-const RoleDashboard: React.FC<RoleDashboardProps> = ({ user, reports, setPage }) => {
-  const pendingReports = reports.filter(r => r.status === 'pending').length;
-  const myReports = reports.filter(r => r.submitted_by === user.name).length;
-  type RoleCfg = { color: string; title: string; subtitle: string; kpis: { label: string; value: string | number }[]; actions: { label: string; page: string; desc: string }[]; };
-  const configs: Record<string, RoleCfg> = {
-    manager: {
-      color: '#0e4a7a', title: 'Program Manager Portal',
-      subtitle: 'National ETT programme oversight, approvals and strategic reporting',
-      kpis: [{ label: 'Pending Approvals', value: pendingReports }, { label: 'Total Learners', value: '592,200+' }, { label: 'Active Districts', value: 15 }, { label: 'Certified TOTs', value: 665 }],
-      actions: [{ label: 'Approve Reports', page: 'reports', desc: `${pendingReports} report(s) awaiting review` }, { label: 'View Analytics', page: 'analytics', desc: 'Programme performance trends' }, { label: 'SASA Workspace', page: 'sasa', desc: 'Case management & referrals' }, { label: 'Impact Stories', page: 'impact', desc: 'Success narratives from the field' }],
-    },
-    admin_officer: {
-      color: '#5b21b6', title: 'Administration Office',
-      subtitle: 'Staff management, system configuration, scheduling and coordination',
-      kpis: [{ label: 'Total Staff', value: 10 }, { label: 'Pending Activations', value: 0 }, { label: 'Active Districts', value: 15 }, { label: 'Trainings Scheduled', value: 3 }],
-      actions: [{ label: 'Staff Directory', page: 'users', desc: 'Manage all personnel accounts' }, { label: 'Calendar', page: 'calendar', desc: 'Training & event schedule' }, { label: 'Tasks', page: 'tasks', desc: 'Assign and track tasks' }, { label: 'Settings', page: 'settings', desc: 'System configuration' }],
-    },
-    staff: {
-      color: '#374151', title: 'Field Staff Workspace',
-      subtitle: 'Submit session reports, manage your tasks and stay aligned with your district',
-      kpis: [{ label: 'My Reports', value: myReports }, { label: 'My District', value: user.district || 'National' }, { label: 'Programme Coverage', value: '54%' }, { label: 'Active Sessions', value: 17 }],
-      actions: [{ label: 'Submit a Case', page: 'submit', desc: 'File a session report' }, { label: 'My Tasks', page: 'tasks', desc: 'View your assigned tasks' }, { label: 'Calendar', page: 'calendar', desc: 'Upcoming training schedule' }, { label: 'Curriculum', page: 'curriculum', desc: 'HIM & GESD session guides' }],
-    },
-    cartographer: {
-      color: '#0f766e', title: 'GIS & Cartography Desk',
-      subtitle: 'Geographic data management, cluster mapping and spatial programme coverage',
-      kpis: [{ label: 'Active Clusters', value: 10 }, { label: 'Districts Mapped', value: 15 }, { label: 'Schools Covered', value: '2,964' }, { label: 'Spatial Coverage', value: '54%' }],
-      actions: [{ label: 'Clusters Map', page: 'maps', desc: 'Interactive programme coverage map' }, { label: 'Districts View', page: 'districts', desc: 'Regional geographic breakdown' }, { label: 'Analytics', page: 'analytics', desc: 'Spatial data and trends' }, { label: 'Impact Stories', page: 'impact', desc: 'Coverage highlights' }],
-    },
-  };
-  const cfg = configs[user.role];
-  if (!cfg) return null;
-  return (
-    <div className="space-y-5 animate-fade-in-up">
-      <div className="rounded-2xl p-5 text-white" style={{ background: `linear-gradient(135deg, ${cfg.color}ee 0%, ${cfg.color}88 100%)` }}>
-        <div className="text-[10px] font-bold uppercase tracking-widest mb-1 opacity-70">{user.role.replace(/_/g, ' ').toUpperCase()}</div>
-        <h1 className="text-xl font-bold mb-1">{cfg.title}</h1>
-        <p className="text-sm opacity-80">{cfg.subtitle}</p>
-        <div className="mt-3 text-xs opacity-60">Signed in as <strong>{user.name}</strong> · {user.district ? `${user.district} District` : 'National Level'}</div>
-      </div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {cfg.kpis.map(k => (
-          <div key={k.label} className="rounded-xl bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 p-4">
-            <div className="text-[10px] text-slate-500 uppercase tracking-wide font-semibold mb-1">{k.label}</div>
-            <div className="text-xl font-bold text-black dark:text-white">{k.value}</div>
-          </div>
-        ))}
-      </div>
-      <div>
-        <div className="text-[10px] text-black dark:text-white opacity-60 font-bold uppercase tracking-wide mb-2">Quick Actions</div>
-        <div className="grid grid-cols-2 gap-3">
-          {cfg.actions.map(a => (
-            <button key={a.page} onClick={() => setPage(a.page)} className="text-left rounded-xl bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 hover:border-orange-400 p-4 transition group">
-              <div className="text-sm font-bold text-black dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400">{a.label}</div>
-              <div className="text-xs text-slate-500 mt-0.5">{a.desc}</div>
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
-
 
 const PAGE_LABELS: Record<string, string> = {
   dashboard: "ETT ScaleUp Program",
@@ -864,6 +793,10 @@ const PAGE_LABELS: Record<string, string> = {
   calendar: "Calendar",
   tasks: "Tasks",
   settings: "Settings",
+  manager_home: "Program Manager",
+  officer_home: "Field Officer",
+  staff_home: "Program Staff",
+  cartographer_home: "GIS Cartographer",
 };
 
 // ─── APPS MAIN CONTAINER / CORE ENGINE ────────
@@ -932,6 +865,18 @@ export default function App() {
     }
   }, [darkMode]);
 
+
+  const getRoleLandingPage = (role: string): string => {
+    switch (role) {
+      case "program_manager": return "manager_home";
+      case "field_officer": return "officer_home";
+      case "program_staff": return "staff_home";
+      case "cartographer": return "cartographer_home";
+      case "sasa_officer": return "sasa";
+      default: return "dashboard";
+    }
+  };
+
   const addReport = (r: any) => {
     const workflow = getReportRecipient(user?.role || "viewer");
     const newReport: Report = {
@@ -977,7 +922,7 @@ export default function App() {
     setPage("maps");
   };
 
-  const isStaff = user && ["admin", "district_coordinator", "data_entry", "tot", "sasa_officer", "manager", "admin_officer", "staff", "cartographer"].includes(user.role);
+  const isStaff = user && ["admin", "district_coordinator", "data_entry", "tot"].includes(user.role);
 
   const pendingCount = user && can(user.role, "approveReport")
     ? reports.filter(r => r.status === "pending" && (user.role === "district_coordinator" ? r.district === user.district : true)).length
@@ -986,9 +931,6 @@ export default function App() {
   const renderPageContent = () => {
     switch (page) {
       case "dashboard":
-        if (user && ['manager', 'admin_officer', 'staff', 'cartographer'].includes(user.role)) {
-          return <RoleDashboard user={user} reports={reports} setPage={setPage} darkMode={darkMode} />;
-        }
         return <Dashboard user={user} reports={reports} setPage={setPage} darkMode={darkMode} />;
       case "submit":
         return <SubmitReport user={user} onSubmit={addReport} showToast={showToast} />;
@@ -1017,7 +959,7 @@ export default function App() {
       case "analytics":
         return <AnalyticsPage reports={reports} />;
       case "users":
-        return (user?.role === 'admin' || user?.role === 'admin_officer') ? <UsersPage user={user} users={users} setUsers={setUsers} showToast={showToast} /> : <div className="p-12 text-center text-slate-400 font-semibold italic">Restricted to National Admin only.</div>;
+        return user?.role === 'admin' ? <UsersPage user={user} users={users} setUsers={setUsers} showToast={showToast} /> : <div className="p-12 text-center text-slate-400 font-semibold italic">Restricted to National Admin only.</div>;
       case "impact":
         return <ImpactPage reports={reports} showToast={showToast} user={user} />;
       case 'sasa':
@@ -1028,50 +970,147 @@ export default function App() {
         return user ? <TasksPage user={user} /> : <div className="p-12 text-center text-slate-400 font-semibold italic">Sign in to view Tasks.</div>;
       case "settings":
         return <SettingsPage user={user} darkMode={darkMode} setDarkMode={setDarkMode} showToast={showToast} reportsCount={reports.length} />;
+      case "manager_home":
+        return user ? <ProgramManagerPage reports={reports} user={user} setPage={setPage} /> : null;
+      case "officer_home":
+        return user ? <FieldOfficerPage user={user} reports={reports} onSubmit={addReport} showToast={showToast} setPage={setPage} /> : null;
+      case "staff_home":
+        return user ? <ProgramStaffPage user={user} reports={reports} setPage={setPage} /> : null;
+      case "cartographer_home":
+        return user ? <CartographerPage user={user} showToast={showToast} /> : null;
       default:
         return <Dashboard user={user} reports={reports} setPage={setPage} darkMode={darkMode} />;
     }
   };
 
-  // Unified nav — same for all users. protected=true items redirect to login if not signed in.
-  const PROTECTED_PAGES = ["reports", "calendar", "tasks", "analytics", "users"];
-  const activeNavGroups = [
-    {
-      title: "Dashboard",
-      items: [
-        { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-        { id: "maps", label: "Clusters map", icon: Map },
+  // Role-based navigation
+  const PROTECTED_PAGES = ["reports", "calendar", "tasks", "analytics", "users", "manager_home", "officer_home", "staff_home", "cartographer_home", "sasa"];
+
+  const getNavGroups = () => {
+    const role = user?.role;
+
+    // Program Manager nav
+    if (role === 'program_manager') return [
+      { title: "My Workspace", items: [
+        { id: "manager_home", label: "Manager Overview", icon: LayoutDashboard, protected: true },
+        { id: "analytics", label: "Analytics", icon: BarChart2, protected: true },
+        { id: "reports", label: "All Reports", icon: FileText, protected: true },
+      ]},
+      { title: "Program", items: [
         { id: "districts", label: "Districts", icon: MapPin },
         { id: "trainings", label: "Trainings", icon: GraduationCap },
-        { id: "curriculum", label: "Curriculum", icon: BookOpen },
-        { id: "ett", label: "ETT standards", icon: Layers }
-      ]
-    },
-    {
-      title: "Planning",
-      items: [
+        { id: "maps", label: "Clusters Map", icon: Map },
+        { id: "impact", label: "Impact Stories", icon: Heart },
+      ]},
+      { title: "More", items: [
         { id: "calendar", label: "Calendar", icon: Calendar, protected: true },
-        { id: "tasks", label: "Tasks", icon: ListTodo, protected: true }
-      ]
-    },
-    {
-      title: "Reports",
-      items: [
-        { id: "submit", label: "Submit a Case", icon: FilePlus },
-        { id: "reports", label: "Reports", icon: FileText, protected: true }
-      ]
-    },
-    {
-      title: "More",
-      items: [
+        { id: "tasks", label: "Tasks", icon: ListTodo, protected: true },
+        { id: "settings", label: "Settings", icon: Settings },
+      ]},
+    ];
+
+    // Field Officer nav
+    if (role === 'field_officer') return [
+      { title: "My Workspace", items: [
+        { id: "officer_home", label: "Field Dashboard", icon: LayoutDashboard, protected: true },
+        { id: "submit", label: "Submit Report", icon: FilePlus, protected: true },
+      ]},
+      { title: "Reference", items: [
+        { id: "curriculum", label: "Curriculum", icon: BookOpen },
+        { id: "maps", label: "Clusters Map", icon: Map },
+        { id: "districts", label: "Districts", icon: MapPin },
+      ]},
+      { title: "More", items: [
+        { id: "calendar", label: "Calendar", icon: Calendar, protected: true },
+        { id: "tasks", label: "Tasks", icon: ListTodo, protected: true },
+        { id: "settings", label: "Settings", icon: Settings },
+      ]},
+    ];
+
+    // Program Staff nav
+    if (role === 'program_staff') return [
+      { title: "My Workspace", items: [
+        { id: "staff_home", label: "Staff Dashboard", icon: LayoutDashboard, protected: true },
+        { id: "submit", label: "Log Session", icon: FilePlus, protected: true },
+      ]},
+      { title: "Curriculum", items: [
+        { id: "curriculum", label: "Curriculum", icon: BookOpen },
+        { id: "ett", label: "ETT Standards", icon: Layers },
+        { id: "trainings", label: "Trainings", icon: GraduationCap },
+      ]},
+      { title: "More", items: [
+        { id: "maps", label: "Clusters Map", icon: Map },
+        { id: "calendar", label: "Calendar", icon: Calendar, protected: true },
+        { id: "settings", label: "Settings", icon: Settings },
+      ]},
+    ];
+
+    // Cartographer nav
+    if (role === 'cartographer') return [
+      { title: "GIS Workspace", items: [
+        { id: "cartographer_home", label: "Cartographer Console", icon: Map, protected: true },
+        { id: "maps", label: "Live Map View", icon: Navigation },
+        { id: "districts", label: "Districts", icon: MapPin },
+      ]},
+      { title: "More", items: [
+        { id: "settings", label: "Settings", icon: Settings },
+      ]},
+    ];
+
+    // SASA Officer nav
+    if (role === 'sasa_officer') return [
+      { title: "SASA Workspace", items: [
+        { id: "sasa", label: "SASA Dashboard", icon: Shield, protected: true },
+        { id: "submit", label: "Submit Case", icon: FilePlus, protected: true },
+      ]},
+      { title: "More", items: [
         { id: "analytics", label: "Analytics", icon: BarChart2 },
-        ...(user?.role === 'sasa_officer' || user?.role === 'admin' || user?.role === 'manager' || user?.role === 'district_coordinator' ? [{ id: "sasa", label: "SASA Workspace", icon: Shield, protected: true }] : []),
-        { id: "impact", label: "Impact stories", icon: Heart },
-        ...(user?.role === 'admin' || user?.role === 'admin_officer' ? [{ id: "users", label: "Staff", icon: Users, protected: true }] : []),
-        { id: "settings", label: "Settings", icon: Settings }
-      ]
-    }
-  ];
+        { id: "calendar", label: "Calendar", icon: Calendar, protected: true },
+        { id: "settings", label: "Settings", icon: Settings },
+      ]},
+    ];
+
+    // Default nav (admin, dc, tot, data_entry, viewer, public)
+    return [
+      {
+        title: "Dashboard",
+        items: [
+          { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+          { id: "maps", label: "Clusters map", icon: Map },
+          { id: "districts", label: "Districts", icon: MapPin },
+          { id: "trainings", label: "Trainings", icon: GraduationCap },
+          { id: "curriculum", label: "Curriculum", icon: BookOpen },
+          { id: "ett", label: "ETT standards", icon: Layers }
+        ]
+      },
+      {
+        title: "Planning",
+        items: [
+          { id: "calendar", label: "Calendar", icon: Calendar, protected: true },
+          { id: "tasks", label: "Tasks", icon: ListTodo, protected: true }
+        ]
+      },
+      {
+        title: "Reports",
+        items: [
+          { id: "submit", label: "Submit a Case", icon: FilePlus },
+          { id: "reports", label: "Reports", icon: FileText, protected: true }
+        ]
+      },
+      {
+        title: "More",
+        items: [
+          { id: "analytics", label: "Analytics", icon: BarChart2 },
+          ...(user?.role === 'admin' ? [{ id: "sasa", label: "SASA Workspace", icon: Shield, protected: true }] : []),
+          { id: "impact", label: "Impact stories", icon: Heart },
+          ...(user?.role === 'admin' ? [{ id: "users", label: "Staff", icon: Users, protected: true }] : []),
+          { id: "settings", label: "Settings", icon: Settings }
+        ]
+      }
+    ];
+  };
+
+  const activeNavGroups = getNavGroups();
 
   const renderNav = (onNavigate?: () => void) => (
     activeNavGroups.map(group => (
@@ -1331,7 +1370,7 @@ export default function App() {
 
       {isLoginModalOpen && (
         <LoginModal
-          onLogin={u => { setUser(u); setIsLoginModalOpen(false); setPage("dashboard"); showToast(`👋 Welcome back, ${u.name}`); }}
+          onLogin={u => { setUser(u); setIsLoginModalOpen(false); setPage(getRoleLandingPage(u.role)); showToast(`👋 Welcome back, ${u.name}`); }}
           onRegister={u => { setUsers(prev => [u, ...prev]); setUser(u); setIsLoginModalOpen(false); setPage("dashboard"); showToast(`🎉 Account certified! Welcome, ${u.name}`); }}
           onClose={() => setIsLoginModalOpen(false)}
           users={users}
