@@ -1,4 +1,4 @@
-const BASE_URL = 'http://13.61.100.62';
+const BASE_URL = 'https://13.61.100.62.nip.io';
 
 export const api = {
   get: async (path: string, token?: string) => {
