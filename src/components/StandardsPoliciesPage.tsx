@@ -157,7 +157,7 @@ const POLICIES: Policy[] = [
       },
       {
         heading: '3. Reporting Procedure',
-        content: `Concerns may be submitted:\n• Verbally or in writing to your supervisor.\n• In writing directly to the Executive Director.\n• To the organisation's Compliance Officer.\n\nFor anonymous or sensitive reports:\nPhone: +265 993 130 111\nEmail: mndirangu@ujamaa-africa.com\n\nSupervisors and managers must report suspected ethical and legal violations in writing to the Compliance Officer, who will investigate all reported complaints.`
+        content: `Concerns may be submitted:\n• Verbally or in writing to your supervisor.\n• In writing directly to the Executive Director.\n• To the organisation's Compliance Officer.\n\nFor anonymous or sensitive reports:\nPhone: +265 993 130 111\nEmail: mkangadzula@ujamaa-africa.org\n\nSupervisors and managers must report suspected ethical and legal violations in writing to the Compliance Officer, who will investigate all reported complaints.`
       },
       {
         heading: '4. Compliance Officer Responsibilities',
