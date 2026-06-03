@@ -922,7 +922,7 @@ export default function App() {
     setPage("maps");
   };
 
-  const isStaff = user && ["admin", "district_coordinator", "data_entry", "tot"].includes(user.role);
+  const isStaff = user && ["admin", "district_coordinator", "data_entry", "tot", "program_manager", "field_officer", "program_staff", "sasa_officer"].includes(user.role);
 
   const pendingCount = user && can(user.role, "approveReport")
     ? reports.filter(r => r.status === "pending" && (user.role === "district_coordinator" ? r.district === user.district : true)).length
