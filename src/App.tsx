@@ -96,6 +96,7 @@ import { CalendarPage } from './components/CalendarPage';
 import { AnalyticsPage } from './components/AnalyticsPage';
 import { TasksPage } from './components/TasksPage';
 import { SasaPage } from './components/SasaPage';
+import { StandardsPoliciesPage } from './components/StandardsPoliciesPage';
 import { ProgramManagerPage } from './components/ProgramManagerPage';
 import { FieldOfficerPage } from './components/FieldOfficerPage';
 import { ProgramStaffPage } from './components/ProgramStaffPage';
@@ -797,6 +798,7 @@ const PAGE_LABELS: Record<string, string> = {
   officer_home: "Field Officer",
   staff_home: "Program Staff",
   cartographer_home: "GIS Cartographer",
+  standards: "Standards & Policies",
 };
 
 // ─── APPS MAIN CONTAINER / CORE ENGINE ────────
@@ -978,6 +980,8 @@ export default function App() {
         return user ? <ProgramStaffPage user={user} reports={reports} setPage={setPage} /> : null;
       case "cartographer_home":
         return user ? <CartographerPage user={user} showToast={showToast} /> : null;
+      case "standards":
+        return user ? <StandardsPoliciesPage /> : null;
       default:
         return <Dashboard user={user} reports={reports} setPage={setPage} darkMode={darkMode} />;
     }
@@ -1080,7 +1084,7 @@ export default function App() {
           { id: "districts", label: "Districts", icon: MapPin },
           { id: "trainings", label: "Trainings", icon: GraduationCap },
           { id: "curriculum", label: "Curriculum", icon: BookOpen },
-          { id: "ett", label: "ETT standards", icon: Layers }
+          { id: "standards", label: "Standards & Policies", icon: Shield, protected: true }
         ]
       },
       {
