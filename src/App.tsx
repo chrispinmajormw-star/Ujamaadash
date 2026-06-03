@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { api } from './api';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -125,9 +126,17 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onRegister, u
     setLoading(true);
     await new Promise(r => setTimeout(r, 500));
     setLoading(false);
-    const u = users.find(x => x.email === email && x.password === pass);
-    if (!u) { setErr("Invalid email or password"); return; }
-    onLogin(u);
+    try {
+  const data = await api.post('/api/users/login', { email, password: pass });
+  if (data.error) {
+    setErr(data.error);
+    return;
+  }
+  localStorage.setItem('token', data.token);
+  onLogin(data.user);
+} catch (err) {
+  setErr('Unable to connect to server. Please try again.');
+}
   };
 
   const createAccount = () => {
