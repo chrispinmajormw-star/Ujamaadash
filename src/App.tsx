@@ -870,9 +870,6 @@ useEffect(() => {
   }, []);
 
   // Synchronize dynamic lists to storage
-  useEffect(() => {
-    safeStorage.setItem("ett_reports", JSON.stringify(reports));
-  }, [reports]);
 
   useEffect(() => {
     safeStorage.setItem("ett_users", JSON.stringify(users));
