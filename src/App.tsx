@@ -862,7 +862,7 @@ useEffect(() => {
           role: u.role,
           name: u.name,
           district: u.district,
-          avatar: u.avatar || u.name?.split(' ').map((x: string) => x[0]).join('').toUpperCase(),
+          avatar: u.name?.split(' ').map((x: string) => x[0]).join('').toUpperCase(),
           status: u.status,
           clusterId: u.cluster_id,
         })));
