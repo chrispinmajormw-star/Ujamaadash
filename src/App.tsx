@@ -113,7 +113,7 @@ interface LoginModalProps {
 }
 
 const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onRegister, users }) => {
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [mode, setMode] = useState<'login' | 'register' | 'pending'>('login');
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
   const [showPass, setShowPass] = useState(false);
@@ -139,22 +139,33 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onRegister, u
 }
   };
 
-  const createAccount = () => {
-    if (!reg.name || !reg.district || !reg.designation || !reg.email || !reg.password) { setErr("Please fill all mandatory fields"); return; }
-    const exists = users.find(u => u.email === reg.email);
-    if (exists) { setErr("Account already exists"); return; }
-    const newUser: User = {
-      id: Date.now().toString(),
+  const createAccount = async () => {
+  if (!reg.name || !reg.district || !reg.designation || !reg.email || !reg.password) { setErr("Please fill all mandatory fields"); return; }
+  setLoading(true);
+  try {
+    const data = await api.post('/api/users/register', {
       name: reg.name,
       district: reg.district,
       email: reg.email,
       password: reg.password,
       role: 'viewer',
       avatar: reg.name.split(" ").map(x => x[0]).join("").toUpperCase(),
-      status: 'active'
-    };
-    onRegister(newUser);
-  };
+    });
+    if (data.error) { 
+  if (data.error.includes('not active')) {
+    setErr('Your account is pending approval by the Administrator.');
+  } else {
+    setErr(data.error); 
+  }
+  return; 
+}
+    setErr('');
+    setMode('pending');
+  } catch (err) {
+    setErr('Unable to connect to server. Please try again.');
+  }
+  setLoading(false);
+};
 
   return (
     <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
@@ -295,6 +306,21 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onRegister, u
               Already have an account? <button onClick={() => { setMode('login'); setErr(''); }} className="font-bold text-slate-900 dark:text-white hover:text-orange-500 transition-colors">Log In</button>
             </div>
           </div>
+           ) : mode === 'pending' ? (
+      <div className="flex flex-col items-center text-center gap-4 py-6">
+        <div className="w-16 h-16 rounded-full bg-orange-50 flex items-center justify-center text-3xl">⏳</div>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Account Submitted!</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+          Your account is <strong>pending approval</strong> by the National Administrator. You will be contacted once your account is activated.
+        </p>
+        <button
+          onClick={onClose}
+          className="w-full py-3 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-sm"
+        >
+          Got it
+        </button>
+      </div>
+    ) : (
         )}
       </div>
     </div>
