@@ -306,22 +306,21 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onRegister, u
               Already have an account? <button onClick={() => { setMode('login'); setErr(''); }} className="font-bold text-slate-900 dark:text-white hover:text-orange-500 transition-colors">Log In</button>
             </div>
           </div>
-           ) : mode === 'pending' ? (
-      <div className="flex flex-col items-center text-center gap-4 py-6">
-        <div className="w-16 h-16 rounded-full bg-orange-50 flex items-center justify-center text-3xl">⏳</div>
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Account Submitted!</h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-          Your account is <strong>pending approval</strong> by the National Administrator. You will be contacted once your account is activated.
-        </p>
-        <button
-          onClick={onClose}
-          className="w-full py-3 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-sm"
-        >
-          Got it
-        </button>
-      </div>
-    ) : (
-        )}
+        ) : mode === 'pending' ? (
+          <div className="flex flex-col items-center text-center gap-4 py-6">
+            <div className="w-16 h-16 rounded-full bg-orange-50 flex items-center justify-center text-3xl">⏳</div>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Account Submitted!</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+              Your account is <strong>pending approval</strong> by the National Administrator. You will be contacted once your account is activated.
+            </p>
+            <button
+              onClick={onClose}
+              className="w-full py-3 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-sm"
+            >
+              Got it
+            </button>
+          </div>
+        ) : null}
       </div>
     </div>
   );
