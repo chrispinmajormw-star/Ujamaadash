@@ -850,10 +850,26 @@ useEffect(() => {
   }
 }, [user]);
 
-  const [users, setUsers] = useState<User[]>(() => {
-    const saved = safeStorage.getItem("ett_users");
-    return saved ? JSON.parse(saved) : USERS_INIT;
-  });
+  const [users, setUsers] = useState<User[]>([]);
+
+useEffect(() => {
+  if (user?.role === 'admin') {
+    usersApi.getAll().then(data => {
+      if (Array.isArray(data)) {
+        setUsers(data.map((u: any) => ({
+          id: u.id,
+          email: u.email,
+          role: u.role,
+          name: u.name,
+          district: u.district,
+          avatar: u.avatar || u.name?.split(' ').map((x: string) => x[0]).join('').toUpperCase(),
+          status: u.status,
+          clusterId: u.cluster_id,
+        })));
+      }
+    });
+  }
+}, [user]);
 
   const [page, setPage] = useState<string>("dashboard");
   const [toast, setToast] = useState<string | null>(null);
@@ -870,10 +886,6 @@ useEffect(() => {
   }, []);
 
   // Synchronize dynamic lists to storage
-
-  useEffect(() => {
-    safeStorage.setItem("ett_users", JSON.stringify(users));
-  }, [users]);
 
   // Synchronize authenticated user to storage
   useEffect(() => {
