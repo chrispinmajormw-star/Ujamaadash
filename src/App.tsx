@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-
+import { api, reportsApi, usersApi } from './api';
 import { api } from './api';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -888,10 +888,16 @@ export default function App() {
     }
   };
 
-  const addReport = (r: any) => {
-    const workflow = getReportRecipient(user?.role || "viewer");
+  const addReport = async (r: any) => {
+  const workflow = getReportRecipient(user?.role || "viewer");
+  try {
+    const saved = await reportsApi.create({
+      ...r,
+      sentTo: workflow.sendTo,
+      workflowStatus: "sent",
+    });
     const newReport: Report = {
-      id: Date.now(),
+      id: saved.id,
       ...r,
       sentTo: workflow.sendTo,
       sentToLabel: workflow.label,
@@ -899,12 +905,11 @@ export default function App() {
       submitted_role: user?.role || "public",
     };
     setReports(p => [newReport, ...p]);
-    if (user && can(user.role, "approveReport")) {
-      showToast("📋 New file logged under current DC oversight reviews.");
-    } else if (workflow.sendTo) {
-      showToast(`✅ File logged and transmitted to the ${workflow.label}`);
-    }
-  };
+    showToast(`✅ Report submitted successfully`);
+  } catch (err) {
+    showToast(`⚠️ Failed to save report`);
+  }
+};
 
   const updateStatus = (id: number, status: 'approved' | 'rejected' | 'forwarded') => {
     setReports(p => p.map(r => r.id === id ? { ...r, status } : r));
