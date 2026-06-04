@@ -822,10 +822,33 @@ export default function App() {
     return saved ? JSON.parse(saved) : null;
   });
 
-  const [reports, setReports] = useState<Report[]>(() => {
-    const saved = safeStorage.getItem("ett_reports");
-    return saved ? JSON.parse(saved) : REPORTS_INIT;
-  });
+  const [reports, setReports] = useState<Report[]>([]);
+
+useEffect(() => {
+  if (user) {
+    reportsApi.getAll().then(data => {
+      if (Array.isArray(data)) {
+        setReports(data.map((r: any) => ({
+          id: r.id,
+          school: r.school,
+          district: r.district,
+          zone: r.zone,
+          boys: r.boys,
+          girls: r.girls,
+          curriculum: r.curriculum,
+          session: r.session,
+          challenges: r.challenges,
+          success: r.success,
+          status: r.status,
+          submitted_by: r.submitted_by_name || r.submitted_by,
+          submitted_at: r.submitted_at?.split('T')[0],
+          submitted_role: r.submitted_role,
+          workflow_status: r.workflow_status,
+        })));
+      }
+    });
+  }
+}, [user]);
 
   const [users, setUsers] = useState<User[]>(() => {
     const saved = safeStorage.getItem("ett_users");
