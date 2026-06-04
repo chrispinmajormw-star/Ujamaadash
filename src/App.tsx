@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { api, reportsApi, usersApi } from './api';
-import { api } from './api';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -586,9 +585,9 @@ const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, onOpenMap }) => {
 
       <Card className="grid grid-cols-2 md:grid-cols-4 gap-3 !p-4">
         {[
-          ["Active Spheres", "15 Districts"],
-          ["Training Coverage", "54% Target reached"],
-          ["Certified TOTs Certified", "665 Certs"],
+          [`Active Spheres`, `${stats.districts} Districts`],
+          [`Training Coverage`, `${stats.coverage}% Target reached`],
+          [`Certified TOTs Certified`, `${stats.tots} Certs`],
           ["Teachers trained", `${DISTRICTS.reduce((acc, d) => acc + d.teachersTrained, 0).toLocaleString()} Trained`]
         ].map(([l, v]) => (
           <div key={l} className="space-y-1">
@@ -1481,3 +1480,13 @@ useEffect(() => {
     </>
   );
 }
+// ─── USERS ───────────────────────────────────────────────────────────────────
+export const usersApi = {
+  getAll: () => api.get('/api/users'),
+  login: (email: string, password: string) => api.post('/api/users/login', { email, password }),
+};
+
+// ─── STATS ───────────────────────────────────────────────────────────────────
+export const statsApi = {
+  get: () => api.get('/api/stats'),
+};

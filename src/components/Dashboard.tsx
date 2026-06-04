@@ -1,3 +1,4 @@
+import { statsApi } from '../api';
 import React, { useEffect, useRef } from 'react';
 import { Shield, FilePlus, MapPin, GraduationCap, School, BookOpen, TrendingUp, FileText, Clock, CheckSquare, Users, Map } from 'lucide-react';
 import { User, Report } from '../types';
@@ -22,6 +23,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
       : reports;
 
   const pending = my.filter(r => r.status === "pending").length;
+  const [stats, setStats] = useState({ districts: 0, tots: 0, teachersTrained: 0, schools: 0, coverage: 0 });
+useEffect(() => {
+  statsApi.get().then(data => { if (!data.error) setStats(data); });
+}, []);
   const approved = my.filter(r => r.status === "approved").length;
   const students = my.reduce((acc, r) => acc + r.boys + r.girls, 0);
 
@@ -233,12 +238,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
         {!isStaff ? (
           <>
             {[
-              { icon: <GraduationCap size={16} className="text-orange-600" />, label: "Learners", value: "592,200+" },
-              { icon: <School size={16} className="text-orange-600" />, label: "Schools", value: "2,964" },
-              { icon: <MapPin size={16} className="text-orange-600" />, label: "Districts", value: "15" },
-              { icon: <Shield size={16} className="text-orange-600" />, label: "TOTs", value: "665" },
-              { icon: <BookOpen size={16} className="text-orange-600" />, label: "Lessons", value: "17,784+" },
-              { icon: <TrendingUp size={16} className="text-orange-600" />, label: "Coverage", value: "54%" },
+              { icon: <GraduationCap size={16} className="text-orange-600" />, label: "Learners", value: stats.learnersTrained },
+              { icon: <School size={16} className="text-orange-600" />, label: "Schools", value: stats.schools },
+              { icon: <MapPin size={16} className="text-orange-600" />, label: "Districts", value: stats.districts },
+              { icon: <Shield size={16} className="text-orange-600" />, label: "TOTs", value: stats.tots },
+              { icon: <BookOpen size={16} className="text-orange-600" />, label: "Lessons", value:stats.lessons },
+              { icon: <TrendingUp size={16} className="text-orange-600" />, label: "Coverage", value: `${stats.coverage}%` },
             ].map((s, i) => (
               <div key={i} className="p-3 rounded-lg" style={{ background: "linear-gradient(135deg, #e85d04 0%, #c44d00 100%)", boxShadow: "0 4px 14px rgba(232,93,4,0.25)" }}>
                 <div className="flex items-center gap-2 mb-1">
