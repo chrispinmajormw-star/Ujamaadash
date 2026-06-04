@@ -773,12 +773,25 @@ const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers, showTo
       <option value="sasa_officer">SASA Officer</option>
       <option value="admin">Admin</option>
     </select>
-    <Btn size="sm" variant="success" onClick={() => {
-      setUsers(prev => prev.map(x => x.id === u.id ? { ...x, status: "active" as const } : x));
-      showToast(`✅ ${u.name} activated successfully`);
-    }}>
-      Activate
-    </Btn>
+    <Btn size="sm" variant="success" onClick={async () => {
+  const selectedRole = (document.querySelector(`[data-user-id="${u.id}"]`) as HTMLSelectElement)?.value || u.role;
+  try {
+    await api.put(`/api/users/${u.id}`, {
+      name: u.name,
+      district: u.district,
+      avatar: u.avatar,
+      status: 'active',
+      clusterId: u.clusterId,
+      role: selectedRole,
+    });
+    setUsers(prev => prev.map(x => x.id === u.id ? { ...x, status: "active" as const, role: selectedRole as any } : x));
+    showToast(`✅ ${u.name} activated successfully`);
+  } catch (err) {
+    showToast(`⚠️ Failed to activate user`);
+  }
+}}>
+  Activate
+</Btn>
   </div>
 )}
                         {u.status === "active" && u.id !== cu.id && (
