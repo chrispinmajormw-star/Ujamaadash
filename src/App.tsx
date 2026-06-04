@@ -269,7 +269,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onRegister, u
               Don't have an account? <button onClick={() => setMode('register')} className="font-bold text-slate-900 dark:text-white hover:text-orange-500 transition-colors">Sign Up</button>
             </div>
           </div>
-        ) : (
+        ) : mode === 'register' ? (
           <div className="flex flex-col h-full max-h-[70vh]">
             <div className="flex justify-center mb-4">
                <AfricaLogo size={32} variant="full" />
