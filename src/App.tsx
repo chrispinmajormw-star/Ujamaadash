@@ -760,13 +760,27 @@ const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers, showTo
                     <td className="p-3">
                       <div className="flex gap-1.5">
                         {u.status === "pending" && (
-                          <Btn size="sm" variant="success" onClick={() => {
-                            setUsers(prev => prev.map(x => x.id === u.id ? { ...x, status: "active" as const } : x));
-                            showToast(`Activated ${u.name}`);
-                          }}>
-                            Activate
-                          </Btn>
-                        )}
+  <div className="flex gap-1.5 flex-wrap">
+    <select
+      className="text-xs border border-neutral-200 dark:border-slate-700 rounded-md px-2 py-1 bg-white dark:bg-slate-800 text-black dark:text-white"
+      defaultValue={u.role}
+      onChange={e => setUsers(prev => prev.map(x => x.id === u.id ? { ...x, role: e.target.value as any } : x))}
+    >
+      <option value="viewer">Viewer</option>
+      <option value="tot">TOT</option>
+      <option value="data_entry">Data Entry</option>
+      <option value="district_coordinator">District Coordinator</option>
+      <option value="sasa_officer">SASA Officer</option>
+      <option value="admin">Admin</option>
+    </select>
+    <Btn size="sm" variant="success" onClick={() => {
+      setUsers(prev => prev.map(x => x.id === u.id ? { ...x, status: "active" as const } : x));
+      showToast(`✅ ${u.name} activated successfully`);
+    }}>
+      Activate
+    </Btn>
+  </div>
+)}
                         {u.status === "active" && u.id !== cu.id && (
                           <Btn size="sm" variant="secondary" className="text-red-600 bg-red-50 dark:bg-red-950/20" onClick={() => {
                             setUsers(prev => prev.map(x => x.id === u.id ? { ...x, status: "pending" as const } : x));
