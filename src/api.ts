@@ -84,3 +84,24 @@ export const documentReportsApi = {
   
   download: (id: string) => api.get(`/api/document-reports/${id}/download`),
 };
+// ─── DOCUMENT REPORTS ────────────────────────────────────────────────────────
+
+export const documentReportsApi = {
+  getInbox: () => api.get('/api/document-reports/inbox'),
+  getSent: () => api.get('/api/document-reports/sent'),
+  getUnreadCount: () => api.get('/api/document-reports/unread-count'),
+  updateStatus: (id: number, status: string, feedback?: string) =>
+    api.put(`/api/document-reports/${id}/status`, { status, feedback }),
+  submit: async (formData: FormData) => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${BASE_URL}/api/document-reports`, {
+      method: 'POST',
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: formData,
+    });
+    return res.json();
+  },
+  getDownloadUrl: (filename: string) => `${BASE_URL}/api/document-reports/download/${filename}`,
+};
