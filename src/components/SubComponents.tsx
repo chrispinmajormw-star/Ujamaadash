@@ -1,4 +1,5 @@
 import React from 'react';
+import { X } from 'lucide-react';
 import { User, Report } from '../types';
 
 export const OR = "#e85d04";
@@ -343,9 +344,9 @@ export const AfricaLogo: React.FC<{ size?: number; variant?: 'orange' | 'black' 
   const base = import.meta.env.BASE_URL || '/';
   const logoSrc = `${base}africalogo.svg`;
 
-  const LogoBox = ({ s }: { s: number }) => (
+  const LogoBox = ({ s, className: boxClassName = "" }: { s: number; className?: string }) => (
     <div
-      className="shrink-0 flex items-center justify-center rounded-lg"
+      className={`shrink-0 flex items-center justify-center rounded-lg ${boxClassName}`}
       style={{ width: s, height: s, backgroundColor: '#e85d04', padding: Math.round(s * 0.1) }}
     >
       <img

@@ -47,7 +47,22 @@ export const api = {
     });
     return res.json();
   },
+
+  // Multipart upload — let the browser set the Content-Type boundary.
+  upload: async (path: string, formData: FormData) => {
+    const res = await fetch(`${BASE_URL}${path}`, {
+      method: 'POST',
+      headers: {
+        ...(getToken() && { Authorization: `Bearer ${getToken()}` }),
+      },
+      body: formData,
+    });
+    return res.json();
+  },
 };
+
+// Absolute URL to a file stored on the backend (used for downloads / links).
+export const fileUrl = (filePath: string) => `${BASE_URL}${filePath}`;
 
 // ─── REPORTS ─────────────────────────────────────────────────────────────────
 
@@ -74,13 +89,17 @@ export const statsApi = {
 };
 export const documentReportsApi = {
   getAll: () => api.get('/api/document-reports'),
-  
-  create: (data: any) => api.post('/api/document-reports', data),
-  
-  updateStatus: (id: string, status: string) => 
-    api.put(`/api/document-reports/${id}`, { status }),
-  
+
+  getInbox: () => api.get('/api/document-reports/inbox'),
+
+  getSent: () => api.get('/api/document-reports/sent'),
+
+  submit: (formData: FormData) => api.upload('/api/document-reports', formData),
+
+  updateStatus: (id: number, status: string, feedback?: string) =>
+    api.put(`/api/document-reports/${id}`, { status, feedback }),
+
   getUnreadCount: () => api.get('/api/document-reports/unread-count'),
-  
-  download: (id: string) => api.get(`/api/document-reports/${id}/download`),
+
+  getDownloadUrl: (filePath: string) => fileUrl(filePath),
 };

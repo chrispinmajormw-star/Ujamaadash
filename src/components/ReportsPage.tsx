@@ -173,7 +173,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
             <select
               multiple
               value={selectedDistricts}
-              onChange={(e) => setSelectedDistricts(Array.from(e.target.selectedOptions, opt => opt.value))}
+              onChange={(e) => setSelectedDistricts(Array.from(e.target.selectedOptions, (opt: HTMLOptionElement) => opt.value))}
               className="w-full px-2 py-1 text-[11px] border border-gray-200 dark:border-slate-700 rounded focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-[#0f1623] text-black dark:text-white h-16"
             >
               {Array.from(new Set(reports.map(r => r.district))).map(district => (
@@ -188,7 +188,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
             <select
               multiple
               value={selectedCurriculums}
-              onChange={(e) => setSelectedCurriculums(Array.from(e.target.selectedOptions, opt => opt.value))}
+              onChange={(e) => setSelectedCurriculums(Array.from(e.target.selectedOptions, (opt: HTMLOptionElement) => opt.value))}
               className="w-full px-2 py-1 text-[11px] border border-gray-200 dark:border-slate-700 rounded focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-[#0f1623] text-black dark:text-white h-16"
             >
               {Array.from(new Set(reports.map(r => r.curriculum))).map(curriculum => (
