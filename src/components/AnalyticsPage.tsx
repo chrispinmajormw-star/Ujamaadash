@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { analyticsApi } from '../api';
+import React, { useState, useEffect } from 'react';
 import {
   BarChart, Bar, PieChart, Pie, Cell, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -81,7 +82,23 @@ interface AnalyticsPageProps { reports: Report[]; }
 export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ reports }) => {
   const [activeRegion, setActiveRegion] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<'overview' | 'districts' | 'clusters' | 'reports'>('overview');
+  export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ reports }) => {
+  const [activeRegion, setActiveRegion] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState<'overview' | 'districts' | 'clusters' | 'reports'>('overview');
+  const [analytics, setAnalytics] = useState<any>({
+    reportsByDistrict: [],
+    reportsByStatus: [],
+    reportsByCurriculum: [],
+    reportsByMonth: [],
+    learnersByDistrict: [],
+    topSchools: [],
+  });
 
+  useEffect(() => {
+    analyticsApi.get().then(data => {
+      if (!data.error) setAnalytics(data);
+    });
+  }, []);
   // Compute from live reports
   const byStatus = { approved: 0, pending: 0, rejected: 0, forwarded: 0 };
   const byCurr = { HIM: 0, GESD: 0, Combined: 0 };
@@ -95,9 +112,9 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ reports }) => {
     boys += r.boys; girls += r.girls;
   });
 
-  const statusPieData = Object.entries(byStatus).map(([k, v]) => ({ name: k, value: v }));
-  const currPieData = Object.entries(byCurr).map(([k, v]) => ({ name: k, value: v }));
-  const distBarData = Object.entries(byDist).map(([k, v]) => ({ district: k, reports: v }));
+  const statusPieData = analytics.reportsByStatus.map((r: any) => ({ name: r.status, value: parseInt(r.count) }));
+  const currPieData = analytics.reportsByCurriculum.map((r: any) => ({ name: r.curriculum, value: parseInt(r.count) }));
+  const distBarData = analytics.reportsByDistrict.map((r: any) => ({ district: r.district, reports: parseInt(r.count) }));
 
   const filteredDistricts = activeRegion === 'all'
     ? TOP15_DISTRICTS

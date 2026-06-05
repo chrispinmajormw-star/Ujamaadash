@@ -94,3 +94,8 @@ export const documentReportsApi = {
   },
   getDownloadUrl: (filename: string) => `${BASE_URL}/api/document-reports/download/${filename}`,
 };
+// ─── ANALYTICS ───────────────────────────────────────────────────────────────
+
+export const analyticsApi = {
+  get: () => api.get('/api/analytics'),
+};
