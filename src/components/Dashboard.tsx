@@ -1,5 +1,5 @@
 import { statsApi } from '../api';
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Shield, FilePlus, MapPin, GraduationCap, School, BookOpen, TrendingUp, FileText, Clock, CheckSquare, Users, Map } from 'lucide-react';
 import { User, Report } from '../types';
 import { ROLE_CFG, can, DISTRICTS, DISTRICT_INFO, MAP_CLUSTERS } from '../data';
