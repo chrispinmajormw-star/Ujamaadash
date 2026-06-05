@@ -1112,6 +1112,7 @@ const pendingCount = (user && can(user.role, "approveReport")
         { id: "manager_home", label: "Manager Overview", icon: LayoutDashboard, protected: true },
         { id: "analytics", label: "Analytics", icon: BarChart2, protected: true },
         { id: "reports", label: "All Reports", icon: FileText, protected: true },
+        { id: "document_reports", label: "Submit a Report", icon: Upload, protected: true },
       ]},
       { title: "Program", items: [
         { id: "districts", label: "Districts", icon: MapPin },
