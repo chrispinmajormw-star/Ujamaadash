@@ -72,3 +72,15 @@ export const usersApi = {
 export const statsApi = {
   get: () => api.get('/api/stats'),
 };
+export const documentReportsApi = {
+  getAll: () => api.get('/api/document-reports'),
+  
+  create: (data: any) => api.post('/api/document-reports', data),
+  
+  updateStatus: (id: string, status: string) => 
+    api.put(`/api/document-reports/${id}`, { status }),
+  
+  getUnreadCount: () => api.get('/api/document-reports/unread-count'),
+  
+  download: (id: string) => api.get(`/api/document-reports/${id}/download`),
+};
