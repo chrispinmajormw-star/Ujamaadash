@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-import { api, reportsApi, usersApi } from './api';
+import { api, reportsApi, usersApi, documentReportsApi } from './api';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -46,7 +46,8 @@ import {
   ListTodo,
   Play,
   Eye,
-  EyeOff
+  EyeOff,
+  Upload,
 } from 'lucide-react';
 
 import { User, Report, Cluster, District, Training, Session } from './types';
@@ -96,6 +97,7 @@ import { CalendarPage } from './components/CalendarPage';
 import { AnalyticsPage } from './components/AnalyticsPage';
 import { TasksPage } from './components/TasksPage';
 import { SasaPage } from './components/SasaPage';
+import { DocumentReportsPage } from './components/DocumentReportsPage';
 import { StandardsPoliciesPage } from './components/StandardsPoliciesPage';
 import { ProgramManagerPage } from './components/ProgramManagerPage';
 import { FieldOfficerPage } from './components/FieldOfficerPage';
@@ -859,6 +861,8 @@ const PAGE_LABELS: Record<string, string> = {
   staff_home: "Program Staff",
   cartographer_home: "GIS Cartographer",
   standards: "Standards & Policies",
+  document_reports: "Document Reports",
+  sasa: "SASA Officer Dashboard",
 };
 
 // ─── APPS MAIN CONTAINER / CORE ENGINE ────────
@@ -1023,9 +1027,19 @@ useEffect(() => {
 
   const isStaff = user && ["admin", "district_coordinator", "data_entry", "tot", "program_manager", "field_officer", "program_staff", "sasa_officer"].includes(user.role);
 
-  const pendingCount = user && can(user.role, "approveReport")
-    ? reports.filter(r => r.status === "pending" && (user.role === "district_coordinator" ? r.district === user.district : true)).length
-    : 0;
+  const [docUnread, setDocUnread] = useState(0);
+
+useEffect(() => {
+  if (user && ['district_coordinator', 'program_manager', 'admin'].includes(user.role)) {
+    documentReportsApi.getUnreadCount().then(data => {
+      if (data.count !== undefined) setDocUnread(data.count);
+    });
+  }
+}, [user, page]);
+
+const pendingCount = (user && can(user.role, "approveReport")
+  ? reports.filter(r => r.status === "pending" && (user.role === "district_coordinator" ? r.district === user.district : true)).length
+  : 0) + docUnread;
 
   const renderPageContent = () => {
     switch (page) {
@@ -1063,6 +1077,8 @@ useEffect(() => {
         return <ImpactPage reports={reports} showToast={showToast} user={user} />;
       case 'sasa':
         return <SasaPage user={user} reports={reports} showToast={showToast} />;
+      case 'document_reports':
+        return <DocumentReportsPage user={user} showToast={showToast} />;
       case "calendar":
         return user ? <CalendarPage user={user} /> : <div className="p-12 text-center text-slate-400 font-semibold italic">Sign in to view the Calendar.</div>;
       case "tasks":
@@ -1192,11 +1208,12 @@ useEffect(() => {
         ]
       },
       {
-        title: "Reports",
-        items: [
-          { id: "submit", label: "Submit a Case", icon: FilePlus },
-          { id: "reports", label: "Reports", icon: FileText, protected: true }
-        ]
+  title: "Reports",
+  items: [
+    { id: "submit", label: "Submit a Case", icon: FilePlus },
+    { id: "reports", label: "Reports", icon: FileText, protected: true },
+    { id: "document_reports", label: "Submit a Report", icon: Upload, protected: true }
+  ]
       },
       {
         title: "More",
@@ -1346,7 +1363,16 @@ useEffect(() => {
                             <span className="font-semibold text-xs">Pending reviews</span>
                             {pendingCount > 0 && <span className="bg-amber-100 text-amber-800 text-[9px] px-1.5 rounded">Action required</span>}
                           </div>
-                          <div className="max-h-[200px] overflow-y-auto space-y-1.5">
+                          <div className="max-h-[200px] overflow-y-auto space-y-1.5"> {docUnread > 0 && (
+    <button
+      type="button"
+      onClick={() => { setPage("document_reports"); setNotifOpen(false); }}
+      className="w-full text-left p-2 bg-orange-50 dark:bg-orange-950/20 rounded border border-orange-200 dark:border-orange-900/40 text-[11px] text-black dark:text-white mb-1"
+    >
+      <div className="font-semibold">{docUnread} new document report{docUnread > 1 ? 's' : ''}</div>
+      <div className="text-[10px] opacity-60">Click to view inbox</div>
+    </button>
+  )}
                             {reports.filter(r => r.status === "pending" && (user.role === "district_coordinator" ? r.district === user.district : true)).length === 0 ? (
                               <p className="text-xs py-3 text-center m-0 opacity-60">No pending files.</p>
                             ) : (
