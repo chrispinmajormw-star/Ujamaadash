@@ -1130,7 +1130,8 @@ const pendingCount = (user && can(user.role, "approveReport")
     if (role === 'field_officer') return [
       { title: "My Workspace", items: [
         { id: "officer_home", label: "Field Dashboard", icon: LayoutDashboard, protected: true },
-        { id: "submit", label: "Submit Report", icon: FilePlus, protected: true },
+        { id: "submit", label: "Log Session", icon: FilePlus, protected: true },
+        { id: "document_reports", label: "Submit a Report", icon: Upload, protected: true },
       ]},
       { title: "Reference", items: [
         { id: "curriculum", label: "Curriculum", icon: BookOpen },
@@ -1149,6 +1150,7 @@ const pendingCount = (user && can(user.role, "approveReport")
       { title: "My Workspace", items: [
         { id: "staff_home", label: "Staff Dashboard", icon: LayoutDashboard, protected: true },
         { id: "submit", label: "Log Session", icon: FilePlus, protected: true },
+        { id: "document_reports", label: "Document Reports", icon: Upload, protected: true },
       ]},
       { title: "Curriculum", items: [
         { id: "curriculum", label: "Curriculum", icon: BookOpen },
@@ -1168,6 +1170,7 @@ const pendingCount = (user && can(user.role, "approveReport")
         { id: "cartographer_home", label: "Cartographer Console", icon: Map, protected: true },
         { id: "maps", label: "Live Map View", icon: Navigation },
         { id: "districts", label: "Districts", icon: MapPin },
+        { id: "document_reports", label: "Document Reports", icon: Upload, protected: true },
       ]},
       { title: "More", items: [
         { id: "settings", label: "Settings", icon: Settings },
@@ -1176,10 +1179,11 @@ const pendingCount = (user && can(user.role, "approveReport")
 
     // SASA Officer nav
     if (role === 'sasa_officer') return [
-      { title: "SASA Workspace", items: [
-        { id: "sasa", label: "SASA Dashboard", icon: Shield, protected: true },
-        { id: "submit", label: "Submit Case", icon: FilePlus, protected: true },
-      ]},
+  { title: "SASA Workspace", items: [
+    { id: "sasa", label: "SASA Dashboard", icon: Shield, protected: true },
+    { id: "submit", label: "Submit Case", icon: FilePlus, protected: true },
+    { id: "document_reports", label: "Submit a Report", icon: Upload, protected: true },
+  ]},
       { title: "More", items: [
         { id: "analytics", label: "Analytics", icon: BarChart2 },
         { id: "calendar", label: "Calendar", icon: Calendar, protected: true },
@@ -1198,6 +1202,9 @@ const pendingCount = (user && can(user.role, "approveReport")
           { id: "trainings", label: "Trainings", icon: GraduationCap },
           { id: "curriculum", label: "Curriculum", icon: BookOpen },
           { id: "standards", label: "Standards & Policies", icon: Shield, protected: true }
+          { id: "submit", label: "Submit a Case", icon: FilePlus },
+          { id: "reports", label: "Reports", icon: FileText, protected: true },
+          ...(user && user.role !== 'tot' && user.role !== 'viewer' ? [{ id: "document_reports", label: "Submit a Report", icon: Upload, protected: true }] : []),
         ]
       },
       {
