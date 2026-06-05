@@ -718,7 +718,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers, showTo
 
       <Card>
         <FilterBar
-          options={["all", "admin", "tot", "data_entry", "district_coordinator"].map(x => ({
+          options={["all", "admin", "tot", "data_entry", "district_coordinator", "sasa_officer", "cartographer"].map(x => ({
             v: x,
             l: x === 'all' ? 'ALL STAFF' : ROLE_CFG[x as keyof typeof ROLE_CFG]?.label.toUpperCase() || x
           }))}

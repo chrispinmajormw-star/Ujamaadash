@@ -10,7 +10,7 @@ export const ROLE_CFG = {
   program_manager: { label: "Program Manager", color: "#0e7490", bg: "#cffafe", icon: "📊" },
   field_officer: { label: "Field Officer", color: "#92400e", bg: "#fef3c7", icon: "🌍" },
   program_staff: { label: "Program Staff", color: "#3730a3", bg: "#e0e7ff", icon: "📚" },
-  cartographer: { label: "GIS Cartographer", color: "#166534", bg: "#dcfce7", icon: "🗺️" },
+  cartographer: { label: "Cartographer", color: "#166534", bg: "#dcfce7", icon: "🗺️" },
 };
 
 export const CAN = {
