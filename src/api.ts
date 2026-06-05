@@ -66,3 +66,9 @@ export const usersApi = {
   getAll: () => api.get('/api/users'),
   login: (email: string, password: string) => api.post('/api/users/login', { email, password }),
 };
+
+// ─── STATS ───────────────────────────────────────────────────────────────────
+
+export const statsApi = {
+  get: () => api.get('/api/stats'),
+};
