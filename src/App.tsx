@@ -585,9 +585,9 @@ const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, onOpenMap }) => {
 
       <Card className="grid grid-cols-2 md:grid-cols-4 gap-3 !p-4">
         {[
-          [`Active Spheres`, `${stats.districts} Districts`],
-          [`Training Coverage`, `${stats.coverage}% Target reached`],
-          [`Certified TOTs Certified`, `${stats.tots} Certs`],
+          ["Active Spheres", "15 Districts"],
+          ["Training Coverage", "54% "],
+          ["Certified TOTs Certified", "665"],
           ["Teachers trained", `${DISTRICTS.reduce((acc, d) => acc + d.teachersTrained, 0).toLocaleString()} Trained`]
         ].map(([l, v]) => (
           <div key={l} className="space-y-1">
