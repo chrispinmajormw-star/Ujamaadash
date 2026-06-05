@@ -79,9 +79,6 @@ const downloadReport = (reports: Report[], boys: number, girls: number) => {
 // ─── ANALYTICS PAGE ──────────────────────────
 interface AnalyticsPageProps { reports: Report[]; }
 
-export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ reports }) => {
-  const [activeRegion, setActiveRegion] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState<'overview' | 'districts' | 'clusters' | 'reports'>('overview');
   export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ reports }) => {
   const [activeRegion, setActiveRegion] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<'overview' | 'districts' | 'clusters' | 'reports'>('overview');
