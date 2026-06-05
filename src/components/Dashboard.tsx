@@ -23,7 +23,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
       : reports;
 
   const pending = my.filter(r => r.status === "pending").length;
-  const [stats, setStats] = useState({ districts: 0, tots: 0, teachersTrained: 0, schools: 0, coverage: 0 });
+  const [stats, setStats] = useState({ districts: 0, tots: 0, teachersTrained: 0, schools: 0, coverage: 0, learnersTrained: 0, lessons: 0 });
 useEffect(() => {
   statsApi.get().then(data => { if (!data.error) setStats(data); });
 }, []);
