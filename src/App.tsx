@@ -1171,18 +1171,16 @@ const pendingCount = (user && can(user.role, "approveReport")
     // Default nav (admin, dc, tot, data_entry, viewer, public)
     return [
       {
-        title: "Dashboard",
-        items: [
-          { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-          { id: "maps", label: "Clusters map", icon: Map },
-          { id: "districts", label: "Districts", icon: MapPin },
-          { id: "trainings", label: "Trainings", icon: GraduationCap },
-          { id: "curriculum", label: "Curriculum", icon: BookOpen },
-          { id: "standards", label: "Standards & Policies", icon: Shield, protected: true },
-          { id: "reports", label: "Reports", icon: FileText, protected: true },
-          ...(user && user.role !== 'tot' && user.role !== 'viewer' ? [{ id: "document_reports", label: "Submit a Report", icon: Upload, protected: true }] : []),
-        ]
-      },
+  title: "Dashboard",
+  items: [
+    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { id: "maps", label: "Clusters map", icon: Map },
+    { id: "districts", label: "Districts", icon: MapPin },
+    { id: "trainings", label: "Trainings", icon: GraduationCap },
+    { id: "curriculum", label: "Curriculum", icon: BookOpen },
+    { id: "standards", label: "Standards & Policies", icon: Shield, protected: true },
+  ]
+},
       {
         title: "Planning",
         items: [
