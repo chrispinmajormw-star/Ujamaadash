@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { Star, Plus, Heart, Newspaper, ChevronDown, ChevronUp, MapPin, Calendar } from 'lucide-react';
-import { Card, Kicker, Btn, Modal, FInput, FSelect, FArea } from './SubComponents';
+import React, { useState, useEffect } from 'react';
+import { Star, Plus, Heart, Newspaper, ChevronDown, ChevronUp, MapPin, Calendar, Edit2, Trash2 } from 'lucide-react';
+import { Card, Kicker, Btn, Modal, FInput, FSelect, FArea, Badge } from './SubComponents';
 import { DISTRICT_LIST } from '../data';
+import { impactStoriesApi } from '../api';
 
 interface ImpactPageProps {
   reports: any[];
@@ -9,86 +10,17 @@ interface ImpactPageProps {
   user: any;
 }
 
-const STORIES = [
-  {
-    id: 1,
-    emoji: '👧',
-    title: 'Breaking the Silence in Mzimba',
-    quote: 'I learned that my voice is my power.',
-    role: 'Student, GESD Graduate',
-    district: 'Mzimba District',
-    date: 'April 2026',
-    curriculum: 'GESD',
-    color: '#a82563',
-    pale: '#fce7f3',
-    full: 'A learner who had been silent about abuse for over a year completed the GESD program\'s Session 3 on Awareness. After learning to trust her inner voice, she reported to a trusted teacher. The school cluster intervened swiftly through the referral pathway, connecting her to VSU support and counselling. She is now back in class, thriving, and has become a peer mentor for younger girls in her cluster.'
-  },
-  {
-    id: 2,
-    emoji: '👦',
-    title: 'A Hero Emerges in Lilongwe',
-    quote: 'Being a hero means helping someone in need.',
-    role: 'Student, HIM Graduate',
-    district: 'Lilongwe Central Cluster',
-    date: 'March 2026',
-    curriculum: 'HIM',
-    color: '#185fa5',
-    pale: '#dbeafe',
-    full: 'A learner witnessed a younger student being harassed on the school grounds. Using the Step-Up Strategies from HIM Topic 4 — the Direct, Distract, Delegate method — they calmly distracted the aggressor and walked the victim safely to a teacher.'
-  },
-  {
-    id: 3,
-    emoji: '👩‍🏫',
-    title: 'Teacher Training Transforms a School',
-    quote: 'Our school now has a referral pathway that actually works.',
-    role: 'Head Teacher, Kawale Primary',
-    district: 'Lilongwe District',
-    date: 'February 2026',
-    curriculum: 'ETT',
-    color: '#059669',
-    pale: '#d1fae5',
-    full: 'After 12 teachers completed the 6-day ETT program, Kawale Primary formed a Child Protection Committee. Within three months, reporting of SGBV incidents increased by 70% — because students and teachers finally trusted the system enough to speak up.'
-  },
-  {
-    id: 4,
-    emoji: '🌟',
-    title: 'Girls Lead the Way in Blantyre',
-    quote: 'We are not victims — we are leaders.',
-    role: 'GESD Graduate & Peer Mentor',
-    district: 'Blantyre South Cluster',
-    date: 'January 2026',
-    curriculum: 'GESD',
-    color: '#d97706',
-    pale: '#fef3c7',
-    full: 'After completing all six GESD sessions, a learner started a weekly girls\' safety club at her school. Within two months, 35 girls were meeting regularly. Three girls in the group have since accessed referral support through the school\'s cluster lead.'
-  },
-  {
-    id: 5,
-    emoji: '🤝',
-    title: 'Boys & Girls Build a Safety Charter Together',
-    quote: 'We signed it together — it belongs to all of us.',
-    role: 'Combined Class, Karonga Primary',
-    district: 'Karonga Lakeshore Cluster',
-    date: 'March 2026',
-    curriculum: 'Combined',
-    color: '#7c3aed',
-    pale: '#ede9fe',
-    full: 'The combined Session 6 brought boys from the HIM program and girls from GESD together for the first time. Students co-wrote a School Safety Charter committing to respect, non-violence, and mutual support. The charter is now displayed at the school entrance.'
-  },
-  {
-    id: 6,
-    emoji: '📣',
-    title: 'Community Father Changes His Stance',
-    quote: 'I used to think this was not men\'s business. Now I know it is.',
-    role: 'Community Father & Parent',
-    district: 'Dedza Highland Cluster',
-    date: 'February 2026',
-    curriculum: 'Community',
-    color: '#e85d04',
-    pale: '#fff1e6',
-    full: 'When the ETT cluster in Dedza held a community parent session, a community member attended reluctantly. By the end, he had signed up to be a community champion. He now attends cluster meetings and speaks openly with other fathers about supporting their daughters\' education and safety.'
-  },
-];
+const CURRICULUM_COLORS: Record<string, { color: string; pale: string }> = {
+  GESD:      { color: '#a82563', pale: '#fce7f3' },
+  HIM:       { color: '#185fa5', pale: '#dbeafe' },
+  ETT:       { color: '#059669', pale: '#d1fae5' },
+  Combined:  { color: '#7c3aed', pale: '#ede9fe' },
+  Community: { color: '#e85d04', pale: '#fff1e6' },
+};
+
+const EMOJI_MAP: Record<string, string> = {
+  GESD: '👧', HIM: '👦', ETT: '👩‍🏫', Combined: '🤝', Community: '📣',
+};
 
 const MILESTONES = [
   { year: '2023', event: 'ETT Country wide ScaleUp introduction' },
@@ -104,19 +36,82 @@ const PRESS = [
 ];
 
 export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user }) => {
+  const [stories, setStories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [storyForm, setStoryForm] = useState({ name: '', district: '', role: '', story: '' });
+  const [editingStory, setEditingStory] = useState<any | null>(null);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [filterCurr, setFilterCurr] = useState('all');
 
-  const submitStory = () => {
-    if (!storyForm.name || !storyForm.story) { showToast('Please fill in your name and story'); return; }
-    setSubmitted(true);
-    showToast('✅ Thank you — your story has been received safely.');
+  const [storyForm, setStoryForm] = useState({
+    title: '', content: '', author_name: '', district_id: '',
+    image_url: '', is_published: true,
+    curriculum: 'GESD',
+  });
+
+  const canManage = user && (user.role === 'admin' || user.role === 'sasa_officer');
+
+  useEffect(() => {
+    impactStoriesApi.getAll().then(data => {
+      if (Array.isArray(data)) setStories(data);
+      setLoading(false);
+    });
+  }, []);
+
+  const openEdit = (story: any) => {
+    setEditingStory(story);
+    setStoryForm({
+      title: story.title,
+      content: story.content,
+      author_name: story.author_name || '',
+      district_id: story.district_id || '',
+      image_url: story.image_url || '',
+      is_published: story.is_published,
+      curriculum: story.curriculum || 'GESD',
+    });
+    setShowForm(true);
   };
 
-  const visible = filterCurr === 'all' ? STORIES : STORIES.filter(s => s.curriculum === filterCurr);
+  const submitStory = async () => {
+    if (!storyForm.title || !storyForm.content) {
+      showToast('⚠️ Title and content are required');
+      return;
+    }
+    try {
+      let data;
+      if (editingStory) {
+        data = await impactStoriesApi.update(editingStory.id, storyForm);
+        if (data.error) { showToast(`⚠️ ${data.error}`); return; }
+        setStories(prev => prev.map(s => s.id === editingStory.id ? { ...s, ...data } : s));
+        showToast('✅ Story updated');
+      } else {
+        data = await impactStoriesApi.create(storyForm);
+        if (data.error) { showToast(`⚠️ ${data.error}`); return; }
+        setStories(prev => [data, ...prev]);
+        showToast('✅ Story published');
+      }
+      setSubmitted(true);
+    } catch {
+      showToast('⚠️ Failed to save story');
+    }
+  };
+
+  const deleteStory = async () => {
+    if (!deleteId) return;
+    const data = await impactStoriesApi.delete(deleteId);
+    if (data.error) { showToast(`⚠️ ${data.error}`); return; }
+    setStories(prev => prev.filter(s => s.id !== deleteId));
+    setDeleteId(null);
+    showToast('Story deleted');
+  };
+
+  const sf = (k: string) => (e: any) => setStoryForm(p => ({ ...p, [k]: e.target.value }));
+
+  const visible = filterCurr === 'all'
+    ? stories
+    : stories.filter(s => s.curriculum === filterCurr);
 
   return (
     <div className="space-y-5 max-w-5xl mx-auto animate-fade-in-up">
@@ -130,9 +125,11 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
             Real outcomes from active districts and clusters across Malawi.
           </p>
         </div>
-        <Btn size="sm" onClick={() => setShowForm(true)}>
-          <Plus size={13} /> Submit Story
-        </Btn>
+        {canManage && (
+          <Btn size="sm" onClick={() => { setEditingStory(null); setStoryForm({ title: '', content: '', author_name: '', district_id: '', image_url: '', is_published: true, curriculum: 'GESD' }); setSubmitted(false); setShowForm(true); }}>
+            <Plus size={13} /> Add Story
+          </Btn>
+        )}
       </div>
 
       {/* KPI row */}
@@ -141,7 +138,7 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
           ['592,200+', 'Learners Reached'],
           ['1,134', 'TOTs Certified'],
           ['127', 'School Clusters'],
-          ['22', 'Active Districts'],
+          [stories.length.toString(), 'Impact Stories'],
         ].map(([v, l]) => (
           <Card key={l} className="p-3 text-center">
             <div className="text-base font-bold text-[#e85d04]">{v}</div>
@@ -167,77 +164,73 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
         ))}
       </div>
 
+      {loading && <div className="text-center py-12 text-sm text-black/40 dark:text-white/40">Loading stories…</div>}
+
+      {!loading && visible.length === 0 && (
+        <div className="text-center py-12 text-sm text-black/40 dark:text-white/40">No stories yet.</div>
+      )}
+
       {/* Stories grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {visible.map(s => {
           const isExp = expanded === s.id;
+          const curr = s.curriculum || 'ETT';
+          const colors = CURRICULUM_COLORS[curr] || CURRICULUM_COLORS['ETT'];
+          const emoji = EMOJI_MAP[curr] || '🌟';
           return (
             <div
               key={s.id}
               className="bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg flex flex-col overflow-hidden hover:border-[#e85d04] dark:hover:border-[#e85d04] transition-all"
             >
-              {/* Colour top stripe */}
-              <div className="h-1 shrink-0" style={{ backgroundColor: s.color }} />
+              <div className="h-1 shrink-0" style={{ backgroundColor: colors.color }} />
 
               <div className="p-4 flex-1 flex flex-col">
-                {/* Top row */}
                 <div className="flex items-start justify-between mb-3">
-                  <div
-                    className="w-9 h-9 rounded-lg flex items-center justify-center text-lg shrink-0"
-                    style={{ backgroundColor: s.pale }}
-                  >
-                    {s.emoji}
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center text-lg shrink-0" style={{ backgroundColor: colors.pale }}>
+                    {emoji}
                   </div>
-                  <span
-                    className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
-                    style={{ color: s.color, backgroundColor: s.pale }}
-                  >
-                    {s.curriculum}
-                  </span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full" style={{ color: colors.color, backgroundColor: colors.pale }}>
+                      {curr}
+                    </span>
+                    {canManage && (
+                      <>
+                        <button onClick={() => openEdit(s)} className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-slate-800 text-black/30 dark:text-white/30 hover:text-black dark:hover:text-white">
+                          <Edit2 size={11} />
+                        </button>
+                        <button onClick={() => setDeleteId(s.id)} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/20 text-black/30 dark:text-white/30 hover:text-red-600">
+                          <Trash2 size={11} />
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
 
-                {/* Title */}
-                <h3 className="text-xs font-bold text-black dark:text-white leading-snug mb-2">
-                  {s.title}
-                </h3>
+                <h3 className="text-xs font-bold text-black dark:text-white leading-snug mb-2">{s.title}</h3>
 
-                {/* Quote */}
-                <div
-                  className="border-l-2 pl-3 py-1 mb-3"
-                  style={{ borderColor: s.color }}
-                >
+                <div className="border-l-2 pl-3 py-1 mb-3" style={{ borderColor: colors.color }}>
                   <p className="text-xs italic text-black dark:text-white opacity-80 leading-relaxed m-0">
-                    "{s.quote}"
+                    "{s.content.length > 120 && !isExp ? s.content.slice(0, 120) + '…' : s.content}"
                   </p>
                 </div>
 
-                {/* Role — no name */}
-                <div
-                  className="text-[10px] font-semibold mb-3"
-                  style={{ color: s.color }}
-                >
-                  — {s.role}
-                </div>
-
-                {/* Expanded content */}
-                {isExp && (
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed mb-3 border-t border-neutral-100 dark:border-slate-800 pt-3">
-                    {s.full}
-                  </p>
+                {s.author_name && (
+                  <div className="text-[10px] font-semibold mb-3" style={{ color: colors.color }}>
+                    — {s.author_name}
+                  </div>
                 )}
 
-                {/* Footer */}
                 <div className="mt-auto pt-3 border-t border-neutral-100 dark:border-slate-800 flex items-center justify-between">
                   <div className="flex items-center gap-2 text-[10px] text-slate-400">
                     <MapPin size={10} />
-                    <span className="truncate max-w-[110px]">{s.district}</span>
+                    <span className="truncate max-w-[110px]">{s.district_name || 'Malawi'}</span>
                     <Calendar size={10} className="ml-1" />
-                    <span>{s.date}</span>
+                    <span>{new Date(s.created_at).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}</span>
                   </div>
                   <button
                     onClick={() => setExpanded(isExp ? null : s.id)}
                     className="flex items-center gap-1 text-[10px] font-bold transition"
-                    style={{ color: s.color }}
+                    style={{ color: colors.color }}
                   >
                     {isExp ? <><ChevronUp size={12} /> Less</> : <><ChevronDown size={12} /> Read more</>}
                   </button>
@@ -250,8 +243,6 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
 
       {/* Milestones + Press */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-        {/* Milestones */}
         <Card className="p-4">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-7 h-7 rounded-lg bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center">
@@ -279,7 +270,6 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
           </div>
         </Card>
 
-        {/* Press */}
         <Card className="p-4">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-7 h-7 rounded-lg bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center">
@@ -290,9 +280,7 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
           <div className="space-y-2.5">
             {PRESS.map((p, i) => (
               <div key={i} className="flex gap-3 items-center p-3 rounded-lg border border-neutral-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/20">
-                <div className="w-8 h-8 rounded-lg bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center shrink-0 text-base">
-                  📰
-                </div>
+                <div className="w-8 h-8 rounded-lg bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center shrink-0 text-base">📰</div>
                 <div className="min-w-0 flex-1">
                   <div className="text-xs font-semibold text-black dark:text-white leading-snug truncate">{p.headline}</div>
                   <div className="text-[10px] text-slate-400 mt-0.5 font-medium">{p.outlet} · {p.date}</div>
@@ -303,46 +291,51 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
         </Card>
       </div>
 
-      {/* Submit story modal */}
-      {showForm && (
-        <Modal title="Submit Your Safe Impact Story" onClose={() => { setShowForm(false); setSubmitted(false); setStoryForm({ name: '', district: '', role: '', story: '' }); }}>
+      {/* Add/Edit Story Modal (admin/sasa_officer only) */}
+      {showForm && canManage && (
+        <Modal
+          title={editingStory ? 'Edit Story' : 'Add Impact Story'}
+          onClose={() => { setShowForm(false); setSubmitted(false); setEditingStory(null); }}
+        >
           {submitted ? (
             <div className="text-center py-6 space-y-3">
               <span className="text-4xl block">💖</span>
-              <h3 className="text-sm font-bold text-black dark:text-white m-0">We Received Your Voice!</h3>
-              <p className="text-xs text-slate-400 leading-relaxed max-w-xs mx-auto">
-                Your submission is handled with full confidentiality. Records are only published after district administrator authentication.
-              </p>
-              <Btn onClick={() => { setShowForm(false); setSubmitted(false); }} size="sm">Dismiss</Btn>
+              <h3 className="text-sm font-bold text-black dark:text-white m-0">Story Saved!</h3>
+              <Btn onClick={() => { setShowForm(false); setSubmitted(false); setEditingStory(null); }} size="sm">Close</Btn>
             </div>
           ) : (
-            <div className="space-y-3 text-xs">
-              <p className="text-slate-400 m-0 leading-relaxed">
-                Share any milestone or successful intervention. You may use an alias or remain anonymous.
-              </p>
-              <FInput label="First Name (or 'Anonymous') *" placeholder="e.g. Anonymous" value={storyForm.name} onChange={e => setStoryForm(p => ({ ...p, name: e.target.value }))} />
-              <FSelect label="Your District" value={storyForm.district} onChange={e => setStoryForm(p => ({ ...p, district: e.target.value }))}>
-                <option value="">Select district (optional)</option>
+            <div className="space-y-3">
+              <FInput label="Title *" value={storyForm.title} onChange={sf('title')} placeholder="e.g. Breaking the Silence in Mzimba" />
+              <FSelect label="Curriculum" value={storyForm.curriculum} onChange={sf('curriculum')}>
+                {['GESD', 'HIM', 'ETT', 'Combined', 'Community'].map(c => <option key={c}>{c}</option>)}
+              </FSelect>
+              <FArea label="Story Content *" value={storyForm.content} onChange={sf('content')} rows={5} placeholder="Share the impact story in detail…" />
+              <FInput label="Author Name (or role)" value={storyForm.author_name} onChange={sf('author_name')} placeholder="e.g. Student, GESD Graduate" />
+              <FSelect label="District (optional)" value={storyForm.district_id} onChange={sf('district_id')}>
+                <option value="">Select district…</option>
                 {DISTRICT_LIST.map(d => <option key={d}>{d}</option>)}
               </FSelect>
-              <FSelect label="I am writing as a *" value={storyForm.role} onChange={e => setStoryForm(p => ({ ...p, role: e.target.value }))}>
-                <option value="">Choose role...</option>
-                <option>Student / Lead Representative</option>
-                <option>Teacher / TOT Champion</option>
-                <option>Parent / Guardian Advocate</option>
-                <option>District Overseer or Staff</option>
-                <option>Interested Stakeholder</option>
-              </FSelect>
-              <FArea label="Your Story *" placeholder="Describe the change or transformation you witnessed." value={storyForm.story} onChange={e => setStoryForm(p => ({ ...p, story: e.target.value }))} />
-              <div className="bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 p-2.5 rounded-lg text-[10px] border border-emerald-100 dark:border-emerald-900/30">
-                🔒 Data security compliant. Learner names and identifiable details are redacted on export.
+              <div className="flex items-center gap-2">
+                <input type="checkbox" checked={storyForm.is_published} onChange={e => setStoryForm(p => ({ ...p, is_published: e.target.checked }))} className="w-4 h-4 rounded text-orange-500" />
+                <label className="text-xs text-black dark:text-white">Publish immediately</label>
               </div>
               <div className="flex gap-2 justify-end pt-2">
                 <Btn variant="secondary" size="sm" onClick={() => setShowForm(false)}>Cancel</Btn>
-                <Btn size="sm" onClick={submitStory}>Submit Story</Btn>
+                <Btn size="sm" onClick={submitStory}>{editingStory ? 'Save Changes' : 'Publish Story'}</Btn>
               </div>
             </div>
           )}
+        </Modal>
+      )}
+
+      {/* Delete confirm */}
+      {deleteId && (
+        <Modal title="Delete Story" onClose={() => setDeleteId(null)} width={400}>
+          <p className="text-sm text-black/70 dark:text-white/70 mb-4">Are you sure you want to delete this story? This cannot be undone.</p>
+          <div className="flex gap-2 justify-end">
+            <Btn size="sm" variant="ghost" onClick={() => setDeleteId(null)}>Cancel</Btn>
+            <Btn size="sm" variant="secondary" onClick={deleteStory}><Trash2 size={13} /> Delete</Btn>
+          </div>
         </Modal>
       )}
     </div>
