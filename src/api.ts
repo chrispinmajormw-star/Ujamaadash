@@ -112,3 +112,36 @@ export const districtsApi = {
   deleteTraining: (id: number) => api.delete(`/api/districts/trainings/${id}`),
   assignDC: (id: number, userId: string) => api.put(`/api/districts/${id}/assign-dc`, { userId }),
 };
+// ─── GBV CASES ───────────────────────────────────────────────────────────────
+
+export const gbvCasesApi = {
+  getAll: () => api.get('/api/gbv-cases'),
+  submit: (data: any) => api.post('/api/gbv-cases', data),
+  updateStatus: (id: number, status: string) => api.put(`/api/gbv-cases/${id}/status`, { status }),
+};
+
+// ─── SESSION RECORDS ──────────────────────────────────────────────────────────
+
+export const sessionRecordsApi = {
+  getAll: () => api.get('/api/session-records'),
+  submit: (data: any) => api.post('/api/session-records', data),
+};
+
+// ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
+
+export const notificationsApi = {
+  getAll: () => api.get('/api/notifications'),
+  getUnreadCount: () => api.get('/api/notifications/unread-count'),
+  markRead: (id: number) => api.put(`/api/notifications/${id}/read`, {}),
+  markAllRead: () => api.put('/api/notifications/mark-all-read', {}),
+};
+
+// ─── IMPACT STORIES ───────────────────────────────────────────────────────────
+
+export const impactStoriesApi = {
+  getAll: () => api.get('/api/impact-stories'),
+  getOne: (id: number) => api.get(`/api/impact-stories/${id}`),
+  create: (data: any) => api.post('/api/impact-stories', data),
+  update: (id: number, data: any) => api.put(`/api/impact-stories/${id}`, data),
+  delete: (id: number) => api.delete(`/api/impact-stories/${id}`),
+};

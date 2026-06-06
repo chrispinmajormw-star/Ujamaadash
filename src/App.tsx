@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-import { api, reportsApi, usersApi, documentReportsApi, districtsApi } from './api';
+import { api, reportsApi, usersApi, documentReportsApi, districtsApi, notificationsApi, impactStoriesApi, gbvCasesApi, sessionRecordsApi } from './api';
 import { api, reportsApi, usersApi, documentReportsApi } from './api';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -933,18 +933,27 @@ useEffect(() => {
   const isStaff = user && ["admin", "district_coordinator", "data_entry", "tot", "program_manager", "field_officer", "program_staff", "sasa_officer"].includes(user.role);
 
   const [docUnread, setDocUnread] = useState(0);
+const [notifications, setNotifications] = useState<any[]>([]);
+const [notifUnread, setNotifUnread] = useState(0);
 
 useEffect(() => {
-  if (user && ['district_coordinator', 'program_manager', 'admin'].includes(user.role)) {
+  if (!user) return;
+  if (['district_coordinator', 'program_manager', 'admin'].includes(user.role)) {
     documentReportsApi.getUnreadCount().then(data => {
       if (data.count !== undefined) setDocUnread(data.count);
     });
   }
+  notificationsApi.getAll().then(data => {
+    if (Array.isArray(data)) setNotifications(data);
+  });
+  notificationsApi.getUnreadCount().then(data => {
+    if (data.count !== undefined) setNotifUnread(data.count);
+  });
 }, [user, page]);
 
 const pendingCount = (user && can(user.role, "approveReport")
   ? reports.filter(r => r.status === "pending" && (user.role === "district_coordinator" ? r.district === user.district : true)).length
-  : 0) + docUnread;
+  : 0) + docUnread + notifUnread;
 
   const renderPageContent = () => {
     switch (page) {
@@ -1273,35 +1282,62 @@ const pendingCount = (user && can(user.role, "approveReport")
                           <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
                           <div className="absolute right-0 top-10 bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg shadow-lg p-3 w-64 z-50 text-black dark:text-white">
                           <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 mb-2">
-                            <span className="font-semibold text-xs">Pending reviews</span>
-                            {pendingCount > 0 && <span className="bg-amber-100 text-amber-800 text-[9px] px-1.5 rounded">Action required</span>}
-                          </div>
-                          <div className="max-h-[200px] overflow-y-auto space-y-1.5"> {docUnread > 0 && (
+  <span className="font-semibold text-xs">Notifications</span>
+  {notifUnread > 0 && (
+    <button
+      onClick={() => {
+        notificationsApi.markAllRead();
+        setNotifUnread(0);
+        setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      }}
+      className="text-[10px] text-orange-600 font-semibold hover:underline"
+    >
+      Mark all read
+    </button>
+  )}
+</div>
+<div className="max-h-[280px] overflow-y-auto space-y-1.5">
+  {docUnread > 0 && (
     <button
       type="button"
       onClick={() => { setPage("document_reports"); setNotifOpen(false); }}
-      className="w-full text-left p-2 bg-orange-50 dark:bg-orange-950/20 rounded border border-orange-200 dark:border-orange-900/40 text-[11px] text-black dark:text-white mb-1"
+      className="w-full text-left p-2 bg-orange-50 dark:bg-orange-950/20 rounded border border-orange-200 dark:border-orange-900/40 text-[11px] text-black dark:text-white"
     >
       <div className="font-semibold">{docUnread} new document report{docUnread > 1 ? 's' : ''}</div>
       <div className="text-[10px] opacity-60">Click to view inbox</div>
     </button>
   )}
-                            {reports.filter(r => r.status === "pending" && (user.role === "district_coordinator" ? r.district === user.district : true)).length === 0 ? (
-                              <p className="text-xs py-3 text-center m-0 opacity-60">No pending files.</p>
-                            ) : (
-                              reports.filter(r => r.status === "pending" && (user.role === "district_coordinator" ? r.district === user.district : true)).map(r => (
-                                <button
-                                  key={r.id}
-                                  type="button"
-                                  onClick={() => { setPage("reports"); setNotifOpen(false); }}
-                                  className="w-full text-left p-2 bg-white dark:bg-[#0f1623] rounded border border-neutral-200 dark:border-slate-800 hover:border-orange-400 text-[11px] text-black dark:text-white"
-                                >
-                                  <div className="font-semibold truncate">{r.school}</div>
-                                  <div className="text-[10px] opacity-60">{r.district} · {r.submitted_at}</div>
-                                </button>
-                              ))
-                            )}
-                          </div>
+  {notifications.length === 0 && docUnread === 0 && (
+    <p className="text-xs py-3 text-center m-0 opacity-60">No notifications.</p>
+  )}
+  {notifications.map(n => (
+    <button
+      key={n.id}
+      type="button"
+      onClick={() => {
+        if (!n.is_read) {
+          notificationsApi.markRead(n.id);
+          setNotifUnread(prev => Math.max(0, prev - 1));
+          setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, is_read: true } : x));
+        }
+        if (n.link) setPage(n.link.replace('/', ''));
+        setNotifOpen(false);
+      }}
+      className={`w-full text-left p-2 rounded border text-[11px] text-black dark:text-white transition-colors ${
+        n.is_read
+          ? 'border-neutral-200 dark:border-slate-800 bg-white dark:bg-[#0f1623]'
+          : 'border-orange-200 dark:border-orange-900/40 bg-orange-50 dark:bg-orange-950/20'
+      }`}
+    >
+      <div className="font-semibold flex items-center gap-1">
+        {!n.is_read && <span className="w-1.5 h-1.5 rounded-full bg-orange-500 shrink-0" />}
+        {n.title}
+      </div>
+      <div className="text-[10px] opacity-60 mt-0.5">{n.message}</div>
+      <div className="text-[10px] opacity-40 mt-0.5">{new Date(n.created_at).toLocaleDateString()}</div>
+    </button>
+  ))}
+</div>
                           </div>
                         </>
                       )}
