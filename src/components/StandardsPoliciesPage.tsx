@@ -370,11 +370,11 @@ export const StandardsPoliciesPage: React.FC = () => {
           </div>
           <div>
             <div className="text-slate-500 mb-0.5">Whistleblowing Hotline</div>
-            <div className="font-semibold text-black dark:text-white">+265 995 513 607</div>
+            <div className="font-semibold text-black dark:text-white">+265 984 110 288</div>
           </div>
           <div>
             <div className="text-slate-500 mb-0.5">Executive Director</div>
-            <div className="font-semibold text-black dark:text-white">mndirangu@ujamaa-africa.com</div>
+            <div className="font-semibold text-black dark:text-white">mkangadzula@ujamaa-africa.org</div>
           </div>
         </div>
       </Card>
