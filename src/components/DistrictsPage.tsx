@@ -1,3 +1,5 @@
+import { Users } from 'lucide-react';
+import { districtsApi, api } from '../api';
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { districtsApi } from '../api';
@@ -59,7 +61,33 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
 
   const isAdmin = user?.role === 'admin';
   const isDC = user?.role === 'district_coordinator';
+  const [assignModal, setAssignModal] = useState<any | null>(null);
+  const [assignUserId, setAssignUserId] = useState('');
+  const [dcUsers, setDcUsers] = useState<any[]>([]);
 
+useEffect(() => {
+  if (isAdmin) {
+    api.get('/api/users').then(data => {
+      if (Array.isArray(data)) {
+        setDcUsers(data.filter((u: any) => u.role === 'district_coordinator'));
+      }
+    });
+  }
+}, [user]);
+
+const assignDC = async () => {
+  if (!assignModal || !assignUserId) return;
+  const data = await districtsApi.assignDC(assignModal.id, assignUserId);
+  if (data.error) { showToast(`⚠️ ${data.error}`); return; }
+  setDistricts(prev => prev.map(d => d.id === assignModal.id ? {
+    ...d,
+    district_coordinator_user_id: assignUserId,
+    coordinator_name: dcUsers.find(u => u.id === assignUserId)?.name || ''
+  } : d));
+  showToast('✅ District Coordinator assigned');
+  setAssignModal(null);
+  setAssignUserId('');
+};
   useEffect(() => {
     districtsApi.getAll().then(data => {
       if (Array.isArray(data)) setDistricts(data);
@@ -237,13 +265,37 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
                           </Btn>
                           <Btn size="sm" variant="primary" onClick={e => { e.stopPropagation(); setTrainingForm({ training_name: '', cohort: '', start_date: '', participants: '', venue: '', training_lead_name: '' }); setTrainingModal({ district: d }); }}>
                             <Plus size={12} /> Add Training
+                            {isAdmin && (
+                            <Btn size="sm" variant="ghost" onClick={e => { e.stopPropagation(); setAssignUserId(d.district_coordinator_user_id || ''); setAssignModal(d); }}>
+                            <Users size={12} /> Assign DC
+                            </Btn>
+                          )}
                           </Btn>
                         </>
                       )}
                       {isExpanded ? <ChevronUp size={16} className="text-black/40 dark:text-white/40" /> : <ChevronDown size={16} className="text-black/40 dark:text-white/40" />}
                     </div>
                   </div>
-
+                  {assignModal && (
+        <Modal title={`Assign DC — ${assignModal.name}`} onClose={() => setAssignModal(null)} width={420}>
+          <p className="text-xs text-black/50 dark:text-white/50 mb-4">
+            Current DC: <strong>{assignModal.coordinator_name || 'Not assigned'}</strong>
+          </p>
+          <FSelect label="Select District Coordinator *" value={assignUserId} onChange={e => setAssignUserId(e.target.value)}>
+            <option value="">Choose a DC…</option>
+            {dcUsers.map(u => (
+              <option key={u.id} value={u.id}>{u.name} — {u.district || 'No district'}</option>
+            ))}
+          </FSelect>
+          <div className="flex gap-2 justify-end mt-3">
+            <Btn size="sm" variant="ghost" onClick={() => setAssignModal(null)}>Cancel</Btn>
+            <Btn size="sm" variant="primary" onClick={assignDC}>Assign</Btn>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+};
                   {/* Expanded content */}
                   {isExpanded && (
                     <div className="mt-4 pt-4 border-t border-neutral-200 dark:border-slate-800">
@@ -416,5 +468,6 @@ const TrainingCard: React.FC<{
         )}
       </div>
     </div>
+    
   );
 };

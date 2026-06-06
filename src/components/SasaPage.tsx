@@ -1,3 +1,4 @@
+import { gbvCasesApi } from '../api';
 import React, { useState } from 'react';
 import { User, Report, CaseReferral, SasaMonthlyReport } from '../types';
 import {
@@ -42,9 +43,12 @@ const StatusDot: React.FC<{ status: CaseReferral['status'] }> = ({ status }) => 
 
 const CaseInbox: React.FC<{
   reports: Report[];
+  gbvCases: any[];
+  setGbvCases: React.Dispatch<React.SetStateAction<any[]>>;
   referrals: CaseReferral[];
   onRefer: (report: Report) => void;
-}> = ({ reports, referrals, onRefer }) => {
+  showToast: (msg: string) => void;
+}> = ({ reports, gbvCases, setGbvCases, referrals, onRefer, showToast }) => {
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Report | null>(null);
@@ -133,6 +137,64 @@ const CaseInbox: React.FC<{
           );
         })}
       </div>
+      
+      {/* GBV Cases from database */}
+{gbvCases.length > 0 && (
+  <div className="mt-4">
+    <div className="text-[10px] font-bold uppercase tracking-wide text-red-600 mb-2">
+      GBV Cases Assigned to You ({gbvCases.length})
+    </div>
+    <div className="space-y-2">
+      {gbvCases.map(c => (
+        <Card key={c.id} className="p-3">
+          <div className="flex flex-wrap items-start gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                <span className="font-bold text-sm text-black dark:text-white">{c.gbv_type}</span>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
+                  c.status === 'new' ? 'bg-red-100 text-red-700' :
+                  c.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
+                  'bg-green-100 text-green-700'
+                }`}>
+                  {c.status.replace('_', ' ')}
+                </span>
+              </div>
+              <div className="text-[11px] text-black/60 dark:text-white/60 mb-1">
+                {c.district} {c.village ? `· ${c.village}` : ''} · {new Date(c.created_at).toLocaleDateString()}
+              </div>
+              <p className="text-xs text-black/70 dark:text-white/70 line-clamp-2">{c.description}</p>
+              {c.contact_method && (
+                <div className="text-[11px] text-orange-600 mt-1">
+                  Contact: {c.contact_method} {c.contact_details ? `— ${c.contact_details}` : '(not provided)'}
+                </div>
+              )}
+            </div>
+            <div className="flex gap-1 shrink-0 flex-wrap">
+              {c.status === 'new' && (
+                <Btn size="sm" variant="primary" onClick={async () => {
+                  await gbvCasesApi.updateStatus(c.id, 'in_progress');
+                  setGbvCases(prev => prev.map(x => x.id === c.id ? { ...x, status: 'in_progress' } : x));
+                  showToast('Case marked as in progress');
+                }}>
+                  Start Case
+                </Btn>
+              )}
+              {c.status === 'in_progress' && (
+                <Btn size="sm" variant="success" onClick={async () => {
+                  await gbvCasesApi.updateStatus(c.id, 'resolved');
+                  setGbvCases(prev => prev.map(x => x.id === c.id ? { ...x, status: 'resolved' } : x));
+                  showToast('Case marked as resolved');
+                }}>
+                  Resolve
+                </Btn>
+              )}
+            </div>
+          </div>
+        </Card>
+      ))}
+    </div>
+  </div>
+)}
 
       {selected && (
         <Modal title={`Case — ${selected.school}`} onClose={() => setSelected(null)} width={560}>
@@ -484,7 +546,15 @@ export const SasaPage: React.FC<SasaPageProps> = ({ user, reports, showToast }) 
   const [referTarget, setReferTarget] = useState<Report | null>(null);
 
   const canAccess = user && (user.role === 'sasa_officer' || user.role === 'admin');
+const [gbvCases, setGbvCases] = useState<any[]>([]);
 
+useEffect(() => {
+  if (user?.role === 'sasa_officer' || user?.role === 'admin') {
+    gbvCasesApi.getAll().then(data => {
+      if (Array.isArray(data)) setGbvCases(data);
+    });
+  }
+}, [user]);
   if (!canAccess) {
     return (
       <div className="p-12 text-center text-black/40 dark:text-white/40 font-semibold italic">
@@ -529,8 +599,8 @@ export const SasaPage: React.FC<SasaPageProps> = ({ user, reports, showToast }) 
       </div>
 
       {tab === 'inbox' && (
-        <CaseInbox reports={reports} referrals={referrals} onRefer={handleRefer} />
-      )}
+  <CaseInbox reports={reports} gbvCases={gbvCases} setGbvCases={setGbvCases} referrals={referrals} onRefer={handleRefer} showToast={showToast} />
+)}
       {tab === 'referrals' && (
         <ReferralsTab
           referrals={referrals}

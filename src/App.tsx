@@ -965,12 +965,20 @@ useEffect(() => {
   }
 };
 
-  const updateStatus = (id: number, status: 'approved' | 'rejected' | 'forwarded') => {
+  const updateStatus = async (id: number, status: 'approved' | 'rejected' | 'forwarded') => {
+  try {
+    await reportsApi.update(id, { status });
     setReports(p => p.map(r => r.id === id ? { ...r, status } : r));
-  };
+    showToast(`✅ Report ${status}`);
+  } catch {
+    showToast('⚠️ Failed to update report status');
+  }
+};
 
   // DC Forward file operation
-  const forwardReport = (id: number) => {
+  const forwardReport = async (id: number) => {
+  try {
+    await reportsApi.update(id, { status: 'forwarded' });
     setReports(p => p.map(r => r.id === id ? {
       ...r,
       status: "forwarded" as const,
@@ -979,7 +987,10 @@ useEffect(() => {
     } : r));
     showToast("📨 File forwarded successfully to the National Admin");
     setForwardModal(null);
-  };
+  } catch {
+    showToast('⚠️ Failed to forward report');
+  }
+};
 
   // Data Officer inline edit persistence
   const saveEditedReport = (updated: Report) => {
