@@ -1179,7 +1179,6 @@ const pendingCount = (user && can(user.role, "approveReport")
           { id: "trainings", label: "Trainings", icon: GraduationCap },
           { id: "curriculum", label: "Curriculum", icon: BookOpen },
           { id: "standards", label: "Standards & Policies", icon: Shield, protected: true },
-          { id: "submit", label: "Submit a Case", icon: FilePlus },
           { id: "reports", label: "Reports", icon: FileText, protected: true },
           ...(user && user.role !== 'tot' && user.role !== 'viewer' ? [{ id: "document_reports", label: "Submit a Report", icon: Upload, protected: true }] : []),
         ]
@@ -1194,7 +1193,6 @@ const pendingCount = (user && can(user.role, "approveReport")
       {
   title: "Reports",
   items: [
-    { id: "submit", label: "Submit a Case", icon: FilePlus },
     { id: "reports", label: "Reports", icon: FileText, protected: true },
     { id: "document_reports", label: "Submit a Report", icon: Upload, protected: true }
   ]
