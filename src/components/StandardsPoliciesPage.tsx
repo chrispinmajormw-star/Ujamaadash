@@ -194,7 +194,7 @@ const POLICIES: Policy[] = [
       },
       {
         heading: '4. Reporting Suspected Fraud',
-        content: `If you see or suspect any fraudulent activity, report it immediately to:\n• Your Manager; OR\n• The Human Resource Manager.\n\nFor anonymous reporting or where the above is not appropriate:\nPhone: +265 993 130 111\nEmail: mndirangu@ujamaa-africa.com\n\nBreaches: We take any failure to comply with this Policy very seriously. Consequences may include termination of employment or contract and prosecution.\n\nWhere a serious allegation could result in reprisals, the recipient must treat the disclosure confidentially and immediately escalate to the Board Secretary/Executive Director.`
+        content: `If you see or suspect any fraudulent activity, report it immediately to:\n• Your Manager; OR\n• The Human Resource Manager.\n\nFor anonymous reporting or where the above is not appropriate:\nPhone: +265 984 110 288\nEmail: mkangadzula@ujamaa-africa.org\n\nBreaches: We take any failure to comply with this Policy very seriously. Consequences may include termination of employment or contract and prosecution.\n\nWhere a serious allegation could result in reprisals, the recipient must treat the disclosure confidentially and immediately escalate to the Board Secretary/Executive Director.`
       },
       {
         heading: '5. Responsibilities',
