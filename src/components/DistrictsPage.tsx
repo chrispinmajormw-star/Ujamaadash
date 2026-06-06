@@ -1,8 +1,6 @@
-import { Users } from 'lucide-react';
-import { districtsApi, api } from '../api';
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
-import { districtsApi } from '../api';
+import { districtsApi, api } from '../api';
 import {
   Card, PageHeader, Btn, ProgBar, Badge, FInput, FArea, FSelect, Modal, FilterBar
 } from './SubComponents';
@@ -54,40 +52,27 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
   const [reportModal, setReportModal] = useState<any | null>(null);
   const [trainingModal, setTrainingModal] = useState<{ district: any; training?: any } | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ trainingId: number; districtId: number } | null>(null);
+  const [assignModal, setAssignModal] = useState<any | null>(null);
 
   // Forms
   const [reportForm, setReportForm] = useState({ number_of_tots: '', teachers_trained: '', school_coverage: '', notes: '' });
   const [trainingForm, setTrainingForm] = useState({ training_name: '', cohort: '', start_date: '', participants: '', venue: '', training_lead_name: '' });
-
-  const isAdmin = user?.role === 'admin';
-  const isDC = user?.role === 'district_coordinator';
-  const [assignModal, setAssignModal] = useState<any | null>(null);
   const [assignUserId, setAssignUserId] = useState('');
   const [dcUsers, setDcUsers] = useState<any[]>([]);
 
-useEffect(() => {
-  if (isAdmin) {
-    api.get('/api/users').then(data => {
-      if (Array.isArray(data)) {
-        setDcUsers(data.filter((u: any) => u.role === 'district_coordinator'));
-      }
-    });
-  }
-}, [user]);
+  const isAdmin = user?.role === 'admin';
+  const isDC = user?.role === 'district_coordinator';
 
-const assignDC = async () => {
-  if (!assignModal || !assignUserId) return;
-  const data = await districtsApi.assignDC(assignModal.id, assignUserId);
-  if (data.error) { showToast(`⚠️ ${data.error}`); return; }
-  setDistricts(prev => prev.map(d => d.id === assignModal.id ? {
-    ...d,
-    district_coordinator_user_id: assignUserId,
-    coordinator_name: dcUsers.find(u => u.id === assignUserId)?.name || ''
-  } : d));
-  showToast('✅ District Coordinator assigned');
-  setAssignModal(null);
-  setAssignUserId('');
-};
+  useEffect(() => {
+    if (isAdmin) {
+      api.get('/api/users').then(data => {
+        if (Array.isArray(data)) {
+          setDcUsers(data.filter((u: any) => u.role === 'district_coordinator'));
+        }
+      });
+    }
+  }, [user]);
+
   useEffect(() => {
     districtsApi.getAll().then(data => {
       if (Array.isArray(data)) setDistricts(data);
@@ -125,6 +110,20 @@ const assignDC = async () => {
     return false;
   };
 
+  const assignDC = async () => {
+    if (!assignModal || !assignUserId) return;
+    const data = await districtsApi.assignDC(assignModal.id, assignUserId);
+    if (data.error) { showToast(`⚠️ ${data.error}`); return; }
+    setDistricts(prev => prev.map(d => d.id === assignModal.id ? {
+      ...d,
+      district_coordinator_user_id: assignUserId,
+      coordinator_name: dcUsers.find(u => u.id === assignUserId)?.name || ''
+    } : d));
+    showToast('✅ District Coordinator assigned');
+    setAssignModal(null);
+    setAssignUserId('');
+  };
+
   const submitReport = async () => {
     if (!reportModal) return;
     const data = await districtsApi.submitReport(reportModal.id, {
@@ -137,10 +136,8 @@ const assignDC = async () => {
     showToast('✅ District report submitted');
     setReportModal(null);
     setReportForm({ number_of_tots: '', teachers_trained: '', school_coverage: '', notes: '' });
-    // Refresh
     setDistrictData(prev => ({ ...prev, [reportModal.id]: undefined as any }));
     loadDistrictData(reportModal.id);
-    // Update districts list
     setDistricts(prev => prev.map(d => d.id === reportModal.id ? {
       ...d,
       number_of_tots: data.number_of_tots,
@@ -189,10 +186,10 @@ const assignDC = async () => {
       {/* Summary strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Total Districts', value: districts.length, icon: <MapPin size={15} /> },
-          { label: 'Active', value: districts.filter(d => d.is_active).length, icon: <CheckCircle size={15} /> },
-          { label: 'Total TOTs', value: districts.reduce((a, d) => a + (parseInt(d.tots) || 0), 0), icon: <GraduationCap size={15} /> },
-          { label: 'Teachers Trained', value: districts.reduce((a, d) => a + (parseInt(d.teachers_trained) || 0), 0), icon: <Users size={15} /> },
+          { label: 'Total Districts', value: districts.length,                                                          icon: <MapPin size={15} /> },
+          { label: 'Active',          value: districts.filter(d => d.is_active).length,                                 icon: <CheckCircle size={15} /> },
+          { label: 'Total TOTs',      value: districts.reduce((a, d) => a + (parseInt(d.tots) || 0), 0),               icon: <GraduationCap size={15} /> },
+          { label: 'Teachers Trained',value: districts.reduce((a, d) => a + (parseInt(d.teachers_trained) || 0), 0),   icon: <Users size={15} /> },
         ].map((s, i) => (
           <div key={i} className="p-3 rounded-lg" style={{ background: 'linear-gradient(135deg,#e85d04,#c44d00)', boxShadow: '0 4px 14px rgba(232,93,4,0.22)' }}>
             <div className="flex items-center gap-1.5 mb-1 text-white/80 text-[10px] font-semibold uppercase tracking-wide">{s.icon}{s.label}</div>
@@ -204,10 +201,10 @@ const assignDC = async () => {
       {/* Region filter */}
       <FilterBar
         options={[
-          { v: 'all', l: 'All Regions' },
-          { v: 'Northern', l: 'Northern' },
-          { v: 'Central', l: 'Central' },
-          { v: 'Southern', l: 'Southern' },
+          { v: 'all',      l: 'All Regions' },
+          { v: 'Northern', l: 'Northern'    },
+          { v: 'Central',  l: 'Central'     },
+          { v: 'Southern', l: 'Southern'    },
         ]}
         active={region}
         onChange={setRegion}
@@ -230,8 +227,8 @@ const assignDC = async () => {
               const isExpanded = expanded === d.id;
               const data = districtData[d.id];
               const trainings = data?.trainings || [];
-              const upcoming = trainings.filter(t => getTrainingStatus(t.start_date, t.end_date) === 'upcoming');
-              const active = trainings.filter(t => getTrainingStatus(t.start_date, t.end_date) === 'active');
+              const upcoming  = trainings.filter(t => getTrainingStatus(t.start_date, t.end_date) === 'upcoming');
+              const active    = trainings.filter(t => getTrainingStatus(t.start_date, t.end_date) === 'active');
               const completed = trainings.filter(t => getTrainingStatus(t.start_date, t.end_date) === 'completed');
 
               return (
@@ -257,6 +254,7 @@ const assignDC = async () => {
                         DC: {d.coordinator_name || 'Not assigned'} · TOTs: {d.number_of_tots || d.tots || 0} · Teachers: {d.teachers_trained || 0}
                       </div>
                     </div>
+
                     <div className="flex items-center gap-2 shrink-0">
                       {canManage(d) && (
                         <>
@@ -265,18 +263,91 @@ const assignDC = async () => {
                           </Btn>
                           <Btn size="sm" variant="primary" onClick={e => { e.stopPropagation(); setTrainingForm({ training_name: '', cohort: '', start_date: '', participants: '', venue: '', training_lead_name: '' }); setTrainingModal({ district: d }); }}>
                             <Plus size={12} /> Add Training
-                            {isAdmin && (
+                          </Btn>
+                          {isAdmin && (
                             <Btn size="sm" variant="ghost" onClick={e => { e.stopPropagation(); setAssignUserId(d.district_coordinator_user_id || ''); setAssignModal(d); }}>
-                            <Users size={12} /> Assign DC
+                              <Users size={12} /> Assign DC
                             </Btn>
                           )}
-                          </Btn>
                         </>
                       )}
-                      {isExpanded ? <ChevronUp size={16} className="text-black/40 dark:text-white/40" /> : <ChevronDown size={16} className="text-black/40 dark:text-white/40" />}
+                      {isExpanded
+                        ? <ChevronUp size={16} className="text-black/40 dark:text-white/40" />
+                        : <ChevronDown size={16} className="text-black/40 dark:text-white/40" />
+                      }
                     </div>
                   </div>
-                  {assignModal && (
+
+                  {/* Expanded content */}
+                  {isExpanded && (
+                    <div className="mt-4 pt-4 border-t border-neutral-200 dark:border-slate-800">
+                      {/* Stats row */}
+                      <div className="grid grid-cols-3 gap-3 mb-4">
+                        {[
+                          { label: 'TOTs',             value: d.number_of_tots || d.tots || 0 },
+                          { label: 'Teachers Trained', value: d.teachers_trained || 0 },
+                          { label: 'School Coverage',  value: `${d.school_coverage || d.coverage || 0}%` },
+                        ].map(s => (
+                          <div key={s.label} className="bg-orange-50 dark:bg-orange-950/20 rounded-lg p-2 text-center">
+                            <div className="text-lg font-black text-orange-600 dark:text-orange-400">{s.value}</div>
+                            <div className="text-[10px] text-black/50 dark:text-white/50 font-semibold">{s.label}</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {!data && <div className="text-center py-4 text-xs text-black/40 dark:text-white/40">Loading trainings…</div>}
+
+                      {data && trainings.length === 0 && (
+                        <div className="text-center py-4 text-xs text-black/40 dark:text-white/40">No trainings yet.</div>
+                      )}
+
+                      {data && trainings.length > 0 && (
+                        <div className="space-y-3">
+                          {active.length > 0 && (
+                            <div>
+                              <div className="text-[10px] font-bold uppercase tracking-wide text-orange-600 mb-2">Active Trainings</div>
+                              {active.map(t => (
+                                <TrainingCard key={t.id} training={t} status="active" canManage={canManage(d)}
+                                  onEdit={() => { setTrainingForm({ training_name: t.name, cohort: t.cohort || '', start_date: t.start_date?.split('T')[0] || '', participants: t.participants || '', venue: t.venue || '', training_lead_name: t.training_lead_name || '' }); setTrainingModal({ district: d, training: t }); }}
+                                  onDelete={() => setDeleteModal({ trainingId: t.id, districtId: d.id })} />
+                              ))}
+                            </div>
+                          )}
+                          {upcoming.length > 0 && (
+                            <div>
+                              <div className="text-[10px] font-bold uppercase tracking-wide text-blue-600 mb-2">Upcoming Trainings</div>
+                              {upcoming.map(t => (
+                                <TrainingCard key={t.id} training={t} status="upcoming" canManage={canManage(d)}
+                                  onEdit={() => { setTrainingForm({ training_name: t.name, cohort: t.cohort || '', start_date: t.start_date?.split('T')[0] || '', participants: t.participants || '', venue: t.venue || '', training_lead_name: t.training_lead_name || '' }); setTrainingModal({ district: d, training: t }); }}
+                                  onDelete={() => setDeleteModal({ trainingId: t.id, districtId: d.id })} />
+                              ))}
+                            </div>
+                          )}
+                          {completed.length > 0 && (
+                            <div>
+                              <div className="text-[10px] font-bold uppercase tracking-wide text-emerald-600 mb-2">Completed Trainings</div>
+                              {completed.map(t => (
+                                <TrainingCard key={t.id} training={t} status="completed" canManage={canManage(d)}
+                                  onEdit={() => { setTrainingForm({ training_name: t.name, cohort: t.cohort || '', start_date: t.start_date?.split('T')[0] || '', participants: t.participants || '', venue: t.venue || '', training_lead_name: t.training_lead_name || '' }); setTrainingModal({ district: d, training: t }); }}
+                                  onDelete={() => setDeleteModal({ trainingId: t.id, districtId: d.id })} />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+
+      {/* ── MODALS — all outside the map loop ── */}
+
+      {/* Assign DC Modal */}
+      {assignModal && (
         <Modal title={`Assign DC — ${assignModal.name}`} onClose={() => setAssignModal(null)} width={420}>
           <p className="text-xs text-black/50 dark:text-white/50 mb-4">
             Current DC: <strong>{assignModal.coordinator_name || 'Not assigned'}</strong>
@@ -293,74 +364,6 @@ const assignDC = async () => {
           </div>
         </Modal>
       )}
-    </div>
-  );
-};
-                  {/* Expanded content */}
-                  {isExpanded && (
-                    <div className="mt-4 pt-4 border-t border-neutral-200 dark:border-slate-800">
-                      {/* Stats row */}
-                      <div className="grid grid-cols-3 gap-3 mb-4">
-                        {[
-                          { label: 'TOTs', value: d.number_of_tots || d.tots || 0 },
-                          { label: 'Teachers Trained', value: d.teachers_trained || 0 },
-                          { label: 'School Coverage', value: `${d.school_coverage || d.coverage || 0}%` },
-                        ].map(s => (
-                          <div key={s.label} className="bg-orange-50 dark:bg-orange-950/20 rounded-lg p-2 text-center">
-                            <div className="text-lg font-black text-orange-600 dark:text-orange-400">{s.value}</div>
-                            <div className="text-[10px] text-black/50 dark:text-white/50 font-semibold">{s.label}</div>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Trainings */}
-                      {!data && <div className="text-center py-4 text-xs text-black/40 dark:text-white/40">Loading trainings…</div>}
-
-                      {data && trainings.length === 0 && (
-                        <div className="text-center py-4 text-xs text-black/40 dark:text-white/40">No trainings yet.</div>
-                      )}
-
-                      {data && trainings.length > 0 && (
-                        <div className="space-y-3">
-                          {/* Active */}
-                          {active.length > 0 && (
-                            <div>
-                              <div className="text-[10px] font-bold uppercase tracking-wide text-orange-600 mb-2">Active Trainings</div>
-                              {active.map(t => (
-                                <TrainingCard key={t.id} training={t} status="active" canManage={canManage(d)} onEdit={() => { setTrainingForm({ training_name: t.name, cohort: t.cohort || '', start_date: t.start_date?.split('T')[0] || '', participants: t.participants || '', venue: t.venue || '', training_lead_name: t.training_lead_name || '' }); setTrainingModal({ district: d, training: t }); }} onDelete={() => setDeleteModal({ trainingId: t.id, districtId: d.id })} />
-                              ))}
-                            </div>
-                          )}
-
-                          {/* Upcoming */}
-                          {upcoming.length > 0 && (
-                            <div>
-                              <div className="text-[10px] font-bold uppercase tracking-wide text-blue-600 mb-2">Upcoming Trainings</div>
-                              {upcoming.map(t => (
-                                <TrainingCard key={t.id} training={t} status="upcoming" canManage={canManage(d)} onEdit={() => { setTrainingForm({ training_name: t.name, cohort: t.cohort || '', start_date: t.start_date?.split('T')[0] || '', participants: t.participants || '', venue: t.venue || '', training_lead_name: t.training_lead_name || '' }); setTrainingModal({ district: d, training: t }); }} onDelete={() => setDeleteModal({ trainingId: t.id, districtId: d.id })} />
-                              ))}
-                            </div>
-                          )}
-
-                          {/* Completed */}
-                          {completed.length > 0 && (
-                            <div>
-                              <div className="text-[10px] font-bold uppercase tracking-wide text-emerald-600 mb-2">Completed Trainings</div>
-                              {completed.map(t => (
-                                <TrainingCard key={t.id} training={t} status="completed" canManage={canManage(d)} onEdit={() => { setTrainingForm({ training_name: t.name, cohort: t.cohort || '', start_date: t.start_date?.split('T')[0] || '', participants: t.participants || '', venue: t.venue || '', training_lead_name: t.training_lead_name || '' }); setTrainingModal({ district: d, training: t }); }} onDelete={() => setDeleteModal({ trainingId: t.id, districtId: d.id })} />
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      ))}
 
       {/* Report Modal */}
       {reportModal && (
@@ -429,7 +432,7 @@ const TrainingCard: React.FC<{
   const cfg = STATUS_CFG[status];
   const pct = status === 'active' ? getProgressPct(training.start_date) : status === 'completed' ? 100 : 0;
   const startDate = training.start_date ? new Date(training.start_date).toLocaleDateString() : '—';
-  const endDate = training.end_date ? new Date(training.end_date).toLocaleDateString() : '—';
+  const endDate   = training.end_date   ? new Date(training.end_date).toLocaleDateString()   : '—';
 
   return (
     <div className="p-3 rounded-lg border border-neutral-200 dark:border-slate-800 mb-2 bg-white dark:bg-[#0f1623]">
@@ -468,6 +471,5 @@ const TrainingCard: React.FC<{
         )}
       </div>
     </div>
-    
   );
 };
