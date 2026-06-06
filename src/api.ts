@@ -99,3 +99,16 @@ export const documentReportsApi = {
 export const analyticsApi = {
   get: () => api.get('/api/analytics'),
 };
+// ─── DISTRICT MANAGEMENT ─────────────────────────────────────────────────────
+
+export const districtsApi = {
+  getAll: () => api.get('/api/districts'),
+  getOne: (id: number) => api.get(`/api/districts/${id}`),
+  getReports: (id: number) => api.get(`/api/districts/${id}/reports`),
+  submitReport: (id: number, data: any) => api.post(`/api/districts/${id}/reports`, data),
+  getTrainings: (id: number) => api.get(`/api/districts/${id}/trainings`),
+  createTraining: (id: number, data: any) => api.post(`/api/districts/${id}/trainings`, data),
+  updateTraining: (id: number, data: any) => api.put(`/api/districts/trainings/${id}`, data),
+  deleteTraining: (id: number) => api.delete(`/api/districts/trainings/${id}`),
+  assignDC: (id: number, userId: string) => api.put(`/api/districts/${id}/assign-dc`, { userId }),
+};

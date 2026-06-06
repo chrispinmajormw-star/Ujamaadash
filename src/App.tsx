@@ -2,6 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
+import { api, reportsApi, usersApi, documentReportsApi, districtsApi } from './api';
 import { api, reportsApi, usersApi, documentReportsApi } from './api';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -87,6 +88,7 @@ import {
   OR_PALE
 } from './components/SubComponents';
 
+import { DistrictsPage } from './components/DistrictsPage';
 import { Dashboard } from './components/Dashboard';
 import { ReportsPage, getReportRecipient } from './components/ReportsPage';
 import { MapsPage } from './components/MapsPage';
@@ -564,103 +566,6 @@ const ETTPage: React.FC = () => (
   </div>
 );
 
-// ─── DISTRICTS ENHANCED VIEW ─────────────────
-interface DistrictsPageProps {
-  user: User | null;
-  onOpenMap: (t: { type: string; name: string; ts: number }) => void;
-}
-const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, onOpenMap }) => {
-  const [region, setRegion] = useState("all");
-  const filtered = DISTRICTS.filter(d => region === "all" || d.r === region);
-  const rcColors: Record<string, { c: string; bg: string }> = {
-    Northern: { c: "#1e40af", bg: "#dbeafe" },
-    Central: { c: OR_D, bg: "#fff1e6" },
-    Southern: { c: "#065f46", bg: "#d1fae5" }
-  };
-  return (
-    <div className="space-y-5 animate-fade-in-up">
-      <div>
-        <Kicker text="Demographic Coverage" />
-        <h1 className="text-base font-bold text-black dark:text-white">Implementing Districts</h1>
-        <p className="text-xs text-black dark:text-white opacity-80">Review 15 active districts and 13 future development regions across Malawi.</p>
-      </div>
-
-      <Card className="grid grid-cols-2 md:grid-cols-4 gap-3 !p-4">
-        {[
-          ["Active Spheres", "15 Districts"],
-          ["Training Coverage", "54% "],
-          ["Certified TOTs Certified", "665"],
-          ["Teachers trained", `${DISTRICTS.reduce((acc, d) => acc + d.teachersTrained, 0).toLocaleString()} Trained`]
-        ].map(([l, v]) => (
-          <div key={l} className="space-y-1">
-            <div className="text-[10px] text-black dark:text-white opacity-80 uppercase tracking-wide">{l}</div>
-            <div className="text-base font-bold text-black dark:text-white">{v}</div>
-          </div>
-        ))}
-      </Card>
-
-      <FilterBar
-        options={["all", "Northern", "Central", "Southern"].map(o => ({ v: o, l: o === "all" ? "ALL REGIONS" : `${o.toUpperCase()}` }))}
-        active={region}
-        onChange={setRegion}
-      />
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filtered.map(d => {
-          const isActive = d.s === "Active";
-          const pct = d.schools > 0 ? Math.round((d.cov / d.schools)*100) : 0;
-          return (
-            <div
-              key={d.name}
-              onClick={() => onOpenMap({ type: "district", name: d.name, ts: Date.now() })}
-              className={`p-4 rounded-lg border cursor-pointer transition-colors bg-white dark:bg-[#0f1623] text-black dark:text-white ${
-                isActive ? 'border-orange-300 dark:border-orange-900/50' : 'border-neutral-200 dark:border-slate-800 opacity-75'
-              }`}
-            >
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h3 className="text-sm font-bold text-black dark:text-white m-0">{d.name}</h3>
-                  <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold mt-1 inline-block`} style={{ color: rcColors[d.r]?.c || '#4b5563', backgroundColor: rcColors[d.r]?.bg || '#f3f4f6' }}>
-                    {d.r}
-                  </span>
-                </div>
-                <Badge text={isActive ? "Active Hub" : "Planned Expansion"} bg={isActive ? "rgba(232,93,4,0.12)" : "rgba(100,116,139,0.1)"} color={isActive ? OR_D : "#64748b"} />
-              </div>
-
-              {isActive ? (
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="bg-white dark:bg-[#0f1623] border border-orange-200 dark:border-orange-900/40 p-2 rounded-lg">
-                      <div className="text-[9px] text-orange-600 font-semibold mb-0.5">TOTs Certified</div>
-                      <div className="text-sm font-bold text-black dark:text-white">{d.tots}</div>
-                    </div>
-                    <div className="bg-white dark:bg-[#0f1623] border border-orange-200 dark:border-orange-900/40 p-2 rounded-lg">
-                      <div className="text-[9px] text-orange-600 font-semibold mb-0.5">Teachers Trained</div>
-                      <div className="text-sm font-bold text-black dark:text-white">{d.teachersTrained}</div>
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-[11px] text-black dark:text-white opacity-80 font-medium">
-                      <span>Schools coverage</span>
-                      <span>{d.cov}/{d.schools} ({pct}%)</span>
-                    </div>
-                    <ProgBar pct={pct} />
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-700 rounded-lg p-4 text-center text-xs text-black dark:text-white opacity-60 font-medium italic">
-                  Expansion assessment planned.
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
-
-
 // ─── USER DIRECTORY ──────────────────────────
 interface UsersPageProps {
   user: User;
@@ -1062,7 +967,7 @@ const pendingCount = (user && can(user.role, "approveReport")
       case "maps":
         return <MapsPage setPage={setPage} user={user} darkMode={darkMode} />;
       case "districts":
-        return <DistrictsPage user={user} onOpenMap={openMapTarget} />;
+        return <DistrictsPage user={user} showToast={showToast} />;
       case "trainings":
         return <TrainingsPage />;
       case "curriculum":
