@@ -87,6 +87,48 @@ export interface Session {
   desc: string;
   pledge: string | null;
   objectives: string[];
+  content?: string;
+  activities?: string[];
+  keyTakeaways?: string[];
+}
+
+export interface QuizQuestion {
+  id: string;
+  lessonNum: string;
+  question: string;
+  options: string[];
+  correctAnswer: number;
+  explanation?: string;
+}
+
+export interface CourseEnrollment {
+  id: string;
+  studentName: string;
+  curriculum: 'him' | 'gesd';
+  startedAt: string;
+  completedAt?: string;
+  progress: number;
+  status: 'active' | 'completed' | 'not-started';
+}
+
+export interface QuizSubmission {
+  id: string;
+  enrollment: string;
+  curriculum: 'him' | 'gesd';
+  answers: Record<string, number>;
+  score: number;
+  totalQuestions: number;
+  submittedAt: string;
+  passed: boolean;
+}
+
+export interface Certificate {
+  id: string;
+  enrollment: string;
+  studentName: string;
+  curriculum: 'him' | 'gesd';
+  issuedAt: string;
+  score: number;
 }
 
 export interface Document {

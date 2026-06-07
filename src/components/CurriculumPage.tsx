@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import {
   BookOpen, ChevronRight, ChevronLeft, HelpCircle,
   FileText, ExternalLink, X, Maximize2, Layers,
-  Shield, Users, Star, ArrowRight
+  Shield, Users, Star, ArrowRight, Play
 } from 'lucide-react';
 import { Card, Kicker } from './SubComponents';
 import { Session } from '../types';
 import { HIM_SESSIONS, GESD_SESSIONS } from '../data';
+import { CourseLessonPage } from './CourseLessonPage';
+import { CourseQuizComponent } from './CourseQuizComponent';
+import { CertificateComponent } from './CertificateComponent';
 
 // ─── PRESENTATION PDF VIEWER ─────────────────
 interface PdfViewerProps {
@@ -26,7 +29,6 @@ const PdfViewer: React.FC<PdfViewerProps> = ({ url, title, subtitle, onClose }) 
 
   return (
     <div className="fixed inset-0 z-[99999] bg-black/90 flex flex-col">
-      {/* Presentation top bar */}
       <div className="shrink-0 h-11 flex items-center justify-between px-4 bg-[#0f1623] border-b border-slate-800">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-6 h-6 rounded bg-[#e85d04] flex items-center justify-center shrink-0">
@@ -62,7 +64,6 @@ const PdfViewer: React.FC<PdfViewerProps> = ({ url, title, subtitle, onClose }) 
         </div>
       </div>
 
-      {/* PDF iframe — presentation mode */}
       <div className="flex-1 bg-[#1a1a2e] overflow-hidden">
         <iframe
           src={`${url}#toolbar=0&navpanes=0&scrollbar=1&view=FitH&zoom=page-fit`}
@@ -107,6 +108,16 @@ export const CurriculumPage: React.FC = () => {
   const [tab, setTab] = useState<'him' | 'gesd'>('him');
   const [sel, setSel] = useState<Session | null>(null);
   const [pdfViewer, setPdfViewer] = useState<typeof PDF_DOCS[0] | null>(null);
+  
+  // Course state
+  const [courseMode, setCourseMode] = useState<'view' | 'lesson' | 'quiz' | 'certificate' | null>(null);
+  const [currentLesson, setCurrentLesson] = useState(0);
+  const [completedLessons, setCompletedLessons] = useState<number[]>([]);
+  const [quizScore, setQuizScore] = useState(0);
+  const [quizPassed, setQuizPassed] = useState(false);
+  const [studentName, setStudentName] = useState('');
+  const [showNamePrompt, setShowNamePrompt] = useState(false);
+  const [tempName, setTempName] = useState('');
 
   const sessions = tab === 'him' ? HIM_SESSIONS : GESD_SESSIONS;
   const isHim = tab === 'him';
@@ -120,8 +131,145 @@ export const CurriculumPage: React.FC = () => {
   const base = import.meta.env.BASE_URL || '/';
   const currDoc = PDF_DOCS.find(d => d.curriculum === tab)!;
 
+  const handleStartCourse = () => {
+    setShowNamePrompt(true);
+  };
+
+  const handleEnterName = () => {
+    if (tempName.trim()) {
+      setStudentName(tempName);
+      setShowNamePrompt(false);
+      setCourseMode('lesson');
+      setCurrentLesson(0);
+      setCompletedLessons([]);
+    }
+  };
+
+  const handleCompleteLesson = (lessonIndex: number) => {
+    if (!completedLessons.includes(lessonIndex)) {
+      setCompletedLessons([...completedLessons, lessonIndex]);
+    }
+  };
+
+  const handleQuizComplete = (score: number, passed: boolean) => {
+    setQuizScore(score);
+    setQuizPassed(passed);
+    if (passed) {
+      setCourseMode('certificate');
+    } else {
+      setCourseMode('view');
+      setCurrentLesson(0);
+      setCompletedLessons([]);
+    }
+  };
+
+  // Course view
+  if (courseMode === 'lesson') {
+    return (
+      <div className="space-y-5 max-w-5xl mx-auto animate-fade-in-up">
+        <button
+          onClick={() => {
+            setCourseMode('view');
+            setCurrentLesson(0);
+            setCompletedLessons([]);
+          }}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white transition"
+        >
+          <ChevronLeft size={14} />
+          Back to Curriculum
+        </button>
+        <CourseLessonPage
+          curriculum={tab}
+          lessonIndex={currentLesson}
+          onComplete={handleCompleteLesson}
+          onStartQuiz={() => {
+            setCourseMode('quiz');
+          }}
+          completedLessons={completedLessons}
+        />
+      </div>
+    );
+  }
+
+  if (courseMode === 'quiz') {
+    return (
+      <div className="space-y-5 max-w-5xl mx-auto animate-fade-in-up">
+        <button
+          onClick={() => setCourseMode('view')}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white transition"
+        >
+          <ChevronLeft size={14} />
+          Exit Quiz
+        </button>
+        <CourseQuizComponent
+          curriculum={tab}
+          studentName={studentName}
+          onComplete={handleQuizComplete}
+          onBack={() => setCourseMode('view')}
+        />
+      </div>
+    );
+  }
+
+  if (courseMode === 'certificate' && quizPassed) {
+    return (
+      <CertificateComponent
+        studentName={studentName}
+        curriculum={tab}
+        score={quizScore}
+        completedAt={new Date().toISOString()}
+        onClose={() => {
+          setCourseMode('view');
+          setCurrentLesson(0);
+          setCompletedLessons([]);
+        }}
+      />
+    );
+  }
+
+  // Main curriculum view
   return (
     <div className="space-y-5 max-w-5xl mx-auto animate-fade-in-up">
+
+      {/* Name Prompt Modal */}
+      {showNamePrompt && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50">
+          <Card className="w-full max-w-md space-y-4">
+            <div>
+              <h2 className="text-lg font-bold text-black dark:text-white">Enter Your Name</h2>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                Your name will appear on your certificate upon completion
+              </p>
+            </div>
+            <input
+              type="text"
+              value={tempName}
+              onChange={(e) => setTempName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleEnterName()}
+              placeholder="Enter your full name"
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-black dark:text-white focus:outline-none focus:ring-2"
+              style={{ '--tw-ring-color': accent } as any}
+              autoFocus
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowNamePrompt(false)}
+                className="flex-1 px-4 py-2 rounded-lg font-semibold text-sm bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-700 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEnterName}
+                disabled={!tempName.trim()}
+                className="flex-1 px-4 py-2 rounded-lg font-semibold text-sm text-white transition hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ backgroundColor: accent }}
+              >
+                Start Course
+              </button>
+            </div>
+          </Card>
+        </div>
+      )}
 
       {/* Header */}
       <div>
@@ -132,12 +280,15 @@ export const CurriculumPage: React.FC = () => {
         </p>
       </div>
 
-      {/* Tab switcher — matches app FilterBar style */}
+      {/* Tab switcher */}
       <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-900 rounded-lg w-fit border border-neutral-200 dark:border-slate-800">
         {([['him', 'Hero In Me (HIM)', Shield], ['gesd', 'GESD — Girls', Users]] as const).map(([k, l, Icon]) => (
           <button
             key={k}
-            onClick={() => setTab(k)}
+            onClick={() => {
+              setTab(k);
+              setCourseMode('view');
+            }}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
               tab === k
                 ? 'bg-white dark:bg-[#0f1623] text-black dark:text-white shadow-sm border border-neutral-200 dark:border-slate-700'
@@ -192,6 +343,47 @@ export const CurriculumPage: React.FC = () => {
                   <span className="text-black dark:text-white opacity-70 font-medium">{tag}</span>
                 </div>
               ))}
+            </div>
+          </Card>
+
+          {/* Take Course Card */}
+          <Card className="overflow-hidden p-0">
+            <div className="px-4 py-3 border-b border-neutral-200 dark:border-slate-800 flex items-center gap-2">
+              <Play size={13} className="text-[#e85d04]" />
+              <span className="text-xs font-bold text-black dark:text-white">Take Course</span>
+              <span
+                className="ml-auto text-[9px] font-bold px-2 py-0.5 rounded-full"
+                style={{ color: accent, backgroundColor: accentPale }}
+              >
+                Interactive
+              </span>
+            </div>
+
+            <div className="p-4 space-y-3">
+              <div>
+                <div className="text-xs font-bold text-black dark:text-white">
+                  {isHim ? 'Hero In Me Course' : 'Girls Empowerment Course'}
+                </div>
+                <p className="text-[11px] text-black dark:text-white opacity-60 leading-relaxed mt-1.5">
+                  Learn through interactive lessons, complete a quiz, and earn a certificate upon passing.
+                </p>
+              </div>
+
+              <button
+                onClick={handleStartCourse}
+                className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-white text-xs font-bold transition hover:opacity-90 active:scale-[0.98]"
+                style={{ backgroundColor: accent }}
+              >
+                <div className="flex items-center gap-2">
+                  <Play size={13} />
+                  <span>Start Course</span>
+                </div>
+                <ArrowRight size={13} />
+              </button>
+
+              <p className="text-[10px] text-slate-400 text-center">
+                Takes 4-6 hours to complete all lessons
+              </p>
             </div>
           </Card>
 
