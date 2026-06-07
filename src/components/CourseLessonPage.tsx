@@ -16,6 +16,7 @@ interface CourseLessonPageProps {
   onStartQuiz: () => void;
   onNextLesson: () => void;
   onPreviousLesson: () => void;
+  onGoToLesson: (index: number) => void;
   completedLessons: number[];
 }
 
@@ -196,7 +197,7 @@ const RenderBlock: React.FC<{ block: ContentBlock; accent: string; pale: string 
 
 /* ─── Main Component ────────────────────────────────────────────────── */
 export const CourseLessonPage: React.FC<CourseLessonPageProps> = ({
-  curriculum, lessonIndex, onComplete, onStartQuiz, onNextLesson, onPreviousLesson, completedLessons,
+  curriculum, lessonIndex, onComplete, onStartQuiz, onNextLesson, onPreviousLesson, onGoToLesson, completedLessons,
 }) => {
   const sessions = curriculum === 'him' ? HIM_SESSIONS : GESD_SESSIONS;
   const lesson = sessions[lessonIndex];
@@ -321,8 +322,7 @@ export const CourseLessonPage: React.FC<CourseLessonPageProps> = ({
                     key={i}
                     onClick={() => {
                       if (canAccess && i !== lessonIndex) {
-                        if (i < lessonIndex) for (let j = 0; j < lessonIndex - i; j++) onPreviousLesson();
-                        else for (let j = 0; j < i - lessonIndex; j++) onNextLesson();
+                        onGoToLesson(i);
                       }
                     }}
                     className={`p-2.5 rounded-lg text-xs font-medium transition-all ${canAccess ? 'cursor-pointer' : 'cursor-not-allowed'} ${i === lessonIndex ? 'text-white' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}`}

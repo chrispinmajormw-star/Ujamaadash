@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hero In Me – Ujamaa Africa</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{--navy:#0d1b3e;--blue:#1a3a8f;--teal:#00b4c6;--orange:#f47920;--gold:#f5a623;--red:#c0392b;--green:#27ae60;--gray:#8899bb;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Barlow',sans-serif;background:var(--navy);color:#fff;min-height:100vh;overflow-x:hidden;}
+.screen{display:none;min-height:100vh;}
+
+/* HERO */
+#screen-hero{display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:2rem 1rem;}
+.sky-bg{position:absolute;inset:0;background:linear-gradient(180deg,#b8d4f0 0%,#ddeeff 40%,#c5e0ff 70%,#7ab8e8 100%);z-index:0;}
+.cloud{position:absolute;background:rgba(255,255,255,.85);border-radius:50px;z-index:1;}
+.cloud::before,.cloud::after{content:'';position:absolute;background:rgba(255,255,255,.85);border-radius:50%;}
+.c1{width:120px;height:40px;top:8%;left:5%;}.c1::before{width:60px;height:60px;top:-30px;left:15px;}.c1::after{width:45px;height:45px;top:-20px;left:50px;}
+.c2{width:90px;height:30px;top:15%;right:8%;}.c2::before{width:50px;height:50px;top:-25px;left:10px;}.c2::after{width:35px;height:35px;top:-15px;left:40px;}
+.c3{width:140px;height:45px;top:5%;left:40%;}.c3::before{width:70px;height:70px;top:-35px;left:20px;}.c3::after{width:55px;height:55px;top:-25px;left:60px;}
+.hero-header{position:relative;z-index:10;text-align:center;margin-bottom:.5rem;}
+.logo-badge{display:inline-flex;align-items:center;gap:10px;background:var(--orange);padding:8px 20px;border-radius:4px;margin-bottom:.8rem;}
+.logo-badge span{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.1rem;color:#fff;letter-spacing:1px;}
+.him-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(3rem,12vw,6.5rem);color:var(--navy);line-height:.9;letter-spacing:6px;text-shadow:3px 3px 0 rgba(255,255,255,.5);}
+.him-title span{color:var(--blue);}
+.subtitle-band{background:var(--navy);color:var(--teal);font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:4px;font-size:.8rem;padding:5px 20px;margin:.4rem 0 1rem;display:inline-block;}
+.curriculum-tag{display:inline-flex;gap:10px;align-items:center;}
+.tag-box{background:var(--navy);color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:2px;font-size:.75rem;padding:5px 12px;border-left:4px solid var(--teal);}
+.float-tag{position:absolute;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;padding:7px 14px;border-radius:50px;z-index:10;}
+.ft-care{background:#e91e8c;color:#fff;top:30%;left:1%;}
+.ft-growth{background:#27ae60;color:#fff;top:20%;right:1%;}
+.ft-safety{background:#fff;color:var(--navy);top:42%;right:3%;}
+.ft-energy{background:var(--gold);color:var(--navy);bottom:24%;left:2%;}
+.figure-wrapper{position:relative;width:100%;max-width:360px;z-index:5;}
+.him-figure{width:200px;display:block;margin:0 auto;filter:drop-shadow(0 8px 24px rgba(0,0,0,.3));animation:heroFloat 3s ease-in-out infinite;}
+@keyframes heroFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+.orange-stripe{position:relative;z-index:10;width:100%;background:var(--orange);text-align:center;padding:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:2px;font-size:.75rem;margin-top:.4rem;}
+.hero-btns{position:relative;z-index:10;display:flex;gap:14px;margin-top:1.4rem;flex-wrap:wrap;justify-content:center;}
+.start-btn{background:var(--navy);color:var(--teal);border:3px solid var(--teal);font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:3px;padding:12px 36px;cursor:pointer;transition:all .25s;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);}
+.start-btn:hover{background:var(--teal);color:var(--navy);}
+.curriculum-btn{background:var(--orange);color:#fff;border:none;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:3px;padding:12px 36px;cursor:pointer;transition:all .25s;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);}
+.curriculum-btn:hover{background:var(--gold);color:var(--navy);}
+
+/* SHARED HEADER */
+.screen-header{background:linear-gradient(135deg,var(--blue) 0%,var(--navy) 100%);padding:1.2rem 1.5rem;display:flex;align-items:center;gap:14px;border-bottom:4px solid var(--teal);}
+.screen-header h2{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:3px;color:var(--teal);}
+.logo-sm{display:flex;align-items:center;gap:8px;}
+.logo-sm .org{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.9rem;letter-spacing:1px;}
+.logo-sm .sub{font-size:.65rem;color:var(--teal);letter-spacing:1px;}
+
+/* CURRICULUM */
+#screen-curriculum{padding-bottom:3rem;}
+.curr-nav{position:sticky;top:0;z-index:100;background:var(--navy);border-bottom:2px solid var(--teal);padding:.6rem 1rem;display:flex;gap:8px;flex-wrap:wrap;overflow-x:auto;}
+.curr-nav button{background:transparent;border:1.5px solid rgba(255,255,255,.15);color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.75rem;letter-spacing:1px;padding:5px 12px;border-radius:3px;cursor:pointer;white-space:nowrap;transition:all .2s;}
+.curr-nav button:hover,.curr-nav button.active{background:var(--teal);border-color:var(--teal);color:var(--navy);}
+.curr-body{max-width:820px;margin:0 auto;padding:2rem 1.2rem;}
+.topic-section{margin-bottom:3rem;}
+.topic-header{display:flex;align-items:center;gap:14px;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:2px solid rgba(255,255,255,.08);}
+.topic-num{width:52px;height:52px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:#fff;flex-shrink:0;}
+.topic-header h2{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:2px;color:var(--gold);}
+.session-block{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:1.5rem;margin-bottom:1.5rem;}
+.session-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.05rem;letter-spacing:2px;color:var(--teal);margin-bottom:1rem;display:flex;align-items:center;gap:8px;}
+.session-title::before{content:'';width:4px;height:18px;background:var(--teal);border-radius:2px;flex-shrink:0;}
+.curr-body h3{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.95rem;letter-spacing:1px;color:var(--gold);margin:1.2rem 0 .5rem;text-transform:uppercase;}
+.curr-body h4{font-family:'Barlow',sans-serif;font-weight:700;font-size:.93rem;color:var(--teal);margin:1rem 0 .4rem;}
+.curr-body p{font-size:.92rem;line-height:1.75;color:rgba(255,255,255,.85);margin-bottom:.8rem;}
+.curr-body ul,.curr-body ol{padding-left:1.4rem;margin-bottom:.8rem;}
+.curr-body li{font-size:.91rem;line-height:1.7;color:rgba(255,255,255,.82);margin-bottom:.2rem;}
+.curr-body strong{color:#fff;font-weight:700;}
+.trainer-say{background:rgba(0,180,198,.08);border-left:4px solid var(--teal);padding:12px 16px;border-radius:0 6px 6px 0;margin:1rem 0;font-style:italic;font-size:.91rem;color:rgba(255,255,255,.9);}
+.activity-box{background:rgba(245,166,35,.07);border:1px solid rgba(245,166,35,.25);border-radius:8px;padding:14px 16px;margin:1rem 0;}
+.activity-box .act-label{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.73rem;letter-spacing:2px;color:var(--gold);margin-bottom:.5rem;}
+.definition-box{background:rgba(26,58,143,.2);border:2px solid var(--blue);border-radius:8px;padding:14px 18px;margin:1rem 0;text-align:center;}
+.definition-box .def-word{font-family:'Bebas Neue',sans-serif;font-size:1.9rem;letter-spacing:3px;color:var(--teal);}
+.definition-box .def-sub{font-style:italic;color:var(--gold);font-size:1rem;}
+.table-wrap{overflow-x:auto;margin:1rem 0;}
+.curr-table{width:100%;border-collapse:collapse;font-size:.84rem;}
+.curr-table th{background:var(--blue);color:#fff;padding:10px 12px;text-align:left;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1px;}
+.curr-table td{padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.07);color:rgba(255,255,255,.82);}
+.curr-table tr:nth-child(even) td{background:rgba(255,255,255,.03);}
+.values-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0;}
+.val-card{border:2px solid var(--blue);border-radius:8px;padding:14px;}
+.val-card h4{font-family:'Barlow Condensed',sans-serif;font-weight:800;letter-spacing:2px;font-size:.88rem;color:var(--gold);margin-bottom:.6rem;}
+.val-card li{font-size:.84rem;}
+.pledge-box{background:linear-gradient(135deg,rgba(26,58,143,.3),rgba(0,180,198,.1));border:1px solid var(--teal);border-radius:10px;padding:1.5rem;margin:1.5rem 0;text-align:center;}
+.pledge-box p{font-style:italic;line-height:2;color:#e8f0ff;}
+.tip-box{background:rgba(39,174,96,.08);border-left:4px solid var(--green);padding:12px 16px;border-radius:0 6px 6px 0;margin:.8rem 0;font-size:.88rem;color:rgba(255,255,255,.85);}
+.tip-box strong{color:var(--green);}
+.scenario-box{background:rgba(244,121,32,.08);border:1px solid rgba(244,121,32,.2);border-radius:6px;padding:12px 14px;margin:.6rem 0;font-size:.89rem;}
+.step-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin:1rem 0;}
+.step-item{background:rgba(0,180,198,.07);border:1px solid rgba(0,180,198,.2);border-radius:6px;padding:10px 12px;font-size:.84rem;display:flex;gap:8px;align-items:flex-start;}
+.step-num{min-width:22px;height:22px;background:var(--teal);color:var(--navy);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.73rem;flex-shrink:0;}
+.helpline-box{background:rgba(192,57,43,.15);border:2px solid var(--red);border-radius:8px;padding:14px 18px;margin:1rem 0;text-align:center;}
+.helpline-box .hl-title{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px;color:var(--red);margin-bottom:6px;}
+.safe-box{background:rgba(0,180,198,.07);border:1px solid rgba(0,180,198,.2);border-radius:8px;padding:1rem 1.2rem;margin:1.2rem 0;}
+
+/* REGISTER */
+#screen-register{padding-bottom:3rem;}
+.form-card{max-width:500px;margin:2rem auto;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:2rem 1.5rem;}
+.form-card h3{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;color:var(--gold);letter-spacing:2px;margin-bottom:.3rem;}
+.form-card>p{color:var(--gray);font-size:.88rem;margin-bottom:1.8rem;}
+.field{margin-bottom:1.3rem;}
+.field label{display:block;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:2px;font-size:.75rem;color:var(--teal);margin-bottom:5px;text-transform:uppercase;}
+.field input,.field select{width:100%;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.15);border-radius:6px;padding:11px 13px;color:#fff;font-family:'Barlow',sans-serif;font-size:.92rem;outline:none;transition:border-color .2s;}
+.field input:focus,.field select:focus{border-color:var(--teal);}
+.field input::placeholder{color:rgba(255,255,255,.3);}
+.field select option{background:var(--navy);}
+.action-btn{width:100%;background:linear-gradient(135deg,var(--orange) 0%,var(--gold) 100%);color:var(--navy);border:none;border-radius:6px;padding:13px;font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:3px;cursor:pointer;transition:all .25s;margin-top:.4rem;}
+.action-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(244,121,32,.5);}
+.error-msg{color:#ff7f7f;font-size:.8rem;margin-top:4px;display:none;}
+.error-msg.show{display:block;}
+
+/* QUIZ */
+#screen-quiz{padding-bottom:3rem;}
+.quiz-container{max-width:640px;margin:2rem auto;padding:0 1.2rem;}
+.quiz-progress-bar{height:6px;background:rgba(255,255,255,.1);border-radius:3px;margin-bottom:2rem;overflow:hidden;}
+.quiz-progress-fill{height:100%;background:linear-gradient(90deg,var(--teal),var(--blue));border-radius:3px;transition:width .4s ease;}
+.q-counter{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:2px;color:var(--gray);margin-bottom:.4rem;}
+.q-topic{display:inline-block;background:var(--teal);color:var(--navy);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.68rem;letter-spacing:2px;padding:3px 10px;border-radius:3px;margin-bottom:.9rem;}
+.q-text{font-size:1.15rem;font-weight:600;line-height:1.5;margin-bottom:1.6rem;color:#fff;}
+.options-grid{display:flex;flex-direction:column;gap:11px;margin-bottom:1.8rem;}
+.option-btn{background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.12);border-radius:8px;padding:13px 18px;color:#fff;font-family:'Barlow',sans-serif;font-size:.93rem;font-weight:500;text-align:left;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:11px;}
+.option-btn:hover:not(:disabled){border-color:var(--teal);background:rgba(0,180,198,.1);transform:translateX(4px);}
+.option-btn .opt-letter{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:.95rem;flex-shrink:0;transition:all .2s;}
+.option-btn.correct{border-color:#27ae60;background:rgba(39,174,96,.15);}
+.option-btn.correct .opt-letter{background:#27ae60;}
+.option-btn.wrong{border-color:var(--red);background:rgba(192,57,43,.15);}
+.option-btn.wrong .opt-letter{background:var(--red);}
+.option-btn:disabled{cursor:default;}
+.feedback-box{padding:13px 16px;border-radius:8px;margin-bottom:1.4rem;font-weight:600;font-size:.92rem;display:none;}
+.feedback-box.show{display:block;}
+.feedback-box.correct-fb{background:rgba(39,174,96,.2);border-left:4px solid #27ae60;color:#7effa8;}
+.feedback-box.wrong-fb{background:rgba(192,57,43,.2);border-left:4px solid var(--red);color:#ffaaaa;}
+.next-btn{background:var(--blue);color:#fff;border:2px solid var(--teal);border-radius:6px;padding:11px 28px;font-family:'Bebas Neue',sans-serif;font-size:1.15rem;letter-spacing:3px;cursor:pointer;display:none;transition:all .2s;}
+.next-btn:hover{background:var(--teal);color:var(--navy);}
+.next-btn.show{display:inline-block;}
+
+/* RESULT */
+#screen-result{padding-bottom:3rem;}
+.result-card{max-width:500px;margin:2rem auto;text-align:center;padding:0 1.2rem;}
+.score-circle{width:150px;height:150px;border-radius:50%;border:6px solid var(--teal);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 1.8rem;background:rgba(0,180,198,.08);animation:scorePop .5s ease both;}
+@keyframes scorePop{from{transform:scale(.5);opacity:0;}to{transform:scale(1);opacity:1;}}
+.score-circle .pct{font-family:'Bebas Neue',sans-serif;font-size:3.2rem;color:var(--teal);line-height:1;}
+.score-circle .lbl{font-size:.7rem;color:var(--gray);letter-spacing:2px;font-family:'Barlow Condensed',sans-serif;font-weight:700;}
+.result-card h2{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:3px;margin-bottom:.4rem;}
+.result-card>p{color:var(--gray);margin-bottom:1.8rem;}
+.result-meta{background:rgba(255,255,255,.05);border-radius:10px;padding:1.2rem;margin-bottom:1.8rem;text-align:left;border:1px solid rgba(255,255,255,.08);}
+.meta-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:.88rem;}
+.meta-row:last-child{border-bottom:none;}
+.meta-row .key{color:var(--gray);}
+.meta-row .val{font-weight:700;color:var(--teal);}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+.btn-secondary{background:transparent;border:2px solid var(--gray);color:var(--gray);border-radius:6px;padding:11px 22px;font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:2px;cursor:pointer;transition:all .2s;}
+.btn-secondary:hover{border-color:#fff;color:#fff;}
+
+/* CERTIFICATE */
+#screen-cert{padding-bottom:3rem;}
+.cert-wrapper{max-width:700px;margin:2rem auto;text-align:center;padding:0 1rem;}
+#certificate-canvas{width:100%;border:3px solid var(--gold);border-radius:4px;box-shadow:0 0 40px rgba(245,166,35,.3);display:block;margin:0 auto 1.8rem;background:#fff;}
+.cert-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+
+@media(max-width:480px){
+  .him-title{font-size:2.8rem;}
+  .ft-care,.ft-growth,.ft-safety,.ft-energy{font-size:.78rem;padding:5px 10px;}
+  .values-grid{grid-template-columns:1fr;}
+  .form-card{padding:1.2rem 1rem;}
+  .curr-body{padding:1.2rem .8rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- HERO SCREEN -->
+<div id="screen-hero">
+  <div class="sky-bg"></div>
+  <div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div>
+  <div class="hero-header">
+    <div class="logo-badge">
+      <svg width="32" height="32" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="30" rx="28" ry="28" fill="#fff" opacity=".9"/><path d="M22 20L26 26 22 30 28 34 24 40 32 38 36 44 38 36 44 32 38 28 40 20 34 24 30 18 26 24Z" fill="#f47920" opacity=".85"/></svg>
+      <span>UJAMAA AFRICA</span>
+    </div>
+    <div class="him-title">- <span>HERO</span> IN ME -</div>
+    <div class="subtitle-band">EMPOWERMENT TRANSFORMATION TRAINING</div>
+    <div class="curriculum-tag">
+      <div class="tag-box">BOY'S CURRICULUM</div>
+      <div class="tag-box" style="border-color:var(--orange);color:var(--orange);">PRIMARY SCHOOL</div>
+    </div>
+  </div>
+  <div class="figure-wrapper">
+    <div class="float-tag ft-care">CARE</div>
+    <div class="float-tag ft-growth">GROWTH</div>
+    <div class="float-tag ft-safety">SAFETY</div>
+    <div class="float-tag ft-energy">ENERGY</div>
+    <svg class="him-figure" viewBox="0 0 220 340" xmlns="http://www.w3.org/2000/svg">
+      <path d="M40 100 Q20 160 25 240 Q60 220 80 200 Q90 170 85 140Z" fill="#c0392b"/>
+      <path d="M180 100 Q200 160 195 240 Q160 220 140 200 Q130 170 135 140Z" fill="#c0392b"/>
+      <path d="M75 120 Q70 160 68 220 L152 220 Q150 160 145 120Z" fill="#1a1a2e"/>
+      <polygon points="110,140 140,160 140,210 110,230 80,210 80,160" fill="white" opacity=".95"/>
+      <text x="110" y="198" text-anchor="middle" font-family="Georgia,serif" font-size="30" fill="#1a3a8f" font-weight="bold">HIM</text>
+      <ellipse cx="110" cy="70" rx="32" ry="36" fill="#2c1a10"/>
+      <path d="M84 55 Q90 38 110 34 Q130 38 136 55 Q120 48 110 46 Q100 48 84 55Z" fill="#1a3a8f"/>
+      <ellipse cx="101" cy="72" rx="5" ry="5.5" fill="#3d2000"/><ellipse cx="119" cy="72" rx="5" ry="5.5" fill="#3d2000"/>
+      <path d="M104 85 Q110 90 116 85" stroke="#3d2000" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <rect x="102" y="100" width="16" height="24" rx="4" fill="#2c1a10"/>
+      <path d="M95 118 Q110 128 125 118 L128 108 Q110 122 92 108Z" fill="#00b4c6"/>
+      <path d="M75 128 Q40 160 30 210 Q40 215 50 210 Q65 175 80 155Z" fill="#1a1a2e"/>
+      <path d="M145 128 Q180 160 190 210 Q180 215 170 210 Q155 175 140 155Z" fill="#1a1a2e"/>
+      <ellipse cx="35" cy="215" rx="12" ry="10" fill="#2c1a10"/><ellipse cx="185" cy="215" rx="12" ry="10" fill="#2c1a10"/>
+      <path d="M90 220 L80 310 Q90 316 102 312 L108 240Z" fill="#1a1a2e"/>
+      <path d="M130 220 L140 310 Q130 316 118 312 L112 240Z" fill="#1a1a2e"/>
+      <path d="M78 308 Q68 325 72 330 L104 330 Q106 320 102 308Z" fill="#1a3a8f"/>
+      <path d="M142 308 Q152 325 148 330 L116 330 Q114 320 118 308Z" fill="#1a3a8f"/>
+    </svg>
+  </div>
+  <div class="orange-stripe">www.ujamaa-africa.org &nbsp;|&nbsp; +254 (254) 725776203</div>
+  <div class="hero-btns">
+    <button class="curriculum-btn" onclick="showScreen('screen-curriculum')">&#128218; VIEW CURRICULUM</button>
+    <button class="start-btn" onclick="showScreen('screen-register')">&#9999; TAKE THE QUIZ &#9658;</button>
+  </div>
+</div>
+
+<!-- CURRICULUM SCREEN -->
+<div class="screen" id="screen-curriculum">
+  <div class="screen-header">
+    <div class="logo-sm">
+      <svg width="34" height="34" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="30" rx="28" ry="28" fill="#f47920"/><path d="M22 20L26 26 22 30 28 34 24 40 32 38 36 44 38 36 44 32 38 28 40 20 34 24 30 18 26 24Z" fill="white"/></svg>
+      <div><div class="org">UJAMAA AFRICA</div><div class="sub">HERO IN ME</div></div>
+    </div>
+    <h2>CURRICULUM</h2>
+    <button class="btn-secondary" style="margin-left:auto;" onclick="showScreen('screen-hero')">&#8592; HOME</button>
+  </div>
+  <nav class="curr-nav">
+    <button class="active" onclick="jumpTo('t0',this)">OVERVIEW</button>
+    <button onclick="jumpTo('t1',this)">TOPIC 1 – NEEDS ASSESSMENT</button>
+    <button onclick="jumpTo('t2',this)">TOPIC 2 – MY VALUE SYSTEM</button>
+    <button onclick="jumpTo('t3',this)">TOPIC 3 – INTRO TO HIM</button>
+    <button onclick="jumpTo('t4',this)">TOPIC 4 – STEP-UP</button>
+    <button onclick="jumpTo('t5',this)">TOPIC 5 – BREAKING SILENCE</button>
+    <button onclick="jumpTo('t6',this)">TOPIC 6 – BOYS &amp; GIRLS</button>
+    <button onclick="jumpTo('t7',this)">TEACHER'S GUIDE</button>
+    <button onclick="jumpTo('t8',this)">FACILITATOR'S NOTES</button>
+  </nav>
+  <div class="curr-body">
+
+    <!-- OVERVIEW -->
+    <div class="topic-section" id="t0">
+      <div class="topic-header"><div class="topic-num" style="background:var(--blue);">&#9733;</div><div><h2>CURRICULUM OVERVIEW</h2></div></div>
+      <p>Grounded in social norms theory, the Hero in Me curriculum provides boys with information about common attitudes and behaviors to debunk misperceived peer and community norms that serve to facilitate false ideas that make it seem normal or acceptable to use force or violence. Driven by gender socialization and gender transformation theory, boys are invited to explore culturally sanctioned notions of masculinity and provided with opportunities to embrace healthy masculinity.</p>
+      <p>In this curriculum, bystander intervention techniques are introduced to support boys' transformation by equipping them with skills to take action when they witness violence. These techniques help boys challenge harmful community norms that support violence against women and girls (VAWG), contributing to the creation of violence-free communities.</p>
+      <p>Ujamaa Africa's HIM curriculum, which is part of the Empowerment Transformation Training (ETT) program, includes strategically designed information and activities. These are intended to:</p>
+      <ul><li>Increase the use of experiential exercises that help boys build personal and emotional connections to the topic,</li><li>Ensure cultural relevance in how the content is delivered,</li><li>Encourage active engagement through group discussions, and</li><li>When possible, provide local data on boys' attitudes and behaviors to challenge false beliefs and shift harmful social norms.</li></ul>
+      <p>Additional intervention components are included to ensure behavioral change, grounded in the theory of planned behavior where we believe that the engagement in specific behaviors is directly related to the intent to perform the behavior. Behavioral intention is related to attitudes towards the behavior, subjective norms regarding the behavior, and control over performing the behavior.</p>
+      <p>Consistent with this theory, our intervention includes several skill-building exercises, scenarios, and role-playing activities, and discussion of overcoming potential barriers to positive bystander action. A male co-facilitator model is also used to convey subjective norms regarding acceptable and unacceptable attitudes and behaviors and to model positive masculinity. Finally, grounded in theories of multiculturalism, all our content is culturally contextualized in order to enhance the buy-in of prevention messaging and the likelihood of behavioral change.</p>
+      <p>The ETT intervention taps into an intuitive but often overlooked approach to addressing GBV: the transformation of male attitudes and behaviors is known as 'Hero in Me' (HIM). The program focuses on three main goals:</p>
+      <ol><li>Reshapes boys' harmful beliefs around gender and sexuality,</li><li>Increases the likelihood that boys seek consent for any activity, and</li><li>Encourages boys to intervene on behalf of girls and women when they encounter possible instances of violence against women and girls.</li></ol>
+      <p>The ETT tool kit assumes that boys possess the ability and desire to treat women respectfully, but condone and commit acts of sexual violence in response to immense social and community pressures. Rather than seeking to instill a new sense of morality, the program activates an existing set of morals within the boys and enables them to build the confidence and skills to act on these morals every day. Boys learn to turn toward the many "tests" they face in life and practice standing up for the rights of their mothers, sisters, girlfriends, and other women in their lives.</p>
+      <div class="safe-box"><p style="font-style:italic;">"Ujamaa Pamodzi Africa is committed to promoting the welfare and protection of children, adults and vulnerable groups in all our activities. We adhere to statutory responsibilities, Malawi government guidance, and international best practices to ensure the highest standards of safeguarding are maintained. Our staff and volunteers are trained in safeguarding and understand their responsibility to report any concerns or incidents of abuse or harm to our designated safeguarding officer, as we have zero tolerance for any form of abuse, neglect, exploitation, or harm."</p></div>
+      <h3>Topics Outline</h3>
+      <ol><li>Topic 1: Needs Assessment – Getting to know you and child rights</li><li>Topic 2: My Value System – Life-skills and Personal awareness (Sessions: Values system; Puberty &amp; Peer Pressure; Self esteem)</li><li>Topic 3: My Value System – Intro to 'H.I.M' and Verbal techniques (Sessions: Introduction to Hero in Me and awareness; Assertiveness)</li><li>Topic 4: Hero in Me – Step-Up definition and strategies</li><li>Topic 5: Referrals, and Break Silence</li><li>Topic 6: Hero in Me – Boys and Girls combined</li><li>Teachers Guide</li><li>Facilitator Notes</li></ol>
+    </div>
+
+    <!-- TOPIC 1 -->
+    <div class="topic-section" id="t1">
+      <div class="topic-header"><div class="topic-num">1</div><div><h2>NEEDS ASSESSMENT: GETTING TO KNOW YOU AND CHILD RIGHTS</h2></div></div>
+      <p><strong>Overview:</strong> The goal of this session is to gather insights about boys' perspectives and to help them understand their rights and responsibilities. We aim to explore what they believe, why they hold those beliefs, and where they acquired them. The session also aims to define who a child is, guiding boys towards a clear understanding of child rights and responsibilities.</p>
+      <h3>Objectives</h3>
+      <ol><li>Students will recognize their personal strengths and enhance their self-image.</li><li>Students will be provided with an opportunity to compare their positive self-concepts with others' positive perception of them.</li><li>Students will be introduced to the concept of self-disclosure and learn how sharing personal experiences can promote connection and support.</li><li>Students should be able to exercise their rights and respect other people's rights.</li></ol>
+      <div class="activity-box">
+        <div class="act-label">ACTIVITY #1 — INTRODUCTION: "THE ADJECTIVE GAME"</div>
+        <p><strong>Purpose:</strong> To welcome students in the Session and allow facilitators to introduce themselves and to get to know the students.</p>
+        <p>Each student introduces themselves by adding an adjective before their name that begins with the same letter as their first name. For example:</p>
+        <ul><li><em>"I am Caring Rahman. I am in class 6."</em></li><li><em>"I am Wonderful Blessings. I am in class 6."</em></li><li><em>"I am Awesome Imran. I am in class 5."</em></li></ul>
+        <p>This can be done when seated but becomes more fun and active if the students are standing. Each student stands up while introducing himself.</p>
+        <div class="trainer-say"><strong>Trainer Says:</strong> Before you can start to lead others, you must first know who you are and how to lead yourself. This is the key to becoming a leader. It is by this principle that great leaders of the past, present, and future gain effective followership and achieve their goals. Knowing yourself means separating who you are, and who you want to be, from what the world thinks you are, and wants you to be.</div>
+      </div>
+      <div class="activity-box">
+        <div class="act-label">ACTIVITY #2 — WHO AM I? "GETTING TO KNOW YOU" QUESTIONS</div>
+        <p>The purpose of this activity is to remind participants about the importance of knowing ourselves.</p>
+        <div class="trainer-say"><strong>Trainer Says:</strong> Before we know each other, I want to let you know that the next few questions are about serious topics like harassment and sexual violence. These questions are important because they help us think about safety, and how we can support one another. If you feel uncomfortable or don't want to answer, that's completely okay. You can choose to pass or talk to me privately later if you wish.</div>
+        <ol><li>What is the most annoying habit that other people have?</li><li>Who is your role model?</li><li>What takes up too much of your time?</li><li>Is it ok for boys to cry? Why or why not? What do you think about emotions and gender?</li><li>What are your views about girls?</li><li>If you are in the company of your fellow boys, what are some of the topics you always discuss?</li><li>Where do you always gather to talk about girls?</li><li>What are some of the crimes or cases of violence that are frequently committed in your community?</li><li>Who do you think faces more risk of violence or harassment in your community, and why do you think that is?</li><li>Have you ever found yourself in a situation where boys were harassing a girl/girls?</li><li>Do you believe that when girls are raped, it is their fault? / Some people believe that survivors of sexual violence are to blame for what happened to them. What are your thoughts about this?</li><li>If someone was being hurt or treated unfairly, who is a trusted adult at home or school that you would feel safe talking to about this?</li></ol>
+      </div>
+      <h3>Who is a Child? Child Rights and Responsibilities</h3>
+      <div class="trainer-say"><strong>Trainer Says:</strong> A child is every human being below the age of eighteen years.</div>
+      <p><strong>Definition of child rights:</strong> Entitlements that all children should have for their growth and wellbeing regardless of their age, sex, race, nationality, religion, political beliefs, and language.</p>
+      <div class="table-wrap">
+        <table class="curr-table">
+          <thead><tr><th>Provision Rights</th><th>Protection Rights</th><th>Participation Rights</th></tr></thead>
+          <tbody>
+            <tr><td>Right to adequate standard of living</td><td>Right to protection from sexual, physical, emotional abuse and neglect</td><td>Right to freedom of expression</td></tr>
+            <tr><td>Right to health care and nutrition</td><td>Right to protection from child labour</td><td>Right to freedom of thought, conscience, and beliefs</td></tr>
+            <tr><td>Right to education</td><td>Right to protection from physical abuse</td><td>Right to make decision</td></tr>
+            <tr><td>Right to play and recreation</td><td>Right to protection from drugs</td><td>Best interest of the child</td></tr>
+            <tr><td>Right to be raised by their parents</td><td>Right to a name, nationality, and family relations</td><td>Right to freedom of association</td></tr>
+            <tr><td>Right to information</td><td>Right to survival, growth, and development</td><td>Right to privacy</td></tr>
+            <tr><td></td><td>Right to birth registration</td><td></td></tr>
+            <tr><td></td><td>Right to maintain contact with both parents if they separate</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Ask the students:</strong> What did you learn today from listening to your classmates' views? Does anyone have any feelings about what they learned today? Was this session helpful?</p>
+    </div>
+
+    <!-- TOPIC 2 -->
+    <div class="topic-section" id="t2">
+      <div class="topic-header"><div class="topic-num">2</div><div><h2>MY VALUE SYSTEM: LIFE-SKILLS AND PERSONAL AWARENESS</h2></div></div>
+      <div class="session-block">
+        <div class="session-title">Session 1: My Value System</div>
+        <p><strong>Objective:</strong> To help students develop the skills of Self-Awareness regarding Personal and Social Values.</p>
+        <p><strong>Values definition:</strong> These are principles or standards of behavior that reflect what individuals consider important, valuable, or useful/meaningful.</p>
+        <h4>Process</h4>
+        <ul><li>The trainer asks the students to brainstorm on the word 'Values'.</li><li>Note the reaction of the students on the board or paper or flip chart. All responses may be noted without belittling any participant.</li><li>The Trainer then talks about the kinds of values.</li></ul>
+        <p><strong>Personal Values:</strong> are those which guide a human being for personal growth and survival. E.g. honesty, responsibility, humanity, and respect.</p>
+        <p><strong>Social Values:</strong> are a set of moral principles defined by society dynamics, institutions, traditions and cultural beliefs. They enable individuals to improve their social life, enhance the understanding of the social set up and build on one's capability.</p>
+        <div class="values-grid">
+          <div class="val-card"><h4>PERSONAL VALUES</h4><ul><li>Cleanliness</li><li>Loyalty</li><li>Love</li><li>Tolerance</li><li>Gratitude</li><li>Forgiveness</li><li>Respect</li><li>Honesty</li><li>Patience</li><li>Courtesy</li><li>Patriotism</li><li>Control over sense</li></ul></div>
+          <div class="val-card"><h4>SOCIAL VALUES</h4><ul><li>Discipline</li><li>Co-operation</li><li>Justice</li><li>Non-violence</li><li>Brotherhood</li><li>Kindness</li><li>Charity</li><li>Dignity of individual</li><li>Sharing</li><li>Caring</li></ul></div>
+        </div>
+      </div>
+      <div class="session-block">
+        <div class="session-title">Session 2 – Life Skills: Puberty and Peer Pressure</div>
+        <h4>Session Objectives</h4>
+        <ul><li>Recognize the physical, emotional, and psychological changes that occur during puberty.</li><li>Identify challenges that boys and girls face during puberty.</li><li>Develop skills — especially for boys — on how to resist negative peer pressure.</li></ul>
+        <div class="trainer-say"><strong>Trainer Says:</strong> The keyword when it comes to puberty is CHANGE. Your body is changing, your feelings are changing, and your relationships with those around you are changing. You are growing up and becoming an adult. This important phase is called puberty, a natural transition from childhood to adulthood.</div>
+        <h4>1. Understanding Puberty</h4>
+        <p>Puberty is a developmental stage during which a child's body matures into an adult body that is capable of reproduction. It typically occurs between: <strong>Boys: 9–14 years</strong> and <strong>Girls: 8–13 years</strong>. The exact age may vary based on genetics, nutrition, and environmental factors. There are two types of changes: Physical and Emotional/Psychological.</p>
+        <h4>Physical Changes In Males</h4>
+        <ul><li>Growth of facial and body hair</li><li>Deepening of the voice</li><li>Enlargement of testes and penis</li><li>Increase in muscle mass</li><li>Growth spurts</li></ul>
+        <h4>Physical Changes In Females</h4>
+        <ul><li>Breast development</li><li>Onset of menstruation (periods)</li><li>Widening of hips</li><li>Growth of body hair</li><li>Growth spurts</li></ul>
+        <div class="tip-box"><strong>Activity Option:</strong> Use diagrams or illustrations to point out the changes visually. Allow learners to ask questions and clarify doubts respectfully.</div>
+        <h4>Psychological and Emotional Changes</h4>
+        <ul><li>Increased sensitivity and mood swings</li><li>Feelings of embarrassment or self-consciousness</li><li>Desire for more independence</li><li>Development of sexual identity and attraction</li><li>Confusion or curiosity about bodily and emotional changes</li></ul>
+        <p><strong>Discussion Prompt:</strong> "What emotions or feelings have you or your friends experienced during puberty?" Let students share experiences (if comfortable). Assure them that these changes are normal and happen to everyone.</p>
+        <h4>3. Challenges Faced During Puberty</h4>
+        <div class="trainer-say"><strong>Trainer Asks:</strong> "What are some of the challenges that boys and girls face during puberty?"</div>
+        <ul><li>Feeling shy or embarrassed about body changes</li><li>Menstrual discomfort for girls</li><li>Pressure to appear mature or act tough</li><li>Peer teasing or bullying</li><li>Not knowing who to talk to about new feelings</li><li>Body shaming</li></ul>
+        <div class="tip-box"><strong>Facilitator Tips:</strong> Normalize their concerns. Emphasize that these changes happen at different times for everyone.</div>
+        <h4>Taking Care of Your Body</h4>
+        <p><strong>Hair:</strong> Just like your skin, your hair might be oilier than it used to be. Washing it more often will keep it clean.</p>
+        <p><strong>Dental:</strong> Brush your teeth and floss at least twice each day: once in the morning and once at night. For extra fresh breath, be sure to brush your tongue. Generally, maintain cleanliness.</p>
+        <h4>4. Introduction to Peer Pressure</h4>
+        <div class="trainer-say"><strong>Trainer Says:</strong> As you go through puberty, you may also feel pressure from your friends or peers to act or behave in certain ways. This is called peer pressure.</div>
+        <p><strong>Examples of Negative Peer Pressure:</strong></p>
+        <ul><li>Skipping school</li><li>Starting fights</li><li>Using drugs or alcohol</li><li>Engaging in early sexual activity</li></ul>
+        <div class="trainer-say"><strong>Trainer Emphasizes:</strong> Not all peer pressure is bad, but negative peer pressure can lead to unsafe and harmful behaviors.</div>
+        <h4>How Does Peer Pressure Affect Us?</h4>
+        <ul><li>Fashion choices.</li><li>Alcohol and drug use.</li><li>Decision to have a boyfriend or girlfriend.</li><li>Choice of who your friends are.</li><li>Attitude towards school and academic performance.</li></ul>
+        <h4>6. Resisting Peer Pressure – Skills for Boys</h4>
+        <div class="trainer-say"><strong>Trainer Says:</strong> Boys often feel pressure to prove they are strong, brave, or 'manly'. But real strength comes from making good choices and respecting yourself and others.</div>
+        <ul><li>Hanging out with people who like doing similar stuff as you.</li><li>Saying NO when you don't want to be part of something.</li><li>Try not to judge others. Respecting their choices increases the chance that they will respect yours.</li><li>Take action. Standing up for yourself and others can be a way to gain that comfort.</li><li>Have Self-confidence.</li><li>Choose your friends wisely.</li><li>Talk to a trusted adult.</li><li>Do not make excuses – say exactly how you feel.</li></ul>
+        <div class="activity-box">
+          <div class="act-label">ROLE PLAY ACTIVITY</div>
+          <div class="scenario-box"><strong>Scenario 1:</strong> You do not want to smoke. Your friend is trying to persuade you to have a cigarette. Use all your arguments to support your decision not to smoke.</div>
+          <div class="scenario-box"><strong>Scenario 2:</strong> You have seen how your father's life has been damaged from drinking too much alcohol and have decided never to drink. Your new friend comes with a bottle of alcohol and wants to try it after school. He is trying to convince you to join him. Use all your arguments to support your decision not to drink.</div>
+          <div class="scenario-box"><strong>Scenario 3:</strong> You have just finished an exam and even though you studied, you are sure you did not do well. Some of your classmates have offered you some marijuana (bhang) to smoke and tell you it will make you feel better. You do not want to try drugs. Use all your arguments to support your decision to not use drugs.</div>
+          <p>Introduce students to the <strong>Three C's model: the Challenge, the Choices, and the Consequences.</strong> Divide the group into four teams and assign a role-play scenario to each team. Each group will use the Three C's model to write out the challenges, choices, and consequences for each decision.</p>
+        </div>
+        <h4>Teach Positive Responses</h4>
+        <ul><li>"No thanks, that's not for me."</li><li>"I don't want to get in trouble."</li><li>"I respect myself too much to do that."</li></ul>
+        <h4>7. Wrapping Up – Key Points</h4>
+        <ul><li>Puberty brings many physical and emotional changes — this is normal.</li><li>Everyone goes through these changes at different times.</li><li>You can take care of yourself by practicing good hygiene, talking to trusted adults, and avoiding negative peer influences.</li><li>Saying "no" to negative peer pressure is a sign of strength and maturity.</li></ul>
+        <div class="tip-box"><strong>Trainer Reminders:</strong> Use respectful, age-appropriate language. Create a safe, non-judgmental space for questions. Be sensitive to learners who may be shy or have limited knowledge of these topics. Encourage learners to talk to parents, guardians, or counselors if they have personal concerns.</div>
+      </div>
+      <div class="session-block">
+        <div class="session-title">Session 3: Life Skills – Self-Esteem</div>
+        <p>Self-esteem describes how people feel about themselves. How people feel about themselves influences their actions towards others and what they can accomplish in life. People with high self-esteem know that they are worthy of love and respect. They respect themselves. When people feel worthy of love and respect, they expect the same from others.</p>
+        <p>Having self-esteem does not mean that you never get upset or angry with yourself. Everyone gets frustrated at times. Someone with high self-esteem can accept his or her mistakes and move on. If another person tries to convince or persuade him or her to do something they really do not want to do, people who feel good about themselves will be less likely to fall under another person's pressure. They will feel more confident that their own decision is the right one and will make their own choices based on their own desires, and not the desires and values of others.</p>
+        <p>The opposite is also true. People with low self-esteem may be more likely to fall under the influence of others, not trusting their own values or decisions. Self-esteem is important because how people feel about themselves influences what they accomplish in life. When people believe in themselves and in their own ability, they are more likely to work hard, reach their goals and accomplish what they set out to do.</p>
+        <h4>High Self-Esteem Allows Us To</h4>
+        <ul><li>Accept new challenges and try new activities.</li><li>Be more comfortable with others, and develop closer and healthier relationships.</li><li>Believe we can succeed.</li><li>Gain self-confidence.</li><li>Be the person we want to be.</li><li>Be assertive and refuse to be pressured into what we do not believe in.</li></ul>
+        <h4>Factors that Lower Self-Esteem – Examples include:</h4>
+        <ul><li>"That's a silly idea."</li><li>"I suppose that's the best you can do."</li><li>"What idiot would do that?"</li><li>"That's typical of you."</li></ul>
+        <h4>Some ways we might put ourselves down include:</h4>
+        <ul><li>Not accepting compliments. "Oh, I'm not really that good, I was just lucky."</li><li>Giving credit to others when it rightfully belongs to us. "You did all the work; I just helped a little." "I couldn't do anything without him."</li><li>Giving others' opinions before our own. "Our teacher always says…" "My friend thinks…" "I really do not know but my mother says…"</li><li>By responding when someone says, "Hey, stupid!" by accepting nicknames like shorty, fatty or thick-head.</li></ul>
+        <h4>Emphasize that people who are used to being put down:</h4>
+        <ul><li>Find it difficult to interact with others or meet new people because they are afraid of rejection.</li><li>Are easily influenced or do things they do not want to do to be accepted.</li><li>Cannot stand up for their rights.</li><li>Are shy.</li><li>Lack of confidence.</li><li>Find it difficult to make decisions.</li></ul>
+        <h4>Promoting Self-Esteem</h4>
+        <ul><li>Practice saying no</li><li>Talk to someone you trust</li><li>Try to avoid comparing yourself to others</li></ul>
+        <h4>Lessons to Learn from Having a High Self-Esteem</h4>
+        <p><strong>Know Ourselves:</strong> It is important for us to know who we are; our values, goals, dreams, and priorities.</p>
+        <p><strong>Respect Ourselves:</strong> Some people can do certain things better than others. Our friends may play football better, work better, or learn faster. They are not better, just different. Never compare yourself to others.</p>
+        <p><strong>Love Ourselves:</strong> We must love ourselves before we can love others. When we have a good relationship with ourselves, our relationship with others will improve.</p>
+        <p><strong>Affirm Ourselves:</strong> Instead of hating ourselves for what we are not or have not done, we should give ourselves credit for what we are and what we have done.</p>
+        <p><strong>Trust Ourselves:</strong> Trusting ourselves means knowing that we can be our own teacher, our own guide, and our own decision maker for matters relating to us.</p>
+        <p><strong>Accept Ourselves:</strong> Accept ourselves as we are. We are doing the best we can, now. Tomorrow we will do better. Treat ourselves lovingly and gently.</p>
+        <p><strong>Show Ourselves:</strong> Let people know who we really are. A healthy personality is based on being honest about who we are.</p>
+        <div class="tip-box"><strong>Trainer Story:</strong> This trainer story should focus on how gender roles have affected a teacher personally, as well as how these roles continue to impact the people he cares about — it could be the wife, mother, daughter, and sister. It should explore how someone's self-esteem can be shaped or limited by societal expectations based on gender, and how these experiences influence the way they view themselves and others.</div>
+        <h4>Wrap-Up Circle</h4>
+        <p>Gather the group in a sitting circle. Review the goal behind the Wrap-Up Circle: To review what we learned in this session. To reflect on how we can apply what we have learned when facing challenges in the real world. To receive advice and support from our peers about real situations we are experiencing in our lives.</p>
+        <p>Lead a discussion: What was the most important thing you learned today? How can the knowledge and skills you learned today help you with situations in your life right now? Does anyone need any help with the current situation they are facing? What kind of challenging situations could you face in the coming days? Who is one person not in this session that you want to tell and teach what you learned here?</p>
+        <div class="pledge-box">
+          <h4 style="color:var(--gold);font-family:'Bebas Neue',sans-serif;letter-spacing:2px;margin-bottom:.8rem;">MY PLEDGE</h4>
+          <p>My values — My behaviors — My growth<br>My personality — I am loyal — I can love — I can tolerate<br>I need respect — You need respect — She needs respect<br>Honesty — That is my strength — That is our strength<br>My body — My sexuality — My responsibility — A time to change!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOPIC 3 -->
+    <div class="topic-section" id="t3">
+      <div class="topic-header"><div class="topic-num">3</div><div><h2>MY VALUE SYSTEM: INTRO TO 'H.I.M' AND VERBAL TECHNIQUES</h2></div></div>
+      <div class="session-block">
+        <div class="session-title">Session 1: Introduction to HIM and Awareness</div>
+        <p><strong>Overview:</strong> This session introduces the concept of "Hero in Me" and prepares learners with the knowledge and skills needed for boys to confidently and effectively step up to end violence. Students will also learn the skills of awareness and how to distinguish between positives and negatives in potential assault and violent situations. They will also discuss ways in which they can De-escalate or Negotiate in a conflict situation.</p>
+        <div class="activity-box">
+          <div class="act-label">ACTIVITY #1 — INTRODUCTION AND WELCOME</div>
+          <ul><li>Welcome participants to the training and introduce yourself. This should be kept very brief since you will also participate in icebreakers and other exercises.</li><li>Ask students to introduce themselves by simply adding an adjective before their name that begins with the same letter.</li></ul>
+        </div>
+        <div class="activity-box">
+          <div class="act-label">ACTIVITY #2 — TAKE THE LEAD: TWO TRUTHS AND A LIE</div>
+          <p><strong>Option 1:</strong></p>
+          <ol><li>Ask each student in the session to think of two true facts about themselves, and one lie.</li><li>Each student in the session takes a turn telling the class their three items.</li><li>The class then must agree on which fact they think is a lie.</li><li>Once the class announces their decision, the student tells the class the correct answer.</li><li>The class then can talk about any of the interesting things they just learned about the new person.</li></ol>
+          <p><strong>Option 2 (Anonymous):</strong></p>
+          <ol><li>Each student writes down their 2 truths and a lie on a piece of paper.</li><li>They then hand it in anonymously to the trainers.</li><li>Read each card randomly one at a time.</li><li>The class must decide who the person on the card is, as well as the lie.</li></ol>
+          <p><strong>Discussion Questions:</strong> How was the activity? What did you learn about each other? Was it easy to figure out the truth or the lie?</p>
+        </div>
+        <h4>Who is a Hero?</h4>
+        <p>To get the participants to understand more about the Hero concept, ask questions that trigger the participants to open and share their thoughts and experiences:</p>
+        <ul><li>According to you, who is a hero?</li><li>Do you have any hero in your life?</li><li>What makes him a hero?</li><li>Who is your role model?</li></ul>
+        <h4>Trainer Content: Negative-turns-Positive Concept</h4>
+        <div class="trainer-say"><strong>Trainer Says:</strong> In many parts of a story, a hero faces a situation where a negative moment in their life turns into a positive event or opportunity. Just as challenges arise when the hero lands in a terrible situation that seem impossible to get out of, the "Negative turns Positive" moment occurs when an individual gets into an upsetting or difficult situation that ultimately leads to something wonderful, usually giving him the courage to save the situation, win a girl's heart (or even meet the girl), or reach their destiny.</div>
+        <div class="trainer-say"><strong>Trainer Says:</strong> These moments usually come out when we least expect it. When this event impacts, it also contains confession moments, where a hero would apologize for getting aggressively angry with a person they have cared about, or apologize for their wrong decisions they have made.</div>
+        <div class="definition-box"><div class="def-word">HERO IN ME</div><div class="def-sub">Turn from Negative to Positive</div></div>
+        <p><strong>Examples:</strong></p>
+        <ul><li>An argument can turn into a resolution.</li><li>The hero discovers something amazing (for example, a friend to guide him or her).</li><li>The hero rescues someone who was about to be harassed by some other boys.</li><li>The hero learns to have fun in difficult circumstances.</li><li>The hero gets lost with his friends but finds a way towards their destination.</li><li>Hero makes a mistake and learns from it.</li><li>The hero makes new friends after a bad experience.</li></ul>
+        <h4>Awareness</h4>
+        <p>The simplest acts in our lives are often missed because we are simply too busy to pay attention to anything going around us, especially if it seems like it does not directly affect us. Awareness means paying attention/being observant or having Consciousness. Awareness makes you stay in control of situations.</p>
+        <div class="definition-box"><div class="def-word">AWARENESS</div><div class="def-sub">To Pay Attention</div></div>
+        <div class="activity-box">
+          <div class="act-label">THE GAZELLE STORY</div>
+          <p>The gazelle is eating grass on a sunny plain. The sun is shining. The gazelle is having his meal. Suddenly, he senses something, he jerks his head up, ears up — completely alert — smelling, listening, looking. His whole body is a live antenna, receiving information. And then he sprints away!</p>
+          <p><strong>Ask:</strong> What kinds of signals could the gazelle have gotten to make him run away? (Answers could include: smell, sound, gut feeling, seeing, memory, intuition, fear.)</p>
+          <p><strong>Ask:</strong> What would happen to the gazelle if he started to get these signals but made excuses instead about what he was receiving? (What would happen if he thought, "Oh that was probably nothing. I have been here before. I do not want to leave. It is fine here…"?) Answers: He will probably die. If he thinks there is danger, he is probably right. Better to be safe than sorry.</p>
+          <p><strong>Ask:</strong> When the gazelle is aware and paying attention, what does he look like? (Body straight up, ears and eyes alert, body ready for action and reaction, etc.)</p>
+        </div>
+        <h4>How to Become Aware</h4>
+        <ul><li><strong>Slow Down:</strong> This helps you notice any small problem.</li><li><strong>Look around you before you act:</strong> While slowing down is essential, the next step is your ability to engage your eyes during that time between the observation and the action.</li><li><strong>Look, do not listen:</strong> Do not allow loud distractions to stop you from keeping your eyes on your surroundings, rather than one direction.</li><li><strong>Look for the new:</strong> Pay attention to things you have not seen before rather than allowing your eyes to focus on the familiar.</li></ul>
+      </div>
+      <div class="session-block">
+        <div class="session-title">Session 2: Being Assertive</div>
+        <h4>Learning Objectives</h4>
+        <ul><li>Distinguish between assertiveness and aggression</li><li>Demonstrate effective assertiveness skills</li></ul>
+        <p>Assertiveness is an important skill for getting along with others. Being assertive means: Being direct and standing up for yourself or being straightforward and honest with yourself and others about what you need and want.</p>
+        <p>Being assertive can help you protect yourself from dangerous situations and can help you resist peer pressure to do things that you are uncomfortable doing. People who are not assertive are often submissive. Even if they are being treated poorly, they do not stand up for themselves. People who are not assertive often lack the confidence and self-esteem to stand up for their own needs and to protect their feelings or body from being hurt.</p>
+        <h4>How to Be Assertive</h4>
+        <p><strong>Decide what you feel or want and say it.</strong> Do not be afraid to be honest about your feelings. Being confident about your own feelings will encourage others to respect them as well. Someone who truly loves you will not want to do things that make you feel unhappy.</p>
+        <p><strong>Look people in the eye.</strong> Eye contact is an important part of being assertive. It tells the other person that you are serious about what you are saying and that you are paying close attention to whether they are listening to you.</p>
+        <p><strong>Do not make excuses.</strong> Your feelings are the best reasons. For example, if you do not feel ready for sex, but your girlfriend or boyfriend is pressuring you, avoid using other people as excuses. Say what you really feel.</p>
+        <p><strong>Do not seek approval from others.</strong> If you do not want to do something, say so clearly, and do not ask if it is all right. Show other people that you know your own mind and are not looking for their approval.</p>
+        <p><strong>Do not get confused by the other person's argument.</strong> Keep repeating what you want or do not want. Stand your ground and do not give in.</p>
+        <p><strong>You have a right to change your mind.</strong> Perhaps you and your girlfriend talked about sex a few days ago and you told her that you would have sex with her. But you thought about it and now you feel sure that the time is not right — that you are not ready and that the relationship is not ready. She says: "But you agreed that we could have sex." Tell her: "I have changed my mind. I have decided I do not feel ready." If she truly loves you, she will respect your right to change your mind, and she will wait until you feel ready.</p>
+        <h4>Assertiveness, Passiveness and Aggression</h4>
+        <ul><li><strong>Assertiveness:</strong> expressing thoughts, feelings, and beliefs in a direct, honest, and appropriate way.</li><li><strong>Aggression:</strong> a feeling of hostility that may lead to attacks or an unprovoked violent action.</li></ul>
+        <div class="trainer-say"><strong>Trainer Says:</strong> Being assertive is standing up for what you believe in and what you want. To be direct and sure. Young people are often tempted to give in to someone else's desires, whether because of peer pressure or something idealized in the media. However, if we say what we want or feel and explain why we have chosen a certain decision or action, then we can do what we really want without hurting another person.</div>
+        <div class="trainer-say"><strong>Trainer Says:</strong> Assertiveness is part of effective communication. When you are assertive you can say No without feeling guilty, can ask for help when it is needed, avoid arguing, disagree without becoming angry, and feel better about yourself.</div>
+        <div class="trainer-say"><strong>Trainer Says:</strong> Being aggressive involves putting other people down, blaming, or criticizing them.</div>
+        <h4>Four Assertive Steps</h4>
+        <ol><li>Say what you see</li><li>Say how you feel</li><li>Say what you want</li><li>Walk away — keep yourself safe</li></ol>
+        <div class="activity-box">
+          <div class="act-label">ACTIVITY — ASSERTIVENESS ROLE-PLAYS</div>
+          <div class="scenario-box">You are in a debate session and every time you start to say something, an older boy interrupts you. Role-play the dialogue at the meeting.</div>
+          <div class="scenario-box">You are in a school building and someone throws a chewing gum down. Chewing is not allowed in the school and the gum is making you sick. Role-play your conversation with the person and the defense of his actions.</div>
+          <div class="scenario-box">Your parents tell you that you cannot have a girlfriend. Role-play the conversation.</div>
+          <div class="scenario-box">You are watching TV. A sibling walks in and changes the channel without asking. Role-play the conversation.</div>
+          <div class="scenario-box">Your parents still treat you like a child. You do not like this, but you also do not want to hurt their feelings. Role-play the conversation.</div>
+          <p><strong>Discussion questions:</strong> What happened? Does this happen here in our community (school, home)? What problems does it cause? What can we do when this happens? What can we do to avoid these problems or this situation? What else could she/he have said to give more information?</p>
+        </div>
+        <h4>The 3 C's of Decision-Making</h4>
+        <p><strong>Challenge:</strong> Clearly identify the situation or the problem to be solved or decided upon.</p>
+        <p><strong>Consider:</strong> Think about the possible alternatives and what would happen for each. Think about the positive and negative consequences for each alternative. Get additional information if you need it.</p>
+        <p><strong>Choose:</strong> Choose the best choice!</p>
+        <h4>Summary of Assertive Words — Saying "NO" Assertively</h4>
+        <p>Saying "NO" assertively is not terribly hard. But very few people are good at it. The idea is to not give in, and still not lose your friends.</p>
+        <p><strong>1. Say something caring:</strong> "That's flattering, but…" / "It's nice of you to offer, but…" / "Thanks for asking, but…" / "I'm glad you trust me to ask, but…" / "I love you, but…" / "I like you, but…" / "I care about you, but…" / "I'm sure you have a good reason for asking, but…"</p>
+        <p><strong>2. Refuse:</strong> "No." / "No, sorry." / "No, thanks." / "No, I'm OK." / "No, that's alright."</p>
+        <p><strong>3. State your decision:</strong> "I'd rather…" / "I prefer…" / "I'm going to…" / "I'm not going to…" / "I don't believe in…" / "I've decided not to…" / "I've decided to…"</p>
+        <p><strong>4. Or suggest an alternative:</strong> "Would you like to…?" / "How about…?" / "Why not instead?"</p>
+        <p>You do not have to give a reason for your refusal. If you trust the person not to argue with your decision, it is OK to state your reason. But you never have to give a reason; it only gives the person something to argue about.</p>
+        <div class="tip-box"><strong>Trainer Story:</strong> One teacher tells a story about his personal experience (no more than 5 minutes). This story should focus on: (a) Describe the situation. (b) Describe the skill you had to use. (c) Describe the feelings you had when you were thinking about facing this situation. Talk about the skills you wished you had. What would you do differently if you could do it again?</div>
+        <div class="pledge-box">
+          <h4 style="color:var(--gold);font-family:'Bebas Neue',sans-serif;letter-spacing:2px;margin-bottom:.8rem;">PLEDGE</h4>
+          <p>As a leader — I will take charge as a leader — I will take lead<br>I am a HERO — I will stay positive<br>You are a HERO — You should stay positive<br>We are HEROES — We will stay positive<br>We can negotiate — We can De-Escalate Together</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOPIC 4 -->
+    <div class="topic-section" id="t4">
+      <div class="topic-header"><div class="topic-num">4</div><div><h2>HERO IN ME: STEP-UP DEFINITION AND STRATEGIES</h2></div></div>
+      <p><strong>Overview:</strong> This fourth session focuses primarily on defining what Step-Up is and creating opportunities for students to practice key Step-Up techniques to specifically take charge to try to resolve a conflict or any other kind of situation in which you or someone else you care about has become a target or is at risk.</p>
+      <h4>Learning Goals</h4>
+      <ul><li>Understand what step-up is.</li><li>Learn basic step-up techniques to do successful and safe interventions.</li><li>Learn skills to identify and deal with situations that require intervention.</li></ul>
+      <div class="trainer-say"><strong>Trainer Says:</strong> Goal is to try to prevent, stop or calm down a conflict situation. This is called stepping up. Does anyone have a definition of the word "Step-Up?"</div>
+      <div class="definition-box"><div class="def-word">STEP-UP</div><div class="def-sub">To Come Forward</div></div>
+      <p>The Step-Up Continuum ranges from <strong>Dismissive (Low Risk)</strong> to <strong>Verbal (Moderate)</strong> to <strong>Active (High Risk)</strong>.</p>
+      <h4>Step-Up Techniques</h4>
+      <div class="step-grid" id="step-grid"></div>
+      <h4>DE-ESCALATION</h4>
+      <div class="definition-box"><div class="def-word">DE-ESCALATION</div><div class="def-sub">Calm Down</div></div>
+      <p>De-escalation simply means 'Calm Down' and is aimed at calmly communicating with an agitated person to understand, manage and resolve a concern or a conflict situation.</p>
+      <div class="trainer-say"><strong>Trainer Says:</strong> Your ability to organize your thinking and calmly respond are effective de-escalation techniques that can help you avoid or deal with a potential crisis and that brings out the Hero in You.</div>
+      <div class="pledge-box"><p><em>De-escalation for a conflict situation. Use your voice, use your brain.<br>De-escalation for a conflict situation. Tone it down, keep it sane.</em></p></div>
+      <h4>NEGOTIATION</h4>
+      <div class="definition-box"><div class="def-word">NEGOTIATION</div><div class="def-sub">To Bargain</div></div>
+      <div class="trainer-say"><strong>Trainer Says:</strong> Day to day we are all involved in numerous situations that need to be dealt with through negotiation. This occurs in schools or at home. A conflict or negotiation situation is one in which there is a conflict of interests or what one wants isn't necessarily what the other wants and where both sides prefer to search for solutions, rather than giving in or breaking-off contact.</div>
+      <p>Few of us enjoy dealing with conflicts — either with peers, siblings, friends, or strangers. This is particularly true when the conflict becomes hostile and when strong feelings become involved. Resolving conflict can be mentally exhausting and emotionally draining.</p>
+      <p>To Negotiate means to discuss, bargain or weigh options. This aims at resolving conflicts and happens in two dimensions: To satisfy our needs; and To satisfy other people's needs. Good negotiation will try for a win-win or aim at a situation where both sides feel they won. It is <strong>IMPORTANT</strong> to have a "walk-away" position or strategy when entering a negotiation or conflict resolution.</p>
+      <div class="definition-box"><div class="def-word">GOAL OF NEGOTIATION</div><div class="def-sub">To Separate People from Problem</div></div>
+      <p><strong>To do this, we need to remember the following:</strong></p>
+      <ul><li>Address problems not personalities.</li><li>Avoid attacking the opponent personally.</li><li>Maintain neutrality.</li><li>Have a goal-oriented frame of mind.</li><li>If your opponent attacks you personally, do not let him hook you into an emotional reaction.</li><li>Try to understand the problem behind the aggression.</li><li>It is ok to lie in a conflict situation to do a successful intervention.</li></ul>
+      <h4>Factors to Consider When Doing Step-Up Activities</h4>
+      <ul><li>Be aware of the distance (how close you want to be to the people),</li><li>Know where escape routes are,</li><li>Consider if there may be allies nearby.</li><li>Communicate with your body: Do not show whose side you're on with your positioning; Wear a concerned look in your face and eyes; Show confidence in your body.</li></ul>
+      <div class="pledge-box">
+        <h4 style="color:var(--gold);font-family:'Bebas Neue',sans-serif;letter-spacing:2px;margin-bottom:.8rem;">PLEDGE</h4>
+        <p>As a young man — I will step up — For the people I care about<br>I will negotiate — I will de-escalate — I will walk away<br>I will offer help — I will do what works to prevent violence<br>I am a hero — You are a hero — We are heroes</p>
+      </div>
+    </div>
+
+    <!-- TOPIC 5 -->
+    <div class="topic-section" id="t5">
+      <div class="topic-header"><div class="topic-num">5</div><div><h2>UNDERSTANDING VIOLENCE AGAINST CHILDREN, BREAKING THE SILENCE &amp; REFERRAL SYSTEM</h2></div></div>
+      <p><strong>Overview:</strong> This topic focuses on helping learners develop a deeper understanding of violence against children by identifying its various forms, including physical, emotional, sexual, and neglect. The session creates a safe and supportive environment for open discussions, where learners are encouraged to reflect on and, if they feel comfortable, share their personal experiences or those of others they trust, especially in cases where they may have faced harm, harassment, or abuse.</p>
+      <h4>Objective of the Lesson</h4>
+      <p>To help learners understand what constitutes violence against children (VAC), recognize its different forms, reflect on its impact, and know how to seek or offer help through appropriate referral systems.</p>
+      <p><strong>Through this topic, learners will:</strong></p>
+      <ul><li>Gain awareness of the different types and signs of violence that affect children and young people.</li><li>Understand that violence is never acceptable and recognize their right to safety and dignity.</li><li>Build the confidence and courage to speak up either during the session or privately to someone they trust about any violent or abusive situations they have experienced or witnessed.</li><li>Learn about referral systems and support services, including how and where to seek help when violence occurs.</li><li>Develop empathy and supportive behaviors toward peers who may be victims of violence.</li></ul>
+      <div class="tip-box"><strong>Facilitator's Notes:</strong> Learners will be informed at the outset that the topic includes discussions on sensitive issues related to violence, and facilitators will ensure a respectful, non-judgmental, and confidential environment throughout.</div>
+      <div class="activity-box">
+        <div class="act-label">1. OPENING ACTIVITY</div>
+        <ul><li>Ask learners to form small groups.</li><li>Prompt: "What comes to your mind when you hear the term 'violence against children'?"</li><li>Let them discuss and then share their thoughts with the larger group.</li><li>Write keywords on a flipchart or board.</li></ul>
+      </div>
+      <h4>2. Defining Violence against Children (VAC)</h4>
+      <div class="trainer-say"><strong>Facilitator Says:</strong> Violence against children includes all forms of violence against people under 18 years old. This violence may be physical, emotional, sexual, or through neglect, and can happen at home, school, community, institutions, or online. It is often carried out by someone the child knows and trusts.</div>
+      <p><strong>Key Definition:</strong> "Violence against children is the intentional use of physical force or power, threatened or actual, by an individual or group that results in or has a high chance of causing harm to a child's health, survival, development, or dignity."</p>
+      <h4>4. Forms of Violence against Children</h4>
+      <p><strong>1. Physical Violence</strong> — Intentional use of physical force that causes or may cause injury or pain. Examples: Hitting, slapping, punching; Kicking, burning, shaking; Beating with objects; Harsh physical punishment.</p>
+      <p><strong>2. Sexual Violence</strong> — Involves any sexual activity with a child that is forced, coerced, or exploitative. Examples: Rape or attempted rape; Unwanted touching or sexual comments; Sexual exploitation or trafficking; Online abuse and grooming.</p>
+      <p><strong>3. Emotional or Psychological Violence</strong> — Behavior that harms a child's emotional well-being or self-esteem. Examples: Verbal abuse, threats, and insults; Humiliation or rejection; Isolation or neglect; Discrimination or intimidation.</p>
+      <h4>5. Signs of Abuse and Violence</h4>
+      <p>Ask learners: What signs might indicate that a child is experiencing violence?</p>
+      <ul><li>Unexplained injuries or bruises</li><li>Fearful, anxious, or withdrawn behavior</li><li>Sudden changes in behavior or school performance</li><li>Avoidance of certain people or places</li><li>Inappropriate sexual behavior or knowledge for their age</li><li>Poor hygiene or signs of neglect</li></ul>
+      <h4>6. Encouraging Disclosure and Breaking the Silence</h4>
+      <p><strong>Breaking silence definition:</strong> Giving someone hope and courage to talk about an incident they have encountered before or for a long period of time. Encouraging them to share in session with anyone they trust on how they tackled the incidence when they were attacked, harassed, harmed, or abused.</p>
+      <p><strong>Key Message:</strong> Speaking out can be the first step to getting help. There is no shame in seeking support. Everyone has the right to feel safe and protected.</p>
+      <ol><li>The attack or abuse is not your fault.</li><li>Break silence, even if the attacker told you not to. We can help.</li><li>You don't have to speak up publicly about what's happening. You can tell in private.</li><li>Sometimes the abuser is a family member, a priest, a trainer, a neighbor. It doesn't matter who they are, no one should harm or threaten you.</li><li>You are not alone. Many women and girls in your community have been attacked or abused and gotten help.</li><li>Whatever happened, you did what you felt you needed to survive the situation. The fact that you are here means you did something right.</li><li>You can be the one who steps up for someone you know who is in trouble.</li><li>Don't live in fear. Get tested so you can be treated if you need it.</li><li>You are worth defending. You deserve to get any help you need.</li><li>To encourage students to come forward, always say that if you come talk with me it DOES NOT have to be about you. You can tell a friend or someone you know who helps and you just don't know how to handle her problem yourself.</li></ol>
+      <div class="tip-box"><strong>Notes to Trainer:</strong> Sometimes the person who we share or break the silence with will not get us the help we need or may not believe us or will blame us for the abuse. If this happens, we encourage them to share and share and share until someone listens or believes and will support them and get the help they need — like medical, psychological, emotional support (counseling) and legal Aid. The instructor must first show that we can be trusted by creating safe space for learners to learn about attacks, threats, and safety and referral pathways. Instructors must offer privacy at all costs to those who are being abused and build networks of resources so we can offer the survivors different ways of getting support.</div>
+      <div class="activity-box">
+        <div class="act-label">ACTIVITY — WRITING SESSION</div>
+        <ol><li>Let learners reflect silently on a situation where either they or someone they know may have faced violence or abuse.</li><li>Optional: Invite volunteers to share with the champion teacher privately (only if they feel safe and comfortable).</li><li>Reassure learners that it's okay to speak up and that help is available.</li><li>Have the student seated and share their story by writing on a piece of paper silently.</li><li>Encourage the students by repeating the importance of breaking the silence and reporting for their friends who might not have the opportunity of sharing but they need help.</li></ol>
+      </div>
+      <h4>7. The Referral System</h4>
+      <p>Reporting violence helps protect others and stop the cycle. <strong>Referral</strong> constitutes handing over a situation to the relevant service provider for an extended intervention in a coordinated manner.</p>
+      <h4>Referral Resource List — Where Can the Survivor Go?</h4>
+      <ol><li>Needs medical help and testing.</li><li>Needs counseling.</li><li>Is living with the abuser.</li><li>Needs legal help.</li><li>Needs ongoing support from family, friends.</li><li>Wants to find out if she is pregnant.</li><li>Wants to find out if she has a sexually transmitted infection.</li><li>Feels suicidal.</li></ol>
+      <div class="tip-box"><strong>Tips for Teacher Champion:</strong> The number one goal of the breaking silence is to get the survivor medical care. In the process of doing that you can get to know him better and discuss other actions that he may need to take. Don't force him to get medical care, just convince him that it's very important. Don't force him to take other steps. Survivors often need to feel that they are 'in control' after an assault that made them feel powerless. Just be gentle and assure him that you would like to help him fix the situation so that he is safe from it happening again.</div>
+      <h4>Discussion Prompt: "Where can you report violence or seek help in your community?"</h4>
+      <ul><li>Trusted teacher, parent, or relative</li><li>Mother Group</li><li>Chief or village head</li><li>Police/Victim Support Unit (VSU)</li><li>Health worker</li><li>Police Forum</li><li>Child Protection Worker</li><li>Religious leader</li></ul>
+      <h4>Key Notes</h4>
+      <ul><li>The primary goal of our program is to <strong>prevent violence before it occurs</strong>.</li><li>Referrals should always be handled in a manner that is <strong>timely, confidential, and appropriate</strong> to the situation.</li><li>Teachers are not investigators; their role is to act as <strong>first responders</strong> and serve as <strong>critical connectors</strong> to professional service providers within the referral system.</li></ul>
+      <div class="table-wrap">
+        <table class="curr-table">
+          <thead><tr><th>Service Provider</th><th>Role</th></tr></thead>
+          <tbody>
+            <tr><td>Community Victim Support Unit</td><td>Immediate support and basic counselling</td></tr>
+            <tr><td>Hospital/Health Centre</td><td>Medical care, psychological support, documentation</td></tr>
+            <tr><td>Child Protection Worker</td><td>Safeguarding and follow-up</td></tr>
+            <tr><td>Mother Group</td><td>Community support and advocacy</td></tr>
+            <tr><td>Social Welfare/NGOs</td><td>Legal aid, shelter, counselling and psychological support</td></tr>
+            <tr><td>Victim Support Officer</td><td>Immediate protection and safety, legal and investigative support, receiving and recording cases</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="helpline-box">
+        <div class="hl-title">HELPLINES</div>
+        <p><strong>116</strong> — Tithandizane Child Help Line</p>
+        <p><strong>5600 / 6600</strong> — GBV Crisis Line</p>
+      </div>
+    </div>
+
+    <!-- TOPIC 6 -->
+    <div class="topic-section" id="t6">
+      <div class="topic-header"><div class="topic-num">6</div><div><h2>HERO IN ME: BOYS AND GIRLS COMBINED</h2></div></div>
+      <p><strong>Overview:</strong> This sixth Topic focuses primarily on creating a platform for students to discuss cross-cutting issues that affect both genders and formulate possible solutions for peaceful coexistence.</p>
+      <h4>Learning Goals</h4>
+      <ul><li>To understand the biased gender stereotypes that exist amongst the boys and girls.</li><li>To understand the concept of "Taking vs. Asking"</li><li>To learn basic instances that require consent.</li><li>To learn more about gender roles and the impact it has on both male and females.</li></ul>
+      <div class="activity-box">
+        <div class="act-label">TAKING VS. ASKING ROLE PLAYS</div>
+        <ol><li>Explain that you are going to act out/tell students about several situations. Small teams will then discuss whether each scene involves taking versus asking (Consent).</li><li>Play the rounds, and after each round, ask the group whether the scene involved "taking" or "asking."</li></ol>
+        <div class="scenario-box">You see that someone left their pen on a table. You grab it and run.</div>
+        <div class="scenario-box">You really want to go to a football match. You don't have the money so you go to your family to see if you can borrow enough for transport.</div>
+        <div class="scenario-box">A friend asks if he can borrow your notes from session. You say no, but when you come back to your classroom, you see that your notes are gone from where you left them.</div>
+        <p><strong>Ask:</strong> Can someone tell us the difference between taking and asking? (Taking is to get something without someone else's permission. Asking is to get something with permission.)</p>
+      </div>
+      <h4>Consent</h4>
+      <div class="definition-box"><div class="def-word">CONSENT</div><div class="def-sub">Agreement Between Two People</div></div>
+      <div class="trainer-say"><strong>Trainer Says:</strong> Consent is an agreement between people. There are many ways to give consent. Consent doesn't have to be verbal, but verbally agreeing to different activities can help both you and your friend respect each other's boundaries.</div>
+      <div class="trainer-say"><strong>Trainer Says:</strong> Consent is about communication. And it should happen every time. Giving consent for one activity, one time, does not mean giving consent for increased or recurring contact. For example, agreeing to hug someone doesn't give that person permission to start touching you.</div>
+      <p>You can withdraw consent at any point if you feel uncomfortable. It's important to clearly communicate to your friend that you are no longer comfortable with this activity and wish to stop. The best way to ensure both parties are comfortable with anything is to talk about it.</p>
+      <h4>There is no consent when:</h4>
+      <ul><li>You refuse to acknowledge "no"</li><li>You assume that wearing certain clothes, flirting, or touching is an invitation for anything more.</li><li>You engage with someone who is under the legal age of consent, as defined by the law.</li><li>You engage with someone who is incapacitated because of drugs or alcohol.</li><li>You pressure someone into sexual activity by using fear or intimidation. Consent is hearing the word "yes." It is not the absence of hearing "NO."</li></ul>
+      <div class="definition-box"><div class="def-word">CONSENT IS</div><div class="def-sub">Hearing the word "YES" — Not Absence of "NO"</div></div>
+      <h4>Beginning to Understand: What is Gender and what is Sex?</h4>
+      <p>Ask the participants to give their understanding of the differences between sex and gender. Ask them to read these statements one by one and decide which denotes characteristics based on sex and which are socially constructed:</p>
+      <ul><li>Women give birth to babies, men don't.</li><li>Care of babies is the responsibility of women because they can breastfeed them.</li><li>Men have moustaches.</li><li>Women cannot carry heavy loads.</li><li>Women are scared of working outside their homes at night.</li><li>Men's voices break at puberty, women's do not.</li><li>Women are emotional and men are rational.</li><li>Most of the women have long hair and men have short hair.</li><li>Most scientists are men.</li><li>Cooking comes naturally to women.</li></ul>
+      <div class="values-grid">
+        <div class="val-card"><h4>SEX</h4><p>Refers to the physical/biological differences between males and females. Biological. Universal.</p></div>
+        <div class="val-card"><h4>GENDER</h4><p>Refers to the social differences between males and females. Societal. Differs across cultures and over time.</p></div>
+      </div>
+      <p>Understanding the difference between sex and gender is critical for development work. It helps us understand that the cause of inequity between men and women is not their biological characteristics, but socially constructed attributes of men and women.</p>
+      <h4>Gender Division of Articles, Activities and Roles</h4>
+      <p><strong>Purpose:</strong> To understand how articles and activities are representatives of gender division of roles. Draw out a list of common articles, roles, and activities. Put up the face of a man at one end of the room and a face of a woman at the other end. Call out the name of each article, role or activity and ask participants to take their position whether it belongs to a man or a woman.</p>
+      <div class="table-wrap">
+        <table class="curr-table">
+          <thead><tr><th>Articles</th><th>Activities</th><th>Roles</th></tr></thead>
+          <tbody>
+            <tr><td>Broom</td><td>Sewing</td><td>Chef</td></tr>
+            <tr><td>Car keys</td><td>Cooking</td><td>Tailor</td></tr>
+            <tr><td>Hijab</td><td>Washing Clothes</td><td>Farmer</td></tr>
+            <tr><td>Rolling-pin</td><td>Reading newspaper</td><td>Housewife</td></tr>
+            <tr><td>Screw-driver</td><td>Breast-feeding babies</td><td>Breadwinner</td></tr>
+            <tr><td>Hammer</td><td>Bathing children</td><td>Nurse</td></tr>
+            <tr><td>Stove</td><td>Fixing the electric bulb</td><td>Mother</td></tr>
+            <tr><td>Tie</td><td>Knitting sweaters</td><td>Barber</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Discussion Questions:</strong> Why do we associate certain articles/activities/roles with women, and some with men? Which of the activities above have any biological basis? Which activities do not have any biological basis and yet are performed by either men or women only? For example, are women born with cooking skills? Are men "naturally" better at repairing, constructions and handling electrical gadgets? Is there a hierarchy in roles? What happens when economic value is attached to an activity/role?</p>
+      <h4>Gender Stereotypes: Feminine and Masculine Qualities</h4>
+      <div class="trainer-say"><strong>Trainer Says:</strong> Gender stereotypes imply attributes that are associated with men and women. Therefore, these tend to determine how they might behave in various circumstances and in the relationships they enjoy with each other. We discussed how men and women behave differently even when in the same situations. Why does this happen? Let us explore together the concept of gender stereotyping. Let us see what consequences such stereotypes have in the way we behave and the relations we have with others around us. We will be challenging these stereotypes. At the same time, we will try to understand what keeps them as important aspects of how we behave and react in a social context.</div>
+      <div class="activity-box">
+        <div class="act-label">THE CHAMELEON STORY</div>
+        <p>Two chameleons were sleeping on the bed. Suddenly a loud noise from nearby woke them up. One of the chameleons hid under the bed, while the other one picked up a stick and ran towards the door.</p>
+        <ol><li>Ask the students to identify which one of the two chameleons is male and which one is female.</li><li>Ask them to support their choice with concrete examples of associative qualities assigned to men and women and how that influenced their decision.</li><li>Make two separate lists of female and male qualities expressed by the students.</li><li>Encourage the participants to come up with all the qualities they associate with men and women.</li></ol>
+        <div class="values-grid">
+          <div class="val-card"><h4>MALE (perceived)</h4><ul><li>Adventurous</li><li>Aggressive</li><li>Strong</li><li>Rough</li><li>Impatient</li><li>Rational</li><li>Intelligent</li><li>Self-centered/Egoistic</li><li>Satisfied</li><li>Authoritative</li></ul></div>
+          <div class="val-card"><h4>FEMALE (perceived)</h4><ul><li>Weak</li><li>Shy</li><li>Gentle</li><li>Dependent</li><li>Tolerant</li><li>Sensitive</li><li>Jealous</li><li>Caring</li><li>Forgiving</li><li>Emotional</li></ul></div>
+        </div>
+        <p>The students can look at the list and decide which of these qualities they think women and men are born with. Keep cancelling qualities that they feel have been learned while growing.</p>
+        <div class="tip-box"><strong>Trainer's Tips:</strong> To conclude the exercise, tell the students that no one can say exactly which chameleon is female and which one is male. The one that ran to the door with a stick could be either male or female. However, due to socialization one learns to associate 'aggression', bravery, and strength with males. One tends to think of females as weak and submissive, who are not capable of handling tough situations. The values, absorbed through socialization are so strongly rooted in the minds of people that these affect all aspects of their lives (personality, attitudes, self-identity, roles, responsibilities, and behavior). These qualities are used as a basis for justifying discrimination between the two. Understanding that these qualities are social constructions, and therefore are changeable, is important for the creation of an equitable society.</div>
+      </div>
+      <div class="tip-box"><strong>Trainer's Tips:</strong> Encourage students to reflect and share their experiences from their childhood and adolescence when they were constantly being told how they should behave. Whether they were under pressure to always perform these roles, and were punished if they stepped out of these socially constructed roles. What comments were made when they tried to step out of these norms? It may be noted that many of these comments/names would refer to appearance or sexual behavior.</div>
+      <h4>Facilitate a Discussion — Questions on Reversals</h4>
+      <ol><li>Is it easy or hard to look at male and female roles in a new and non-traditional way?</li><li>How do men or women accept the changes in gender roles? Why?</li><li>What are some of the ways changing gender roles have affected relationships between men and women in social settings? In families? In the school?</li><li>Would you and your parents reach the same or different solutions?</li><li>If you could make one change in men's gender roles, what would it be? In women's gender roles?</li></ol>
+      <div class="tip-box"><strong>One teacher tells a story about his personal experience</strong> (no more than 5 minutes). Describe the situation. Describe the scenario you were in. Describe the feelings you had when you were thinking about facing this situation. Talk about the skills you wished you had. What would you do differently if you could do it again?</div>
+      <h4>Wrap-Up Circle</h4>
+      <p>Gather the group in a sitting circle. Review the goal behind the Wrap-Up Circle: To review what we learned in this session; To think about how we can use what we have learned when we face our challenges in the real world; To get advice and support from our peers and teachers with real situations we are facing in our lives.</p>
+      <p>Lead a discussion: What was the most important thing you learned today? How can the knowledge and skills you learned today help you with situations in your life right now? Does anyone need any help with the current situation they are facing? What kinds of challenging situations could you face in the coming days? Who is one person not in this session that you want to tell and teach what you learned here?</p>
+      <div class="pledge-box"><p style="font-family:'Bebas Neue',sans-serif;letter-spacing:3px;font-size:1.3rem;color:var(--gold);">END OF THE TOOLKIT</p></div>
+    </div>
+
+    <!-- TEACHER'S GUIDE -->
+    <div class="topic-section" id="t7">
+      <div class="topic-header"><div class="topic-num" style="background:var(--teal);color:var(--navy);">TG</div><div><h2>TEACHER'S GUIDE – SESSIONS OUTLINE</h2></div></div>
+      <div class="session-block">
+        <div class="session-title">Topic 1: Needs Assessment</div>
+        <p><strong>Session 1: Getting to Know You</strong> — Introduction; Getting to know you questions</p>
+        <p><strong>Session 2: Child Rights</strong> — Definition; Who is a Child?; What are child rights?; Examples of child rights; Types of child rights; Child rights and responsibilities; Pledge</p>
+      </div>
+      <div class="session-block">
+        <div class="session-title">Topic 2: My Value System</div>
+        <p><strong>Session 1:</strong> Personal values and social values — Definition of value; Types of values; Personal value definition and examples; Social value definition and examples; Trainer story; Wrapping up</p>
+        <p><strong>Session 2:</strong> Life-skills and personal awareness — Definition of Puberty; Changes during puberty in boys and girls; How puberty affects boys and girls; Hygiene (taking care of your body)</p>
+        <p><strong>Session 3:</strong> Peer pressure — Definition; Examples of peer pressure; How peer pressure affects us (boys); Resisting peer pressure; Challenge Choice Consequences (3Cs) role plays; Wrapping up</p>
+        <p><strong>Session 4:</strong> Self-esteem — Definition; Types of self-esteem; Factors that lower self-esteem; Promoting high self-esteem; Trainer story; Pledge</p>
+      </div>
+      <div class="session-block">
+        <div class="session-title">Topic 3: Intro to H.I.M and Verbal Techniques</div>
+        <p><strong>Session 1:</strong> Introduction to Hero in Me — Introduction and welcome activity (Take a lead, choose one option); Who is a Hero?; Do you have any hero in your life?; What makes him a hero?; Who is your role model?; Hero in Me definition; Example of Hero</p>
+        <p><strong>Session 2:</strong> Awareness — Definition; Gazelle story; How to become aware; Wrapping up</p>
+        <p><strong>Session 3:</strong> Assertiveness — Definition; Differentiate Assertive, Passive and Aggressive; How to be Assertive; Assertive steps; Assertiveness role plays; Closing Pledge</p>
+      </div>
+      <div class="session-block">
+        <div class="session-title">Topic 4: Hero in Me – Step-Up Definition and Strategies</div>
+        <p><strong>Session 1:</strong> Step-up definition and strategies — Definition; Goal of Step-up; <strong>NOTE: The most important thing to consider is SAFETY FIRST;</strong> Step-up techniques; De-escalation and negotiation; Factors to consider when doing step-up; Role plays (Dismissive / Verbal / Active); Pledge</p>
+      </div>
+      <div class="session-block">
+        <div class="session-title">Topic 5: Breaking the Silence and Referrals</div>
+        <p><strong>Session 1:</strong> Forms of Violence; Impact of Violence; Importance of breaking the silence; Trainer story; Wrapping up</p>
+        <p><strong>Session 2:</strong> Referral Pathways — Definition; Examples</p>
+        <div class="helpline-box"><div class="hl-title">HELPLINES</div><p><strong>116</strong> — Tithandizane Child Help Line</p><p><strong>5600 / 6600</strong> — GBV Crisis</p></div>
+        <p><strong>Session 3:</strong> Hero in Me Review — Ask questions from Topics 1 to 4; Give responses to the questions asked depending on learner's answers; Summarize</p>
+      </div>
+      <div class="session-block">
+        <div class="session-title">Topic 6: Boys and Girls Combined</div>
+        <p>Taking Vs Asking; Consent — Definition, What consent is all about; Gender and sex; Gender stereotypes — Feminine and Masculine qualities.</p>
+      </div>
+      <div class="session-block">
+        <div class="session-title">Roles and Responsibilities of Teacher Champions</div>
+        <p>Why are you a Teacher Champion? To stop the cycle of violence and to transform our schools, community, society and the world.</p>
+        <p>The reason why? It is to be the change we want to see in the world or in your school. NO ONE else in the teaching fraternity is teaching these skills but you and other teachers in Malawi who just do these training/classes. There are very few actions that create consequences for these perpetrators hence they set out to harm a child. If you want to make sure what happened to you or someone you know does not happen to others, then you must stand up and reach out with these skills to men and women and children. There is no one else coming! There are no laws or police or courts standing where the attacks take place. It's just us and these skills. God put you in this room, learn these skills well. Pay attention and act as lives depend on you because they do.</p>
+        <p>Take what you have learned here out into your schools and teach it everywhere — for your whole life. Whenever you go you have lifesaving skills and it's your job to be at the top of this class and you can teach them well.</p>
+        <p><strong>Teacher Champions must:</strong></p>
+        <ul><li>Map all available referral services in their community.</li><li>Establish relationships with local service providers.</li><li>Keep updated contact details of key stakeholders.</li><li>Coordinate closely with Ujamaa and other partners.</li></ul>
+        <h4>Documentation and Follow-Up — Teacher Champions should record:</h4>
+        <ol><li>Nature of the incident</li><li>Actions taken</li><li>Who the case was referred to</li><li>Outcome or follow-up steps</li></ol>
+        <h4>Ways to Report Anonymously</h4>
+        <ul><li>Through Ujamaa staff</li><li>Anonymous tip lines</li><li>Through intermediaries like Police and CPWs</li></ul>
+        <h4>Creating Safe Space</h4>
+        <p><strong>Definition:</strong> A safe space is an environment where people feel respected and supported to share their views and ideas.</p>
+        <p>HIM classes can bring up all kinds of issues for your learners. Role plays can trigger traumatic memories. Rape, sodomy, abuse and attacks are all extremely sensitive topics. They can be a great deal of secrecy, fear and shame around these issues and feelings are bound to rise to the surface in our classes.</p>
+        <p>Confidentiality is a cornerstone of Ujamaa Pamodzi classes; one way we communicate that priority to our learners is by bringing it up in classes as a rule. Learners rely on us to lay down rules of privacy, respect and compassionate interaction.</p>
+        <ol><li>Keep things confidential. Everything said in this room should stay in this room.</li><li>Respect each other's opinion. There is no right or wrong answer, everyone has a right to express himself.</li><li>Be thankful when someone shares their story. It takes courage to share something personal and we want to celebrate courage!</li></ol>
+      </div>
+    </div>
+
+    <!-- FACILITATOR'S NOTES -->
+    <div class="topic-section" id="t8">
+      <div class="topic-header"><div class="topic-num" style="background:var(--red);">FN</div><div><h2>FACILITATOR'S NOTES</h2></div></div>
+      <div class="session-block">
+        <div class="session-title">Understanding Positive Discipline</div>
+        <p><strong>Punishment:</strong> Is a short term strategy that stops the behaviour right away but doesn't stop it from happening in the future. It involves associating pain with behaviour rather than an understanding of what is wrong.</p>
+        <p><strong>Discipline:</strong> doesn't mean replacing the cane with other humiliating punishments. Positive discipline is about creating good relationships with children and helping them learn right from wrong.</p>
+        <h4>Goals of Disciplining a Child</h4>
+        <ul><li>To help children learn from their behavior</li><li>To help them make better choices</li><li>To make them stop a certain behaviour</li><li>To understand there are consequences for their behaviour.</li></ul>
+        <p><strong>What is positive discipline?</strong> It is a non-violent, solution focused, respectful approach, based on child development principles.</p>
+        <h4>Types of Positive Discipline</h4>
+        <p><strong>1. Reflection</strong> — Children learn from their mistakes when they understand what they did was wrong and when they are given an opportunity to think about the consequences of their behaviour. Types: Verbal warning (talk to the child and tell him/her what they did wrong); Imposing timeout (ask a child to leave a class for 10 minutes or sit in a quiet place); Letter writing (ask the student to write a letter or essay on why they behaved in a certain way and what they will do to avoid repeating the mistake, including an apology); Oral apology (this involves apologizing to the wronged person and asking for forgiveness); Discipline box (write the name of a child on a piece of paper and place it in a box in the classroom, checked on a weekly basis).</p>
+        <p><strong>2. Penalty</strong> — For offences that are persistent and detrimental for all concerned, children may need to experience a penalty to understand that there are consequences to their actions. Types: Withdrawal of privileges (taking away an activity that he/she enjoys); Light work that improves the school environment (slashing an appropriate sized area of grass, cleaning small part of school); Detention (the student must remain for extra time after school to reflect on what they did wrong); Signing of discipline or behavior contract (one page contract between the student and the teacher); Disciplinary talk with the learner; Demerit (marking the file or disciplinary book to record the child's offence).</p>
+        <p><strong>3. Reparation</strong> — These are offences that cause damage to a third party. Types: Public apology (possibly during assembly); Replace or repair (e.g. replacing or repairing the damage); Financial restitution (if the offence was intentional, the learner must pay for the materials); Official reprimand (written notice to their disciplinary record, must sign a letter committing to reform); Involving parents (parents get involved to contribute towards replacing, repairing or apologizing).</p>
+        <p><strong>4. Last Resort</strong> — For persistent and serious offences. Types: Parent meetings (summoning and discussing with the parents as a warning); Referral (referring the student to a professional who can assist); Suspension (a time limited suspension e.g. one week with a written warning and referral to a counselor).</p>
+      </div>
+      <div class="session-block">
+        <div class="session-title">Child Rights, VAEN and Life Skills</div>
+        <p>Children's rights are the human rights of children with particular attention to the rights of special protection and care afforded to minors. The 1989 Convention on the Rights of the Child (CRC) defines a child as "any human being below the age of eighteen years, unless under the law applicable to the child, majority is attained earlier."</p>
+        <p>All children have the right to be protected from violence, exploitation and abuse. Yet, millions of children worldwide from all socio-economic backgrounds, across all ages, religions and cultures suffer violence, exploitation and abuse every day.</p>
+        <p><strong>Child exploitation:</strong> Child exploitation is the act of using a minor child for profit, labor, sexual gratification, or some other personal or financial advantage. Child exploitation often results in cruel or harmful treatment of the child, as the activities he or she may be forced to take part in can cause emotional, physical, and social problems.</p>
+      </div>
+      <div class="session-block">
+        <div class="session-title">Developing Rules and Regulations with Learner Participation</div>
+        <p>Appropriate behaviour fosters a positive classroom environment. Engaging students on the first day of school in creating a set of rules helps ensure their investment. Students are more likely to buy into the rules if they have a hand in creating them.</p>
+        <ol><li>Treat others as you would like to be treated.</li><li>Respect other people and their property (e.g., no hitting, no stealing).</li><li>Laugh with anyone, but laugh at no one.</li><li>Be responsible for your own learning.</li><li>Come to class and hand in assignments on time.</li><li>Do not disturb people who are working.</li></ol>
+        <p><strong>Three types of logical consequences:</strong></p>
+        <ol><li><strong>"You break it, you fix it"</strong> — can be used to mend emotional messes as well as physical messes. A student can repair hurt feelings with an apology of action.</li><li><strong>Temporary loss of privilege</strong> — a simple way to help a student remember to use that privilege (art materials, recess, and group time) responsibly.</li><li><strong>Time-out or "take a break"</strong> — a strategy to help students learn self-control. A student who is disrupting the work of the group is asked to leave for a few minutes.</li></ol>
+      </div>
+      <div class="session-block">
+        <div class="session-title">Mentorship and Role Modelling</div>
+        <p><strong>Mentorship</strong> is a relationship in which a more experienced or more knowledgeable person helps to guide a less experienced or less knowledgeable person.</p>
+        <p><strong>Role modelling</strong> is a process that allows students to learn new behaviors without the trial and error of doing things for themselves (Bandura, 1977). It is a form of learning from experience that uses humanist and social learning theories (Rogers, 1983). A key feature is the experience learners bring to a situation. Individuals want to learn and do so best when they feel free to express and choose their own direction. Mentors fulfill a dual role of teacher and facilitator — helping their students to identify what direction learning should take and facilitating the best conditions for this to occur.</p>
+      </div>
+      <div class="session-block">
+        <div class="session-title">Guidance and Counselling</div>
+        <p><strong>Meaning of Guidance:</strong> Guidance is all round assistance to an individual in all aspects of his or her development. It makes use of the science of psychology to determine the attitude, interest, intelligence, personality and the discipline of the education for providing right and suitable assistance.</p>
+        <ul><li>It is a process of helping or assisting an individual to solve their problems. It helps them to identify where to go, what to do and how to post accomplishments of their goals.</li><li>It is a continuous process which starts right from childhood, adolescence and continues over into old age.</li><li>It is assistance to the individual in the process of development rather than direction of that development.</li><li>It is a service meant for all: its regular service which is required for every student, not only for abnormal students.</li><li>Guidance is an organized service not an incidental activity of the school.</li><li>Guidance is more an art than science.</li><li>Guidance is centered on the needs and aspirations of students.</li></ul>
+        <p><strong>Counseling:</strong> It is giving professional help and advice to someone to resolve personal or psychological problems.</p>
+        <p><strong>Qualities of a Good Counsellor:</strong> The core qualities include genuineness, empathy, warmth and unconditional positive regard. In addition, a good counsellor needs to be creative, have a sense of humour, be a risk taker, tolerant, gracious and democratic.</p>
+        <p><strong>Necessary Skills of a Good Counsellor:</strong></p>
+        <ul><li>Listening and communication skills</li><li>Problem solving and decision making skills</li><li>Ability to deal with conflict</li><li>Be oneself</li><li>Have interest</li><li>Having acknowledgement</li></ul>
+        <h4>Difference between Guidance and Counseling</h4>
+        <ul><li>Guidance is mainly preventive and developmental whereas counseling is remedial as well as preventive and developmental.</li><li>Intellectual attitudes are the raw material of guidance but emotional rather than pure intellectual attitudes are the raw materials of the counseling process.</li><li>In guidance, decision making is operable at intellectual level, whereas in counseling it operates at emotional level.</li><li>In educational context, counseling service is one among various services offered by guidance programmes.</li></ul>
+      </div>
+    </div>
+
+    <div style="text-align:center;padding:2rem 0;">
+      <button class="action-btn" style="width:auto;padding:13px 36px;" onclick="showScreen('screen-register')">TAKE THE QUIZ NOW</button>
+    </div>
+  </div>
+</div>
+
+<!-- REGISTER SCREEN -->
+<div class="screen" id="screen-register">
+  <div class="screen-header">
+    <div class="logo-sm"><svg width="34" height="34" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="30" rx="28" ry="28" fill="#f47920"/><path d="M22 20L26 26 22 30 28 34 24 40 32 38 36 44 38 36 44 32 38 28 40 20 34 24 30 18 26 24Z" fill="white"/></svg><div><div class="org">UJAMAA AFRICA</div><div class="sub">HERO IN ME</div></div></div>
+    <h2>REGISTRATION</h2>
+    <button class="btn-secondary" style="margin-left:auto;" onclick="showScreen('screen-hero')">HOME</button>
+  </div>
+  <div class="form-card">
+    <h3>Tell Us About You</h3>
+    <p>Complete the form below to begin the Hero in Me knowledge assessment.</p>
+    <div class="field"><label>Full Name</label><input type="text" id="reg-name" placeholder="e.g. Chisomo Banda" autocomplete="off"><div class="error-msg" id="err-name">Please enter your full name.</div></div>
+    <div class="field"><label>Email Address</label><input type="email" id="reg-email" placeholder="e.g. chisomo@email.com" autocomplete="off"><div class="error-msg" id="err-email">Please enter a valid email address (e.g. name@domain.com).</div></div>
+    <div class="field"><label>School Name</label><input type="text" id="reg-school" placeholder="e.g. Lilongwe Primary School" autocomplete="off"><div class="error-msg" id="err-school">Please enter your school name.</div></div>
+    <div class="field"><label>Class / Grade</label>
+      <select id="reg-class"><option value="">-- Select your class --</option><option>Standard 4</option><option>Standard 5</option><option>Standard 6</option><option>Standard 7</option><option>Standard 8</option><option>Form 1</option><option>Form 2</option><option>Form 3</option><option>Form 4</option></select>
+      <div class="error-msg" id="err-class">Please select your class.</div>
+    </div>
+    <div class="field"><label>Date</label><input type="date" id="reg-date"></div>
+    <button class="action-btn" onclick="startQuiz()">BEGIN ASSESSMENT</button>
+  </div>
+</div>
+
+<!-- QUIZ SCREEN -->
+<div class="screen" id="screen-quiz">
+  <div class="screen-header">
+    <div class="logo-sm"><svg width="34" height="34" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="30" rx="28" ry="28" fill="#f47920"/><path d="M22 20L26 26 22 30 28 34 24 40 32 38 36 44 38 36 44 32 38 28 40 20 34 24 30 18 26 24Z" fill="white"/></svg><div><div class="org">UJAMAA AFRICA</div><div class="sub">HIM ASSESSMENT</div></div></div>
+    <h2>KNOWLEDGE CHECK</h2>
+  </div>
+  <div class="quiz-container">
+    <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="q-progress"></div></div>
+    <div class="q-counter" id="q-counter">QUESTION 1 OF 10</div>
+    <div class="q-topic" id="q-topic">TOPIC</div>
+    <div class="q-text" id="q-text"></div>
+    <div class="options-grid" id="options-grid"></div>
+    <div class="feedback-box" id="feedback-box"></div>
+    <button class="next-btn" id="next-btn" onclick="nextQuestion()">NEXT QUESTION</button>
+  </div>
+</div>
+
+<!-- RESULT SCREEN -->
+<div class="screen" id="screen-result">
+  <div class="screen-header">
+    <div class="logo-sm"><svg width="34" height="34" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="30" rx="28" ry="28" fill="#f47920"/><path d="M22 20L26 26 22 30 28 34 24 40 32 38 36 44 38 36 44 32 38 28 40 20 34 24 30 18 26 24Z" fill="white"/></svg><div><div class="org">UJAMAA AFRICA</div><div class="sub">YOUR RESULTS</div></div></div>
+    <h2>RESULTS</h2>
+  </div>
+  <div class="result-card">
+    <div class="score-circle"><div class="pct" id="res-pct">0%</div><div class="lbl">SCORE</div></div>
+    <h2 id="res-title">WELL DONE!</h2>
+    <p id="res-msg"></p>
+    <div class="result-meta">
+      <div class="meta-row"><span class="key">Name</span><span class="val" id="res-name">-</span></div>
+      <div class="meta-row"><span class="key">School</span><span class="val" id="res-school">-</span></div>
+      <div class="meta-row"><span class="key">Class</span><span class="val" id="res-class">-</span></div>
+      <div class="meta-row"><span class="key">Correct Answers</span><span class="val" id="res-correct">-</span></div>
+      <div class="meta-row"><span class="key">Total Questions</span><span class="val">10</span></div>
+      <div class="meta-row"><span class="key">Date</span><span class="val" id="res-date">-</span></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="showScreen('screen-curriculum')">REVIEW CURRICULUM</button>
+      <button class="btn-secondary" onclick="retakeQuiz()">RETAKE</button>
+      <button class="action-btn" style="width:auto;padding:11px 24px;" onclick="goToCertificate()">GET CERTIFICATE</button>
+    </div>
+  </div>
+</div>
+
+<!-- CERTIFICATE SCREEN -->
+<div class="screen" id="screen-cert">
+  <div class="screen-header">
+    <div class="logo-sm"><svg width="34" height="34" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="30" rx="28" ry="28" fill="#f47920"/><path d="M22 20L26 26 22 30 28 34 24 40 32 38 36 44 38 36 44 32 38 28 40 20 34 24 30 18 26 24Z" fill="white"/></svg><div><div class="org">UJAMAA AFRICA</div><div class="sub">CERTIFICATE</div></div></div>
+    <h2>YOUR CERTIFICATE</h2>
+  </div>
+  <div class="cert-wrapper">
+    <canvas id="certificate-canvas" width="900" height="640"></canvas>
+    <div class="cert-actions">
+      <button class="btn-secondary" onclick="showScreen('screen-result')">BACK</button>
+      <button class="action-btn" style="width:auto;padding:12px 28px;" onclick="downloadCertPDF()">DOWNLOAD PDF</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var questions=[
+  {topic:"Child Rights",text:"According to the Hero in Me curriculum, who is defined as a child?",options:["Anyone under the age of 16 years","Anyone under the age of 18 years","Anyone under the age of 21 years","Anyone under the age of 15 years"],correct:1,explanation:"A child is defined as every human being below the age of 18 years, consistent with the UN Convention on the Rights of the Child."},
+  {topic:"Values",text:"Which of the following is an example of a PERSONAL value as taught in the Hero in Me curriculum?",options:["Discipline and Co-operation","Kindness and Charity","Honesty and Respect","Brotherhood and Justice"],correct:2,explanation:"Personal values guide individual growth and include honesty, responsibility, humanity, and respect. Discipline, co-operation, brotherhood, and justice are social values."},
+  {topic:"Puberty",text:"At what age range does puberty typically begin in boys according to the HIM curriculum?",options:["6 to 10 years","9 to 14 years","12 to 18 years","8 to 13 years"],correct:1,explanation:"The curriculum states puberty typically occurs between 9 to 14 years for boys and 8 to 13 years for girls."},
+  {topic:"Peer Pressure",text:"What is the best definition of peer pressure as described in the Hero in Me curriculum?",options:["Pressure from teachers to perform well in school","Feeling pressured by friends or peers to act or behave in certain ways","Pressure from parents to follow family rules","Academic stress caused by examinations"],correct:1,explanation:"Peer pressure is the pressure felt from friends or peers to act or behave in certain ways, which can be positive or negative."},
+  {topic:"Self-Esteem",text:"Which of the following is NOT listed as a way to promote high self-esteem in the curriculum?",options:["Practice saying no","Talk to someone you trust","Compare yourself to others to improve","Try to avoid comparing yourself to others"],correct:2,explanation:"The curriculum teaches that you should AVOID comparing yourself to others. Comparing yourself negatively to others actually lowers self-esteem."},
+  {topic:"Hero in Me",text:"How is Hero in Me (HIM) defined in the curriculum?",options:["Being physically strong and brave","Turning from Negative to Positive","Having superpowers to help others","Following the rules set by adults"],correct:1,explanation:"Hero in Me is defined as Turning from Negative to Positive - when difficult situations lead to positive outcomes, growth, or courage."},
+  {topic:"Assertiveness",text:"What does being assertive mean according to the Hero in Me curriculum?",options:["Being aggressive and dominating others","Staying silent to avoid conflict","Being direct, honest, and standing up for yourself","Always agreeing with what others say"],correct:2,explanation:"Assertiveness means being direct and standing up for yourself, being honest with yourself and others about what you need and want, without being aggressive."},
+  {topic:"Step-Up",text:"What is the definition of Step-Up in the Hero in Me curriculum?",options:["To run away from a dangerous situation","To call the police immediately","To come forward and take action to prevent or stop harm","To ignore minor conflicts to keep the peace"],correct:2,explanation:"Step-Up is defined as To Come Forward - taking action to prevent, stop, or calm down a conflict situation to protect yourself or someone else."},
+  {topic:"Consent",text:"Which of the following best describes consent as taught in the curriculum?",options:["The absence of a no from the other person","An agreement between people meaning hearing the word yes","Permission that only needs to be given once","Something only needed in romantic relationships"],correct:1,explanation:"Consent is an agreement between people. The curriculum emphasizes that consent is hearing the word YES. It is NOT the absence of hearing NO. It must happen every time."},
+  {topic:"Breaking Silence",text:"According to the HIM curriculum, what is Breaking the Silence?",options:["Shouting loudly when someone attacks you","Posting about abuse on social media","Giving someone hope and courage to talk about a violent incident they have experienced","Reporting every small argument to a teacher"],correct:2,explanation:"Breaking the Silence means giving someone hope and courage to speak about an incident of violence, harassment, or abuse that they have experienced or witnessed, so they can get the help they need."}
+];
+
+var stepTechs=["Say, Let us talk about this later","Use humor to lighten the mood","Lower your voice","Give choices","Act calm even if you are not","Walk away","Ask, What would help you right now?","Change the subject to a positive one","Give personal space","Distract with something positive that they like","Show that you are listening","Offer help","Talk about something they like","Encourage the person","Remind them of something amazing they did","Say, You can do this","Call another adult for help","Say, Let us call someone. I think they can help","Be willing to find a solution","Avoid over-reacting","Use active listening","Offer a solution","Let the person talk without interrupting","Say, I see your point","Offer to take a walk with the person","Clarify expectations","Remind them of something they love","Apologize for something you did wrong","Invite them to do a preferred activity","Slow yourself down to avoid getting worked up","Say, So you are upset because... right?","Show empathy","Encourage the person to use a coping strategy","Do not take items or personal property away from them","Encourage the person to take a walk or get a drink","Ask, Would it help if...?","Keep escape routes open to the door","Coach the person with positive remarks","Acknowledge where you agree with the person","Tell the person, I am here for you","Say, Talk to me, and listen","Ignore the behavior if it is minor","Distract by saying, Hey let us go...","Be respectful in your tone","Do what works at the moment","Ask them to draw a picture of what happened"];
+
+var userData={},currentQ=0,score=0,answered=false;
+
+window.addEventListener('DOMContentLoaded',function(){
+  var g=document.getElementById('step-grid');
+  if(g){stepTechs.forEach(function(t,i){g.innerHTML+='<div class="step-item"><span class="step-num">'+(i+1)+'</span>'+t+'</div>';});}
+  var d=document.getElementById('reg-date');
+  if(d){d.value=new Date().toISOString().split('T')[0];}
+});
+
+function showScreen(id){
+  var screens=document.querySelectorAll('.screen');
+  screens.forEach(function(s){s.style.display='none';});
+  var hero=document.getElementById('screen-hero');
+  if(hero){hero.style.display='none';}
+  var el=document.getElementById(id);
+  if(el){el.style.display='block';}
+  window.scrollTo(0,0);
+}
+
+function jumpTo(id,btn){
+  var btns=document.querySelectorAll('.curr-nav button');
+  btns.forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  var el=document.getElementById(id);
+  if(el){var y=el.getBoundingClientRect().top+window.scrollY-120;window.scrollTo({top:y,behavior:'smooth'});}
+}
+
+function validateEmail(e){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);}
+function showErr(id,show){var el=document.getElementById(id);if(el){if(show){el.classList.add('show');}else{el.classList.remove('show');}}}
+
+function startQuiz(){
+  var name=document.getElementById('reg-name').value.trim();
+  var email=document.getElementById('reg-email').value.trim();
+  var school=document.getElementById('reg-school').value.trim();
+  var cls=document.getElementById('reg-class').value;
+  var date=document.getElementById('reg-date').value;
+  var valid=true;
+  if(!name){showErr('err-name',true);valid=false;}else{showErr('err-name',false);}
+  if(!validateEmail(email)){showErr('err-email',true);valid=false;}else{showErr('err-email',false);}
+  if(!school){showErr('err-school',true);valid=false;}else{showErr('err-school',false);}
+  if(!cls){showErr('err-class',true);valid=false;}else{showErr('err-class',false);}
+  if(!valid){return;}
+  var d=date?new Date(date+'T00:00:00'):new Date();
+  userData={name:name,email:email,school:school,cls:cls,date:d.toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})};
+  currentQ=0;score=0;
+  showScreen('screen-quiz');
+  renderQuestion();
+}
+
+function renderQuestion(){
+  answered=false;
+  var q=questions[currentQ];var total=questions.length;
+  document.getElementById('q-progress').style.width=((currentQ/total)*100)+'%';
+  document.getElementById('q-counter').textContent='QUESTION '+(currentQ+1)+' OF '+total;
+  document.getElementById('q-topic').textContent=q.topic.toUpperCase();
+  document.getElementById('q-text').textContent=q.text;
+  var grid=document.getElementById('options-grid');grid.innerHTML='';
+  var letters=['A','B','C','D'];
+  q.options.forEach(function(opt,i){
+    var btn=document.createElement('button');
+    btn.className='option-btn';
+    btn.innerHTML='<span class="opt-letter">'+letters[i]+'</span>'+opt;
+    (function(idx){btn.onclick=function(){selectAnswer(idx);};})(i);
+    grid.appendChild(btn);
+  });
+  var fb=document.getElementById('feedback-box');fb.className='feedback-box';fb.textContent='';
+  var nb=document.getElementById('next-btn');nb.classList.remove('show');
+  nb.textContent=currentQ===total-1?'SEE RESULTS':'NEXT QUESTION';
+}
+
+function selectAnswer(chosen){
+  if(answered){return;}answered=true;
+  var q=questions[currentQ];
+  var btns=document.querySelectorAll('.option-btn');
+  btns.forEach(function(b){b.disabled=true;});
+  var fb=document.getElementById('feedback-box');
+  if(chosen===q.correct){
+    btns[chosen].classList.add('correct');score++;
+    fb.className='feedback-box correct-fb show';
+    fb.textContent='Correct! '+q.explanation;
+  }else{
+    btns[chosen].classList.add('wrong');btns[q.correct].classList.add('correct');
+    fb.className='feedback-box wrong-fb show';
+    fb.textContent='Not quite. '+q.explanation;
+  }
+  document.getElementById('next-btn').classList.add('show');
+}
+
+function nextQuestion(){
+  currentQ++;
+  if(currentQ<questions.length){renderQuestion();}else{showResults();}
+}
+
+function showResults(){
+  var pct=Math.round((score/questions.length)*100);
+  var title,msg,color;
+  if(pct>=80){title='HERO ACHIEVED!';msg='Outstanding! You have demonstrated excellent knowledge of the Hero in Me curriculum. You are ready to be a hero!';color='#27ae60';}
+  else if(pct>=60){title='WELL DONE!';msg='Good effort! You have a solid understanding of the Hero in Me curriculum. Keep learning and growing.';color='#f5a623';}
+  else{title='KEEP GROWING!';msg='You have completed the assessment. Review the Hero in Me curriculum and try again to improve your score.';color='#f47920';}
+  document.getElementById('res-pct').textContent=pct+'%';
+  var rt=document.getElementById('res-title');rt.textContent=title;rt.style.color=color;
+  document.getElementById('res-msg').textContent=msg;
+  document.getElementById('res-name').textContent=userData.name;
+  document.getElementById('res-school').textContent=userData.school;
+  document.getElementById('res-class').textContent=userData.cls;
+  document.getElementById('res-correct').textContent=score+' / '+questions.length;
+  document.getElementById('res-date').textContent=userData.date;
+  showScreen('screen-result');
+}
+
+function retakeQuiz(){currentQ=0;score=0;showScreen('screen-quiz');renderQuestion();}
+
+function goToCertificate(){showScreen('screen-cert');drawCertificate();}
+
+function drawCertificate(){
+  var canvas=document.getElementById('certificate-canvas');
+  var ctx=canvas.getContext('2d');
+  var W=canvas.width,H=canvas.height;
+  var pct=Math.round((score/questions.length)*100);
+  ctx.fillStyle='#fdf8ee';ctx.fillRect(0,0,W,H);
+  var g=ctx.createLinearGradient(0,0,W,0);g.addColorStop(0,'#0d1b3e');g.addColorStop(1,'#1a3a8f');
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,115);
+  ctx.fillStyle='#f47920';ctx.fillRect(0,115,W,8);
+  ctx.fillStyle='#f5a623';ctx.fillRect(0,H-8,W,8);
+  ctx.fillStyle='#0d1b3e';ctx.fillRect(0,H-82,W,74);
+  ctx.fillStyle='#00b4c6';ctx.fillRect(0,H-82,W,4);
+  ctx.strokeStyle='#f5a623';ctx.lineWidth=3;ctx.strokeRect(18,18,W-36,H-36);
+  ctx.strokeStyle='#0d1b3e';ctx.lineWidth=1.5;ctx.strokeRect(24,24,W-48,H-48);
+  ctx.beginPath();ctx.arc(W/2-210,60,28,0,Math.PI*2);ctx.fillStyle='#f47920';ctx.fill();
+  ctx.fillStyle='white';ctx.font='bold 18px Arial';ctx.textAlign='center';ctx.fillText('UA',W/2-210,66);
+  ctx.fillStyle='#f47920';ctx.font='bold 14px Arial';ctx.fillText('UJAMAA AFRICA',W/2,36);
+  ctx.fillStyle='#ffffff';ctx.font='bold 40px Georgia,serif';ctx.fillText('HERO IN ME',W/2,84);
+  ctx.fillStyle='#00b4c6';ctx.font='11px Arial';ctx.fillText('EMPOWERMENT TRANSFORMATION TRAINING',W/2,108);
+  ctx.fillStyle='#555';ctx.font='italic 16px Georgia,serif';ctx.fillText('This is to certify that',W/2,158);
+  ctx.fillStyle='#1a3a8f';ctx.font='bold 36px Georgia,serif';ctx.fillText(userData.name,W/2,206);
+  var nm=ctx.measureText(userData.name);
+  ctx.strokeStyle='#f47920';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(W/2-nm.width/2-10,214);ctx.lineTo(W/2+nm.width/2+10,214);ctx.stroke();
+  ctx.fillStyle='#444';ctx.font='italic 15px Georgia,serif';ctx.fillText('has successfully completed the',W/2,248);
+  ctx.fillStyle='#0d1b3e';ctx.font='bold 20px Arial';ctx.fillText("HERO IN ME - BOY'S CURRICULUM",W/2,278);
+  ctx.fillStyle='#555';ctx.font='13px Georgia,serif';ctx.fillText('Primary School Empowerment Transformation Training Assessment',W/2,300);
+  ctx.beginPath();ctx.arc(W/2,370,50,0,Math.PI*2);
+  ctx.fillStyle=pct>=80?'#27ae60':pct>=60?'#f5a623':'#f47920';ctx.fill();
+  ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.stroke();
+  ctx.fillStyle='#fff';ctx.font='bold 26px Georgia,serif';ctx.fillText(pct+'%',W/2,379);
+  ctx.font='10px Arial';ctx.fillText('SCORE',W/2,394);
+  var ach=pct>=80?'HERO ACHIEVED':pct>=60?'WELL DONE':'PARTICIPANT';
+  ctx.fillStyle=pct>=80?'#27ae60':pct>=60?'#f5a623':'#f47920';
+  ctx.font='bold 13px Arial';ctx.fillText(ach,W/2,432);
+  var dY=482;
+  ctx.strokeStyle='#ddd';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(80,dY-16);ctx.lineTo(W-80,dY-16);ctx.stroke();
+  var cols=[{l:'NAME',v:userData.name},{l:'SCHOOL',v:userData.school},{l:'CLASS',v:userData.cls},{l:'DATE',v:userData.date}];
+  var cW=(W-140)/4;
+  for(var i=0;i<cols.length;i++){
+    var c=cols[i];var x=70+cW*i+cW/2;
+    ctx.fillStyle='#999';ctx.font='10px Arial';ctx.textAlign='center';ctx.fillText(c.l,x,dY);
+    ctx.fillStyle='#0d1b3e';ctx.font='bold 12px Georgia,serif';
+    var v=c.v;var mw=cW-8;
+    while(ctx.measureText(v).width>mw&&v.length>5){v=v.slice(0,-1);}
+    if(v!==c.v){v+='...';}
+    ctx.fillText(v,x,dY+18);
+  }
+  ctx.strokeStyle='#ddd';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(80,dY+30);ctx.lineTo(W-80,dY+30);ctx.stroke();
+  ctx.fillStyle='#ffffff';ctx.font='11px Arial';ctx.textAlign='center';
+  ctx.fillText('www.ujamaa-africa.org  |  +254 (254) 725776203  |  Hero in Me - Empowerment Transformation Training',W/2,H-46);
+  ctx.fillStyle='#00b4c6';ctx.font='10px Arial';
+  ctx.fillText('Ujamaa Pamodzi Africa - Promoting Welfare, Protection, and Empowerment of Children',W/2,H-28);
+}
+
+function downloadCertPDF(){
+  var jsPDF=window.jspdf.jsPDF;
+  var canvas=document.getElementById('certificate-canvas');
+  var imgData=canvas.toDataURL('image/png',1.0);
+  var pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  var pW=pdf.internal.pageSize.getWidth();var pH=pdf.internal.pageSize.getHeight();
+  var m=8;var iW=pW-m*2;var iH=(canvas.height/canvas.width)*iW;var yP=(pH-iH)/2;
+  pdf.addImage(imgData,'PNG',m,yP,iW,iH);
+  var safe=userData.name.replace(/[^a-zA-Z0-9 ]/g,'').replace(/\s+/g,'_');
+  pdf.save('HIM_Certificate_'+safe+'.pdf');
+}
+
+// Init
+var hero=document.getElementById('screen-hero');
+if(hero){hero.style.display='flex';}
+</script>
+</body>
+</html>
