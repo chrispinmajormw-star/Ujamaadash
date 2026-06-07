@@ -7,7 +7,7 @@ interface CertificateComponentProps {
   score: number;
   completedAt: string;
   grade: string;
-  sex: string;
+  sex?: string;
   onClose: () => void;
 }
 

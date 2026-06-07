@@ -19,6 +19,7 @@ interface PdfViewerProps {
   onClose: () => void;
 }
 const PdfViewer: React.FC<PdfViewerProps> = ({ url, title, subtitle, onClose }) => {
+  const containerRef = React.useRef<HTMLDivElement>(null);
   const [fullscreen, setFullscreen] = useState(false);
 
   useEffect(() => {
@@ -27,8 +28,24 @@ const PdfViewer: React.FC<PdfViewerProps> = ({ url, title, subtitle, onClose }) 
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  useEffect(() => {
+    const onFsChange = () => setFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onFsChange);
+    return () => document.removeEventListener('fullscreenchange', onFsChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    const el = containerRef.current;
+    if (!el) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      el.requestFullscreen();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-[99999] bg-black/90 flex flex-col">
+    <div ref={containerRef} className="fixed inset-0 z-[99999] bg-black/90 flex flex-col">
       <div className="shrink-0 h-11 flex items-center justify-between px-4 bg-[#0f1623] border-b border-slate-800">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-6 h-6 rounded bg-[#e85d04] flex items-center justify-center shrink-0">
@@ -49,9 +66,9 @@ const PdfViewer: React.FC<PdfViewerProps> = ({ url, title, subtitle, onClose }) 
             <ExternalLink size={11} /> Open tab
           </a>
           <button
-            onClick={() => setFullscreen(f => !f)}
+            onClick={toggleFullscreen}
             className="w-7 h-7 flex items-center justify-center rounded border border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-white transition"
-            title="Toggle fullscreen"
+            title={fullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
           >
             <Maximize2 size={13} />
           </button>
@@ -116,8 +133,12 @@ export const CurriculumPage: React.FC = () => {
   const [quizScore, setQuizScore] = useState(0);
   const [quizPassed, setQuizPassed] = useState(false);
   const [studentName, setStudentName] = useState('');
+  const [studentGrade, setStudentGrade] = useState('');
+  const [studentSex, setStudentSex] = useState('');
   const [showNamePrompt, setShowNamePrompt] = useState(false);
   const [tempName, setTempName] = useState('');
+  const [tempGrade, setTempGrade] = useState('');
+  const [tempSex, setTempSex] = useState('');
 
   const sessions = tab === 'him' ? HIM_SESSIONS : GESD_SESSIONS;
   const isHim = tab === 'him';
@@ -132,12 +153,15 @@ export const CurriculumPage: React.FC = () => {
   const currDoc = PDF_DOCS.find(d => d.curriculum === tab)!;
 
   const handleStartCourse = () => {
+    if (sessions.length === 0) return;
     setShowNamePrompt(true);
   };
 
   const handleEnterName = () => {
-    if (tempName.trim()) {
-      setStudentName(tempName);
+    if (tempName.trim() && tempGrade.trim()) {
+      setStudentName(tempName.trim());
+      setStudentGrade(tempGrade.trim());
+      setStudentSex(tempSex.trim());
       setShowNamePrompt(false);
       setCourseMode('lesson');
       setCurrentLesson(0);
@@ -154,12 +178,7 @@ export const CurriculumPage: React.FC = () => {
   const handleQuizComplete = (score: number, passed: boolean) => {
     setQuizScore(score);
     setQuizPassed(passed);
-    if (passed) {
-      setCourseMode('certificate');
-    } else {
-      // Failed: stay in quiz mode so student can retry without redoing all lessons
-      setCourseMode('quiz');
-    }
+    setCourseMode(passed ? 'certificate' : 'lesson');
   };
 
   // Course view
@@ -214,6 +233,7 @@ export const CurriculumPage: React.FC = () => {
           studentName={studentName}
           onComplete={handleQuizComplete}
           onBack={() => setCourseMode('view')}
+          onReviewLessons={() => setCourseMode('lesson')}
         />
       </div>
     );
@@ -225,6 +245,8 @@ export const CurriculumPage: React.FC = () => {
         studentName={studentName}
         curriculum={tab}
         score={quizScore}
+        grade={studentGrade}
+        sex={studentSex}
         completedAt={new Date().toISOString()}
         onClose={() => {
           setCourseMode('view');
@@ -244,21 +266,39 @@ export const CurriculumPage: React.FC = () => {
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50">
           <Card className="w-full max-w-md space-y-4">
             <div>
-              <h2 className="text-lg font-bold text-black dark:text-white">Enter Your Name</h2>
+              <h2 className="text-lg font-bold text-black dark:text-white">Student Details</h2>
               <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                Your name will appear on your certificate upon completion
+                Your details will appear on your certificate upon completion
               </p>
             </div>
             <input
               type="text"
               value={tempName}
               onChange={(e) => setTempName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleEnterName()}
-              placeholder="Enter your full name"
+              placeholder="Full name"
               className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-black dark:text-white focus:outline-none focus:ring-2"
               style={{ '--tw-ring-color': accent } as any}
               autoFocus
             />
+            <input
+              type="text"
+              value={tempGrade}
+              onChange={(e) => setTempGrade(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleEnterName()}
+              placeholder="Grade / Form (e.g. Form 2)"
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-black dark:text-white focus:outline-none focus:ring-2"
+              style={{ '--tw-ring-color': accent } as any}
+            />
+            <select
+              value={tempSex}
+              onChange={(e) => setTempSex(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-black dark:text-white focus:outline-none focus:ring-2"
+              style={{ '--tw-ring-color': accent } as any}
+            >
+              <option value="">Sex (optional)</option>
+              <option value="Female">Female</option>
+              <option value="Male">Male</option>
+            </select>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowNamePrompt(false)}
@@ -268,7 +308,7 @@ export const CurriculumPage: React.FC = () => {
               </button>
               <button
                 onClick={handleEnterName}
-                disabled={!tempName.trim()}
+                disabled={!tempName.trim() || !tempGrade.trim()}
                 className="flex-1 px-4 py-2 rounded-lg font-semibold text-sm text-white transition hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ backgroundColor: accent }}
               >
@@ -379,7 +419,8 @@ export const CurriculumPage: React.FC = () => {
 
               <button
                 onClick={handleStartCourse}
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-white text-xs font-bold transition hover:opacity-90 active:scale-[0.98]"
+                disabled={sessions.length === 0}
+                className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-white text-xs font-bold transition hover:opacity-90 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ backgroundColor: accent }}
               >
                 <div className="flex items-center gap-2">
@@ -450,6 +491,14 @@ export const CurriculumPage: React.FC = () => {
               {isHim ? '45–90 min each' : '45–60 min each'}
             </div>
           </div>
+
+          {sessions.length === 0 && (
+            <Card className="p-6 text-center">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                No sessions are available for this programme yet.
+              </p>
+            </Card>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {sessions.map((s, i) => (

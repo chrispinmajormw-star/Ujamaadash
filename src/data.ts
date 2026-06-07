@@ -1,4 +1,4 @@
-import { User, Report, Cluster, District, Session, CaseReferral, SasaMonthlyReport } from './types';
+import { User, Report, Cluster, District, Session, QuizQuestion, CaseReferral, SasaMonthlyReport } from './types';
 
 export const ROLE_CFG = {
   admin: { label: "National Admin", color: "#991b1b", bg: "#fee2e2", icon: "🛡️" },
@@ -541,7 +541,7 @@ export const HIM_SESSIONS: Session[] = [
     ]
   },
   {
-    "num": "HIM1",
+    "num": "HIM4",
     "title": "Introduction to HIM and Awareness",
     "dur": "1 hr",
     "desc": "Introduction to HIM and Awareness",
@@ -661,7 +661,7 @@ export const HIM_SESSIONS: Session[] = [
     ]
   },
   {
-    "num": "HIM2",
+    "num": "HIM5",
     "title": "Being Assertive",
     "dur": "1 hr",
     "desc": "Being Assertive",
@@ -1218,7 +1218,208 @@ export const HIM_SESSIONS: Session[] = [
   }
 ];
 
-export const GESD_SESSIONS: Session[] = [];
+export const GESD_SESSIONS: Session[] = [
+  {
+    "num": "GESD1",
+    "title": "Getting to Know You",
+    "dur": "45–60 min",
+    "desc": "Child Rights - Life Skills - Puberty - Menstruation - Hygiene",
+    "pledge": null,
+    "objectives": [
+      "To help students realize they are unique and appreciate who they are.",
+      "Students can recognize their personal strengths and enhance their self-image.",
+      "Students will compare their positive self-concepts with others positive perception.",
+      "To ensure learners have skills to think and behave positively, relate to others, and succeed in life."
+    ],
+    "content": [
+      {
+        "type": "paragraph",
+        "title": "Getting to Know You Questions",
+        "content": "1. Who are you? State your name and where you reside\n2. What are your likes and dislikes?\n3. What are you good at? Drawing, soccer, reading, best subjects\n4. In the company of fellow girls, what topics do you always discuss?\n5. Have you ever been pressured to do something you do not like by a father, mother, friend, sister or brother?\n6. Do you know about private parts?\n\n**CHANT (repeat 3 times):**\nThese are my private parts. No one should see them. No one should touch them. No one should feel them. No one should play with them.\nAwa ndi malo anga obisika. Wina asawagwire. Wina asawone. Wina asawaseweletse."
+      },
+      {
+        "type": "paragraph",
+        "title": "Child Rights",
+        "content": "A child is every human being below the age of eighteen years.\n\n**Definition:** Entitlements all children have for their growth and wellbeing regardless of age, sex, race, nationality, religion, political beliefs, and language.\n\n**PROVISION RIGHTS:**\nAdequate standard of living\nRight to health care and nutrition\nRight to education\nRight to play and recreation\nRight to be raised by their parents\nRight to information\n\n**PROTECTION RIGHTS:**\nProtection from sexual, physical, emotional abuse and neglect\nProtection from child labour\nProtection from drugs\nRight to a name, nationality, and family relations\nRight to survival, growth, and development\nRight to privacy\nRight to birth registration\nRight to maintain contact with both parents if they separate\n\n**PARTICIPATION RIGHTS:**\nRight to freedom of expression\nRight to freedom of thought, conscience, and beliefs\nRight to make decisions\nBest interest of the child\nRight to freedom of association"
+      },
+      {
+        "type": "paragraph",
+        "title": "Life Skills and Adolescence",
+        "content": "**Life Skills Definition:** Abilities that enable individuals to effectively deal with the demands and challenges of everyday life.\n\n**Adolescence:** A critical developmental phase between childhood and adulthood, generally spanning ages 10 to 19 years. Characterized by significant physical, psychological, emotional, and social changes."
+      },
+      {
+        "type": "paragraph",
+        "title": "Puberty",
+        "content": "**Definition:** A period when people develop from childhood into adulthood. Boys and girls undergo physical, behavioral, cognitive, social, intellectual and emotional growth and change.\n\n**PHYSICAL CHANGES - Boys only:**\nDeep Voice - Stronger muscles - Breast tissue may develop - Produce Sperm - Penis and Testicles grow bigger\n\n**PHYSICAL CHANGES - Girls only:**\nBreast enlargement - Increase in height and weight - Hips broaden - Menstruation begins - Voice smooths\n\n**PHYSICAL CHANGES - Both:**\nGrow taller - More body hair - Body odor - Acne and pimples may appear\n\n**EMOTIONAL AND SOCIAL CHANGES for Both:**\nMood Swings - Attraction to opposite sex - More aware of what others think about them"
+      },
+      {
+        "type": "paragraph",
+        "title": "Menstruation and Hygiene",
+        "content": "**Definition:** Normal vaginal bleeding that occurs as part of a womans monthly cycle.\n\n**Menstrual Cycle:** Average is every 28 days. Cycles from 21 to 35 days are normal.\n\n**WHAT TO EXPECT:**\n1. Shedding of blood, heavy or light flow\n2. Back and abdominal pain\n3. Mood swings\n\n**WHAT TO USE:**\nEXTERNAL: Reusable sanitary pads, Sanitary towels\nINTERNAL: Menstrual cup and Tampons, not advisable at young age\n\nAt school: Alert the teacher. At home: Alert your guardian.\n\n**PERSONAL HYGIENE:**\nChange sanitary towel regularly to avoid smell\nBathe at least twice a day and comb hair\nBrush teeth at least twice daily\nWash clothes regularly\nClean vagina with clean water only\n\n**WHAT GIRLS SHOULD AVOID:**\n1. Negative peer pressure\n2. Premarital sexual intercourse\n3. Drug and substance abuse"
+      }
+    ]
+  },
+  {
+    "num": "GESD2",
+    "title": "Girls Empowerment Self-Defense",
+    "dur": "45–60 min",
+    "desc": "GESD Definition - Womens Bill of Rights - Attack Progression Scale - Perpetrators Pattern",
+    "pledge": null,
+    "objectives": [],
+    "content": [
+      {
+        "type": "paragraph",
+        "title": "What is GESD?",
+        "content": "**Definition:** Girls Empowerment Self Defense forms the foundation on which all safety goals and strategies are built. The strategies deal with any form of verbal or physical violence.\n\n**THREE COMPONENTS:**\n\n**1. SELF-EMPOWERMENT**\nTaking charge of our own lives. Health, safety and education goals.\n\n**2. SELF-EFFICACY**\nThe way a person meets life challenges and overcomes them. Girls gain skills to believe in themselves and master life challenges.\n\n**3. SELF-DEFENSE**\nAnything we DO, SAY, or BELIEVE that helps keep us safe. Fighting back is the LAST RESORT when someone will not take no for an answer.\n\n**AIM OF GESD: To GET AWAY.**\nWe do not fight unless we have to. If we can get free by running away, we should run. If we can talk our way out, we should talk. We fight when it is our last and best option."
+      },
+      {
+        "type": "paragraph",
+        "title": "Womens and Girls Assertive Bill of Rights",
+        "content": "1. You have the right to judge your own behaviors, thoughts and emotions.\n2. You have the right to offer no reasons or excuses for your behavior.\n3. You have the right to judge if you are responsible for finding solutions to other peoples problems.\n4. You have the right to change your mind.\n5. You have the right to make mistakes and be responsible for them.\n6. You have the right to say I do not know.\n7. You have the right to be independent of the goodwill of others.\n8. You have the right to be illogical in making decisions.\n9. You have the right to say I do not understand.\n10. You have the right to say I do not care.\n11. **You have the RIGHT TO SAY NO.**\n12. You have the right to do less than you are humanly capable of doing.\n13. You have the right to take the time you need to respond.\n14. You have the right to disagree with others regardless of their position or numbers.\n15. You have the right to feel all your emotions including anger and express them appropriately.\n16. You have the right to ask questions.\n17. You have the right to be treated with respect.\n18. You have the right to ask for what you want.\n19. You have the right to feel good about yourself, your actions and your life.\n20. You have the right to exercise ANY AND ALL of these rights, without feeling guilty."
+      },
+      {
+        "type": "paragraph",
+        "title": "Attack Progression Scale APS",
+        "content": "**Definition:** A scale that shows the different forms of attacks that women and girls encounter in day-to-day life.\n\n**VERBAL - Irritating - Hands Off:**\nTesting, Unwanted Attention, Harassment, Accusations, Yelling, Taunting, Name Calling, Bullying, Threats\n\n**INTIMIDATION - Dangerous - Hands Off:**\nMenacing Stance, Following, Stalking, Cornering, Blocking Path\n\n**PHYSICAL - Life-Threatening - Hands On:**\nTouching, Grabbing, Pushing, Slapping, Kicking, Punching, Bat/Stick, Choking, Knife, Gun\n\n**SEXUAL ASSAULT:**\nNon-consensual sexual contacts and behaviors including defilement, rape, attempted rape, verbally sexual advances, touching of private parts, forced sexual acts, sexual harassment.\n\n**IMPORTANT POINTS:**\nThe APS is NOT a straight line. Violent behaviors can jump from one to another in any order.\nWe want conflict to end where it starts without getting worse.\nOur response may differ depending on WHO is threatening. A boss? A boyfriend? A relative? A stranger?\nOur response may differ depending on the CONDITION of the attacker. Drunk, high, angry, out of control?\n\n**USES OF VOICE IN STOPPING ATTACKS:**\nYell No, Call for help, Lie or trickery, Tell someone, Warn of consequences, Name the behavior, Fake compliance, Use humor, Negotiate, Act crazy"
+      },
+      {
+        "type": "paragraph",
+        "title": "Perpetrators Progression Pattern PPP",
+        "content": "**Definition:** The pattern and techniques attackers use to get close to a victim. Attacks do not happen randomly. The attacker chooses a victim, interacts with them, and isolates them.\n\n**STAGE 1 - VICTIM IDENTIFICATION:**\nAttacker wants an easy victim. Someone vulnerable such as weak, drunk, or young. Easily intimidated or unlikely to be believed. Most attackers are people the victim knows. Family members, neighbors, teachers.\n\n**STAGE 2 - VICTIM SELECTION USING PLOYS:**\nConversation web: engages to get more information about you\nFlattery: says nice things. Flattery is your test\nAsking for help: exploits the social norm to be nice\nCharm and niceness: nice people can still be perpetrators\nEmergency: gets your attention in a confusing way\nIgnoring No: RED FLAG. If he cannot hear NO now, he will not hear it later\nGiving help creating debt: buys things, then says you owe him\nAuthority: uses power role to trick or bully you\nPromises: makes promises you never asked for\nBaiting: says something untrue to get you talking\nIntimidation: uses threats to control you\nToo much information: over-explains because he is not sure you believe him\nForced teaming: acts like you have something in common where none exists\n\n**RESPONDING TO PLOYS:**\n1. Be firm. You do NOT have to be nice or polite.\n2. You are allowed to do, say, or believe ANYTHING that helps keep you safe.\n3. Ploys alert us to danger. Take action immediately.\n\n**STAGE 3 - ATTACK PROCESS:**\nMost dangerous stage. Attacker uses threats and intimidation to position you. If ordered to go somewhere with him, the place he moves you to will be BETTER FOR HIM and WORSE FOR YOU."
+      }
+    ]
+  },
+  {
+    "num": "GESD3",
+    "title": "Awareness and Inner Voice",
+    "dur": "45–60 min",
+    "desc": "Awareness - A.B.L.E 4 Signs - Inner Voice and Intuition - 5 Personal Weapons S.M.E.V.B",
+    "pledge": null,
+    "objectives": [],
+    "content": [
+      {
+        "type": "paragraph",
+        "title": "Awareness",
+        "content": "**Definition:** Being alert. Paying attention to what is happening inside and outside of you. Attackers do not like people who are aware and paying attention. When we are aware, the attacker will probably notice and move on.\n\n**THE GAZELLE STORY:**\nThe gazelle is eating grass on the sunny plain. The sun is shining, she is having her meal. Suddenly she senses something. She jerks her head up, ears up, completely alert. Smelling, listening, her whole body is alive and antennae receiving. Then she dashes away!\n\nThe gazelle trusted her signal and acted immediately. She did not make excuses. We can do the same.\n\n**EXAMPLES OF UNAWARE PERSONS:**\n1. A drunk person\n2. Someone multitasking such as playing or texting\n3. Someone listening to music with headphones\n4. A confused person\n\n**THE SIMPLE RULE OF AWARENESS: BE and ACT aware.**"
+      },
+      {
+        "type": "paragraph",
+        "title": "Four Visible Signs of Awareness I AM A.B.L.E",
+        "content": "**A - ALERT!**\nI am paying attention! Being aware of my surroundings. Paying attention to messages and clues. If something feels uncomfortable, trust that feeling and move to a safer place.\n\n**B - BODY LANGUAGE**\nYour body speaks before you do. Stand tall, keep shoulders back, move with confidence. Strong body language sends a clear message: I am aware and in control.\n\n**L - LOUDNESS**\nAwareness has a confident voice. Speaking up, not mumbling. Showing the attacker that you will yell and tell. We want strong body language, strong facial expression and strong voice.\n\n**E - EYE CONTACT**\nA clear sign of awareness. Eye contact alone can end targeting. It says: I am paying attention and you cannot make me scared.\n\n**AWARENESS CHEER:**\nAlert: I am paying attention, I AM ALERT!\nBody Language: I am confident, I am not scared!\nEye Contact: I can see you, I am looking right at you!\nLoudness: I will Yell! I will call for help! I WILL NOT BE SILENCED!\n\n**I AM A.B.L.E!**"
+      },
+      {
+        "type": "paragraph",
+        "title": "Inner Voice and Intuition",
+        "content": "**Definition:** The feelings or thoughts that warn us of potential danger. Women and girls must learn to trust this inner voice, even when cultural, family, and community influences have taught them to ignore warning signals.\n\n**DENIAL:** Thoughts and feelings that silence our inner voice to keep us comfortable. While INTUITION protects us from danger, DENIAL protects us from facing uncomfortable truths.\n\n**FOUR WAYS OF EXPERIENCING INNER VOICE:**\nBody: Strong body sensations\nMind: Voices or thoughts\nEmotions: Feeling unsafe, worried, something is wrong\nSpirit-senses: Impulses to do or change something, even with no logical reason\n\n**MESSENGERS OF THE INNER VOICE:**\nGut feeling, Hesitation, Wonder, Nagging thoughts\n\n**MESSENGERS OF DENIAL - these silence your intuition:**\nJustify, Minimize, Excuses, Ridicule, Refusal"
+      },
+      {
+        "type": "paragraph",
+        "title": "Five Personal Weapons S.M.E.V.B",
+        "content": "**Definition:** Five personal weapons where all our abilities and strategies come from. We fight with the TOTAL SELF. No part is fighting alone. When these five are used together, we give the highest form of resistance.\n\n**1. SPIRIT**\nAttitude! Belief that we are worth defending and can fight and survive no matter the odds. I can defend myself. It matters if I do. I am worth defending. SPIRIT FIRST, technique second.\n\n**2. MIND**\nGathers data! Looks for weak spots, escape routes, things to use as weapons. Lightning fast. Always looking for an opening, an escape route, or a weak spot.\n\n**3. EYES**\nShows resistance! Can end targeting! We look into the attackers eyes to show we are focused, not easily scared. Eye contact is a DEFENSE, not a challenge. Also scans for: What condition is he in? Anyone else around? Where are the escape routes?\n\n**4. VOICE**\nYells NO! Calls for help. Can negotiate, distract, lie, or act crazy. Up to 85% of Empowerment Training is using our voices effectively.\n\n**5. BODY**\nA major prevention tool. Body language, gestures, running or fighting to stay safe. The way we stand sends a powerful message to attackers.\n\n**SMEVB CHEER:**\nSPIRIT: I have my spirit! I can defend myself. It matters if I do. I AM WORTH DEFENDING!\nMIND: I have my mind! Taking in the situation. Helping me get FREE!\nEYES: I have my Eyes! I see you. I am not intimidated. I am putting you on NOTICE!\nVOICE: I have my voice! I will use it. I will tell everyone! GET BACK!\nBODY: I am powerful. I am dangerous. My body is strong. VERY STRONG. I have FIVE WEAPONS!"
+      }
+    ]
+  },
+  {
+    "num": "GESD4",
+    "title": "Verbal Techniques",
+    "dur": "45–60 min",
+    "desc": "Verbal Safety Tool-Box - Saying No Effectively - Assertiveness - Boundaries - Breaking the Silence",
+    "pledge": null,
+    "objectives": [],
+    "content": [
+      {
+        "type": "paragraph",
+        "title": "Verbal Safety Tool-Box",
+        "content": "**Definition:** A range of strategies, skills, ideas and techniques for handling conflict and preventing attacks. Many attacks can be stopped simply by using our voices effectively.\n\nThe Verbal Safety Tool-Box includes:\nYelling No loudly, Calling for help, Telling a trusted person, Warning of consequences, Naming the behavior, Using humor, Negotiating, Acting crazy, Fake compliance, Stance and Yell, Assertiveness, Setting Boundaries"
+      },
+      {
+        "type": "paragraph",
+        "title": "Saying No Effectively and Stance and Yell",
+        "content": "**Definition:** Means a strong and confident voice, eye contact and assertive body posture. The ability to say No effectively is an important skill in every womans life.\n\n**NOT ALL NOs CARRY EQUAL WEIGHT:**\nAngry No: often heard\nTired No: may not be taken seriously\nFIRM No: clear and direct. THIS IS WHAT WE WANT.\nQuiet No: easily ignored\nSmiling and flirty No: sends mixed messages\nDistracted No: not effective\n\n**THE YELL:**\nYell from deep in your gut. Different from a scream. Comes from a lower place in the body. We Yell No because it scares the attacker away and lets anyone around know you resist. Your yell should be deep and very scary.\n\n**THE STANCE:**\nStand with feet shoulder-width apart, strongest foot slightly back and angled, knees slightly bent. Feel stable. Like no one can push you over. Put your elbows in with palms up facing out, chest high.\n\nIMPORTANCE OF STANCE: Helps us balance so we do not fall when pushed.\nIMPORTANCE OF EYE CONTACT: Shows the attacker we are not intimidated. Helps us know his next move. Looks for escape routes."
+      },
+      {
+        "type": "paragraph",
+        "title": "Assertiveness",
+        "content": "**Definition:** Knowing what you want and stating it clearly. Attackers rely on choosing victims that will not tell.\n\n**THREE RESPONSES TO CONFLICT:**\n\n**AGGRESSIVE:**\nBullying to get your way, taking things without asking, being rude, making threats, using a mean voice and demanding.\n\n**ASSERTIVE - THIS IS WHAT WE WANT:**\nBeing direct, stating clearly what you want, using eye contact, an even tone of voice and upright body posture.\n\n**PASSIVENESS:**\nNot asking for what you want, expecting others to read your mind, doing things you do not want because you cannot say No, then being secretly resentful.\n\n**IMPORTANT POINTS:**\nSpeak firmly, calmly and make eye contact.\nYou do NOT have to justify yourself, ask for forgiveness, explain, or make excuses.\nIf you act like a pushover, you will be treated like a pushover.\nBe assertive, not pushy."
+      },
+      {
+        "type": "paragraph",
+        "title": "Boundaries",
+        "content": "**Definition:** Rules we set for how we want others to speak and act towards us. We train people how to treat us from the moment we meet. If we let disrespectful behavior go by, we give permission for it to continue.\n\n**TYPES OF BOUNDARIES:**\nPhysical, Emotional, Mental, Spiritual\n\n**HOW TO KNOW SOMEONE IS CROSSING YOUR BOUNDARY:**\nWe feel hurt. We feel uncomfortable. Makes us sad.\n\n**WAYS OF DEFENDING BOUNDARIES:**\n**Name the behavior:** Used to stop harassment in public and private places.\n**Make a scene:** Speaking up to expose the harasser removes the power of secrecy."
+      },
+      {
+        "type": "paragraph",
+        "title": "Breaking the Silence",
+        "content": "**Definition:** Encouraging students to speak up about any attack or abuse they experience. Students are supported to tell a trusted person so they can receive help and protection.\n\n**FORMS OF VIOLENCE:**\nPhysical: Hitting, shaking, burning, torture\nEmotional: Name calling, constant criticism, belittling, persistent shaming, isolation\nSexual: Incest, child marriage, rape, pornography, sexual slavery, indecent touching\n\n**SIGNS OF ABUSE AND VIOLENCE:**\nUnexplained injuries or bruises\nFearful, anxious, or withdrawn behavior\nSudden changes in behavior or school performance\nAvoidance of certain people or places\nInappropriate sexual behavior for their age\nPoor hygiene or signs of neglect\n\n**DEFINITION OF RAPE:** Penetration of a persons genital organs by another person without consent, or where consent is obtained through force, threats, intimidation, or coercion.\n\n**DEFILEMENT:** Sexual penetration of a childs genital organs using any body part or object.\n\n**IMPORTANT POINTS ABOUT BREAKING THE SILENCE:**\n1. The attack or abuse is NOT your fault.\n2. Tell, even if the attacker told you not to. We can help.\n3. You do not have to speak up publicly. You can Tell in private.\n4. Sometimes the abuser is a family member, a priest, a trainer, or a neighbor. No one should harm or threaten you.\n5. You are NOT alone. Many women and girls have been attacked and gotten help.\n6. Whatever happened, you did what you needed to survive.\n7. You are worth defending. You deserve to get any help you need.\n\n**KEY REFERRAL ACTORS:**\nCommunity Victim Support Unit: Immediate support and basic counseling\nHospital/Health Centre: Medical care, psychological support, documentation\nChild Protection Worker: Safeguarding and follow-up\nMother Group: Community support and advocacy\nSocial Welfare/NGOs: Legal aid, shelter, counseling and psychological support\nVictim Support Officer: Immediate protection and safety, legal and investigative support"
+      }
+    ]
+  },
+  {
+    "num": "GESD5",
+    "title": "Physical Techniques",
+    "dur": "45–60 min",
+    "desc": "Weapons and Targets - What is Free and Open - Five Fingers - Close Target Skills - Full-Force Drill",
+    "pledge": null,
+    "objectives": [],
+    "content": [
+      {
+        "type": "paragraph",
+        "title": "Introduction to Physical Techniques",
+        "content": "**FIVE MAJOR STEPS TO REMEMBER:**\n1. Range: how far or close is the attacker?\n2. Target: which part of the attackers body?\n3. Weapon: which part of your body will you use?\n4. Power source: where does the power come from, hips, legs, full body?\n5. Safety: always get away after striking\n\nAlways emphasize STANCE when releasing from any grabs or holds."
+      },
+      {
+        "type": "paragraph",
+        "title": "Weapons Targets and Strikes",
+        "content": "**WEAPONS - Your body parts used to fight with:**\nFingers for Eyes: Eyes Poke, Gouge, Bird beak, Scratch\nPalm for Nose, Chin, Groins: Palm Strikes, Groin Grab\nFist for Throat, Temples, Ears: Hammer Fist, Earbox\nElbow for Diaphragm, Spinal Cord: Back Elbow\nKnees for Groins: Knees to the Groins\nLeg for Groins: Straight Kick to Groins\nHeel for Knee, Small Toe: Side Kick, Stomp\n\n**FOUR PRIMARY TARGETS - soft, easy to break, attacker is easily disabled when hit:**\n1. EYES\n2. THROAT\n3. GROINS\n4. KNEE\n\n**HIGH-LOW CONCEPT:** Hit the upper vulnerable target of an attackers body, forcing him to open the lower vulnerable target.\n\n**STRIKE:** Using your palm, fist, elbows, or knees to hit an attacker, fighting with everything to get free."
+      },
+      {
+        "type": "paragraph",
+        "title": "What is Free and What is Open",
+        "content": "**Definition:** When you are grabbed:\nWhat is FREE: What is NOT grabbed or held on me that I can use to fight with?\nWhat is OPEN: What vulnerable body part on the attacker can I hit to get free?\n\nInstead of panicking or pulling away, CENTER yourself and resist by using your FREE weapons against UNPROTECTED areas on the attackers body.\n\n**IMPORTANT POINTS:**\n1. It answers ALL what-if questions:\nWhat if I fall on the ground? What is free, what is open.\nWhat if he is tall? What is free, what is open.\nWhat if he grabs me from behind? What is free, what is open.\n2. It REPLACES PANIC with organized strategies."
+      },
+      {
+        "type": "paragraph",
+        "title": "Five Fingers of Emergency Self-Defense",
+        "content": "Share this with family and friends after learning it!\n\n**1. THINK**\nDo not panic. Stay calm and think about how to respond. If something does not feel right, leave.\n\n**2. YELL**\nUse your voice! Yell NO loudly. Call for help. Use your strongest, loudest voice: NO! STOP! LET GO! BACK OFF!\n\n**3. RUN**\nGet away and run if you can. If you can avoid violence, you should.\n\n**4. FIGHT**\nIf you need to fight, use What is Free, What is Open. There are many tools right on your body. Use the 4 Primary Targets: Eyes, Throat, Groins, Knee.\n\n**5. TELL**\nDo not keep quiet about what happened. Telling is an important part of healing and moving on. Tell someone - your parents, a friend, a trainer. If the first person does not believe you - tell and tell and tell until someone does."
+      },
+      {
+        "type": "paragraph",
+        "title": "Close Target Skills Step by Step",
+        "content": "**Definition:** Techniques used to get free from grabs, holds, or blocks when the attacker is very close.\n\n**WRIST GRAB:**\nStep 1: Make a stance\nStep 2: Twist your wrist against the attackers thumb to release, yelling No!\nStep 3: Get away\n\n**DOUBLE WRIST GRAB:**\nStep 1: Make a stance\nStep 2: Support your held hand with your other hand\nStep 3: Twist against both thumbs to release, yelling No!\nStep 4: Get away\n\n**BACK KICK:**\nStep 1: Make a stance\nStep 2: Break the attackers knee from behind using your heel, yelling No!\nStep 3: Get away\n\n**STOMP:**\nStep 1: Make a stance\nStep 2: Stomp the baby toe using your heel, yelling No!\nStep 3: Get away\n\n**GROIN GRAB:**\nStep 1: Make a stance\nStep 2: Reach for the groins, grab and squeeze, yelling No!\nStep 3: Get away\n\n**KNEE TO THE GROIN:**\nStep 1: Make a stance\nStep 2: Support yourself on the attackers shoulder\nStep 3: Hit the groins hard with your knee, yelling No!\nStep 4: Get away\n\n**EYE POKE:**\nStep 1: Make a stance\nStep 2: Put up a shield with palm out\nStep 3: Poke the eyes using two fingers, yelling No!\nStep 4: Get away\n\n**THROAT POKE:**\nStep 1: Make a stance\nStep 2: Poke the notch of the assailants throat with your thumb, yelling No!\nStep 3: Get away\n\n**HAND OVER MOUTH:**\nStep 1: Make a stance\nStep 2: Pull down the little finger pinky to break it, yelling No!\nStep 3: Get away\n\n**HAIR GRAB:**\nStep 1: Support your hair to ease the pain\nStep 2: Hold his hand to gain control\nStep 3: Make a stance\nStep 4: Turn to do the release\nStep 5: Include a secondary move to disable the attacker, yelling No!\nStep 6: Get away\n\n**FULL-FORCE DRILL:**\nPracticing drills that simulate an attack, requiring the defender to use three or more full-force strikes or kicks in a row. Gives girls the chance to realize their inner power and courage to fight back."
+      }
+    ]
+  },
+  {
+    "num": "GESD6",
+    "title": "Combined Class - Consent and Gender",
+    "dur": "45–60 min",
+    "desc": "Multiple Assailants - Taking vs Asking - Consent - Gender and Sex - Gender Stereotypes",
+    "pledge": null,
+    "objectives": [],
+    "content": [
+      {
+        "type": "paragraph",
+        "title": "Multiple Assailants and Attackers",
+        "content": "**Definition:** Knowing what to do in an attack involving more than one attacker.\n\n**STRATEGIES AGAINST MULTIPLE ATTACKERS:**\n1. Be assertive: Find out what they really want. Use your awareness skills.\n2. Find and split the Leader: The leader is the one everyone looks to. Isolate and disable him first.\n3. Do not have to wait: If threatened by a group, it is okay to hit first with full commitment.\n4. Stay out of the middle: Keep one attacker between you and the others.\n5. Do not allow yourself to be cornered: Keep moving, stay in the open.\n6. Be scary: Create chaos so they are unsure what you are capable of.\n7. Fight dirty: Go for primary targets, eyes, groin, throat, knees.\n8. Try to stay upright: Not as safe on the ground with multiple attackers.\n9. Include extra moves: Ensure you do not have to fight the same attacker twice.\n10. Use What is Free, What is Open: Always yell No when striking.\n11. Keep moving: Move, strike, look for opening, move, strike, move."
+      },
+      {
+        "type": "paragraph",
+        "title": "Taking Vs Asking and Consent",
+        "content": "**TAKING VS ASKING:**\nTaking: Getting something WITHOUT someone elses permission.\nAsking: Getting something WITH permission.\n\n**CONSENT Definition:** Consent is an agreement between people. It does not have to be verbal, but verbally agreeing to activities helps both people respect each others boundaries.\n\n**CONSENT IS ABOUT COMMUNICATION. It should happen EVERY TIME.**\n\nGiving consent for one activity, one time, does NOT mean giving consent for increased or recurring contact. For example, agreeing to hug someone does not give that person permission to start touching you.\n\nYou can WITHDRAW CONSENT at any point if you feel uncomfortable.\n\n**THERE IS NO CONSENT WHEN:**\nYou refuse to acknowledge No!\nYou assume wearing certain clothes, flirting, or touching is an invitation for more.\nYou engage with someone under the legal age of consent.\nYou engage with someone incapacitated by drugs or alcohol.\nYou pressure someone into sexual activity using fear or intimidation.\n\n**IMPORTANT: CONSENT IS HEARING THE WORD YES. IT IS NOT THE ABSENCE OF HEARING NO.**"
+      },
+      {
+        "type": "paragraph",
+        "title": "Gender and Sex",
+        "content": "**DEFINITIONS:**\nSex: Refers to the PHYSICAL and BIOLOGICAL differences between males and females. Biological, Universal, Unchanging.\nGender: Refers to the SOCIAL differences between males and females. Social construction, Differs across cultures, Changes over time.\n\nUnderstanding the difference helps us see that inequity between men and women is NOT caused by biology, but by SOCIALLY CONSTRUCTED attributes.\n\n**GENDER DIVISION OF ARTICLES, ACTIVITIES AND ROLES:**\nPurpose: Understand how articles and activities represent gender division of roles.\n\nCommon Articles: Broom, Car keys, Hijab, Rolling-pin, Screwdriver, Hammer, Stove, Tie\nCommon Activities: Sewing, Cooking, Washing Clothes, Reading newspaper, Breastfeeding, Bathing children, Fixing electric bulb, Knitting sweaters\nCommon Roles: Chef, Tailor, Farmer, Housewife, Breadwinner, Nurse, Mother, Barber\n\n**DISCUSSION QUESTIONS:**\nWhy do we associate certain activities with women and some with men?\nAre women born with cooking skills? Are men naturally better at repairs?\nIs there a hierarchy in roles?\nWhat happens when economic value is attached to an activity?"
+      },
+      {
+        "type": "paragraph",
+        "title": "Gender Stereotypes Feminine and Masculine Qualities",
+        "content": "**Purpose:** To understand stereotyping of female and male qualities and gender biases.\n\n**THE CHAMELEON STORY:**\nTwo chameleons were sleeping on a bed. Suddenly a loud noise woke them up. One hid under the bed, while the other picked up a stick and ran towards the door.\n\nKey question: Which chameleon is male and which is female?\n\nAnswer: The one that ran with a stick could be EITHER male or female! However, due to socialization, we associate aggression, bravery, and strength with males, and weakness and submissiveness with females.\n\n**COMMON GENDER STEREOTYPES - learned through socialization, NOT born with:**\n\nMales often labeled: Adventurous, Aggressive, Strong, Rough, Impatient, Rational, Intelligent, Self-centered, Authoritative\n\nFemales often labeled: Weak, Shy, Gentle, Dependent, Tolerant, Sensitive, Jealous, Caring, Forgiving, Emotional\n\n**KEY MESSAGE:** These qualities are SOCIAL CONSTRUCTIONS. They are CHANGEABLE. Understanding this is important for creating an equitable society.\n\n**DISCUSSION QUESTIONS:**\n1. Is it easy or hard to look at male and female roles in a new and non-traditional way?\n2. How do men or women accept the changes in gender roles? Why?\n3. How has changing gender roles affected relationships in families and schools?\n4. If you could make one change in gender roles, what would it be?\n\n**WRAP-UP:**\nWhat was the most important thing you learned today?\nHow can the knowledge and skills you learned help you with situations in your life right now?\nWho is one person not in this session that you want to tell and teach what you learned here?"
+      }
+    ]
+  }
+];
 
 export const SESSION_LISTS: Record<string, string[]> = {
   HIM: ["Topic 1: Getting to Know You", "Topic 2: My Value System", "Topic 3: Intro to H.I.M & Verbal Techniques", "Topic 4: Hero in Me: Step-Up Strategies", "Topic 5: Referrals & Break the Silence", "Topic 6: Boys & Girls Combined Session"],

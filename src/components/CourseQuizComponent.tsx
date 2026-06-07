@@ -9,6 +9,7 @@ interface CourseQuizComponentProps {
   studentName: string;
   onComplete: (score: number, passed: boolean) => void;
   onBack: () => void;
+  onReviewLessons?: () => void;
 }
 
 const THEME = {
@@ -17,7 +18,7 @@ const THEME = {
 };
 
 export const CourseQuizComponent: React.FC<CourseQuizComponentProps> = ({
-  curriculum, studentName, onComplete, onBack,
+  curriculum, studentName, onComplete, onBack, onReviewLessons,
 }) => {
   const allQuestions = curriculum === 'him' ? HIM_QUIZ_QUESTIONS : GESD_QUIZ_QUESTIONS;
   const [questions, setQuestions]           = useState<QuizQuestion[]>([]);
@@ -32,6 +33,10 @@ export const CourseQuizComponent: React.FC<CourseQuizComponentProps> = ({
   useEffect(() => {
     const shuffled = [...allQuestions].sort(() => Math.random() - 0.5);
     setQuestions(shuffled.slice(0, Math.min(20, shuffled.length)));
+    setCurrentQuestion(0);
+    setAnswers({});
+    setRevealed({});
+    setSubmitted(false);
   }, [curriculum]);
 
   const handleAnswerSelect = (optionIndex: number) => {
@@ -51,11 +56,20 @@ export const CourseQuizComponent: React.FC<CourseQuizComponentProps> = ({
 
   if (questions.length === 0) return (
     <div className="flex items-center justify-center h-96">
-      <div className="text-center">
+      <div className="text-center space-y-3">
         <div className="inline-block p-4 rounded-full mb-4" style={{ backgroundColor: pale }}>
           <AlertCircle size={24} style={{ color: accent }} />
         </div>
-        <p className="text-slate-600 dark:text-slate-400">Loading quiz...</p>
+        <p className="text-slate-600 dark:text-slate-400">
+          {allQuestions.length === 0
+            ? 'No quiz questions are available for this programme yet.'
+            : 'Loading quiz...'}
+        </p>
+        {allQuestions.length === 0 && (
+          <button onClick={onBack} className="text-sm font-semibold underline" style={{ color: accent }}>
+            Back to curriculum
+          </button>
+        )}
       </div>
     </div>
   );
@@ -63,9 +77,10 @@ export const CourseQuizComponent: React.FC<CourseQuizComponentProps> = ({
   if (submitted) return (
     <SubmissionResult score={score} passed={passed} curriculum={curriculum}
       studentName={studentName} questions={questions} answers={answers}
-      onContinue={() => onComplete(score, passed)} onRetry={() => {
+      onContinue={() => passed ? onComplete(score, passed) : (onReviewLessons ? onReviewLessons() : onComplete(score, passed))}
+      onRetry={() => {
         const shuffled = [...allQuestions].sort(() => Math.random() - 0.5);
-        setQuestions(shuffled.slice(0, 20));
+        setQuestions(shuffled.slice(0, Math.min(20, shuffled.length)));
         setCurrentQuestion(0); setAnswers({}); setRevealed({}); setSubmitted(false);
       }} />
   );

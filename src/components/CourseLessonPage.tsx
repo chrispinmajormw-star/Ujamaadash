@@ -200,8 +200,20 @@ export const CourseLessonPage: React.FC<CourseLessonPageProps> = ({
   curriculum, lessonIndex, onComplete, onStartQuiz, onNextLesson, onPreviousLesson, onGoToLesson, completedLessons,
 }) => {
   const sessions = curriculum === 'him' ? HIM_SESSIONS : GESD_SESSIONS;
-  const lesson = sessions[lessonIndex];
   const totalLessons = sessions.length;
+  const lesson = sessions[lessonIndex];
+
+  if (!lesson || totalLessons === 0) {
+    return (
+      <Card className="p-8 text-center space-y-3">
+        <AlertCircle size={32} className="mx-auto text-slate-400" />
+        <h2 className="text-lg font-bold text-black dark:text-white">No lessons available</h2>
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+          This curriculum has no lesson content yet. Please go back and try another programme.
+        </p>
+      </Card>
+    );
+  }
   const isLast = lessonIndex === totalLessons - 1;
   const isCompleted = completedLessons.includes(lessonIndex);
   const { accent, pale, badge, text } = THEME[curriculum];
