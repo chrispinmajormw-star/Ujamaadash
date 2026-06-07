@@ -185,6 +185,12 @@ export const CurriculumPage: React.FC = () => {
           onStartQuiz={() => {
             setCourseMode('quiz');
           }}
+          onNextLesson={() => {
+            setCurrentLesson(currentLesson + 1);
+          }}
+          onPreviousLesson={() => {
+            setCurrentLesson(currentLesson - 1);
+          }}
           completedLessons={completedLessons}
         />
       </div>

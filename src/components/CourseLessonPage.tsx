@@ -12,6 +12,8 @@ interface CourseLessonPageProps {
   lessonIndex: number;
   onComplete: (lessonIndex: number) => void;
   onStartQuiz: () => void;
+  onNextLesson: () => void;
+  onPreviousLesson: () => void;
   completedLessons: number[];
 }
 
@@ -20,6 +22,8 @@ export const CourseLessonPage: React.FC<CourseLessonPageProps> = ({
   lessonIndex,
   onComplete,
   onStartQuiz,
+  onNextLesson,
+  onPreviousLesson,
   completedLessons,
 }) => {
   const sessions = curriculum === 'him' ? HIM_SESSIONS : GESD_SESSIONS;
@@ -39,10 +43,10 @@ export const CourseLessonPage: React.FC<CourseLessonPageProps> = ({
     if (!isCompleted) {
       onComplete(lessonIndex);
     }
-    if (!isLast) {
-      // Navigate to next lesson (handled by parent)
-    } else if (isLast && isCompleted) {
+    if (isLast) {
       onStartQuiz();
+    } else {
+      onNextLesson();
     }
   };
 
@@ -193,16 +197,34 @@ export const CourseLessonPage: React.FC<CourseLessonPageProps> = ({
             <div className="space-y-1 max-h-80 overflow-y-auto">
               {sessions.map((s, i) => {
                 const lessonCompleted = completedLessons.includes(i);
+                const canAccess = i === 0 || completedLessons.includes(i - 1) || i === lessonIndex;
                 return (
                   <div
                     key={i}
-                    className={`p-2.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                    onClick={() => {
+                      if (canAccess && i !== lessonIndex) {
+                        // Navigate to clicked lesson
+                        if (i < lessonIndex) {
+                          for (let j = 0; j < lessonIndex - i; j++) {
+                            onPreviousLesson();
+                          }
+                        } else {
+                          for (let j = 0; j < i - lessonIndex; j++) {
+                            onNextLesson();
+                          }
+                        }
+                      }
+                    }}
+                    className={`p-2.5 rounded-lg text-xs font-medium transition-all ${
+                      canAccess ? 'cursor-pointer' : 'cursor-not-allowed'
+                    } ${
                       i === lessonIndex
                         ? 'text-white'
                         : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                     }`}
                     style={{
-                      backgroundColor: i === lessonIndex ? accent : 'transparent'
+                      backgroundColor: i === lessonIndex ? accent : 'transparent',
+                      opacity: !canAccess ? 0.4 : 1
                     }}
                   >
                     <div className="flex items-center gap-2">
@@ -237,6 +259,7 @@ export const CourseLessonPage: React.FC<CourseLessonPageProps> = ({
       {/* Bottom Navigation */}
       <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-slate-800">
         <button
+          onClick={onPreviousLesson}
           disabled={lessonIndex === 0}
           className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm transition disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
           style={{
