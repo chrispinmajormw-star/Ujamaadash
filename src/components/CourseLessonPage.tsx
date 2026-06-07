@@ -272,9 +272,13 @@ export const CourseLessonPage: React.FC<CourseLessonPageProps> = ({
           {lesson.content && lesson.content.length > 0 && (
             <Card className="p-5 space-y-2">
               <h2 className="text-sm font-bold text-black dark:text-white mb-3">Lesson Content</h2>
-              {lesson.content.map((block, i) => (
-                <RenderBlock key={i} block={block} accent={accent} pale={pale} />
-              ))}
+              {typeof lesson.content === 'string' ? (
+                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{lesson.content}</p>
+              ) : Array.isArray(lesson.content) ? (
+                lesson.content.map((block: any, i: number) => (
+                  <RenderBlock key={i} block={block} accent={accent} pale={pale} />
+                ))
+              ) : null}
             </Card>
           )}
 

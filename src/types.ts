@@ -87,7 +87,7 @@ export interface Session {
   desc: string;
   pledge: string | null;
   objectives: string[];
-  content?: string;
+  content?: string | ContentBlock[];
   activities?: string[];
   keyTakeaways?: string[];
 }
@@ -182,5 +182,17 @@ export interface SasaMonthlyReport {
   highlights: string;
   challenges: string;
   recommendations: string;
-  status: 'draft' | 'submitted';
 }
+
+export interface ContentBlock {
+  type: 'paragraph' | 'trainer_says' | 'activity' | 'definition' | 'tip' | 'scenario' | 'table' | 'values_grid' | 'step_grid' | 'pledge' | 'cheer' | 'helpline';
+  title?: string;
+  label?: string;
+  content?: string;
+  items?: string[];
+  headers?: string[];
+  rows?: string[][];
+  columns?: { title: string; items: string[] }[];
+  steps?: string[];
+}
+
