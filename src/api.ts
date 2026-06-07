@@ -81,6 +81,7 @@ export const documentReportsApi = {
   getUnreadCount: () => api.get('/api/document-reports/unread-count'),
   updateStatus: (id: number, status: string, feedback?: string) =>
     api.put(`/api/document-reports/${id}/status`, { status, feedback }),
+  forward: (id: number) => api.put(`/api/document-reports/${id}/forward`, {}),
   submit: async (formData: FormData) => {
     const token = localStorage.getItem('token');
     const res = await fetch(`${BASE_URL}/api/document-reports`, {

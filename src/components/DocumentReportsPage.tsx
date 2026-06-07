@@ -149,6 +149,11 @@ export const DocumentReportsPage: React.FC<DocumentReportsPageProps> = ({ user, 
                   <div className="text-[11px] text-black/60 dark:text-white/60 mb-1">
                     From: <strong>{r.sender_name}</strong> · {r.district} · {new Date(r.created_at).toLocaleDateString()}
                   </div>
+                  <div className="text-[10px] text-orange-600 font-semibold">
+                    {r.sender_role === 'sasa_officer' ? '🛡️ From SASA Officer' :
+                    r.sender_role === 'district_coordinator' ? '🗺️ From District Coordinator' :
+                    r.sender_role === 'program_manager' ? '📊 Forwarded by Manager' : ''}
+                  </div>
                   {r.description && <p className="text-xs text-black/70 dark:text-white/70">{r.description}</p>}
                   {r.feedback && (
                     <div className="mt-2 text-xs text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/20 rounded p-2">
@@ -294,15 +299,26 @@ export const DocumentReportsPage: React.FC<DocumentReportsPageProps> = ({ user, 
             rows={3}
             placeholder="Add feedback or comments for the sender…"
           />
-          <div className="flex gap-2 justify-end mt-3">
+          <div className="flex gap-2 justify-end mt-3 flex-wrap">
             <Btn size="sm" variant="ghost" onClick={() => { setReviewing(null); setFeedback(''); }}>Cancel</Btn>
             <Btn size="sm" variant="secondary" onClick={() => handleUpdateStatus(reviewing.id, 'rejected')}>
-              <XCircle size={13} /> Reject
-            </Btn>
+            <XCircle size={13} /> Reject
+              </Btn>
             <Btn size="sm" variant="success" onClick={() => handleUpdateStatus(reviewing.id, 'approved')}>
-              <CheckCircle size={13} /> Approve
+            <CheckCircle size={13} /> Approve
             </Btn>
-          </div>
+            {role === 'program_manager' && (
+            <Btn size="sm" variant="primary" onClick={async () => {
+            const data = await documentReportsApi.forward(reviewing.id);
+              if (data.error) { showToast(`⚠️ ${data.error}`); return; }
+            setInbox(prev => prev.filter(r => r.id !== reviewing.id));
+            setReviewing(null);
+            showToast('📨 Report forwarded to Admin');
+            }}>
+            Forward to Admin
+            </Btn>
+            )}
+        </div>
         </Modal>
       )}
     </div>
