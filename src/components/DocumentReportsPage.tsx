@@ -91,6 +91,21 @@ export const DocumentReportsPage: React.FC<DocumentReportsPageProps> = ({ user, 
     return bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(0)} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
   };
 
+  const openFile = async (filename: string, displayName: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${documentReportsApi.getDownloadUrl(filename)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) { showToast('⚠️ Could not open file'); return; }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    } catch {
+      showToast('⚠️ Failed to open file');
+    }
+  };
+
   const TABS = [
     ...(canReceive(role) ? [{ id: 'inbox', label: 'Inbox', icon: <Inbox size={14} />, count: inbox.filter(r => r.status === 'pending').length }] : []),
     ...(canSubmit(role) ? [{ id: 'sent', label: 'Sent', icon: <Send size={14} /> }, { id: 'submit', label: 'Submit Report', icon: <Upload size={14} /> }] : []),
@@ -162,14 +177,12 @@ export const DocumentReportsPage: React.FC<DocumentReportsPageProps> = ({ user, 
                   )}
                 </div>
                 <div className="flex gap-2 shrink-0 flex-wrap">
-                  <a
-                    href={documentReportsApi.getDownloadUrl(r.file_path)}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    onClick={() => openFile(r.file_path, r.file_name)}
                     className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md border border-neutral-200 dark:border-slate-700 hover:border-orange-400 text-black dark:text-white"
                   >
                     <Download size={12} /> {r.file_name} {r.file_size ? `(${formatSize(r.file_size)})` : ''}
-                  </a>
+                  </button>
                   {r.status === 'pending' && (
                     <Btn size="sm" variant="secondary" onClick={() => setReviewing(r)}>
                       Review
@@ -213,14 +226,12 @@ export const DocumentReportsPage: React.FC<DocumentReportsPageProps> = ({ user, 
                     </div>
                   )}
                 </div>
-                <a
-                  href={documentReportsApi.getDownloadUrl(r.file_path)}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => openFile(r.file_path, r.file_name)}
                   className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md border border-neutral-200 dark:border-slate-700 hover:border-orange-400 text-black dark:text-white shrink-0"
                 >
                   <Download size={12} /> {r.file_name}
-                </a>
+                </button>
               </div>
             </Card>
           ))}
@@ -283,14 +294,12 @@ export const DocumentReportsPage: React.FC<DocumentReportsPageProps> = ({ user, 
             From <strong>{reviewing.sender_name}</strong> · {reviewing.district} · {new Date(reviewing.created_at).toLocaleDateString()}
           </p>
           <div className="mb-4">
-            <a
-              href={documentReportsApi.getDownloadUrl(reviewing.file_path)}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={() => openFile(reviewing.file_path, reviewing.file_name)}
               className="flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-md border border-neutral-200 dark:border-slate-700 hover:border-orange-400 text-black dark:text-white w-fit"
             >
-              <Download size={13} /> Download {reviewing.file_name}
-            </a>
+              <Download size={13} /> Open {reviewing.file_name}
+            </button>
           </div>
           <FArea
             label="Feedback (optional)"
