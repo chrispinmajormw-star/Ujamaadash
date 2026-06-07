@@ -98,7 +98,7 @@ export const Btn: React.FC<BtnProps> = ({
   style,
   ...props
 }) => {
-  const baseStyle = "font-sans font-bold rounded-xl cursor-pointer inline-flex items-center gap-2 transform active:scale-95 transition-all justify-center whitespace-nowrap";
+  const baseStyle = "font-sans font-bold rounded-xl cursor-pointer inline-flex items-center gap-2 transform active:scale-95 transition-all justify-center whitespace-nowrap min-h-[44px] sm:min-h-auto focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500";
   
   const variants = {
     primary: "bg-orange-600 hover:bg-orange-700 text-white shadow-sm border-none",
@@ -111,15 +111,16 @@ export const Btn: React.FC<BtnProps> = ({
   };
 
   const sizes = {
-    sm: "px-3 py-1 text-xs",
-    md: "px-4 py-2 text-sm",
-    lg: "px-5 py-3 text-base"
+    sm: "px-3 py-1 sm:py-1.5 text-xs",
+    md: "px-4 py-2 sm:py-2.5 text-sm",
+    lg: "px-5 py-3 sm:py-3.5 text-base"
   };
 
   return (
     <button
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
+      aria-disabled={disabled}
       className={`${baseStyle} ${variants[variant]} ${sizes[size]} ${full ? 'w-full' : ''} ${disabled ? "opacity-50 cursor-not-allowed" : ""} ${className}`}
       style={style}
       {...props}
@@ -139,7 +140,7 @@ export const FInput: React.FC<FInputProps> = ({ label, value, onChange, classNam
     <input
       value={value}
       onChange={onChange}
-      className={`w-full px-3 py-2 bg-white dark:bg-[#0f1623] text-black dark:text-white border border-neutral-200 dark:border-slate-800 rounded-lg text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none transition-all placeholder:text-black/40 dark:placeholder:text-white/40 ${className}`}
+      className={`w-full px-3 py-2.5 sm:py-2 h-10 sm:h-9 bg-white dark:bg-[#0f1623] text-black dark:text-white border border-neutral-200 dark:border-slate-800 rounded-lg text-sm focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 outline-none transition-all placeholder:text-black/40 dark:placeholder:text-white/40 ${className}`}
       {...props}
     />
   </div>
@@ -155,7 +156,7 @@ export const FSelect: React.FC<FSelectProps> = ({ label, value, onChange, childr
     <select
       value={value}
       onChange={onChange}
-      className={`w-full px-3 py-2.5 bg-white dark:bg-[#0f1623] text-black dark:text-white border border-neutral-200 dark:border-slate-800 rounded-lg text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none transition-all cursor-pointer ${className}`}
+      className={`w-full px-3 py-2.5 sm:py-2 h-10 sm:h-9 bg-white dark:bg-[#0f1623] text-black dark:text-white border border-neutral-200 dark:border-slate-800 rounded-lg text-sm focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 outline-none transition-all cursor-pointer ${className}`}
       {...p}
     >
       {children}
@@ -173,7 +174,7 @@ export const FArea: React.FC<FAreaProps> = ({ label, value, onChange, className 
     <textarea
       value={value}
       onChange={onChange}
-      className={`w-full px-3 py-2 bg-white dark:bg-[#0f1623] text-black dark:text-white border border-neutral-200 dark:border-slate-800 rounded-lg text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none resize-y min-height-[80px] transition-all placeholder:text-black/40 dark:placeholder:text-white/40 ${className}`}
+      className={`w-full px-3 py-2.5 bg-white dark:bg-[#0f1623] text-black dark:text-white border border-neutral-200 dark:border-slate-800 rounded-lg text-sm focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 outline-none resize-y min-h-[100px] transition-all placeholder:text-black/40 dark:placeholder:text-white/40 ${className}`}
       {...p}
     />
   </div>
@@ -230,18 +231,20 @@ export const Toast: React.FC<{ msg: string; onClose: () => void }> = ({ msg, onC
   const cleanMsg = firstEmoji ? msg.replace(firstEmoji, "").trimStart() : msg;
   return (
     <div
-      className="fixed bottom-5 right-5 bg-white dark:bg-[#1a2235] text-black dark:text-white px-4 py-3 rounded-xl text-sm z-[99999] shadow-2xl flex items-start gap-3 animate-slide-up max-w-xs border border-neutral-100 dark:border-slate-800"
+      className="fixed bottom-5 left-4 right-4 sm:left-auto sm:right-5 sm:max-w-xs bg-white dark:bg-[#1a2235] text-black dark:text-white px-4 py-3 sm:px-4 sm:py-3 rounded-xl text-sm z-[99999] shadow-2xl flex items-center gap-3 animate-slide-up border border-neutral-100 dark:border-slate-800 min-h-[48px] sm:min-h-auto"
       style={{ borderLeft: `4px solid ${accentColor}` }}
+      role="alert"
+      aria-live="polite"
     >
       <div
-        className="mt-0.5 shrink-0 w-2 h-2 rounded-full"
-        style={{ backgroundColor: accentColor, marginTop: "4px" }}
+        className="flex-shrink-0 w-2 h-2 rounded-full"
+        style={{ backgroundColor: accentColor }}
       />
-      <span className="flex-1 font-medium leading-snug">{cleanMsg}</span>
+      <span className="flex-1 font-medium leading-snug text-sm sm:text-sm">{cleanMsg}</span>
       <button
         onClick={onClose}
-        className="shrink-0 w-6 h-6 rounded-md flex items-center justify-center text-black/40 dark:text-white/40 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-slate-700 transition-colors text-xs font-bold ml-1"
-        aria-label="Dismiss"
+        className="flex-shrink-0 w-6 h-6 rounded-md flex items-center justify-center text-black/40 dark:text-white/40 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-slate-700 transition-colors text-xs font-bold ml-1 focus:outline-none focus:ring-2 focus:ring-orange-500"
+        aria-label="Dismiss notification"
       >
         ✕
       </button>

@@ -612,12 +612,12 @@ const pendingCount = (user && can(user.role, "approveReport")
             </aside>
 
             <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#0f1623]">
-              <header className="h-12 shrink-0 flex items-center justify-between gap-3 px-3 border-b border-neutral-200 dark:border-slate-800 bg-white dark:bg-[#0f1623]">
+              <header className="h-14 sm:h-12 shrink-0 flex items-center justify-between gap-3 px-3 sm:px-4 border-b border-neutral-200 dark:border-slate-800 bg-white dark:bg-[#0f1623]">
                 <div className="flex items-center gap-2 min-w-0">
                   <button
                     type="button"
                     onClick={() => setPage("dashboard")}
-                    className="p-1.5 rounded-md text-black dark:text-white hover:bg-neutral-100 dark:hover:bg-slate-800 mr-1"
+                    className="p-2 sm:p-1.5 rounded-md text-black dark:text-white hover:bg-neutral-100 dark:hover:bg-slate-800 mr-1 min-h-[44px] sm:min-h-auto min-w-[44px] sm:min-w-auto focus:outline-none focus:ring-2 focus:ring-orange-500"
                     aria-label="Back to dashboard"
                   >
                     <ArrowLeft size={16} />
@@ -625,26 +625,28 @@ const pendingCount = (user && can(user.role, "approveReport")
                   <button
                     type="button"
                     onClick={() => setSidebarOpen(true)}
-                    className="md:hidden p-1.5 rounded-md border border-neutral-200 dark:border-slate-700 text-black dark:text-white"
+                    className="md:hidden p-2 rounded-md border border-neutral-200 dark:border-slate-700 text-black dark:text-white min-h-[44px] min-w-[44px] focus:outline-none focus:ring-2 focus:ring-orange-500"
                     aria-label="Open menu"
                   >
-                    <Sliders size={16} />
+                    <Sliders size={18} />
                   </button>
                   <h2 className="text-sm font-semibold text-black dark:text-white truncate m-0">
                     {PAGE_LABELS[page] || "ETT ScaleUp Program"}
                   </h2>
                 </div>
 
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                   {user && (
                     <div className="relative">
                       <button
                         type="button"
                         onClick={() => setNotifOpen(!notifOpen)}
-                        className="w-8 h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-slate-700 hover:border-orange-400 text-black dark:text-white relative"
+                        className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-slate-700 hover:border-orange-400 text-black dark:text-white relative focus:outline-none focus:ring-2 focus:ring-orange-500"
                         title={`${pendingCount} pending reviews`}
+                        aria-label="Notifications"
                       >
-                        <Bell size={14} />
+                        <Bell size={16} className="sm:hidden" />
+                        <Bell size={14} className="hidden sm:block" />
                         {pendingCount > 0 && (
                           <span className="absolute -top-1 -right-1 bg-red-600 text-white font-bold text-[9px] min-w-[16px] h-4 rounded-full flex items-center justify-center px-0.5">
                             {pendingCount}
@@ -722,21 +724,25 @@ const pendingCount = (user && can(user.role, "approveReport")
                   <button
                     type="button"
                     onClick={() => setDarkMode(!darkMode)}
-                    className="w-8 h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-slate-700 hover:border-orange-400 text-black dark:text-white"
+                    className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-slate-700 hover:border-orange-400 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                     title="Toggle theme"
+                    aria-label="Toggle dark mode"
                   >
-                    {darkMode ? <Sun size={14} /> : <Moon size={14} />}
+                    {darkMode ? <Sun size={16} className="sm:hidden" /> : <Moon size={16} className="sm:hidden" />}
+                    {darkMode ? <Sun size={14} className="hidden sm:block" /> : <Moon size={14} className="hidden sm:block" />}
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setPage("settings")}
-                    className={`w-8 h-8 flex items-center justify-center rounded-md border hover:border-orange-400 text-black dark:text-white ${
+                    className={`w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-md border hover:border-orange-400 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 ${
                       page === 'settings' ? 'border-orange-500 text-orange-600' : 'border-neutral-200 dark:border-slate-700'
                     }`}
                     title="Settings"
+                    aria-label="Settings"
                   >
-                    <Settings size={14} />
+                    <Settings size={16} className="sm:hidden" />
+                    <Settings size={14} className="hidden sm:block" />
                   </button>
 
                   {user ? (
@@ -747,7 +753,7 @@ const pendingCount = (user && can(user.role, "approveReport")
                       <button
                         type="button"
                         onClick={() => { setUser(null); setPage("dashboard"); showToast("Signed out."); }}
-                        className="px-2.5 py-1 rounded-md bg-red-600 hover:bg-red-700 text-white font-semibold text-xs"
+                        className="px-3 py-2 sm:px-2.5 sm:py-1 rounded-md bg-red-600 hover:bg-red-700 text-white font-semibold text-sm sm:text-xs min-h-[44px] sm:min-h-auto focus:outline-none focus:ring-2 focus:ring-red-500"
                       >
                         Sign out
                       </button>

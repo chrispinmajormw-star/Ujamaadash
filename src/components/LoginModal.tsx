@@ -73,11 +73,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onRegi
       <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={onClose} />
       
       {/* Glassmorphism Modal container */}
-      <div className="relative w-full max-w-[420px] rounded-3xl bg-white/70 dark:bg-[#0f1623]/70 backdrop-blur-2xl border border-white/40 dark:border-white/10 shadow-2xl overflow-hidden p-8 animate-fade-in-up">
+      <div className="relative w-full max-w-[420px] rounded-3xl bg-white/70 dark:bg-[#0f1623]/70 backdrop-blur-2xl border border-white/40 dark:border-white/10 shadow-2xl overflow-hidden p-6 sm:p-8 animate-fade-in-up max-h-[90vh] overflow-y-auto">
         
         {/* Close button */}
-        <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-slate-500 transition-colors">
-          <X size={18} />
+        <button onClick={onClose} className="absolute top-4 right-4 w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-slate-500 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500" aria-label="Close dialog">
+          <X size={20} className="sm:hidden" />
+          <X size={18} className="hidden sm:block" />
         </button>
 
         {mode === 'login' ? (
@@ -100,8 +101,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onRegi
                   type="email" 
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder="Enter your email" 
-                  className="w-full px-4 py-3 rounded-xl bg-white/40 dark:bg-black/30 border border-slate-300/50 dark:border-white/10 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all"
+                  placeholder="Enter your email"
+                  autoComplete="email"
+                  className="w-full px-4 py-3 sm:py-2.5 rounded-xl bg-white/40 dark:bg-black/30 border border-slate-300/50 dark:border-white/10 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/30 transition-all min-h-[44px] sm:min-h-auto"
                 />
               </div>
 
@@ -112,10 +114,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onRegi
                     type={showPass ? "text" : "password"} 
                     value={pass}
                     onChange={e => setPass(e.target.value)}
-                    placeholder="••••••••" 
-                    className="w-full pl-4 pr-10 py-3 rounded-xl bg-white/40 dark:bg-black/30 border border-slate-300/50 dark:border-white/10 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all"
+                    placeholder="••••••••"
+                    autoComplete="current-password"
+                    className="w-full pl-4 pr-10 py-3 sm:py-2.5 rounded-xl bg-white/40 dark:bg-black/30 border border-slate-300/50 dark:border-white/10 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/30 transition-all min-h-[44px] sm:min-h-auto"
                   />
-                  <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                  <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500 rounded" aria-label={showPass ? "Hide password" : "Show password"}>
                      {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
@@ -123,10 +126,10 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onRegi
 
               <div className="flex items-center justify-between px-1 pt-1">
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" className="w-3.5 h-3.5 rounded text-orange-500 focus:ring-orange-500 focus:ring-offset-0 bg-white/50 border-slate-300 dark:border-slate-600" />
+                  <input type="checkbox" className="w-4 h-4 rounded text-orange-500 focus:ring-orange-500 focus:ring-offset-0 bg-white/50 border-slate-300 dark:border-slate-600" />
                   <span className="text-xs text-slate-600 dark:text-slate-300">Remember me</span>
                 </label>
-                <button className="text-xs text-slate-600 dark:text-slate-300 hover:text-orange-500 transition-colors">
+                <button className="text-xs text-slate-600 dark:text-slate-300 hover:text-orange-500 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 rounded px-2 py-1">
                   Forgot password?
                 </button>
               </div>
@@ -141,7 +144,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onRegi
             <button 
               onClick={doLogin} 
               disabled={loading}
-              className="w-full mt-6 py-3 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-sm shadow-lg shadow-orange-500/20 transition-all active:scale-[0.98] disabled:opacity-70"
+              className="w-full mt-6 py-3 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-sm shadow-lg shadow-orange-500/20 transition-all active:scale-[0.98] disabled:opacity-70 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
             >
               {loading ? "Signing In..." : "Log In"}
             </button>
