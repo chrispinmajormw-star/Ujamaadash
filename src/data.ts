@@ -1,3 +1,4 @@
+import { CaseReferral, SasaMonthlyReport } from './types';
 import { User, Report, Cluster, District, Session } from './types';
 
 export const ROLE_CFG = {
@@ -424,3 +425,23 @@ export const GESD_QUIZ_QUESTIONS: QuizQuestion[] = [
   { id:19, topic:"Menstruation",    question:"What is the average menstrual cycle length?", options:["14 days","28 days","45 days","7 days"], correctAnswer:1, explanation:"The average menstrual cycle is every 28 days. Cycles from 21 to 35 days are also considered normal." },
   { id:20, topic:"Referral",        question:"The Malawi GBV Crisis Line number is:", options:["116","999","5600 / 6600","0800"], correctAnswer:2, explanation:"5600 / 6600 is the GBV Crisis Line in Malawi. 116 is the Tithandizane Child Help Line. Both are important helpline numbers." },
 ];
+// ─── SASA OFFICER CONSTANTS ───────────────────────────────────────────────────
+
+export const REFERRAL_AGENCIES = [
+  { id: "police",          label: "Police Station" },
+  { id: "hospital",        label: "Hospital / Health Centre" },
+  { id: "social_welfare",  label: "Social Welfare Office" },
+  { id: "child_protection",label: "Child Protection Services" },
+  { id: "legal_aid",       label: "Legal Aid Bureau" },
+  { id: "safe_house",      label: "Safe House / Shelter" },
+];
+
+export const REFERRAL_STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
+  pending:     { label: "Pending",     color: "#92400e", bg: "#fef9c3" },
+  in_progress: { label: "In Progress", color: "#1e40af", bg: "#dbeafe" },
+  resolved:    { label: "Resolved",    color: "#065f46", bg: "#dcfce7" },
+};
+
+export const CASE_REFERRALS_INIT: CaseReferral[] = [];
+
+export const SASA_REPORTS_INIT: SasaMonthlyReport[] = [];
