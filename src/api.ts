@@ -146,3 +146,11 @@ export const impactStoriesApi = {
   update: (id: number, data: any) => api.put(`/api/impact-stories/${id}`, data),
   delete: (id: number) => api.delete(`/api/impact-stories/${id}`),
 };
+// ─── PROGRAMME STATS ─────────────────────────────────────────────────────────
+
+export const programmeStatsApi = {
+  getAll: () => api.get('/api/programme-stats'),
+  update: (year: string, data: any) => api.put(`/api/programme-stats/${year}`, data),
+  create: (data: any) => api.post('/api/programme-stats', data),
+  delete: (year: string) => api.delete(`/api/programme-stats/${year}`),
+};

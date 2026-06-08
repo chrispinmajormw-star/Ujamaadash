@@ -1,3 +1,5 @@
+import { Modal } from './SubComponents';
+import { programmeStatsApi } from '../api';
 import { statsApi } from '../api';
 import React, { useState, useEffect, useRef } from 'react';
 import { Shield, FilePlus, MapPin, GraduationCap, School, BookOpen, TrendingUp, FileText, Clock, CheckSquare, Users, Map } from 'lucide-react';
@@ -27,16 +29,35 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
 useEffect(() => {
   statsApi.get().then(data => { if (!data.error) setStats(data); });
 }, []);
+  const [editStats, setEditStats] = useState(false);
+  const [editingYear, setEditingYear] = useState<any | null>(null);
   const approved = my.filter(r => r.status === "approved").length;
   const students = my.reduce((acc, r) => acc + r.boys + r.girls, 0);
 
-  const YEARLY_DATA = [
-    { year: "2023", schools: 116, teachers: 228, learners: 45600, targetSchools: 225, targetLearners: 45000 },
-    { year: "2024", schools: 357, teachers: 727, learners: 145400, targetSchools: 950, targetLearners: 190005 },
-    { year: "2025", schools: 975, teachers: 1973, learners: 395000, targetSchools: 3000, targetLearners: 600000 },
-    { year: "2026", schools: 1482, teachers: 2964, learners: 592200, targetSchools: 6000, targetLearners: 1200000, current: true },
-    { year: "2027", schools: 0, teachers: 0, learners: 0, targetSchools: 10000, targetLearners: 2000000, planned: true },
-  ];
+  const [YEARLY_DATA, setYEARLY_DATA] = useState<any[]>([
+  { year: "2023", schools: 116, teachers: 228, learners: 45600, targetSchools: 225, targetLearners: 45000 },
+  { year: "2024", schools: 357, teachers: 727, learners: 145400, targetSchools: 950, targetLearners: 190005 },
+  { year: "2025", schools: 975, teachers: 1973, learners: 395000, targetSchools: 3000, targetLearners: 600000 },
+  { year: "2026", schools: 1482, teachers: 2964, learners: 592200, targetSchools: 6000, targetLearners: 1200000, current: true },
+  { year: "2027", schools: 0, teachers: 0, learners: 0, targetSchools: 10000, targetLearners: 2000000, planned: true },
+]);
+
+useEffect(() => {
+  programmeStatsApi.getAll().then(data => {
+    if (Array.isArray(data) && data.length > 0) {
+      setYEARLY_DATA(data.map((d: any) => ({
+        year: d.year,
+        schools: d.schools,
+        teachers: d.teachers,
+        learners: d.learners,
+        targetSchools: d.target_schools,
+        targetLearners: d.target_learners,
+        current: d.is_current,
+        planned: d.is_planned,
+      })));
+    }
+  });
+}, []);
 
   const chartRefs = useRef<Record<string, any>>({});
   const mapRef = useRef<any>(null);
@@ -221,6 +242,11 @@ useEffect(() => {
         subtitle={user ? `${ROLE_CFG[user.role]?.label}${currentUser.district ? ` · ${currentUser.district}` : ''}` : "Ujamaa Dashboard · Ujamaa Pamodzi Africa"}
         actions={
           <>
+          {user?.role === 'admin' && (
+          <Btn size="sm" variant="ghost" onClick={() => setEditStats(true)}>
+            Edit Programme Stats
+          </Btn>
+          )}
             <Btn size="sm" onClick={() => setPage("submit")}>
               <FilePlus size={13} /> {user ? "Submit report" : "Report case"}
             </Btn>
@@ -377,6 +403,68 @@ useEffect(() => {
           </Card>
         </div>
       </div>
+      {editStats && user?.role === 'admin' && (
+  <Modal title="Programme Statistics" onClose={() => { setEditStats(false); setEditingYear(null); }} width={600}>
+    <div className="space-y-2 max-h-96 overflow-y-auto">
+      {YEARLY_DATA.map(d => (
+        <div key={d.year} className="p-3 rounded-lg border border-neutral-200 dark:border-slate-800">
+          {editingYear?.year === d.year ? (
+            <div className="space-y-2">
+              <div className="font-bold text-sm text-black dark:text-white mb-2">{d.year}</div>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  ['Schools', 'schools'], ['Teachers', 'teachers'],
+                  ['Learners', 'learners'], ['Target Schools', 'targetSchools'],
+                  ['Target Learners', 'targetLearners'],
+                ].map(([label, key]) => (
+                  <div key={key}>
+                    <label className="text-[10px] font-bold uppercase text-black/50 dark:text-white/50">{label}</label>
+                    <input
+                      type="number"
+                      value={editingYear[key]}
+                      onChange={e => setEditingYear((p: any) => ({ ...p, [key]: parseInt(e.target.value) || 0 }))}
+                      className="w-full text-xs border border-neutral-200 dark:border-slate-700 rounded px-2 py-1 bg-white dark:bg-slate-800 text-black dark:text-white"
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2 justify-end mt-2">
+                <Btn size="sm" variant="ghost" onClick={() => setEditingYear(null)}>Cancel</Btn>
+                <Btn size="sm" variant="primary" onClick={async () => {
+                  const data = await programmeStatsApi.update(editingYear.year, {
+                    schools: editingYear.schools,
+                    teachers: editingYear.teachers,
+                    learners: editingYear.learners,
+                    target_schools: editingYear.targetSchools,
+                    target_learners: editingYear.targetLearners,
+                    is_current: editingYear.current || false,
+                    is_planned: editingYear.planned || false,
+                  });
+                  if (!data.error) {
+                    setYEARLY_DATA(prev => prev.map(y => y.year === editingYear.year ? editingYear : y));
+                    setEditingYear(null);
+                  }
+                }}>Save</Btn>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="font-bold text-sm text-black dark:text-white">{d.year}</span>
+                {d.current && <span className="ml-2 text-[10px] bg-orange-100 text-orange-700 px-1.5 rounded font-bold">Current</span>}
+                {d.planned && <span className="ml-2 text-[10px] bg-slate-100 text-slate-600 px-1.5 rounded font-bold">Planned</span>}
+                <div className="text-[11px] text-black/50 dark:text-white/50 mt-0.5">
+                  {d.schools.toLocaleString()} schools · {d.teachers.toLocaleString()} teachers · {d.learners.toLocaleString()} learners
+                </div>
+              </div>
+              <Btn size="sm" variant="ghost" onClick={() => setEditingYear({ ...d })}>Edit</Btn>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  </Modal>
+)}
     </div>
   );
 };
