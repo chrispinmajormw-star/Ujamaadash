@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
   BookOpen, ChevronRight, ChevronLeft, HelpCircle,
-  FileText, ExternalLink, X, Maximize2, Layers,
-  Shield, Users, Star, ArrowRight, Play
+  FileText, ExternalLink, X, Maximize2, Lock,
+  Shield, Users, ArrowRight, Play, GraduationCap
 } from 'lucide-react';
 import { Card, Kicker } from './SubComponents';
 import { Session } from '../types';
-import { HIM_SESSIONS, GESD_SESSIONS } from '../data';
+import { HIM_SESSIONS, GESD_SESSIONS, TEACHER_CHAMPION_SESSIONS } from '../data';
 import { CourseLessonPage } from './CourseLessonPage';
 import { CourseQuizComponent } from './CourseQuizComponent';
 import { CertificateComponent } from './CertificateComponent';
@@ -139,8 +139,14 @@ export const CurriculumPage: React.FC = () => {
   const [tempName, setTempName] = useState('');
   const [tempGrade, setTempGrade] = useState('');
   const [tempSex, setTempSex] = useState('');
+  const [gesdUnlocked, setGesdUnlocked] = useState(false);
+  const [showGesdGate, setShowGesdGate] = useState(false);
+  const [gateSex, setGateSex] = useState('');
+  const [gateDenied, setGateDenied] = useState(false);
 
   const sessions = tab === 'him' ? HIM_SESSIONS : GESD_SESSIONS;
+  const teacherModules = TEACHER_CHAMPION_SESSIONS;
+  const gesdLocked = tab === 'gesd' && !gesdUnlocked;
   const isHim = tab === 'him';
   const accent = isHim ? '#185fa5' : '#a82563';
   const accentPale = isHim ? '#dbeafe' : '#fce7f3';
@@ -153,12 +159,13 @@ export const CurriculumPage: React.FC = () => {
   const currDoc = PDF_DOCS.find(d => d.curriculum === tab)!;
 
   const handleStartCourse = () => {
-    if (sessions.length === 0) return;
+    if (sessions.length === 0 || gesdLocked) return;
     setShowNamePrompt(true);
   };
 
   const handleEnterName = () => {
-    if (tempName.trim() && tempGrade.trim()) {
+    const sexOk = tab === 'him' || tempSex === 'Female';
+    if (tempName.trim() && tempGrade.trim() && sexOk) {
       setStudentName(tempName.trim());
       setStudentGrade(tempGrade.trim());
       setStudentSex(tempSex.trim());
@@ -166,6 +173,28 @@ export const CurriculumPage: React.FC = () => {
       setCourseMode('lesson');
       setCurrentLesson(0);
       setCompletedLessons([]);
+    }
+  };
+
+  const handleGesdTab = () => {
+    if (gesdUnlocked) {
+      setTab('gesd');
+      setCourseMode('view');
+      return;
+    }
+    setGateSex('');
+    setGateDenied(false);
+    setShowGesdGate(true);
+  };
+
+  const handleGesdGateConfirm = () => {
+    if (gateSex === 'Female') {
+      setGesdUnlocked(true);
+      setShowGesdGate(false);
+      setTab('gesd');
+      setCourseMode('view');
+    } else if (gateSex === 'Male') {
+      setGateDenied(true);
     }
   };
 
@@ -261,6 +290,56 @@ export const CurriculumPage: React.FC = () => {
   return (
     <div className="space-y-5 max-w-5xl mx-auto animate-fade-in-up">
 
+      {/* GESD access gate — girls only */}
+      {showGesdGate && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50">
+          <Card className="w-full max-w-md space-y-4">
+            <div className="flex items-center gap-2">
+              <Lock size={18} className="text-pink-600" />
+              <h2 className="text-lg font-bold text-black dark:text-white">GESD Programme Access</h2>
+            </div>
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              The Girls Empowerment Self-Defense (GESD) programme is designed exclusively for girls and young women. Please confirm your sex to continue.
+            </p>
+            {gateDenied ? (
+              <div className="rounded-lg p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/40">
+                <p className="text-sm text-red-700 dark:text-red-400 font-medium">
+                  GESD is only available to female students. Please explore the Hero In Me (HIM) programme instead.
+                </p>
+              </div>
+            ) : (
+              <select
+                value={gateSex}
+                onChange={(e) => setGateSex(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-black dark:text-white"
+              >
+                <option value="">Select your sex</option>
+                <option value="Female">Female</option>
+                <option value="Male">Male</option>
+              </select>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowGesdGate(false)}
+                className="flex-1 px-4 py-2 rounded-lg font-semibold text-sm bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-white"
+              >
+                Cancel
+              </button>
+              {!gateDenied && (
+                <button
+                  onClick={handleGesdGateConfirm}
+                  disabled={!gateSex}
+                  className="flex-1 px-4 py-2 rounded-lg font-semibold text-sm text-white disabled:opacity-50"
+                  style={{ backgroundColor: '#a82563' }}
+                >
+                  Continue
+                </button>
+              )}
+            </div>
+          </Card>
+        </div>
+      )}
+
       {/* Name Prompt Modal */}
       {showNamePrompt && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50">
@@ -295,10 +374,15 @@ export const CurriculumPage: React.FC = () => {
               className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-black dark:text-white focus:outline-none focus:ring-2"
               style={{ '--tw-ring-color': accent } as any}
             >
-              <option value="">Sex (optional)</option>
+              <option value="">{tab === 'gesd' ? 'Select sex (required)' : 'Sex (optional)'}</option>
               <option value="Female">Female</option>
-              <option value="Male">Male</option>
+              {tab === 'him' && <option value="Male">Male</option>}
             </select>
+            {tab === 'gesd' && (
+              <p className="text-[10px] text-pink-600 dark:text-pink-400">
+                GESD is for girls only. You must select Female to enrol.
+              </p>
+            )}
             <div className="flex gap-3">
               <button
                 onClick={() => setShowNamePrompt(false)}
@@ -308,7 +392,7 @@ export const CurriculumPage: React.FC = () => {
               </button>
               <button
                 onClick={handleEnterName}
-                disabled={!tempName.trim() || !tempGrade.trim()}
+                disabled={!tempName.trim() || !tempGrade.trim() || (tab === 'gesd' && tempSex !== 'Female')}
                 className="flex-1 px-4 py-2 rounded-lg font-semibold text-sm text-white transition hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ backgroundColor: accent }}
               >
@@ -334,8 +418,8 @@ export const CurriculumPage: React.FC = () => {
           <button
             key={k}
             onClick={() => {
-              setTab(k);
-              setCourseMode('view');
+              if (k === 'gesd') handleGesdTab();
+              else { setTab('him'); setCourseMode('view'); }
             }}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
               tab === k
@@ -345,6 +429,7 @@ export const CurriculumPage: React.FC = () => {
           >
             <Icon size={12} />
             {l}
+            {k === 'gesd' && !gesdUnlocked && <Lock size={10} className="text-pink-500" />}
           </button>
         ))}
       </div>
@@ -419,19 +504,19 @@ export const CurriculumPage: React.FC = () => {
 
               <button
                 onClick={handleStartCourse}
-                disabled={sessions.length === 0}
+                disabled={sessions.length === 0 || gesdLocked}
                 className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-white text-xs font-bold transition hover:opacity-90 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ backgroundColor: accent }}
               >
                 <div className="flex items-center gap-2">
-                  <Play size={13} />
-                  <span>Start Course</span>
+                  {gesdLocked ? <Lock size={13} /> : <Play size={13} />}
+                  <span>{gesdLocked ? 'Unlock GESD to Start' : 'Start Course'}</span>
                 </div>
                 <ArrowRight size={13} />
               </button>
 
               <p className="text-[10px] text-slate-400 text-center">
-                Takes 4-6 hours to complete all lessons
+                6 topics · complete all lessons then pass the quiz
               </p>
             </div>
           </Card>
@@ -481,8 +566,8 @@ export const CurriculumPage: React.FC = () => {
         <div className="lg:col-span-2 space-y-3">
           <div className="flex items-center justify-between">
             <div className="text-xs font-bold text-black dark:text-white">
-              Session Breakdown
-              <span className="ml-2 text-[10px] font-normal text-slate-400">{sessions.length} lessons</span>
+              {isHim ? 'Core Topics' : 'Core Sessions'}
+              <span className="ml-2 text-[10px] font-normal text-slate-400">6 lessons</span>
             </div>
             <div
               className="text-[10px] font-bold px-2 py-0.5 rounded-full"
@@ -500,10 +585,10 @@ export const CurriculumPage: React.FC = () => {
             </Card>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className={`grid grid-cols-1 sm:grid-cols-2 gap-3 ${gesdLocked ? 'opacity-40 pointer-events-none' : ''}`}>
             {sessions.map((s, i) => (
               <div
-                key={i}
+                key={s.num}
                 onClick={() => setSel(s)}
                 className="group bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg p-3.5 cursor-pointer hover:border-[#e85d04] dark:hover:border-[#e85d04] transition-all hover:shadow-sm"
               >
@@ -532,6 +617,38 @@ export const CurriculumPage: React.FC = () => {
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* Teacher Champion modules — shared across all curriculums */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <GraduationCap size={14} className="text-[#e85d04]" />
+          <div className="text-xs font-bold text-black dark:text-white">
+            Teacher Champion Resources
+            <span className="ml-2 text-[10px] font-normal text-slate-400">6 modules for facilitators</span>
+          </div>
+        </div>
+        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+          Facilitator guidance on roles, discipline, child rights, classroom rules, mentorship, and counselling — available on both HIM and GESD programmes.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {teacherModules.map((s) => (
+            <div
+              key={s.num}
+              onClick={() => setSel(s)}
+              className="group bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg p-3.5 cursor-pointer hover:border-[#e85d04] transition-all hover:shadow-sm"
+            >
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <div className="text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+                  {s.num}
+                </div>
+                <ChevronRight size={13} className="text-slate-300 group-hover:text-[#e85d04] transition shrink-0" />
+              </div>
+              <h3 className="text-xs font-bold text-black dark:text-white mb-1 leading-snug line-clamp-2">{s.title}</h3>
+              <p className="text-[10px] text-slate-400">{s.dur}</p>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -586,19 +703,21 @@ export const CurriculumPage: React.FC = () => {
               )}
 
               {/* Objectives */}
-              <div>
-                <div className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Learning Objectives</div>
-                <div className="space-y-1.5">
-                  {sel.objectives.map((obj, i) => (
-                    <div key={i} className="flex items-start gap-2">
-                      <div className="w-4 h-4 rounded flex items-center justify-center shrink-0 mt-0.5" style={{ backgroundColor: accentPale }}>
-                        <span className="text-[9px] font-bold" style={{ color: accent }}>{i + 1}</span>
+              {sel.objectives.length > 0 && (
+                <div>
+                  <div className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Learning Objectives</div>
+                  <div className="space-y-1.5">
+                    {sel.objectives.map((obj, i) => (
+                      <div key={i} className="flex items-start gap-2">
+                        <div className="w-4 h-4 rounded flex items-center justify-center shrink-0 mt-0.5" style={{ backgroundColor: accentPale }}>
+                          <span className="text-[9px] font-bold" style={{ color: accent }}>{i + 1}</span>
+                        </div>
+                        <span className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">{obj}</span>
                       </div>
-                      <span className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">{obj}</span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="flex items-start gap-1.5 text-[10px] text-slate-400 pt-1 border-t border-neutral-100 dark:border-slate-800">
                 <HelpCircle size={12} className="shrink-0 mt-0.5" />

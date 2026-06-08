@@ -8,6 +8,7 @@ import {
 import { Session, ContentBlock } from '../types';
 import { HIM_SESSIONS, GESD_SESSIONS } from '../data';
 import { Card } from './SubComponents';
+import { SectionContent, renderInlineText } from '../utils/lessonContent';
 
 interface CourseLessonPageProps {
   curriculum: 'him' | 'gesd';
@@ -32,9 +33,21 @@ const RenderBlock: React.FC<{ block: ContentBlock; accent: string; pale: string 
 
     case 'paragraph':
       return (
-        <div className="mb-3">
-          {block.title && <h4 className="text-xs font-bold uppercase tracking-wide mb-1.5" style={{ color: accent }}>{block.title}</h4>}
-          <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{block.content}</p>
+        <div className="mb-5 pb-4 border-b border-slate-100 dark:border-slate-800 last:border-0">
+          {block.title && (
+            <h4 className="text-sm font-bold mb-2" style={{ color: accent }}>{block.title}</h4>
+          )}
+          {block.content && <SectionContent content={block.content} accent={accent} />}
+          {block.items && (
+            <ul className="mt-2 space-y-1.5">
+              {block.items.map((item, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
+                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: accent }} />
+                  <span className="leading-relaxed">{renderInlineText(item, accent)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       );
 
@@ -45,7 +58,9 @@ const RenderBlock: React.FC<{ block: ContentBlock; accent: string; pale: string 
             <MessageSquare size={13} style={{ color: accent }} />
             <span className="text-[10px] font-extrabold uppercase tracking-widest" style={{ color: accent }}>{block.label || 'Trainer Says'}</span>
           </div>
-          <p className="text-sm italic text-slate-700 dark:text-slate-300 leading-relaxed">{block.content}</p>
+          <div className="text-sm italic text-slate-700 dark:text-slate-300 leading-relaxed">
+            {block.content && <SectionContent content={block.content} accent={accent} />}
+          </div>
         </div>
       );
 
@@ -54,15 +69,15 @@ const RenderBlock: React.FC<{ block: ContentBlock; accent: string; pale: string 
         <div className="my-3 rounded-xl border p-4" style={{ borderColor: accent + '40', backgroundColor: accent + '08' }}>
           <div className="flex items-center gap-2 mb-2">
             <Zap size={13} style={{ color: accent }} />
-            <span className="text-[10px] font-extrabold uppercase tracking-widest" style={{ color: accent }}>{block.label}</span>
+            <span className="text-[10px] font-extrabold uppercase tracking-widest" style={{ color: accent }}>{block.label || block.title}</span>
           </div>
-          {block.content && <p className="text-sm text-slate-700 dark:text-slate-300 mb-2 leading-relaxed">{block.content}</p>}
+          {block.content && <div className="mb-2"><SectionContent content={block.content} accent={accent} /></div>}
           {block.items && (
             <ul className="space-y-1.5">
               {block.items.map((item, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
                   <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-[10px] font-bold text-white" style={{ backgroundColor: accent }}>{i + 1}</div>
-                  <span className="leading-relaxed">{item}</span>
+                  <span className="leading-relaxed">{renderInlineText(item.replace(/^-\s*/, ''), accent)}</span>
                 </li>
               ))}
             </ul>
@@ -75,7 +90,7 @@ const RenderBlock: React.FC<{ block: ContentBlock; accent: string; pale: string 
         <div className="my-3 rounded-xl border-2 p-4 text-center" style={{ borderColor: accent + '60', backgroundColor: pale + '60' }}>
           <div className="text-[10px] font-extrabold uppercase tracking-widest mb-1" style={{ color: accent }}>DEFINITION</div>
           {block.title && <div className="text-lg font-black mb-1" style={{ color: accent }}>{block.title}</div>}
-          {block.content && <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{block.content}</p>}
+          {block.content && <SectionContent content={block.content} accent={accent} />}
         </div>
       );
 
@@ -283,8 +298,8 @@ export const CourseLessonPage: React.FC<CourseLessonPageProps> = ({
 
           {/* Rich content blocks */}
           {lesson.content && lesson.content.length > 0 && (
-            <Card className="p-5 space-y-2">
-              <h2 className="text-sm font-bold text-black dark:text-white mb-3">Lesson Content</h2>
+            <Card className="p-5 space-y-1">
+              <h2 className="text-sm font-bold text-black dark:text-white mb-4 pb-2 border-b border-slate-200 dark:border-slate-700">Course Sections</h2>
               {typeof lesson.content === 'string' ? (
                 <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{lesson.content}</p>
               ) : Array.isArray(lesson.content) ? (

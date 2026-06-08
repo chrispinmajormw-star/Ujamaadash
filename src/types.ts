@@ -7,7 +7,7 @@ export interface User {
   id: string;
   email: string;
   password?: string;
-  role: 'admin' | 'tot' | 'data_entry' | 'district_coordinator' | 'viewer' | 'sasa_officer' | 'program_manager' | 'field_officer' | 'program_staff' | 'cartographer';
+  role: 'admin' | 'tot' | 'data_entry' | 'district_coordinator' | 'viewer';
   name: string;
   district: string | null;
   avatar: string;
@@ -87,48 +87,8 @@ export interface Session {
   desc: string;
   pledge: string | null;
   objectives: string[];
-  content?: string | ContentBlock[];
-  activities?: string[];
+  content?: ContentBlock[];
   keyTakeaways?: string[];
-}
-
-export interface QuizQuestion {
-  id: string;
-  lessonNum: string;
-  question: string;
-  options: string[];
-  correctAnswer: number;
-  explanation?: string;
-}
-
-export interface CourseEnrollment {
-  id: string;
-  studentName: string;
-  curriculum: 'him' | 'gesd';
-  startedAt: string;
-  completedAt?: string;
-  progress: number;
-  status: 'active' | 'completed' | 'not-started';
-}
-
-export interface QuizSubmission {
-  id: string;
-  enrollment: string;
-  curriculum: 'him' | 'gesd';
-  answers: Record<string, number>;
-  score: number;
-  totalQuestions: number;
-  submittedAt: string;
-  passed: boolean;
-}
-
-export interface Certificate {
-  id: string;
-  enrollment: string;
-  studentName: string;
-  curriculum: 'him' | 'gesd';
-  issuedAt: string;
-  score: number;
 }
 
 export interface Document {
@@ -156,32 +116,13 @@ export interface Task {
 }
 
 
-export interface CaseReferral {
+export interface QuizQuestion {
   id: number;
-  caseId: number;
-  caseSchool: string;
-  caseDistrict: string;
-  agency: string;
-  agencyLabel: string;
-  referredBy: string;
-  referredAt: string;
-  status: 'pending' | 'in_progress' | 'resolved';
-  outcome?: string;
-  notes?: string;
-}
-
-export interface SasaMonthlyReport {
-  id: number;
-  month: string;
-  submittedBy: string;
-  submittedAt: string;
-  totalCases: number;
-  publicCases: number;
-  referrals: number;
-  resolvedReferrals: number;
-  highlights: string;
-  challenges: string;
-  recommendations: string;
+  topic: string;
+  question: string;
+  options: string[];
+  correctAnswer: number;
+  explanation: string;
 }
 
 export interface ContentBlock {
@@ -195,4 +136,3 @@ export interface ContentBlock {
   columns?: { title: string; items: string[] }[];
   steps?: string[];
 }
-
