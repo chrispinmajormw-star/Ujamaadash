@@ -106,7 +106,6 @@ import { FieldOfficerPage } from './components/FieldOfficerPage';
 import { ProgramStaffPage } from './components/ProgramStaffPage';
 import { CartographerPage } from './components/CartographerPage';
 import { safeStorage } from './utils/storage';
-
 import { LoginModal } from './components/LoginModal';
 import { SubmitReport } from './components/SubmitReport';
 import { TrainingsPage } from './components/TrainingsPage';
@@ -521,7 +520,7 @@ const pendingCount = (user && can(user.role, "approveReport")
           { id: "analytics", label: "Analytics", icon: BarChart2 },
           ...(user?.role === 'admin' ? [{ id: "sasa", label: "SASA Workspace", icon: Shield, protected: true }] : []),
           { id: "impact", label: "Impact stories", icon: Heart },
-          { id: 'teacher_resources', label: 'Teacher Resources', icon: BookOpen }
+          { id: 'teacher_resources', label: 'Teacher Resources', icon: BookOpen },
           ...(user?.role === 'admin' ? [{ id: "users", label: "Staff", icon: Users, protected: true }] : []),
           { id: "settings", label: "Settings", icon: Settings }
         ]
