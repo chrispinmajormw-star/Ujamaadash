@@ -87,6 +87,7 @@ import {
   OR_PALE
 } from './components/SubComponents';
 
+import { TeacherChampionPage } from './components/TeacherChampionPage';
 import { DistrictsPage } from './components/DistrictsPage';
 import { Dashboard } from './components/Dashboard';
 import { ReportsPage, getReportRecipient } from './components/ReportsPage';
@@ -355,6 +356,8 @@ const pendingCount = (user && can(user.role, "approveReport")
         return <MapsPage setPage={setPage} user={user} darkMode={darkMode} />;
       case "districts":
         return <DistrictsPage user={user} showToast={showToast} />;
+      case 'teacher_resources':
+        return <TeacherChampionPage />;
       case "trainings":
         return <TrainingsPage />;
       case "curriculum":
@@ -518,6 +521,7 @@ const pendingCount = (user && can(user.role, "approveReport")
           { id: "analytics", label: "Analytics", icon: BarChart2 },
           ...(user?.role === 'admin' ? [{ id: "sasa", label: "SASA Workspace", icon: Shield, protected: true }] : []),
           { id: "impact", label: "Impact stories", icon: Heart },
+          { id: 'teacher_resources', label: 'Teacher Resources', icon: BookOpen }
           ...(user?.role === 'admin' ? [{ id: "users", label: "Staff", icon: Users, protected: true }] : []),
           { id: "settings", label: "Settings", icon: Settings }
         ]

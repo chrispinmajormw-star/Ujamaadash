@@ -80,6 +80,32 @@ export interface Training {
   s: 'active' | 'upcoming' | 'completed';
 }
 
+// ─── Rich content block types (used in Session.content) ──────────────────────
+
+export interface ContentBlock {
+  type:
+    | 'paragraph'
+    | 'trainer_says'
+    | 'activity'
+    | 'definition'
+    | 'tip'
+    | 'scenario'
+    | 'table'
+    | 'values_grid'
+    | 'step_grid'
+    | 'pledge'
+    | 'cheer'
+    | 'helpline';
+  title?: string;
+  label?: string;
+  content?: string;
+  items?: string[];
+  headers?: string[];
+  rows?: string[][];
+  columns?: { title: string; items: string[] }[];
+  steps?: string[];
+}
+
 export interface Session {
   num: string;
   title: string;
@@ -89,6 +115,15 @@ export interface Session {
   objectives: string[];
   content?: ContentBlock[];
   keyTakeaways?: string[];
+}
+
+export interface QuizQuestion {
+  id: number;
+  topic: string;
+  question: string;
+  options: string[];
+  correctAnswer: number;
+  explanation: string;
 }
 
 export interface Document {
@@ -115,24 +150,31 @@ export interface Task {
   reportId?: number;
 }
 
-
-export interface QuizQuestion {
+export interface CaseReferral {
   id: number;
-  topic: string;
-  question: string;
-  options: string[];
-  correctAnswer: number;
-  explanation: string;
+  caseId: number;
+  caseSchool: string;
+  caseDistrict: string;
+  agency: string;
+  agencyLabel: string;
+  referredBy: string;
+  referredAt: string;
+  status: 'pending' | 'in_progress' | 'resolved';
+  outcome?: string;
+  notes?: string;
 }
 
-export interface ContentBlock {
-  type: 'paragraph' | 'trainer_says' | 'activity' | 'definition' | 'tip' | 'scenario' | 'table' | 'values_grid' | 'step_grid' | 'pledge' | 'cheer' | 'helpline';
-  title?: string;
-  label?: string;
-  content?: string;
-  items?: string[];
-  headers?: string[];
-  rows?: string[][];
-  columns?: { title: string; items: string[] }[];
-  steps?: string[];
+export interface SasaMonthlyReport {
+  id: number;
+  month: string;
+  submittedBy: string;
+  submittedAt: string;
+  totalCases: number;
+  publicCases: number;
+  referrals: number;
+  resolvedReferrals: number;
+  highlights: string;
+  challenges: string;
+  recommendations: string;
+  status: 'draft' | 'submitted';
 }
