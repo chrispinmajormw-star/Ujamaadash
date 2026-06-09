@@ -485,7 +485,28 @@ const pendingCount = (user && can(user.role, "approveReport")
         { id: "settings", label: "Settings", icon: Settings },
       ]},
     ];
-
+    
+// District Coordinator nav
+if (role === 'district_coordinator') return [
+  { title: "My District", items: [
+    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { id: "districts", label: "My District", icon: MapPin, protected: true },
+    { id: "trainings", label: "Trainings", icon: GraduationCap, protected: true },
+    { id: "reports", label: "Reports", icon: FileText, protected: true },
+    { id: "document_reports", label: "Submit a Report", icon: Upload, protected: true },
+  ]},
+  { title: "Programme", items: [
+    { id: "submit", label: "Submit a Case", icon: FilePlus },
+    { id: "curriculum", label: "Curriculum", icon: BookOpen },
+    { id: "analytics", label: "Analytics", icon: BarChart2, protected: true },
+    { id: "impact", label: "Impact Stories", icon: Heart },
+  ]},
+  { title: "More", items: [
+    { id: "calendar", label: "Calendar", icon: Calendar, protected: true },
+    { id: "tasks", label: "Tasks", icon: ListTodo, protected: true },
+    { id: "settings", label: "Settings", icon: Settings },
+  ]},
+];
     // Default nav (admin, dc, tot, data_entry, viewer, public)
     return [
       {

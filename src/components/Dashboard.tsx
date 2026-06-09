@@ -164,7 +164,7 @@ useEffect(() => {
       cancelAnimationFrame(raf);
       Object.keys(chartRefs.current).forEach(kill);
     };
-  }, [darkMode]);
+  }, [darkMode, YEARLY_DATA]);
 
   useEffect(() => {
     const L = (window as any).L;

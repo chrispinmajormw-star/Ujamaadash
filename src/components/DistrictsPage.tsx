@@ -172,7 +172,12 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
     loadDistrictData(deleteModal.districtId);
   };
 
-  const filtered = districts.filter(d => region === 'all' || d.region === region);
+  const filtered = districts.filter(d => {
+  if (isDC && user?.id) {
+    return d.district_coordinator_user_id === user.id;
+  }
+  return region === 'all' || d.region === region;
+});
   const grouped: Record<string, any[]> = { Northern: [], Central: [], Southern: [] };
   filtered.forEach(d => { if (grouped[d.region]) grouped[d.region].push(d); });
 
@@ -199,17 +204,19 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
       </div>
 
       {/* Region filter */}
+      {!isDC && (
       <FilterBar
-        options={[
-          { v: 'all',      l: 'All Regions' },
-          { v: 'Northern', l: 'Northern'    },
-          { v: 'Central',  l: 'Central'     },
-          { v: 'Southern', l: 'Southern'    },
+      options={[
+        { v: 'all', l: 'All Regions' },
+        { v: 'Northern', l: 'Northern' },
+        { v: 'Central', l: 'Central' },
+        { v: 'Southern', l: 'Southern' },
         ]}
         active={region}
         onChange={setRegion}
-      />
-
+        />
+        )}
+        
       {loading && <div className="text-center py-12 text-sm text-black/40 dark:text-white/40">Loading districts…</div>}
 
       {/* Districts grouped by region */}

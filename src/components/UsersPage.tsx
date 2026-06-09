@@ -140,13 +140,53 @@ export const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers,
                           </div>
                         )}
                         {u.status === "active" && u.id !== cu.id && (
-                          <Btn size="sm" variant="secondary" className="text-red-600 bg-red-50 dark:bg-red-950/20" onClick={() => {
-                            setUsers(prev => prev.map(x => x.id === u.id ? { ...x, status: "pending" as const } : x));
-                            showToast(`Suspended profile credentials`);
-                          }}>
-                            Suspend
-                          </Btn>
-                        )}
+  <div className="flex gap-1.5 flex-wrap">
+    <select
+      className="text-xs border border-neutral-200 dark:border-slate-700 rounded-md px-2 py-1 bg-white dark:bg-slate-800 text-black dark:text-white"
+      value={u.role}
+      onChange={async e => {
+        const newRole = e.target.value;
+        try {
+          await api.put(`/api/users/${u.id}`, {
+            name: u.name, district: u.district, avatar: u.avatar,
+            status: u.status, clusterId: u.clusterId, role: newRole,
+          });
+          setUsers(prev => prev.map(x => x.id === u.id ? { ...x, role: newRole as any } : x));
+          showToast(`✅ Role updated to ${newRole}`);
+        } catch { showToast('⚠️ Failed to update role'); }
+      }}
+    >
+      <option value="viewer">Viewer</option>
+      <option value="tot">TOT</option>
+      <option value="data_entry">Data Entry</option>
+      <option value="district_coordinator">District Coordinator</option>
+      <option value="sasa_officer">SASA Officer</option>
+      <option value="program_manager">Program Manager</option>
+      <option value="field_officer">Field Officer</option>
+      <option value="cartographer">Cartographer</option>
+    </select>
+    <Btn size="sm" variant="secondary" className="text-amber-600 bg-amber-50 dark:bg-amber-950/20" onClick={async () => {
+      await api.put(`/api/users/${u.id}`, {
+        name: u.name, district: u.district, avatar: u.avatar,
+        status: 'pending', clusterId: u.clusterId, role: u.role,
+      });
+      setUsers(prev => prev.map(x => x.id === u.id ? { ...x, status: "pending" as const } : x));
+      showToast(`Suspended ${u.name}`);
+    }}>
+      Suspend
+    </Btn>
+    <Btn size="sm" variant="secondary" className="text-red-600 bg-red-50 dark:bg-red-950/20" onClick={async () => {
+      if (!confirm(`Delete ${u.name}? This cannot be undone.`)) return;
+      try {
+        await api.delete(`/api/users/${u.id}`);
+        setUsers(prev => prev.filter(x => x.id !== u.id));
+        showToast(`🗑️ ${u.name} deleted`);
+      } catch { showToast('⚠️ Failed to delete user'); }
+    }}>
+      Delete
+    </Btn>
+  </div>
+)}
                       </div>
                     </td>
                   </tr>
