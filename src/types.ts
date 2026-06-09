@@ -7,8 +7,19 @@ export interface User {
   id: string;
   email: string;
   password?: string;
-  role: 'admin' | 'tot' | 'data_entry' | 'district_coordinator' | 'viewer';
+  role:
+    | 'admin'
+    | 'tot'
+    | 'data_entry'
+    | 'district_coordinator'
+    | 'viewer'
+    | 'sasa_officer'
+    | 'program_manager'
+    | 'program_staff'
+    | 'field_officer'
+    | 'cartographer';
   name: string;
+  region: string | null;   // 'Northern' | 'Central' | 'Southern' | null (HQ)
   district: string | null;
   avatar: string;
   status: 'active' | 'pending' | 'inactive';
