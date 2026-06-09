@@ -154,3 +154,16 @@ export const programmeStatsApi = {
   create: (data: any) => api.post('/api/programme-stats', data),
   delete: (year: string) => api.delete(`/api/programme-stats/${year}`),
 };
+// ─── TRAININGS ────────────────────────────────────────────────────────────────
+
+export const trainingsApi = {
+  getAll: () => api.get('/api/trainings'),
+};
+// ─── MONITORING DATA ──────────────────────────────────────────────────────────
+
+export const monitoringApi = {
+  getActivities: () => api.get('/api/monitoring/activities'),
+  submitActivity: (data: any) => api.post('/api/monitoring/activities', data),
+  getIssues: () => api.get('/api/monitoring/issues'),
+  submitIssue: (data: any) => api.post('/api/monitoring/issues', data),
+};

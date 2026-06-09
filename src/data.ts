@@ -3,7 +3,7 @@ import { CaseReferral, SasaMonthlyReport, QuizQuestion, Session, User, Report, C
 export const ROLE_CFG = {
   admin: { label: "National Admin", color: "#991b1b", bg: "#fee2e2", icon: "🛡️" },
   tot: { label: "Trainer of Trainers", color: "#c44d00", bg: "#fff4ec", icon: "🎓" },
-  data_entry: { label: "Data Entry Officer", color: "#c44d00", bg: "#fff4ec", icon: "📝" },
+  data_entry: { label: "Data Officer", color: "#c44d00", bg: "#fff4ec", icon: "📝" },
   district_coordinator: { label: "District Coordinator", color: "#065f46", bg: "#d1fae5", icon: "🏛️" },
   viewer: { label: "Viewer", color: "#1e40af", bg: "#dbeafe", icon: "👁️" },
 };

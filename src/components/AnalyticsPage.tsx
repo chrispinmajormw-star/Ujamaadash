@@ -1,4 +1,4 @@
-import { analyticsApi } from '../api';
+import { analyticsApi, monitoringApi } from '../api';
 import React, { useState, useEffect } from 'react';
 import {
   BarChart, Bar, PieChart, Pie, Cell, LineChart, Line,
@@ -81,7 +81,7 @@ interface AnalyticsPageProps { reports: Report[]; }
 
   export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ reports }) => {
   const [activeRegion, setActiveRegion] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState<'overview' | 'districts' | 'clusters' | 'reports'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'districts' | 'clusters' | 'reports' | 'monitoring'>('overview');
   const [analytics, setAnalytics] = useState<any>({
     reportsByDistrict: [],
     reportsByStatus: [],
@@ -96,6 +96,33 @@ interface AnalyticsPageProps { reports: Report[]; }
       if (!data.error) setAnalytics(data);
     });
   }, []);
+
+  const [monActivities, setMonActivities] = React.useState<any[]>([
+    { district: 'Lilongwe', month: 'Jan 2026', teachbacks: 8, pea_monitoring: 5, cluster_meetings: 4, issue_based: 3, routine: 6 },
+    { district: 'Blantyre', month: 'Jan 2026', teachbacks: 6, pea_monitoring: 4, cluster_meetings: 3, issue_based: 2, routine: 5 },
+    { district: 'Mzimba',   month: 'Feb 2026', teachbacks: 5, pea_monitoring: 3, cluster_meetings: 5, issue_based: 1, routine: 4 },
+    { district: 'Mangochi', month: 'Feb 2026', teachbacks: 7, pea_monitoring: 4, cluster_meetings: 2, issue_based: 4, routine: 3 },
+    { district: 'Zomba',    month: 'Mar 2026', teachbacks: 4, pea_monitoring: 6, cluster_meetings: 3, issue_based: 2, routine: 5 },
+    { district: 'Kasungu',  month: 'Mar 2026', teachbacks: 9, pea_monitoring: 3, cluster_meetings: 6, issue_based: 1, routine: 4 },
+    { district: 'Lilongwe', month: 'Apr 2026', teachbacks: 10, pea_monitoring: 7, cluster_meetings: 5, issue_based: 3, routine: 7 },
+    { district: 'Blantyre', month: 'Apr 2026', teachbacks: 7, pea_monitoring: 5, cluster_meetings: 4, issue_based: 2, routine: 6 },
+  ]);
+  const [monIssues, setMonIssues] = React.useState<any[]>([
+    { district: 'Lilongwe', month: 'Jan 2026', teacher_transfers: 3, lack_of_interest: 5, other_issues: 2, lack_of_admin_support: 1, learner_behaviour: 4 },
+    { district: 'Blantyre', month: 'Jan 2026', teacher_transfers: 2, lack_of_interest: 3, other_issues: 1, lack_of_admin_support: 2, learner_behaviour: 2 },
+    { district: 'Mzimba',   month: 'Feb 2026', teacher_transfers: 4, lack_of_interest: 2, other_issues: 3, lack_of_admin_support: 0, learner_behaviour: 3 },
+    { district: 'Mangochi', month: 'Feb 2026', teacher_transfers: 1, lack_of_interest: 6, other_issues: 2, lack_of_admin_support: 3, learner_behaviour: 5 },
+    { district: 'Zomba',    month: 'Mar 2026', teacher_transfers: 2, lack_of_interest: 4, other_issues: 1, lack_of_admin_support: 2, learner_behaviour: 3 },
+    { district: 'Kasungu',  month: 'Mar 2026', teacher_transfers: 5, lack_of_interest: 3, other_issues: 4, lack_of_admin_support: 1, learner_behaviour: 2 },
+    { district: 'Lilongwe', month: 'Apr 2026', teacher_transfers: 2, lack_of_interest: 4, other_issues: 2, lack_of_admin_support: 2, learner_behaviour: 3 },
+    { district: 'Blantyre', month: 'Apr 2026', teacher_transfers: 3, lack_of_interest: 2, other_issues: 1, lack_of_admin_support: 1, learner_behaviour: 4 },
+  ]);
+
+  React.useEffect(() => {
+    monitoringApi.getActivities().then(d => { if (Array.isArray(d) && d.length > 0) setMonActivities(d); });
+    monitoringApi.getIssues().then(d => { if (Array.isArray(d) && d.length > 0) setMonIssues(d); });
+  }, []);
+
   // Compute from live reports
   const byStatus = { approved: 0, pending: 0, rejected: 0, forwarded: 0 };
   const byCurr = { HIM: 0, GESD: 0, Combined: 0 };
@@ -122,6 +149,7 @@ interface AnalyticsPageProps { reports: Report[]; }
     { id: 'districts', label: 'Districts' },
     { id: 'clusters', label: 'Clusters' },
     { id: 'reports', label: 'Reports' },
+    { id: 'monitoring', label: 'Monitoring' },
   ] as const;
 
   return (
@@ -470,6 +498,150 @@ interface AnalyticsPageProps { reports: Report[]; }
                 <Legend wrapperStyle={{ fontSize: 11 }} />
                 <Bar dataKey="Boys" fill="#185fa5" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="Girls" fill="#a82563" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
+        </div>
+      )}
+
+      {/* ── MONITORING TAB ── */}
+      {activeTab === 'monitoring' && (
+        <div className="space-y-5">
+          {/* Activity totals by month stacked bar */}
+          <Card className="p-4">
+            <h4 className="text-xs font-bold text-black dark:text-white mb-1">Monitoring Activities by Month</h4>
+            <p className="text-[10px] text-slate-400 mb-4">TB = Teachbacks · PEA = PEA Monitoring · CM = Cluster Meetings · IB = Issue Based · RT = Routine</p>
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={(() => {
+                const byMonth: Record<string, any> = {};
+                monActivities.forEach(r => {
+                  if (!byMonth[r.month]) byMonth[r.month] = { month: r.month, teachbacks: 0, pea_monitoring: 0, cluster_meetings: 0, issue_based: 0, routine: 0 };
+                  byMonth[r.month].teachbacks      += r.teachbacks || 0;
+                  byMonth[r.month].pea_monitoring  += r.pea_monitoring || 0;
+                  byMonth[r.month].cluster_meetings+= r.cluster_meetings || 0;
+                  byMonth[r.month].issue_based     += r.issue_based || 0;
+                  byMonth[r.month].routine         += r.routine || 0;
+                });
+                return Object.values(byMonth);
+              })()} barCategoryGap="30%">
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar dataKey="teachbacks"       name="Teachbacks"        stackId="a" fill="#e85d04" radius={[0,0,0,0]} />
+                <Bar dataKey="pea_monitoring"   name="PEA Monitoring"    stackId="a" fill="#185fa5" />
+                <Bar dataKey="cluster_meetings" name="Cluster Meetings"  stackId="a" fill="#059669" />
+                <Bar dataKey="issue_based"      name="Issue Based"       stackId="a" fill="#7c3aed" />
+                <Bar dataKey="routine"          name="Routine"           stackId="a" fill="#d97706" radius={[4,4,0,0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* Activities pie — total share */}
+            <Card className="p-4">
+              <h4 className="text-xs font-bold text-black dark:text-white mb-4">Activity Type Distribution</h4>
+              <ResponsiveContainer width="100%" height={240}>
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: 'Teachbacks',      value: monActivities.reduce((a,r) => a + (r.teachbacks||0), 0),       fill: '#e85d04' },
+                      { name: 'PEA Monitoring',  value: monActivities.reduce((a,r) => a + (r.pea_monitoring||0), 0),   fill: '#185fa5' },
+                      { name: 'Cluster Meetings',value: monActivities.reduce((a,r) => a + (r.cluster_meetings||0), 0), fill: '#059669' },
+                      { name: 'Issue Based',     value: monActivities.reduce((a,r) => a + (r.issue_based||0), 0),      fill: '#7c3aed' },
+                      { name: 'Routine',         value: monActivities.reduce((a,r) => a + (r.routine||0), 0),          fill: '#d97706' },
+                    ]}
+                    dataKey="value" nameKey="name" cx="50%" cy="50%"
+                    innerRadius={55} outerRadius={85} paddingAngle={3}
+                    label={({ name, percent }) => `${(percent*100).toFixed(0)}%`} labelLine={false}
+                  >
+                    {[0,1,2,3,4].map(i => (
+                      <Cell key={i} fill={['#e85d04','#185fa5','#059669','#7c3aed','#d97706'][i]} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </Card>
+
+            {/* Issues pie */}
+            <Card className="p-4">
+              <h4 className="text-xs font-bold text-black dark:text-white mb-4">Prevailing Issues Distribution</h4>
+              <ResponsiveContainer width="100%" height={240}>
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: 'Teacher Transfers',    value: monIssues.reduce((a,r) => a + (r.teacher_transfers||0), 0),     fill: '#dc2626' },
+                      { name: 'Lack of Interest',     value: monIssues.reduce((a,r) => a + (r.lack_of_interest||0), 0),      fill: '#f59e0b' },
+                      { name: 'Other Issues',         value: monIssues.reduce((a,r) => a + (r.other_issues||0), 0),          fill: '#6b7280' },
+                      { name: 'Lack of Admin Support',value: monIssues.reduce((a,r) => a + (r.lack_of_admin_support||0), 0), fill: '#7c3aed' },
+                      { name: 'Learner Behaviour',    value: monIssues.reduce((a,r) => a + (r.learner_behaviour||0), 0),     fill: '#0891b2' },
+                    ]}
+                    dataKey="value" nameKey="name" cx="50%" cy="50%"
+                    outerRadius={85} paddingAngle={3}
+                    label={({ name, percent }) => `${(percent*100).toFixed(0)}%`} labelLine={false}
+                  >
+                    {[0,1,2,3,4].map(i => (
+                      <Cell key={i} fill={['#dc2626','#f59e0b','#6b7280','#7c3aed','#0891b2'][i]} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </Card>
+          </div>
+
+          {/* Issues trend by month */}
+          <Card className="p-4">
+            <h4 className="text-xs font-bold text-black dark:text-white mb-4">Prevailing Issues Trend by Month</h4>
+            <ResponsiveContainer width="100%" height={240}>
+              <LineChart data={(() => {
+                const byMonth: Record<string, any> = {};
+                monIssues.forEach(r => {
+                  if (!byMonth[r.month]) byMonth[r.month] = { month: r.month, teacher_transfers: 0, lack_of_interest: 0, other_issues: 0, lack_of_admin_support: 0, learner_behaviour: 0 };
+                  byMonth[r.month].teacher_transfers     += r.teacher_transfers || 0;
+                  byMonth[r.month].lack_of_interest      += r.lack_of_interest || 0;
+                  byMonth[r.month].other_issues          += r.other_issues || 0;
+                  byMonth[r.month].lack_of_admin_support += r.lack_of_admin_support || 0;
+                  byMonth[r.month].learner_behaviour     += r.learner_behaviour || 0;
+                });
+                return Object.values(byMonth);
+              })()}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Line type="monotone" dataKey="teacher_transfers"     name="Teacher Transfers"     stroke="#dc2626" strokeWidth={2} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="lack_of_interest"      name="Lack of Interest"      stroke="#f59e0b" strokeWidth={2} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="other_issues"          name="Other Issues"          stroke="#6b7280" strokeWidth={2} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="lack_of_admin_support" name="Admin Support"         stroke="#7c3aed" strokeWidth={2} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="learner_behaviour"     name="Learner Behaviour"     stroke="#0891b2" strokeWidth={2} dot={{ r: 3 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </Card>
+
+          {/* Activities by district horizontal bar */}
+          <Card className="p-4">
+            <h4 className="text-xs font-bold text-black dark:text-white mb-4">Total Monitoring Activities by District</h4>
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart layout="vertical" barCategoryGap="20%"
+                data={(() => {
+                  const byDist: Record<string, any> = {};
+                  monActivities.forEach(r => {
+                    if (!byDist[r.district]) byDist[r.district] = { district: r.district, total: 0 };
+                    byDist[r.district].total += (r.teachbacks||0) + (r.pea_monitoring||0) + (r.cluster_meetings||0) + (r.issue_based||0) + (r.routine||0);
+                  });
+                  return Object.values(byDist).sort((a: any, b: any) => b.total - a.total);
+                })()}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
+                <XAxis type="number" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis dataKey="district" type="category" tick={{ fontSize: 10 }} width={80} axisLine={false} tickLine={false} />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar dataKey="total" name="Total Activities" fill="#e85d04" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </Card>

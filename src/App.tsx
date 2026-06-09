@@ -16,6 +16,7 @@ import {
   BookOpen,
   BarChart2,
   Users,
+  ClipboardList, 
   TrendingUp,
   Info,
   Shield,
@@ -111,6 +112,7 @@ import { SubmitReport } from './components/SubmitReport';
 import { TrainingsPage } from './components/TrainingsPage';
 import { ETTPage } from './components/ETTPage';
 import { UsersPage } from './components/UsersPage';
+import { DataOfficerPage } from './components/DataOfficerPage';
 
 const PAGE_LABELS: Record<string, string> = {
   dashboard: "ETT ScaleUp Program",
@@ -243,6 +245,7 @@ useEffect(() => {
       case "program_staff": return "staff_home";
       case "cartographer": return "cartographer_home";
       case "sasa_officer": return "sasa";
+      case "data_entry": return "data_officer";
       default: return "dashboard";
     }
   };
@@ -357,6 +360,10 @@ const pendingCount = (user && can(user.role, "approveReport")
         return <DistrictsPage user={user} showToast={showToast} />;
       case 'teacher_resources':
         return <TeacherChampionPage />;
+        case 'data_officer':
+        return user?.role === 'data_entry' || user?.role === 'admin'
+        ? <DataOfficerPage user={user!} showToast={showToast} />
+        : null;
       case "trainings":
         return <TrainingsPage />;
       case "curriculum":
@@ -485,7 +492,7 @@ const pendingCount = (user && can(user.role, "approveReport")
         { id: "settings", label: "Settings", icon: Settings },
       ]},
     ];
-    
+
 // District Coordinator nav
 if (role === 'district_coordinator') return [
   { title: "My District", items: [
@@ -518,6 +525,7 @@ if (role === 'district_coordinator') return [
     { id: "trainings", label: "Trainings", icon: GraduationCap },
     { id: "curriculum", label: "Curriculum", icon: BookOpen },
     { id: "standards", label: "Standards & Policies", icon: Shield, protected: true },
+    { id: 'data_officer', label: 'Monitoring Data', icon: ClipboardList, protected: true },
   ]
 },
       {
