@@ -190,8 +190,9 @@ useEffect(() => {
           email: u.email,
           role: u.role,
           name: u.name,
-          district: u.district,
-          avatar: u.name?.split(' ').map((x: string) => x[0]).join('').toUpperCase(),
+          region: u.region ?? null,
+          district: u.district ?? null,
+          avatar: u.avatar || u.name?.split(' ').map((x: string) => x[0]).join('').toUpperCase(),
           status: u.status,
           clusterId: u.cluster_id,
         })));
@@ -199,6 +200,27 @@ useEffect(() => {
     });
   }
 }, [user]);
+
+  // Refresh users list from server — called after activate/suspend/delete in UsersPage
+  const refreshUsers = useCallback(() => {
+    if (user?.role === 'admin') {
+      usersApi.getAll().then(data => {
+        if (Array.isArray(data)) {
+          setUsers(data.map((u: any) => ({
+            id: u.id,
+            email: u.email,
+            role: u.role,
+            name: u.name,
+            region: u.region ?? null,
+            district: u.district ?? null,
+            avatar: u.avatar || u.name?.split(' ').map((x: string) => x[0]).join('').toUpperCase(),
+            status: u.status,
+            clusterId: u.cluster_id,
+          })));
+        }
+      });
+    }
+  }, [user]);
 
   const [page, setPage] = useState<string>("dashboard");
   const [toast, setToast] = useState<string | null>(null);
@@ -373,7 +395,7 @@ const pendingCount = (user && can(user.role, "approveReport")
       case "analytics":
         return <AnalyticsPage reports={reports} />;
       case "users":
-        return user?.role === 'admin' ? <UsersPage user={user} users={users} setUsers={setUsers} showToast={showToast} /> : <div className="p-12 text-center text-slate-400 font-semibold italic">Restricted to National Admin only.</div>;
+        return user?.role === 'admin' ? <UsersPage user={user} users={users} setUsers={setUsers} showToast={showToast} refreshUsers={refreshUsers} /> : <div className="p-12 text-center text-slate-400 font-semibold italic">Restricted to National Admin only.</div>;
       case "impact":
         return <ImpactPage reports={reports} showToast={showToast} user={user} />;
       case 'sasa':

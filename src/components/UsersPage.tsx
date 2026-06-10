@@ -10,7 +10,9 @@ export interface UsersPageProps {
   users: User[];
   setUsers: React.Dispatch<React.SetStateAction<User[]>>;
   showToast: (msg: string) => void;
+  refreshUsers?: () => void;
 }
+
 // ─── MALAWI DISTRICTS BY REGION ──────────────────────────────────────────────
 const DISTRICTS_BY_REGION: Record<string, string[]> = {
   Northern: [
@@ -58,7 +60,7 @@ const BLANK_FORM = {
   district: '',
 };
 
-export const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers, showToast }) => {
+export const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers, showToast, refreshUsers }) => {
   const [showAdd, setShowAdd] = useState(false);
   const [filt, setFilt]       = useState('all');
   const [regionFilt, setRegionFilt] = useState('all');
@@ -120,6 +122,7 @@ export const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers,
       setShowAdd(false);
       setNf(BLANK_FORM);
       showToast(`✅ ${created.name} added and activated`);
+      refreshUsers?.();
     } catch {
       showToast('⚠️ Failed to create user. Check the server.');
     }
@@ -279,12 +282,12 @@ export const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers,
 
                         {/* ── PENDING users: Activate with role + location assignment ── */}
                         {u.status === 'pending' && (
-                          <PendingUserActions u={u} setUsers={setUsers} showToast={showToast} cu={cu} />
+                          <PendingUserActions u={u} setUsers={setUsers} showToast={showToast} cu={cu} refreshUsers={refreshUsers} />
                         )}
 
                         {/* ── ACTIVE users: Change role / suspend / delete ── */}
                         {u.status === 'active' && u.id !== cu.id && (
-                          <ActiveUserActions u={u} setUsers={setUsers} showToast={showToast} />
+                          <ActiveUserActions u={u} setUsers={setUsers} showToast={showToast} refreshUsers={refreshUsers} />
                         )}
                       </div>
                     </td>
@@ -375,7 +378,8 @@ const PendingUserActions: React.FC<{
   setUsers: React.Dispatch<React.SetStateAction<User[]>>;
   showToast: (msg: string) => void;
   cu: User;
-}> = ({ u, setUsers, showToast }) => {
+  refreshUsers?: () => void;
+}> = ({ u, setUsers, showToast, refreshUsers }) => {
   const [selectedRole, setSelectedRole] = useState(u.role);
   const [selectedRegion, setSelectedRegion] = useState(u.region || '');
   const [selectedDistrict, setSelectedDistrict] = useState(u.district || '');
@@ -405,6 +409,7 @@ const PendingUserActions: React.FC<{
         : x
       ));
       showToast(`✅ ${u.name} activated as ${selectedRole} in ${selectedDistrict || selectedRegion || 'HQ'}`);
+      refreshUsers?.();
     } catch {
       showToast('⚠️ Failed to activate user');
     }
@@ -468,7 +473,8 @@ const ActiveUserActions: React.FC<{
   u: User;
   setUsers: React.Dispatch<React.SetStateAction<User[]>>;
   showToast: (msg: string) => void;
-}> = ({ u, setUsers, showToast }) => {
+  refreshUsers?: () => void;
+}> = ({ u, setUsers, showToast, refreshUsers }) => {
   return (
     <div className="flex gap-1.5 flex-wrap">
       <Btn size="sm" variant="secondary"
@@ -481,6 +487,7 @@ const ActiveUserActions: React.FC<{
             });
             setUsers(prev => prev.map(x => x.id === u.id ? { ...x, status: 'pending' as const } : x));
             showToast(`Suspended ${u.name}`);
+            refreshUsers?.();
           } catch { showToast('⚠️ Failed to suspend user'); }
         }}>
         Suspend
@@ -493,6 +500,7 @@ const ActiveUserActions: React.FC<{
             await api.delete(`/api/users/${u.id}`);
             setUsers(prev => prev.filter(x => x.id !== u.id));
             showToast(`🗑️ ${u.name} deleted`);
+            refreshUsers?.();
           } catch { showToast('⚠️ Failed to delete user'); }
         }}>
         Delete
