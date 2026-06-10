@@ -1,4 +1,0 @@
-Into Server: ssh -i "C:\Users\lenovo\Downloads\ujamaadash-key.pem" ubuntu@13.61.100.62
-Restating Server & Backend: pm2 restart ujamaadash-backend   &  sudo systemctl restart nginx
-Into Database: sudo -u postgres psql -d ujamaadash
-Create backend route: nano /home/ubuntu/Ujamaa_backend/src/routes/Route name.js

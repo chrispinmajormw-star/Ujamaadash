@@ -1,6 +1,5 @@
 import { Modal } from './SubComponents';
-import { programmeStatsApi } from '../api';
-import { statsApi } from '../api';
+import { programmeStatsApi, statsApi, api } from '../api';
 import React, { useState, useEffect, useRef } from 'react';
 import { Shield, FilePlus, MapPin, GraduationCap, School, BookOpen, TrendingUp, FileText, Clock, CheckSquare, Users, Map } from 'lucide-react';
 import { User, Report } from '../types';
@@ -15,20 +14,41 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, darkMode }) => {
-  const currentUser = user || { role: "viewer" as const, name: "Public Viewer", district: null };
-  const isStaff = user && ["admin", "district_coordinator", "data_entry"].includes(user.role);
+  const currentUser = user || { role: "viewer" as const, name: "Public Viewer", district: null, region: null };
+  const isStaff = user && ["admin", "district_coordinator", "data_entry", "tot", "program_manager", "field_officer"].includes(user.role);
 
+  // Filter reports based on role scope
   const my = (currentUser.role === "data_entry" || currentUser.role === "tot")
-    ? reports.filter(r => r.submitted_by === currentUser.name)
+    ? reports.filter(r => r.district === currentUser.district)
     : currentUser.role === "district_coordinator"
       ? reports.filter(r => r.district === currentUser.district)
-      : reports;
+      : currentUser.role === "program_manager"
+        ? reports.filter(r => {
+            // Filter by region — match districts in their region
+            return true; // backend already filters; frontend shows all for now
+          })
+        : reports;
 
   const pending = my.filter(r => r.status === "pending").length;
-  const [stats, setStats] = useState({ districts: 0, tots: 0, teachersTrained: 0, schools: 0, coverage: 0, learnersTrained: 0, lessons: 0 });
-useEffect(() => {
-  statsApi.get().then(data => { if (!data.error) setStats(data); });
-}, []);
+  const [stats, setStats] = useState({
+    districts: 0, tots: 0, teachersTrained: 0, schools: 0,
+    coverage: 0, learnersTrained: 0, lessons: 0, approvedReports: 0, clusters: 0,
+  });
+
+  useEffect(() => {
+    if (!user) return;
+    // Load stats scoped to the user's location
+    if (user.role === 'program_manager' && user.region) {
+      statsApi.get().then(data => { if (!data.error) setStats(data); });
+      // Optionally scope: api.get(`/api/stats/region/${user.region}`)
+    } else if ((user.role === 'district_coordinator' || user.role === 'tot') && user.district) {
+      api.get(`/api/stats/district/${encodeURIComponent(user.district)}`).then(data => {
+        if (!data.error) setStats(prev => ({ ...prev, ...data }));
+      });
+    } else {
+      statsApi.get().then(data => { if (!data.error) setStats(data); });
+    }
+  }, [user]);
   const [editStats, setEditStats] = useState(false);
   const [editingYear, setEditingYear] = useState<any | null>(null);
   const approved = my.filter(r => r.status === "approved").length;
@@ -239,7 +259,7 @@ useEffect(() => {
             {user ? `Welcome, ${currentUser.name}` : "Program overview"}
           </span>
         }
-        subtitle={user ? `${ROLE_CFG[user.role]?.label}${currentUser.district ? ` · ${currentUser.district}` : ''}` : "Ujamaa Dashboard · Ujamaa Pamodzi Africa"}
+        subtitle={user ? `${ROLE_CFG[user.role]?.label}${user.region ? ` · ${user.region} Region` : ''}${user.district ? ` · ${user.district}` : ''}` : "Ujamaa Dashboard · Ujamaa Pamodzi Africa"}
         actions={
           <>
           {user?.role === 'admin' && (
