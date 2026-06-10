@@ -172,7 +172,8 @@ const CaseInbox: React.FC<{
             <div className="flex gap-1 shrink-0 flex-wrap">
               {c.status === 'new' && (
                 <Btn size="sm" variant="primary" onClick={async () => {
-                  await gbvCasesApi.updateStatus(c.id, 'in_progress');
+                  const data = await gbvCasesApi.updateStatus(c.id, 'in_progress');
+                  if (data.error) { showToast(`⚠️ ${data.error}`); return; }
                   setGbvCases(prev => prev.map(x => x.id === c.id ? { ...x, status: 'in_progress' } : x));
                   showToast('Case marked as in progress');
                 }}>
@@ -181,7 +182,8 @@ const CaseInbox: React.FC<{
               )}
               {c.status === 'in_progress' && (
                 <Btn size="sm" variant="success" onClick={async () => {
-                  await gbvCasesApi.updateStatus(c.id, 'resolved');
+                  const data = await gbvCasesApi.updateStatus(c.id, 'resolved');
+                  if (data.error) { showToast(`⚠️ ${data.error}`); return; }
                   setGbvCases(prev => prev.map(x => x.id === c.id ? { ...x, status: 'resolved' } : x));
                   showToast('Case marked as resolved');
                 }}>

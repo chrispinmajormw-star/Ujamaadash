@@ -80,8 +80,8 @@ export const documentReportsApi = {
   getSent: () => api.get('/api/document-reports/sent'),
   getUnreadCount: () => api.get('/api/document-reports/unread-count'),
   updateStatus: (id: number, status: string, feedback?: string) =>
-    api.put(`/api/document-reports/${id}/status`, { status, feedback }),
-  forward: (id: number) => api.put(`/api/document-reports/${id}/forward`, {}),
+    api.put(`/api/document-reports/${id}`, { status, feedback }),
+  forward: (id: number) => api.put(`/api/document-reports/${id}`, { status: 'forwarded' }),
   submit: async (formData: FormData) => {
     const token = localStorage.getItem('token');
     const res = await fetch(`${BASE_URL}/api/document-reports`, {
@@ -109,8 +109,8 @@ export const districtsApi = {
   submitReport: (id: number, data: any) => api.post(`/api/districts/${id}/reports`, data),
   getTrainings: (id: number) => api.get(`/api/districts/${id}/trainings`),
   createTraining: (id: number, data: any) => api.post(`/api/districts/${id}/trainings`, data),
-  updateTraining: (id: number, data: any) => api.put(`/api/districts/trainings/${id}`, data),
-  deleteTraining: (id: number) => api.delete(`/api/districts/trainings/${id}`),
+  updateTraining: (id: number, data: any) => api.put(`/api/trainings/${id}`, data),
+  deleteTraining: (id: number) => api.delete(`/api/trainings/${id}`),
   assignDC: (id: number, userId: string) => api.put(`/api/districts/${id}/assign-dc`, { userId }),
 };
 // ─── GBV CASES ───────────────────────────────────────────────────────────────
