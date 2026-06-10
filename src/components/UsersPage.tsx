@@ -11,7 +11,6 @@ export interface UsersPageProps {
   setUsers: React.Dispatch<React.SetStateAction<User[]>>;
   showToast: (msg: string) => void;
 }
-
 // ─── MALAWI DISTRICTS BY REGION ──────────────────────────────────────────────
 const DISTRICTS_BY_REGION: Record<string, string[]> = {
   Northern: [
