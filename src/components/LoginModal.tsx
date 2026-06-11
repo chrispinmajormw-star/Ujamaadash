@@ -122,13 +122,20 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onRegi
       if (!reg.district) { setErr('Please select your district'); return; }
     }
 
+    // Check for duplicate email in existing users
+    const existingUser = users.find(u => u.email.toLowerCase() === reg.email.trim().toLowerCase());
+    if (existingUser) {
+      setErr('An account with this email already exists. Please use a different email or sign in.');
+      return;
+    }
+
     setLoading(true);
     try {
       const payload: Record<string, string> = {
         name: reg.name.trim(),
         email: reg.email.trim(),
         password: reg.password,
-        designation: reg.role,   // backend logs this; Admin confirms the real role
+        designation: reg.role,
         avatar: reg.name.trim().split(' ').map((x: string) => x[0]).join('').toUpperCase().slice(0, 2),
       };
 
@@ -142,15 +149,29 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onRegi
       const data = await api.post('/api/users/register', payload);
 
       if (data.error) {
-        setErr(data.error.includes('not active')
-          ? 'Your account is pending approval by the Administrator.'
-          : data.error);
+        if (data.error.includes('already exists') || data.error.includes('duplicate')) {
+          setErr('An account with this email already exists. Please use a different email or sign in.');
+        } else {
+          setErr(data.error);
+        }
         setLoading(false);
         return;
       }
 
-      setErr('');
-      setMode('pending');
+      // Account created successfully - create user object and call onRegister
+      const newUser: User = {
+        id: data.id || Date.now(),
+        email: reg.email.trim(),
+        name: reg.name.trim(),
+        role: reg.role as User['role'],
+        region: locationType === 'region' || locationType === 'district' ? reg.region : null,
+        district: locationType === 'district' ? reg.district : null,
+        avatar: reg.name.trim().split(' ').map((x: string) => x[0]).join('').toUpperCase().slice(0, 2),
+        status: 'active',
+      };
+
+      // Immediately log in the user (no admin approval needed)
+      onRegister(newUser);
     } catch {
       setErr('Unable to connect to server. Please try again.');
     }
@@ -271,7 +292,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onRegi
               Create an <span className="font-semibold">account</span>
             </h2>
             <p className="text-[11px] text-center text-slate-500 dark:text-slate-400 mb-5 leading-relaxed">
-              Your account will be reviewed and activated by the System Administrator.
+              Create your account with your role and location details. You'll have immediate access once registered.
             </p>
 
             <div className="space-y-3">
