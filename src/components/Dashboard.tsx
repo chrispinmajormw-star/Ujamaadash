@@ -1,7 +1,7 @@
 import { Modal } from './SubComponents';
 import { programmeStatsApi, statsApi, api } from '../api';
-import React, { useState, useEffect, useRef } from 'react';
-import { Shield, FilePlus, MapPin, GraduationCap, School, BookOpen, TrendingUp, FileText, Clock, CheckSquare, Users, Map } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Shield, FilePlus, GraduationCap, School, FileText, Clock, CheckSquare, Users, Map, Edit2, RefreshCw, Star } from 'lucide-react';
 import { User, Report } from '../types';
 import { ROLE_CFG, can, DISTRICTS, DISTRICT_INFO, MAP_CLUSTERS } from '../data';
 import { Card, PageHeader, Btn, Pill, TrendIndicator } from './SubComponents';
@@ -30,29 +30,44 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
         : reports;
 
   const pending = my.filter(r => r.status === "pending").length;
-  const [stats, setStats] = useState({
-    districts: 0, tots: 0, teachersTrained: 0, schools: 0,
-    coverage: 0, learnersTrained: 0, lessons: 0, approvedReports: 0, clusters: 0,
-  });
 
-  useEffect(() => {
+  // ── KPI STATS ─────────────────────────────────────────────────────────────
+  // Live counts from DB — Admin can override via Edit Stats modal
+  const [stats, setStats] = useState({
+    learners: 0, teachers: 0, schools: 0, tots: 0, stots: 0,
+    approvedReports: 0, clusters: 0,
+  });
+  const [statsOverride, setStatsOverride] = useState<Record<string, number>>({});
+  const [editingKPI, setEditingKPI] = useState(false);
+  const [kpiDraft, setKpiDraft] = useState<Record<string, number>>({});
+
+  const loadStats = useCallback(() => {
     if (!user) return;
-    // Load stats scoped to the user's location
-    if (user.role === 'program_manager' && user.region) {
-      statsApi.get().then(data => { if (!data.error) setStats(data); });
-      // Optionally scope: api.get(`/api/stats/region/${user.region}`)
-    } else if ((user.role === 'district_coordinator' || user.role === 'tot') && user.district) {
+    if ((user.role === 'district_coordinator' || user.role === 'tot') && user.district) {
       api.get(`/api/stats/district/${encodeURIComponent(user.district)}`).then(data => {
         if (!data.error) setStats(prev => ({ ...prev, ...data }));
       });
     } else {
-      statsApi.get().then(data => { if (!data.error) setStats(data); });
+      statsApi.get().then(data => {
+        if (!data.error) setStats(prev => ({ ...prev, ...data }));
+      });
     }
   }, [user]);
+
+  useEffect(() => { loadStats(); }, [loadStats]);
   const [editStats, setEditStats] = useState(false);
   const [editingYear, setEditingYear] = useState<any | null>(null);
   const approved = my.filter(r => r.status === "approved").length;
   const students = my.reduce((acc, r) => acc + r.boys + r.girls, 0);
+
+  // Merge live stats with admin overrides
+  const displayStats = {
+    learners:  statsOverride.learners  ?? stats.learners,
+    teachers:  statsOverride.teachers  ?? stats.teachers,
+    schools:   statsOverride.schools   ?? stats.schools,
+    tots:      statsOverride.tots      ?? stats.tots,
+    stots:     statsOverride.stots     ?? stats.stots,
+  };
 
   const [YEARLY_DATA, setYEARLY_DATA] = useState<any[]>([
   { year: "2023", schools: 116, teachers: 228, learners: 45600, targetSchools: 225, targetLearners: 45000 },
@@ -280,45 +295,65 @@ useEffect(() => {
       />
 
       {/* KPI row */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {!isStaff ? (
-          <>
-            {[
-              { icon: <GraduationCap size={16} className="text-orange-600" />, label: "Learners", value: stats.learnersTrained },
-              { icon: <School size={16} className="text-orange-600" />, label: "Schools", value: stats.schools },
-              { icon: <MapPin size={16} className="text-orange-600" />, label: "Districts", value: stats.districts },
-              { icon: <Shield size={16} className="text-orange-600" />, label: "TOTs", value: stats.tots },
-              { icon: <BookOpen size={16} className="text-orange-600" />, label: "Lessons", value:stats.lessons },
-              { icon: <TrendingUp size={16} className="text-orange-600" />, label: "Coverage", value: `${stats.coverage}%` },
-            ].map((s, i) => (
-              <div key={i} className="p-3 rounded-lg" style={{ background: "linear-gradient(135deg, #e85d04 0%, #c44d00 100%)", boxShadow: "0 4px 14px rgba(232,93,4,0.25)" }}>
-                <div className="flex items-center gap-2 mb-1">
-                  <span style={{ filter: "brightness(0) invert(1) opacity(0.85)" }}>{s.icon}</span>
-                  <span className="text-[10px] text-white opacity-85 font-medium">{s.label}</span>
-                </div>
-                <div className="text-lg font-bold text-white">{s.value}</div>
-              </div>
-            ))}
-          </>
-        ) : (
-          <>
-            {[
-              { icon: <FileText size={16} className="text-orange-600" />, label: "Total reports", value: my.length, trend: 12 },
-              { icon: <Clock size={16} className="text-amber-600" />, label: "Pending", value: pending, trend: -5 },
-              { icon: <CheckSquare size={16} className="text-emerald-600" />, label: "Approved", value: approved, trend: 18 },
-              { icon: <Users size={16} className="text-orange-600" />, label: "Learners", value: students, trend: 8 },
-            ].map((s: any, i) => (
-              <div key={i} className="p-3 rounded-lg" style={{ background: "linear-gradient(135deg, #e85d04 0%, #c44d00 100%)", boxShadow: "0 4px 14px rgba(232,93,4,0.25)" }}>
-                <div className="flex items-center gap-2 mb-1">
-                  <span style={{ filter: "brightness(0) invert(1) opacity(0.85)" }}>{s.icon}</span>
-                  <span className="text-[10px] text-white opacity-85 font-medium">{s.label}</span>
-                </div>
-                <div className="text-lg font-bold text-white">{s.value}</div>
-                <TrendIndicator value={s.trend} className="mt-1 !text-white/80" />
-              </div>
-            ))}
-          </>
+      <div className="space-y-2">
+        {/* Admin edit button for KPI cards */}
+        {user?.role === 'admin' && (
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => { setKpiDraft({ ...displayStats }); setEditingKPI(true); }}
+              className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-orange-600 transition-colors"
+            >
+              <Edit2 size={12} /> Edit Stats
+            </button>
+            <button onClick={loadStats} className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-orange-600 transition-colors">
+              <RefreshCw size={12} /> Refresh
+            </button>
+          </div>
         )}
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {!isStaff ? (
+            <>
+              {[
+                { icon: <GraduationCap size={16} />, label: "Learners Reached",  value: displayStats.learners.toLocaleString(),  key: 'learners' },
+                { icon: <Users size={16} />,         label: "Teachers Trained",   value: displayStats.teachers.toLocaleString(),  key: 'teachers' },
+                { icon: <School size={16} />,        label: "Schools Reached",    value: displayStats.schools.toLocaleString(),   key: 'schools'  },
+                { icon: <Shield size={16} />,        label: "TOTs Certified",     value: displayStats.tots.toLocaleString(),      key: 'tots'     },
+                { icon: <Star size={16} />,          label: "Senior TOTs (STOTs)",value: displayStats.stots.toLocaleString(),     key: 'stots'    },
+              ].map((s, i) => (
+                <div key={i} className="p-3 rounded-lg relative group" style={{ background: "linear-gradient(135deg, #e85d04 0%, #c44d00 100%)", boxShadow: "0 4px 14px rgba(232,93,4,0.25)" }}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span style={{ filter: "brightness(0) invert(1) opacity(0.85)" }}>{s.icon}</span>
+                    <span className="text-[10px] text-white opacity-85 font-medium leading-tight">{s.label}</span>
+                  </div>
+                  <div className="text-lg font-bold text-white">{s.value}</div>
+                  {statsOverride[s.key] !== undefined && (
+                    <span className="absolute top-1.5 right-1.5 text-[8px] bg-white/20 text-white px-1 rounded">edited</span>
+                  )}
+                </div>
+              ))}
+            </>
+          ) : (
+            <>
+              {[
+                { icon: <FileText size={16} className="text-orange-600" />,   label: "Total reports", value: my.length,   trend: 12 },
+                { icon: <Clock size={16} className="text-amber-600" />,        label: "Pending",       value: pending,     trend: -5 },
+                { icon: <CheckSquare size={16} className="text-emerald-600" />,label: "Approved",      value: approved,    trend: 18 },
+                { icon: <Users size={16} className="text-orange-600" />,       label: "Learners",      value: students,    trend: 8  },
+                { icon: <Shield size={16} className="text-orange-600" />,      label: "TOTs",          value: displayStats.tots, trend: 0 },
+              ].map((s: any, i) => (
+                <div key={i} className="p-3 rounded-lg" style={{ background: "linear-gradient(135deg, #e85d04 0%, #c44d00 100%)", boxShadow: "0 4px 14px rgba(232,93,4,0.25)" }}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span style={{ filter: "brightness(0) invert(1) opacity(0.85)" }}>{s.icon}</span>
+                    <span className="text-[10px] text-white opacity-85 font-medium">{s.label}</span>
+                  </div>
+                  <div className="text-lg font-bold text-white">{s.value}</div>
+                  <TrendIndicator value={s.trend} className="mt-1 !text-white/80" />
+                </div>
+              ))}
+            </>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -485,6 +520,51 @@ useEffect(() => {
     </div>
   </Modal>
 )}
+      {/* ── KPI EDIT MODAL (Admin override) ─────────────────────────────── */}
+      {editingKPI && user?.role === 'admin' && (
+        <Modal title="Edit Dashboard Stats" onClose={() => setEditingKPI(false)}>
+          <p className="text-xs text-slate-500 mb-4 leading-relaxed">
+            These numbers are auto-fetched from the database. You can override them here.
+            Overrides only last until the page is refreshed — to permanently update, edit the
+            database records directly.
+          </p>
+          <div className="space-y-3">
+            {[
+              { key: 'learners', label: 'Learners Reached',   icon: '🎓' },
+              { key: 'teachers', label: 'Teachers Trained',   icon: '👨‍🏫' },
+              { key: 'schools',  label: 'Schools Reached',    icon: '🏫' },
+              { key: 'tots',     label: 'TOTs Certified',     icon: '🛡️' },
+              { key: 'stots',    label: 'Senior TOTs (STOTs)',icon: '⭐' },
+            ].map(({ key, label, icon }) => (
+              <div key={key}>
+                <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+                  {icon} {label}
+                </label>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="number"
+                    value={kpiDraft[key] ?? 0}
+                    onChange={e => setKpiDraft(p => ({ ...p, [key]: parseInt(e.target.value) || 0 }))}
+                    className="flex-1 text-sm border border-neutral-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-800 text-black dark:text-white"
+                  />
+                  <span className="text-[10px] text-slate-400">
+                    DB: {(stats as any)[key]?.toLocaleString() ?? 0}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2 justify-end pt-4">
+            <Btn size="sm" variant="ghost" onClick={() => { setStatsOverride({}); setEditingKPI(false); }}>
+              Reset to DB values
+            </Btn>
+            <Btn size="sm" onClick={() => { setStatsOverride({ ...kpiDraft }); setEditingKPI(false); }}>
+              Apply Overrides
+            </Btn>
+          </div>
+        </Modal>
+      )}
+
     </div>
   );
 };
