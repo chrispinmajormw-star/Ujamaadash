@@ -231,6 +231,9 @@ useEffect(() => {
   const [editingReport, setEditingReport] = useState<Report | null>(null);
   const [forwardModal, setForwardModal] = useState<Report | null>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<{ id: string; label: string; page: string }[]>([]);
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -358,6 +361,29 @@ useEffect(() => {
 const pendingCount = (user && can(user.role, "approveReport")
   ? reports.filter(r => r.status === "pending" && (user.role === "district_coordinator" ? r.district === user.district : true)).length
   : 0) + docUnread + notifUnread;
+
+  // Global search functionality
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    const query = searchQuery.toLowerCase().trim();
+    const results: { id: string; label: string; page: string }[] = [];
+    // Search reports
+    reports.forEach(r => {
+      if (r.school?.toLowerCase().includes(query) || r.district?.toLowerCase().includes(query)) {
+        results.push({ id: `report-${r.id}`, label: `Report: ${r.school} (${r.district})`, page: 'reports' });
+      }
+    });
+    // Search pages
+    Object.entries(PAGE_LABELS).forEach(([id, label]) => {
+      if (label.toLowerCase().includes(query)) {
+        results.push({ id: `page-${id}`, label: `Page: ${label}`, page: id });
+      }
+    });
+    setSearchResults(results.slice(0, 8));
+  }, [searchQuery, reports]);
 
   const renderPageContent = () => {
     switch (page) {
@@ -692,6 +718,48 @@ if (role === 'district_coordinator') return [
                 </div>
 
                 <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                  {/* Global Search Button */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setSearchOpen(!searchOpen)}
+                      className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-slate-700 hover:border-orange-400 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      title="Search"
+                      aria-label="Global search"
+                    >
+                      <Search size={16} className="sm:hidden" />
+                      <Search size={14} className="hidden sm:block" />
+                    </button>
+                    {searchOpen && (
+                      <div className="absolute right-0 top-10 bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg shadow-lg p-2 w-72 z-50">
+                        <input
+                          type="text"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="Search reports, pages..."
+                          className="w-full px-3 py-2 text-xs border border-neutral-200 dark:border-slate-700 rounded bg-white dark:bg-[#0f1623] text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          autoFocus
+                        />
+                        {searchResults.length > 0 && (
+                          <div className="mt-2 max-h-60 overflow-y-auto">
+                            {searchResults.map(result => (
+                              <button
+                                key={result.id}
+                                onClick={() => { setPage(result.page); setSearchOpen(false); setSearchQuery(''); }}
+                                className="w-full text-left px-2 py-1.5 text-xs text-black dark:text-white hover:bg-orange-50 dark:hover:bg-slate-800 rounded transition-colors"
+                              >
+                                {result.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {searchQuery && searchResults.length === 0 && (
+                          <p className="text-xs text-center py-2 text-slate-400">No results found</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
                   {user && (
                     <div className="relative">
                       <button
