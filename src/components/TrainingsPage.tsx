@@ -26,7 +26,8 @@ const getStatus = (t: Training): 'active' | 'upcoming' | 'completed' => {
   if (t.status && ['active', 'upcoming', 'completed'].includes(t.status)) return t.status as any;
   if (!t.start_date) return 'upcoming';
   const start = t.start_date.split('T')[0];
-  const end = t.end_date ? t.end_date.split('T')[0] : start;
+  // Auto-calculate end date as 6 days after start if not provided
+  const end = t.end_date ? t.end_date.split('T')[0] : new Date(new Date(start).getTime() + 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
   if (TODAY < start) return 'upcoming';
   if (TODAY > end) return 'completed';
   return 'active';

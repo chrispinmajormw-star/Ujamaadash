@@ -22,9 +22,12 @@ const REGION_COLORS: Record<string, { color: string; bg: string }> = {
 
 const TODAY = new Date().toISOString().split('T')[0];
 
-const getTrainingStatus = (startDate: string, endDate: string) => {
+const getTrainingStatus = (startDate: string, endDate?: string) => {
+  if (!startDate) return 'upcoming';
+  // Auto-calculate end date as 6 days after start if not provided
+  const calculatedEndDate = endDate || new Date(new Date(startDate).getTime() + 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
   if (TODAY < startDate) return 'upcoming';
-  if (TODAY > endDate) return 'completed';
+  if (TODAY > calculatedEndDate) return 'completed';
   return 'active';
 };
 
