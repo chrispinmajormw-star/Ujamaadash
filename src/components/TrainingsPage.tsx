@@ -26,6 +26,7 @@ const getStatus = (t: Training): 'active' | 'upcoming' | 'completed' => {
   if (t.computed_status) return t.computed_status as any;
   if (t.status && ['active', 'upcoming', 'completed'].includes(t.status)) return t.status as any;
   if (!t.start_date) return 'upcoming';
+  // Normalize dates to YYYY-MM-DD format for proper comparison
   const start = t.start_date.split('T')[0];
   // Auto-calculate end date as 6 days after start if not provided
   const end = t.end_date ? t.end_date.split('T')[0] : new Date(new Date(start).getTime() + 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -76,7 +77,7 @@ export const TrainingsPage: React.FC = () => {
 
   // Filter by year first, then by status
   const trainingsInYear = trainings.filter(t => {
-    if (!t.start_date) return false;
+    if (!t.start_date) return yearFilt === 'all'; // Include trainings without dates when showing all
     const trainingYear = new Date(t.start_date).getFullYear();
     return yearFilt === 'all' || trainingYear === parseInt(yearFilt);
   });
