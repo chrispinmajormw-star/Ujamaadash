@@ -19,6 +19,7 @@ interface Training {
 }
 
 const TODAY = new Date().toISOString().split('T')[0];
+const CURRENT_YEAR = new Date().getFullYear();
 
 const getStatus = (t: Training): 'active' | 'upcoming' | 'completed' => {
   // Use backend computed_status if available
@@ -53,6 +54,7 @@ export const TrainingsPage: React.FC = () => {
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState('');
   const [filt, setFilt]           = useState<string>('all');
+  const [yearFilt, setYearFilt]   = useState<string>(String(CURRENT_YEAR));
 
   const load = async () => {
     setLoading(true);
@@ -72,15 +74,22 @@ export const TrainingsPage: React.FC = () => {
 
   useEffect(() => { load(); }, []);
 
-  const visible = trainings.filter(t => {
+  // Filter by year first, then by status
+  const trainingsInYear = trainings.filter(t => {
+    if (!t.start_date) return false;
+    const trainingYear = new Date(t.start_date).getFullYear();
+    return yearFilt === 'all' || trainingYear === parseInt(yearFilt);
+  });
+
+  const visible = trainingsInYear.filter(t => {
     if (filt === 'all') return true;
     return getStatus(t) === filt;
   });
 
   const counts = {
-    active:    trainings.filter(t => getStatus(t) === 'active').length,
-    upcoming:  trainings.filter(t => getStatus(t) === 'upcoming').length,
-    completed: trainings.filter(t => getStatus(t) === 'completed').length,
+    active:    trainingsInYear.filter(t => getStatus(t) === 'active').length,
+    upcoming:  trainingsInYear.filter(t => getStatus(t) === 'upcoming').length,
+    completed: trainingsInYear.filter(t => getStatus(t) === 'completed').length,
   };
 
   return (
@@ -109,11 +118,21 @@ export const TrainingsPage: React.FC = () => {
         <StatCard icon={<Check size={18} className="text-emerald-500" />}  label="Completed Cycles"  value={counts.completed} color="#059669" />
       </div>
 
-      <FilterBar
-        options={['all', 'active', 'upcoming', 'completed'].map(x => ({ v: x, l: x.toUpperCase() }))}
-        active={filt}
-        onChange={setFilt}
-      />
+      <div className="flex gap-2 flex-wrap">
+        <FilterBar
+          options={['all', 'active', 'upcoming', 'completed'].map(x => ({ v: x, l: x.toUpperCase() }))}
+          active={filt}
+          onChange={setFilt}
+        />
+        <FilterBar
+          options={[
+            { v: String(CURRENT_YEAR), l: String(CURRENT_YEAR) },
+            { v: 'all', l: 'All Years' },
+          ]}
+          active={yearFilt}
+          onChange={setYearFilt}
+        />
+      </div>
 
       {loading && (
         <div className="text-center py-12 text-slate-400 text-sm">Loading trainings...</div>
