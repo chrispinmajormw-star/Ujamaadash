@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  ClipboardList, AlertTriangle, Plus, Save, CheckCircle,
+  ClipboardList, MapPin, AlertTriangle, Plus, Save, CheckCircle,
   ChevronDown, ChevronUp, Calendar, BarChart2, Trash2
 } from 'lucide-react';
 import { User } from '../types';
