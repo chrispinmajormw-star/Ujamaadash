@@ -62,6 +62,8 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
   const [trainingForm, setTrainingForm] = useState({ training_name: '', cohort: '', start_date: '', participants: '', venue: '', training_lead_name: '' });
   const [assignUserId, setAssignUserId] = useState('');
   const [dcUsers, setDcUsers] = useState<any[]>([]);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isAdmin = user?.role === 'admin';
   const isDC = user?.role === 'district_coordinator';
@@ -138,52 +140,121 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
     setAssignUserId('');
   };
 
+  const validateReportForm = () => {
+    const errors: Record<string, string> = {};
+    if (!reportForm.number_of_tots || parseInt(reportForm.number_of_tots) < 0) {
+      errors.number_of_tots = 'Please enter a valid number of TOTs';
+    }
+    if (!reportForm.teachers_trained || parseInt(reportForm.teachers_trained) < 0) {
+      errors.teachers_trained = 'Please enter a valid number of teachers';
+    }
+    if (!reportForm.school_coverage || parseFloat(reportForm.school_coverage) < 0 || parseFloat(reportForm.school_coverage) > 100) {
+      errors.school_coverage = 'Please enter coverage between 0-100%';
+    }
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const submitReport = async () => {
     if (!reportModal) return;
-    const data = await districtsApi.submitReport(reportModal.id, {
-      number_of_tots: parseInt(reportForm.number_of_tots),
-      teachers_trained: parseInt(reportForm.teachers_trained),
-      school_coverage: parseFloat(reportForm.school_coverage),
-      notes: reportForm.notes,
-    });
-    if (data.error) { showToast(`⚠️ ${data.error}`); return; }
-    showToast('✅ District report submitted');
-    setReportModal(null);
-    setReportForm({ number_of_tots: '', teachers_trained: '', school_coverage: '', notes: '' });
-    setDistrictData(prev => ({ ...prev, [reportModal.id]: undefined as any }));
-    loadDistrictData(reportModal.id);
-    setDistricts(prev => prev.map(d => d.id === reportModal.id ? {
-      ...d,
-      number_of_tots: data.number_of_tots,
-      teachers_trained: data.teachers_trained,
-      school_coverage: data.school_coverage,
-    } : d));
+    if (!validateReportForm()) {
+      showToast('⚠️ Please fix the form errors');
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const data = await districtsApi.submitReport(reportModal.id, {
+        number_of_tots: parseInt(reportForm.number_of_tots),
+        teachers_trained: parseInt(reportForm.teachers_trained),
+        school_coverage: parseFloat(reportForm.school_coverage),
+        notes: reportForm.notes,
+      });
+      if (data.error) { showToast(`⚠️ ${data.error}`); return; }
+      showToast('✅ District report submitted');
+      setReportModal(null);
+      setReportForm({ number_of_tots: '', teachers_trained: '', school_coverage: '', notes: '' });
+      setFormErrors({});
+      setDistrictData(prev => ({ ...prev, [reportModal.id]: undefined as any }));
+      loadDistrictData(reportModal.id);
+      setDistricts(prev => prev.map(d => d.id === reportModal.id ? {
+        ...d,
+        number_of_tots: data.number_of_tots,
+        teachers_trained: data.teachers_trained,
+        school_coverage: data.school_coverage,
+      } : d));
+    } catch (error) {
+      showToast('⚠️ Network error. Please check your connection and try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const validateTrainingForm = () => {
+    const errors: Record<string, string> = {};
+    if (!trainingForm.training_name || trainingForm.training_name.trim().length < 3) {
+      errors.training_name = 'Training name must be at least 3 characters';
+    }
+    if (!trainingForm.start_date) {
+      errors.start_date = 'Start date is required';
+    } else {
+      const selectedDate = new Date(trainingForm.start_date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      // Allow dates from today onwards (no past dates)
+      if (selectedDate < today) {
+        errors.start_date = 'Start date cannot be in the past';
+      }
+    }
+    if (trainingForm.participants && (parseInt(trainingForm.participants) < 1 || parseInt(trainingForm.participants) > 1000)) {
+      errors.participants = 'Participants must be between 1-1000';
+    }
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const submitTraining = async () => {
     if (!trainingModal) return;
+    if (!validateTrainingForm()) {
+      showToast('⚠️ Please fix the form errors');
+      return;
+    }
     const { district, training } = trainingModal;
     const isEdit = !!training;
-    const fn = isEdit
-      ? () => districtsApi.updateTraining(training.id, trainingForm)
-      : () => districtsApi.createTraining(district.id, trainingForm);
-    const data = await fn();
-    if (data.error) { showToast(`⚠️ ${data.error}`); return; }
-    showToast(isEdit ? '✅ Training updated' : '✅ Training added');
-    setTrainingModal(null);
-    setTrainingForm({ training_name: '', cohort: '', start_date: '', participants: '', venue: '', training_lead_name: '' });
-    setDistrictData(prev => ({ ...prev, [district.id]: undefined as any }));
-    loadDistrictData(district.id);
+    setIsSubmitting(true);
+    try {
+      const fn = isEdit
+        ? () => districtsApi.updateTraining(training.id, trainingForm)
+        : () => districtsApi.createTraining(district.id, trainingForm);
+      const data = await fn();
+      if (data.error) { showToast(`⚠️ ${data.error}`); return; }
+      showToast(isEdit ? '✅ Training updated' : '✅ Training added');
+      setTrainingModal(null);
+      setTrainingForm({ training_name: '', cohort: '', start_date: '', participants: '', venue: '', training_lead_name: '' });
+      setFormErrors({});
+      setDistrictData(prev => ({ ...prev, [district.id]: undefined as any }));
+      loadDistrictData(district.id);
+    } catch (error) {
+      showToast('⚠️ Network error. Please check your connection and try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const deleteTraining = async () => {
     if (!deleteModal) return;
-    const data = await districtsApi.deleteTraining(deleteModal.trainingId);
-    if (data.error) { showToast(`⚠️ ${data.error}`); return; }
-    showToast('Training deleted');
-    setDeleteModal(null);
-    setDistrictData(prev => ({ ...prev, [deleteModal.districtId]: undefined as any }));
-    loadDistrictData(deleteModal.districtId);
+    setIsSubmitting(true);
+    try {
+      const data = await districtsApi.deleteTraining(deleteModal.trainingId);
+      if (data.error) { showToast(`⚠️ ${data.error}`); return; }
+      showToast('✅ Training deleted successfully');
+      setDeleteModal(null);
+      setDistrictData(prev => ({ ...prev, [deleteModal.districtId]: undefined as any }));
+      loadDistrictData(deleteModal.districtId);
+    } catch (error) {
+      showToast('⚠️ Network error. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const filtered = visibleDistricts.filter(d => {

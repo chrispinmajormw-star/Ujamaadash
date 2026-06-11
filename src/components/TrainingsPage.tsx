@@ -67,7 +67,7 @@ export const TrainingsPage: React.FC = () => {
         setError('Failed to load trainings');
       }
     } catch {
-      setError('Could not connect to server');
+      setError('Could not connect to server. Please check your internet connection and try again.');
     }
     setLoading(false);
   };
