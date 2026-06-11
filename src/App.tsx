@@ -113,6 +113,7 @@ import { TrainingsPage } from './components/TrainingsPage';
 import { ETTPage } from './components/ETTPage';
 import { UsersPage } from './components/UsersPage';
 import { DataOfficerPage } from './components/DataOfficerPage';
+import { MonitoringProvider } from './context/MonitoringContext';
 
 const PAGE_LABELS: Record<string, string> = {
   dashboard: "ETT ScaleUp Program",
@@ -617,7 +618,8 @@ if (role === 'district_coordinator') return [
   );
 
   return (
-    <>
+    <MonitoringProvider>
+      <>
       <div className="h-screen flex overflow-hidden bg-white dark:bg-[#0f1623] text-black dark:text-white transition-colors">
         <AnimatePresence>
           {sidebarOpen && (
@@ -887,6 +889,7 @@ if (role === 'district_coordinator') return [
           users={users}
         />
       )}
-    </>
+      </>
+    </MonitoringProvider>
   );
 }

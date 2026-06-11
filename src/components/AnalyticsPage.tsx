@@ -1,4 +1,5 @@
-import { analyticsApi, monitoringApi } from '../api';
+import { analyticsApi } from '../api';
+import { useMonitoring } from '../context/MonitoringContext';
 import React, { useState, useEffect } from 'react';
 import {
   BarChart, Bar, PieChart, Pie, Cell, LineChart, Line,
@@ -97,31 +98,8 @@ interface AnalyticsPageProps { reports: Report[]; }
     });
   }, []);
 
-  const [monActivities, setMonActivities] = React.useState<any[]>([
-    { district: 'Lilongwe', month: 'Jan 2026', teachbacks: 8, pea_monitoring: 5, cluster_meetings: 4, issue_based: 3, routine: 6 },
-    { district: 'Blantyre', month: 'Jan 2026', teachbacks: 6, pea_monitoring: 4, cluster_meetings: 3, issue_based: 2, routine: 5 },
-    { district: 'Mzimba',   month: 'Feb 2026', teachbacks: 5, pea_monitoring: 3, cluster_meetings: 5, issue_based: 1, routine: 4 },
-    { district: 'Mangochi', month: 'Feb 2026', teachbacks: 7, pea_monitoring: 4, cluster_meetings: 2, issue_based: 4, routine: 3 },
-    { district: 'Zomba',    month: 'Mar 2026', teachbacks: 4, pea_monitoring: 6, cluster_meetings: 3, issue_based: 2, routine: 5 },
-    { district: 'Kasungu',  month: 'Mar 2026', teachbacks: 9, pea_monitoring: 3, cluster_meetings: 6, issue_based: 1, routine: 4 },
-    { district: 'Lilongwe', month: 'Apr 2026', teachbacks: 10, pea_monitoring: 7, cluster_meetings: 5, issue_based: 3, routine: 7 },
-    { district: 'Blantyre', month: 'Apr 2026', teachbacks: 7, pea_monitoring: 5, cluster_meetings: 4, issue_based: 2, routine: 6 },
-  ]);
-  const [monIssues, setMonIssues] = React.useState<any[]>([
-    { district: 'Lilongwe', month: 'Jan 2026', teacher_transfers: 3, lack_of_interest: 5, other_issues: 2, lack_of_admin_support: 1, learner_behaviour: 4 },
-    { district: 'Blantyre', month: 'Jan 2026', teacher_transfers: 2, lack_of_interest: 3, other_issues: 1, lack_of_admin_support: 2, learner_behaviour: 2 },
-    { district: 'Mzimba',   month: 'Feb 2026', teacher_transfers: 4, lack_of_interest: 2, other_issues: 3, lack_of_admin_support: 0, learner_behaviour: 3 },
-    { district: 'Mangochi', month: 'Feb 2026', teacher_transfers: 1, lack_of_interest: 6, other_issues: 2, lack_of_admin_support: 3, learner_behaviour: 5 },
-    { district: 'Zomba',    month: 'Mar 2026', teacher_transfers: 2, lack_of_interest: 4, other_issues: 1, lack_of_admin_support: 2, learner_behaviour: 3 },
-    { district: 'Kasungu',  month: 'Mar 2026', teacher_transfers: 5, lack_of_interest: 3, other_issues: 4, lack_of_admin_support: 1, learner_behaviour: 2 },
-    { district: 'Lilongwe', month: 'Apr 2026', teacher_transfers: 2, lack_of_interest: 4, other_issues: 2, lack_of_admin_support: 2, learner_behaviour: 3 },
-    { district: 'Blantyre', month: 'Apr 2026', teacher_transfers: 3, lack_of_interest: 2, other_issues: 1, lack_of_admin_support: 1, learner_behaviour: 4 },
-  ]);
-
-  React.useEffect(() => {
-    monitoringApi.getActivities().then(d => { if (Array.isArray(d) && d.length > 0) setMonActivities(d); });
-    monitoringApi.getIssues().then(d => { if (Array.isArray(d) && d.length > 0) setMonIssues(d); });
-  }, []);
+  // Use monitoring context for real-time data sync
+  const { activities: monActivities, issues: monIssues } = useMonitoring();
 
   // Compute from live reports
   const byStatus = { approved: 0, pending: 0, rejected: 0, forwarded: 0 };

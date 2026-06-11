@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { User } from '../types';
 import { monitoringApi } from '../api';
+import { useMonitoring } from '../context/MonitoringContext';
 import { Card, Kicker, PageHeader, Btn, FInput, FSelect, StatCard, Badge } from './SubComponents';
 
 interface DataOfficerPageProps {
@@ -44,23 +45,12 @@ const BLANK_ACTIVITY = { district: '', month: '', teachbacks: '', pea_monitoring
 const BLANK_ISSUE = { district: '', month: '', teacher_transfers: '', lack_of_interest: '', other_issues: '', lack_of_admin_support: '', learner_behaviour: '' };
 
 export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToast }) => {
+  const { activities, issues, addActivity, addIssue } = useMonitoring();
   const [tab, setTab] = useState<TabId>('activities');
-  const [activities, setActivities] = useState(SEED_ACTIVITIES);
-  const [issues, setIssues] = useState(SEED_ISSUES);
   const [actForm, setActForm] = useState({ ...BLANK_ACTIVITY });
   const [issueForm, setIssueForm] = useState({ ...BLANK_ISSUE });
   const [saving, setSaving] = useState(false);
   const [expandedHistory, setExpandedHistory] = useState<number | null>(null);
-
-  // Load from API on mount
-  useEffect(() => {
-    monitoringApi.getActivities().then(data => {
-      if (Array.isArray(data) && data.length > 0) setActivities(data);
-    });
-    monitoringApi.getIssues().then(data => {
-      if (Array.isArray(data) && data.length > 0) setIssues(data);
-    });
-  }, []);
 
   const submitActivity = async () => {
     if (!actForm.district || !actForm.month) { showToast('⚠️ District and month are required'); return; }
@@ -77,12 +67,12 @@ export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToas
     try {
       const data = await monitoringApi.submitActivity(payload);
       const newRecord = data.id ? data : { ...payload, id: Date.now(), created_at: new Date().toISOString().split('T')[0] };
-      setActivities(p => [newRecord, ...p]);
+      addActivity(newRecord);
       setActForm({ ...BLANK_ACTIVITY });
       showToast('✅ Monitoring activities saved');
     } catch {
       // Optimistic fallback
-      setActivities(p => [{ ...payload, id: Date.now(), created_at: new Date().toISOString().split('T')[0] }, ...p]);
+      addActivity({ ...payload, id: Date.now(), created_at: new Date().toISOString().split('T')[0] });
       setActForm({ ...BLANK_ACTIVITY });
       showToast('✅ Activities saved locally');
     }
@@ -104,11 +94,11 @@ export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToas
     try {
       const data = await monitoringApi.submitIssue(payload);
       const newRecord = data.id ? data : { ...payload, id: Date.now(), created_at: new Date().toISOString().split('T')[0] };
-      setIssues(p => [newRecord, ...p]);
+      addIssue(newRecord);
       setIssueForm({ ...BLANK_ISSUE });
       showToast('✅ Prevailing issues saved');
     } catch {
-      setIssues(p => [{ ...payload, id: Date.now(), created_at: new Date().toISOString().split('T')[0] }, ...p]);
+      addIssue({ ...payload, id: Date.now(), created_at: new Date().toISOString().split('T')[0] });
       setIssueForm({ ...BLANK_ISSUE });
       showToast('✅ Issues saved locally');
     }
