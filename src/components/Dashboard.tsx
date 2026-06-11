@@ -1,7 +1,7 @@
 import { Modal } from './SubComponents';
 import { programmeStatsApi, statsApi, api } from '../api';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Shield, FilePlus, GraduationCap, School, FileText, Clock, CheckSquare, Users, Map, Edit2, RefreshCw, Star } from 'lucide-react';
+import { Shield, FilePlus, GraduationCap, School, TrendingUp, FileText, Clock,BookOpen, CheckSquare, Users, Map, MapPin, Edit2, RefreshCw, Star } from 'lucide-react';
 import { User, Report } from '../types';
 import { ROLE_CFG, can, DISTRICTS, DISTRICT_INFO, MAP_CLUSTERS } from '../data';
 import { Card, PageHeader, Btn, Pill, TrendIndicator } from './SubComponents';
@@ -418,7 +418,7 @@ useEffect(() => {
           <div className="space-y-1.5">
             {[
               { label: "Clusters map", page: "maps", icon: Map },
-              { label: "Districts", page: "districts", icon: MapPin },
+              { label: "Districts", page: "districts", icon: School },
               { label: "Curriculum", page: "curriculum", icon: BookOpen },
               { label: "Analytics", page: "analytics", icon: TrendingUp },
             ].map(({ label, page: p, icon: Icon }) => (
