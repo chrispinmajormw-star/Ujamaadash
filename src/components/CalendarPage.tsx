@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight, MapPin, Trash2, Clock, RefreshCw } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus, Info, ChevronLeft, ChevronRight, MapPin, Trash2, Clock, RefreshCw } from 'lucide-react';
 import { User } from '../types';
 import { Card, Btn, Badge, FInput, FSelect, FArea, Modal } from './SubComponents';
 import { DISTRICT_LIST } from '../data';
