@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { gbvCasesApi } from '../api';
+import { gbvCasesApi, api } from '../api';
 import { User, Report, CaseReferral, SasaMonthlyReport } from '../types';
 import {
   REFERRAL_AGENCIES, REFERRAL_STATUS_CFG,
@@ -543,20 +543,60 @@ const MonthlyReports: React.FC<{
 
 export const SasaPage: React.FC<SasaPageProps> = ({ user, reports, showToast }) => {
   const [tab, setTab] = useState<'inbox' | 'referrals' | 'monthly'>('inbox');
-  const [referrals, setReferrals] = useState<CaseReferral[]>(CASE_REFERRALS_INIT);
-  const [sasaReports, setSasaReports] = useState<SasaMonthlyReport[]>(SASA_REPORTS_INIT);
+  const [referrals, setReferrals] = useState<CaseReferral[]>([]);
+  const [sasaReports, setSasaReports] = useState<SasaMonthlyReport[]>([]);
   const [referTarget, setReferTarget] = useState<Report | null>(null);
+  const [gbvCases, setGbvCases] = useState<any[]>([]);
 
   const canAccess = user && (user.role === 'sasa_officer' || user.role === 'admin');
-const [gbvCases, setGbvCases] = useState<any[]>([]);
 
-useEffect(() => {
-  if (user?.role === 'sasa_officer' || user?.role === 'admin') {
+  useEffect(() => {
+    if (!canAccess) return;
+
+    // Load GBV cases
     gbvCasesApi.getAll().then(data => {
       if (Array.isArray(data)) setGbvCases(data);
     });
-  }
-}, [user]);
+
+    // Load referrals from DB
+    api.get('/api/case-referrals').then(data => {
+      if (Array.isArray(data)) {
+        setReferrals(data.map((r: any) => ({
+          id: r.id,
+          caseId: r.case_id,
+          caseSchool: r.case_school || '',
+          caseDistrict: r.case_district || '',
+          agency: r.agency || '',
+          agencyLabel: r.agency_label || r.agency || '',
+          referredBy: r.referred_by || '',
+          referredAt: r.referred_at || r.created_at || '',
+          status: r.status || 'pending',
+          outcome: r.outcome || '',
+          notes: r.notes || '',
+        })));
+      }
+    });
+
+    // Load SASA monthly reports from DB
+    api.get('/api/sasa-reports').then(data => {
+      if (Array.isArray(data)) {
+        setSasaReports(data.map((r: any) => ({
+          id: r.id,
+          month: r.month,
+          submittedBy: r.submitted_by_name || r.submitted_by || '',
+          submittedAt: r.submitted_at ? r.submitted_at.split('T')[0] : '',
+          totalCases: r.total_cases || 0,
+          publicCases: r.public_cases || 0,
+          referrals: r.referrals || 0,
+          resolvedReferrals: r.resolved_referrals || 0,
+          highlights: r.highlights || '',
+          challenges: r.challenges || '',
+          recommendations: r.recommendations || '',
+          status: r.status || 'draft',
+        })));
+      }
+    });
+  }, [user]);
   if (!canAccess) {
     return (
       <div className="p-12 text-center text-black/40 dark:text-white/40 font-semibold italic">

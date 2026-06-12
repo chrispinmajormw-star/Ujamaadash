@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight, MapPin, Tag, Trash2, Clock, Info } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight, MapPin, Trash2, Clock, RefreshCw } from 'lucide-react';
 import { User } from '../types';
 import { Card, Btn, Badge, FInput, FSelect, FArea, Modal } from './SubComponents';
 import { DISTRICT_LIST } from '../data';
-import { safeStorage } from '../utils/storage';
+import { api } from '../api';
 
 export interface CalendarEvent {
   id: string;
@@ -97,12 +97,9 @@ const DEFAULT_EVENTS: CalendarEvent[] = [
 ];
 
 export const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
-  const [events, setEvents] = useState<CalendarEvent[]>(() => {
-    const saved = safeStorage.getItem('ett_calendar_events');
-    return saved ? JSON.parse(saved) : DEFAULT_EVENTS;
-  });
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Keep track of current calendar navigate date
   const today = new Date();
   const [currentDate, setCurrentDate] = useState<Date>(new Date(today.getFullYear(), today.getMonth(), 1));
   const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
@@ -111,59 +108,64 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterDistrict, setFilterDistrict] = useState<string>('all');
 
-  // New Event Form State
   const [newEvent, setNewEvent] = useState({
-    title: '',
-    description: '',
-    date: todayStr,
+    title: '', description: '', date: todayStr,
     category: 'training' as CalendarEvent['category'],
-    district: 'National'
+    district: user?.district || 'National'
   });
 
-  useEffect(() => {
-    safeStorage.setItem('ett_calendar_events', JSON.stringify(events));
-  }, [events]);
+  const loadEvents = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await api.get('/api/calendar-events');
+      if (Array.isArray(data)) {
+        setEvents(data.map((e: any) => ({
+          id: String(e.id),
+          title: e.title,
+          description: e.description || '',
+          date: e.event_date ? e.event_date.split('T')[0] : (e.date || ''),
+          category: e.category || 'training',
+          district: e.district || 'National',
+          createdBy: e.created_by || '',
+          createdByName: e.created_by_name || e.creator_name || 'Staff',
+        })));
+      }
+    } catch { }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { loadEvents(); }, [loadEvents]);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
-  const handlePrevMonth = () => {
-    setCurrentDate(new Date(year, month - 1, 1));
-  };
+  const handlePrevMonth = () => { setCurrentDate(new Date(year, month - 1, 1)); };
+  const handleNextMonth = () => { setCurrentDate(new Date(year, month + 1, 1)); };
 
-  const handleNextMonth = () => {
-    setCurrentDate(new Date(year, month + 1, 1));
-  };
-
-  const handleAddEvent = () => {
+  const handleAddEvent = async () => {
     if (!newEvent.title.trim()) return;
-
-    const added: CalendarEvent = {
-      id: 'evt_' + Date.now(),
-      title: newEvent.title.trim(),
-      description: newEvent.description.trim() || 'No description provided.',
-      date: newEvent.date,
-      category: newEvent.category,
-      district: newEvent.district,
-      createdBy: user?.id || 'public',
-      createdByName: user?.name || 'Authorized Officer'
-    };
-
-    setEvents(prev => [...prev, added]);
-    setShowAddModal(false);
-    setNewEvent({
-      title: '',
-      description: '',
-      date: selectedDateStr,
-      category: 'training',
-      district: user?.district || 'National'
-    });
+    try {
+      const created = await api.post('/api/calendar-events', {
+        title: newEvent.title.trim(),
+        description: newEvent.description.trim(),
+        event_date: newEvent.date,
+        category: newEvent.category,
+        district: newEvent.district,
+      });
+      if (created.id) {
+        await loadEvents();
+        setShowAddModal(false);
+        setNewEvent({ title: '', description: '', date: selectedDateStr, category: 'training', district: user?.district || 'National' });
+      }
+    } catch { }
   };
 
-  const handleDeleteEvent = (id: string) => {
-    if (confirm('Are you sure you want to dismiss this scheduled event?')) {
+  const handleDeleteEvent = async (id: string) => {
+    if (!confirm('Are you sure you want to dismiss this scheduled event?')) return;
+    try {
+      await api.delete(`/api/calendar-events/${id}`);
       setEvents(prev => prev.filter(e => e.id !== id));
-    }
+    } catch { }
   };
 
   // Generate Month Days grid

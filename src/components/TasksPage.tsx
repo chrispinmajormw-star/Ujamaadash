@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { CheckSquare, ListTodo, Plus, Search, Calendar, ChevronRight, ChevronLeft, Trash2, ArrowRight, ArrowLeft, ShieldAlert, CheckCircle2, Circle } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { CheckSquare, ListTodo, Plus, Search, Calendar, ChevronRight, ChevronLeft, Trash2, RefreshCw } from 'lucide-react';
 import { User } from '../types';
 import { Card, Btn, Badge, FInput, FSelect, FArea, Modal } from './SubComponents';
 import { DISTRICT_LIST } from '../data';
-import { safeStorage } from '../utils/storage';
+import { api } from '../api';
 
 export interface TaskItem {
   id: string;
@@ -122,78 +122,96 @@ const DEFAULT_TASKS: TaskItem[] = [
 ];
 
 export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
-  const [tasks, setTasks] = useState<TaskItem[]>(() => {
-    const saved = safeStorage.getItem('ett_planning_tasks');
-    return saved ? JSON.parse(saved) : DEFAULT_TASKS;
-  });
-
+  const [tasks, setTasks] = useState<TaskItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
 
-  // New Task Form State
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
     priority: 'medium' as TaskItem['priority'],
     assignedRole: 'data_entry' as TaskItem['assignedRole'],
-    dueDate: '2026-05-29',
-    district: 'National',
+    dueDate: new Date().toISOString().split('T')[0],
+    district: user?.district || 'National',
     category: 'Data Entry'
   });
 
-  useEffect(() => {
-    safeStorage.setItem('ett_planning_tasks', JSON.stringify(tasks));
-  }, [tasks]);
-
-  // Set default filter to match current user's role on launch
-  useEffect(() => {
-    if (user) {
-      if (['admin', 'district_coordinator', 'data_entry'].includes(user.role)) {
-        setRoleFilter(user.role);
+  // Load tasks from API
+  const loadTasks = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await api.get('/api/tasks');
+      if (Array.isArray(data)) {
+        setTasks(data.map((t: any) => ({
+          id: String(t.id),
+          title: t.title,
+          description: t.description || '',
+          priority: t.priority || 'medium',
+          assignedRole: t.assigned_role || 'data_entry',
+          dueDate: t.due_date ? t.due_date.split('T')[0] : '',
+          district: t.district || 'National',
+          category: t.category || 'General',
+          status: t.status === 'in_progress' ? 'progress' : (t.status || 'todo'),
+        })));
       }
+    } catch { }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { loadTasks(); }, [loadTasks]);
+
+  useEffect(() => {
+    if (user && ['admin', 'district_coordinator', 'data_entry'].includes(user.role)) {
+      setRoleFilter(user.role);
     }
   }, [user]);
 
-  const handleAddTask = () => {
+  const handleAddTask = async () => {
     if (!newTask.title.trim()) return;
-
-    const added: TaskItem = {
-      id: 'task_' + Date.now(),
-      title: newTask.title.trim(),
-      description: newTask.description.trim() || 'No description provided.',
-      priority: newTask.priority,
-      assignedRole: newTask.assignedRole,
-      dueDate: newTask.dueDate,
-      district: newTask.district,
-      category: newTask.category.trim() || 'General Operations',
-      status: 'todo'
-    };
-
-    setTasks(prev => [added, ...prev]);
-    setShowAddModal(false);
-    setNewTask({
-      title: '',
-      description: '',
-      priority: 'medium',
-      assignedRole: (user?.role as any) || 'data_entry',
-      dueDate: '2026-05-29',
-      district: user?.district || 'National',
-      category: 'Operations'
-    });
+    try {
+      const created = await api.post('/api/tasks', {
+        title: newTask.title.trim(),
+        description: newTask.description.trim(),
+        priority: newTask.priority,
+        assigned_role: newTask.assignedRole,
+        due_date: newTask.dueDate,
+        district: newTask.district,
+        category: newTask.category || 'General Operations',
+        status: 'pending',
+        assigned_to: null,
+        assigned_by: user?.id || null,
+      });
+      if (created.id) {
+        await loadTasks();
+        setShowAddModal(false);
+        setNewTask({
+          title: '', description: '', priority: 'medium',
+          assignedRole: (user?.role as any) || 'data_entry',
+          dueDate: new Date().toISOString().split('T')[0],
+          district: user?.district || 'National',
+          category: 'Operations'
+        });
+      }
+    } catch { }
   };
 
-  const handleMoveStatus = (id: string, nextStatus: TaskItem['status']) => {
-    setTasks(prev =>
-      prev.map(t => (t.id === id ? { ...t, status: nextStatus } : t))
-    );
+  const handleMoveStatus = async (id: string, nextStatus: TaskItem['status']) => {
+    const apiStatus = nextStatus === 'progress' ? 'in_progress' : nextStatus === 'completed' ? 'completed' : 'pending';
+    try {
+      await api.put(`/api/tasks/${id}`, { status: apiStatus });
+      setTasks(prev => prev.map(t => t.id === id ? { ...t, status: nextStatus } : t));
+    } catch { }
   };
 
-  const handleDeleteTask = (id: string) => {
-    if (confirm('Are you sure you want to delete this task?')) {
+  const handleDeleteTask = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this task?')) return;
+    try {
+      await api.delete(`/api/tasks/${id}`);
       setTasks(prev => prev.filter(t => t.id !== id));
-    }
+    } catch { }
   };
 
   // Filter processes
@@ -226,19 +244,24 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-gray-100 mb-6">
         <div>
           <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#e85d04] select-none">PORTAL ACTIONS</span>
-          <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight font-sans">
-            Operations Tasks
-          </h1>
+          <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight font-sans">Operations Tasks</h1>
           <p className="text-xs text-gray-500 mt-1 max-w-xl">
             Register checkpoints, cross-examine database entries, schedule school reviews, and delegate task sheets.
           </p>
         </div>
-
-        {/* FAST ADD SWITCH */}
-        <Btn variant="primary" size="sm" onClick={() => setShowAddModal(true)} className="self-start md:self-auto">
-          <Plus size={14} /> New Task Entry
-        </Btn>
+        <div className="flex gap-2 self-start md:self-auto">
+          <button onClick={loadTasks} className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-orange-600 transition-colors px-2 py-1.5 rounded border border-slate-200">
+            <RefreshCw size={12} className={loading ? 'animate-spin' : ''} /> Refresh
+          </button>
+          <Btn variant="primary" size="sm" onClick={() => setShowAddModal(true)}>
+            <Plus size={14} /> New Task Entry
+          </Btn>
+        </div>
       </div>
+
+      {loading && (
+        <div className="text-center py-12 text-slate-400 text-sm">Loading tasks from database...</div>
+      )}
 
       {/* FILTER CONTROLS BAR WITH INTUITIVE INPUTS */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-gray-50 p-3.5 rounded-2xl border border-gray-200 mb-6 font-sans">
