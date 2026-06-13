@@ -164,10 +164,11 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
   useEffect(() => { loadTasks(); }, [loadTasks]);
 
   useEffect(() => {
-    if (user && ['admin', 'district_coordinator', 'data_entry'].includes(user.role)) {
-      setRoleFilter(user.role);
-    }
-  }, [user]);
+  if (user) {
+    setRoleFilter('all'); // show all tasks by default
+    setNewTask(p => ({ ...p, assignedRole: (user.role as any) || 'data_entry', district: user.district || 'National' }));
+  }
+}, [user]);
 
   const handleAddTask = async () => {
     if (!newTask.title.trim()) return;
