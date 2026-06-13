@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Calendar as CalendarIcon, Plus, Info, ChevronLeft, ChevronRight, MapPin, Trash2, Clock, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight, MapPin, Tag, Trash2, Clock, Info } from 'lucide-react';
 import { User } from '../types';
 import { Card, Btn, Badge, FInput, FSelect, FArea, Modal } from './SubComponents';
 import { DISTRICT_LIST } from '../data';
-import { api } from '../api';
+import { safeStorage } from '../utils/storage';
 
 export interface CalendarEvent {
   id: string;
@@ -97,9 +97,12 @@ const DEFAULT_EVENTS: CalendarEvent[] = [
 ];
 
 export const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [events, setEvents] = useState<CalendarEvent[]>(() => {
+    const saved = safeStorage.getItem('ett_calendar_events');
+    return saved ? JSON.parse(saved) : DEFAULT_EVENTS;
+  });
 
+  // Keep track of current calendar navigate date
   const today = new Date();
   const [currentDate, setCurrentDate] = useState<Date>(new Date(today.getFullYear(), today.getMonth(), 1));
   const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
@@ -108,64 +111,59 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterDistrict, setFilterDistrict] = useState<string>('all');
 
+  // New Event Form State
   const [newEvent, setNewEvent] = useState({
-    title: '', description: '', date: todayStr,
+    title: '',
+    description: '',
+    date: todayStr,
     category: 'training' as CalendarEvent['category'],
-    district: user?.district || 'National'
+    district: 'National'
   });
 
-  const loadEvents = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await api.get('/api/calendar-events');
-      if (Array.isArray(data)) {
-        setEvents(data.map((e: any) => ({
-          id: String(e.id),
-          title: e.title,
-          description: e.description || '',
-          date: e.event_date ? e.event_date.split('T')[0] : (e.date || ''),
-          category: e.category || 'training',
-          district: e.district || 'National',
-          createdBy: e.created_by || '',
-          createdByName: e.created_by_name || e.creator_name || 'Staff',
-        })));
-      }
-    } catch { }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { loadEvents(); }, [loadEvents]);
+  useEffect(() => {
+    safeStorage.setItem('ett_calendar_events', JSON.stringify(events));
+  }, [events]);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
-  const handlePrevMonth = () => { setCurrentDate(new Date(year, month - 1, 1)); };
-  const handleNextMonth = () => { setCurrentDate(new Date(year, month + 1, 1)); };
-
-  const handleAddEvent = async () => {
-    if (!newEvent.title.trim()) return;
-    try {
-      const created = await api.post('/api/calendar-events', {
-        title: newEvent.title.trim(),
-        description: newEvent.description.trim(),
-        event_date: newEvent.date,
-        category: newEvent.category,
-        district: newEvent.district,
-      });
-      if (created.id) {
-        await loadEvents();
-        setShowAddModal(false);
-        setNewEvent({ title: '', description: '', date: selectedDateStr, category: 'training', district: user?.district || 'National' });
-      }
-    } catch { }
+  const handlePrevMonth = () => {
+    setCurrentDate(new Date(year, month - 1, 1));
   };
 
-  const handleDeleteEvent = async (id: string) => {
-    if (!confirm('Are you sure you want to dismiss this scheduled event?')) return;
-    try {
-      await api.delete(`/api/calendar-events/${id}`);
+  const handleNextMonth = () => {
+    setCurrentDate(new Date(year, month + 1, 1));
+  };
+
+  const handleAddEvent = () => {
+    if (!newEvent.title.trim()) return;
+
+    const added: CalendarEvent = {
+      id: 'evt_' + Date.now(),
+      title: newEvent.title.trim(),
+      description: newEvent.description.trim() || 'No description provided.',
+      date: newEvent.date,
+      category: newEvent.category,
+      district: newEvent.district,
+      createdBy: user?.id || 'public',
+      createdByName: user?.name || 'Authorized Officer'
+    };
+
+    setEvents(prev => [...prev, added]);
+    setShowAddModal(false);
+    setNewEvent({
+      title: '',
+      description: '',
+      date: selectedDateStr,
+      category: 'training',
+      district: user?.district || 'National'
+    });
+  };
+
+  const handleDeleteEvent = (id: string) => {
+    if (confirm('Are you sure you want to dismiss this scheduled event?')) {
       setEvents(prev => prev.filter(e => e.id !== id));
-    } catch { }
+    }
   };
 
   // Generate Month Days grid
@@ -181,7 +179,18 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
-  const filteredEvents = events.filter(e => {
+  // Visibility: admin sees all events. Everyone else sees events they
+  // created, National (all-staff) events, or events in their own district.
+  const myEvents = events.filter(e => {
+    if (!user) return e.district === 'National';
+    if (user.role === 'admin') return true;
+    if (e.createdBy === user.id) return true;
+    if (e.district === 'National') return true;
+    if (user.district && e.district === user.district) return true;
+    return false;
+  });
+
+  const filteredEvents = myEvents.filter(e => {
     const catMatch = filterCategory === 'all' || e.category === filterCategory;
     const destMatch = filterDistrict === 'all' || e.district === filterDistrict;
     return catMatch && destMatch;
@@ -205,7 +214,9 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
             Operations Calendar
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xl">
-            Schedule collaborative teacher check-ins, reporting targets, curriculum reviews, and district milestones.
+            {user?.role === 'admin'
+              ? 'All scheduled operations across the programme — training, visits, audits, and deadlines.'
+              : 'Your scheduled check-ins, reviews, and district milestones, plus national-wide events.'}
           </p>
         </div>
 
@@ -245,11 +256,11 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
               onChange={e => setFilterDistrict(e.target.value)}
               className="bg-transparent text-xs font-bold text-slate-700 dark:text-slate-300 border-none outline-none cursor-pointer"
             >
-              <option value="all">All Districts</option>
+              <option value="all">All My Events</option>
               <option value="National">National Hub Only</option>
-              {DISTRICT_LIST.map(d => (
-                <option key={d} value={d}>{d}</option>
-              ))}
+              {user?.role === 'admin'
+                ? DISTRICT_LIST.map(d => <option key={d} value={d}>{d}</option>)
+                : (user?.district ? <option value={user.district}>{user.district}</option> : null)}
             </select>
           </div>
         </div>
@@ -468,13 +479,15 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                             {style.label}
                           </span>
 
-                          <button
-                            onClick={() => handleDeleteEvent(e.id)}
-                            className="text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition border-none bg-transparent"
-                            title="Remove appointment"
-                          >
-                            <Trash2 size={13} />
-                          </button>
+                          {(user?.role === 'admin' || e.createdBy === user?.id) && (
+                            <button
+                              onClick={() => handleDeleteEvent(e.id)}
+                              className="text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition border-none bg-transparent"
+                              title="Remove appointment"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          )}
                         </div>
 
                         <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 mb-1 leading-snug">
@@ -568,9 +581,9 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                 onChange={e => setNewEvent(p => ({ ...p, district: e.target.value }))}
               >
                 <option value="National">National (All Areas)</option>
-                {DISTRICT_LIST.map(d => (
-                  <option key={d} value={d}>{d} Area</option>
-                ))}
+                {user?.role === 'admin'
+                  ? DISTRICT_LIST.map(d => <option key={d} value={d}>{d} Area</option>)
+                  : (user?.district ? <option value={user.district}>{user.district} Area</option> : null)}
               </FSelect>
             </div>
 
