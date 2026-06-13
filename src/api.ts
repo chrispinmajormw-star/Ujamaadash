@@ -167,3 +167,28 @@ export const monitoringApi = {
   getIssues: () => api.get('/api/monitoring/issues'),
   submitIssue: (data: any) => api.post('/api/monitoring/issues', data),
 };
+// ─── CASE REFERRALS ────────────────────────────────────────────────────────
+
+export const caseReferralsApi = {
+  getAll: (params?: { status?: string; district?: string }) => {
+    const query = params ? '?' + new URLSearchParams(params as any).toString() : '';
+    return api.get(`/api/case-referrals${query}`);
+  },
+  getById: (id: number) => api.get(`/api/case-referrals/${id}`),
+  create: (data: any) => api.post('/api/case-referrals', data),
+  update: (id: number, data: any) => api.put(`/api/case-referrals/${id}`, data),
+  delete: (id: number) => api.delete(`/api/case-referrals/${id}`),
+};
+
+// ─── SASA MONTHLY REPORTS ────────────────────────────────────────────────────
+
+export const sasaReportsApi = {
+  getAll: (params?: { status?: string; month?: string }) => {
+    const query = params ? '?' + new URLSearchParams(params as any).toString() : '';
+    return api.get(`/api/sasa-reports${query}`);
+  },
+  getById: (id: number) => api.get(`/api/sasa-reports/${id}`),
+  create: (data: any) => api.post('/api/sasa-reports', data),
+  update: (id: number, data: any) => api.put(`/api/sasa-reports/${id}`, data),
+  delete: (id: number) => api.delete(`/api/sasa-reports/${id}`),
+};
