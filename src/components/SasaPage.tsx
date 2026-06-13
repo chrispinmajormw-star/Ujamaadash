@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { gbvCasesApi, api } from '../api';
+import { gbvCasesApi, caseReferralsApi, sasaReportsApi } from '../api';
 import { User, Report, CaseReferral, SasaMonthlyReport } from '../types';
 import {
   REFERRAL_AGENCIES, REFERRAL_STATUS_CFG,
-  CASE_REFERRALS_INIT, SASA_REPORTS_INIT,
 } from '../data';
 import {
   Card, PageHeader, Btn, Pill, FilterBar, Badge,
@@ -26,6 +25,36 @@ const formatMonth = (m: string) => {
   const [y, mo] = m.split('-');
   return new Date(Number(y), Number(mo) - 1).toLocaleString('default', { month: 'long', year: 'numeric' });
 };
+
+// Map snake_case API rows → camelCase frontend shapes
+const mapReferral = (r: any): CaseReferral => ({
+  id: r.id,
+  caseId: r.case_id,
+  caseSchool: r.case_school,
+  caseDistrict: r.case_district,
+  agency: r.agency,
+  agencyLabel: r.agency_label,
+  referredBy: r.referred_by_name || 'SASA Officer',
+  referredAt: r.referred_at ? String(r.referred_at).split('T')[0] : TODAY,
+  status: r.status,
+  outcome: r.outcome || undefined,
+  notes: r.notes || undefined,
+});
+
+const mapSasaReport = (r: any): SasaMonthlyReport => ({
+  id: r.id,
+  month: r.month,
+  submittedBy: r.submitted_by_name || 'SASA Officer',
+  submittedAt: r.submitted_at ? String(r.submitted_at).split('T')[0] : TODAY,
+  totalCases: r.total_cases,
+  publicCases: r.public_cases,
+  referrals: r.referrals,
+  resolvedReferrals: r.resolved_referrals,
+  highlights: r.highlights || '',
+  challenges: r.challenges || '',
+  recommendations: r.recommendations || '',
+  status: r.status,
+});
 
 const StatusDot: React.FC<{ status: CaseReferral['status'] }> = ({ status }) => {
   const cfg = REFERRAL_STATUS_CFG[status];
@@ -265,33 +294,48 @@ const ReferralsTab: React.FC<{
     return true;
   });
 
-  const submitReferral = () => {
+  const submitReferral = async () => {
     if (!referModal) return;
     const agency = REFERRAL_AGENCIES.find(a => a.id === newRef.agency)!;
-    const ref: CaseReferral = {
-      id: Date.now(),
-      caseId: referModal.id,
-      caseSchool: referModal.school,
-      caseDistrict: referModal.district,
-      agency: agency.id,
-      agencyLabel: agency.label,
-      referredBy: 'SASA Officer',
-      referredAt: TODAY,
-      status: 'pending',
-      notes: newRef.notes,
-    };
-    setReferrals(prev => [ref, ...prev]);
-    showToast(`Case referred to ${agency.label}`);
-    setReferModal(null);
-    clearReferTarget();
-    setNewRef({ agency: REFERRAL_AGENCIES[0].id, notes: '' });
+    try {
+      const data = await caseReferralsApi.create({
+        caseId: referModal.id,
+        caseSchool: referModal.school,
+        caseDistrict: referModal.district,
+        agency: agency.id,
+        agencyLabel: agency.label,
+        notes: newRef.notes,
+      });
+      if (data.error) { showToast(`⚠️ ${data.error}`); return; }
+      setReferrals(prev => [mapReferral(data), ...prev]);
+      showToast(`Case referred to ${agency.label}`);
+      setReferModal(null);
+      clearReferTarget();
+      setNewRef({ agency: REFERRAL_AGENCIES[0].id, notes: '' });
+    } catch {
+      showToast('⚠️ Failed to submit referral');
+    }
   };
 
-  const updateStatus = (id: number, status: CaseReferral['status']) => {
-    setReferrals(prev => prev.map(r => r.id === id ? { ...r, status, outcome: status === 'resolved' ? outcome : r.outcome } : r));
-    setEditId(null);
-    setOutcome('');
-    showToast(`Referral marked as ${status}`);
+  const updateStatus = async (id: number, status: CaseReferral['status']) => {
+    const ref = referrals.find(r => r.id === id);
+    if (!ref) return;
+    try {
+      const data = await caseReferralsApi.update(id, {
+        agency: ref.agency,
+        agencyLabel: ref.agencyLabel,
+        status,
+        outcome: status === 'resolved' ? outcome : ref.outcome,
+        notes: ref.notes,
+      });
+      if (data.error) { showToast(`⚠️ ${data.error}`); return; }
+      setReferrals(prev => prev.map(r => r.id === id ? mapReferral(data) : r));
+      setEditId(null);
+      setOutcome('');
+      showToast(`Referral marked as ${status}`);
+    } catch {
+      showToast('⚠️ Failed to update referral');
+    }
   };
 
   return (
@@ -420,30 +464,33 @@ const MonthlyReports: React.FC<{
   const sf = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm(p => ({ ...p, [k]: e.target.value }));
 
-  const submit = (asDraft: boolean) => {
+  const submit = async (asDraft: boolean) => {
     const monthCases = allCases.length;
     const publicCases = allCases.filter(r => r.submitted_role === 'public').length;
     const monthRefs = referrals.length;
     const resolved = referrals.filter(r => r.status === 'resolved').length;
+    const status = asDraft ? 'draft' : 'submitted';
 
-    const report: SasaMonthlyReport = {
-      id: Date.now(),
-      month: form.month,
-      submittedBy: 'SASA Officer',
-      submittedAt: TODAY,
-      totalCases: monthCases,
-      publicCases,
-      referrals: monthRefs,
-      resolvedReferrals: resolved,
-      highlights: form.highlights,
-      challenges: form.challenges,
-      recommendations: form.recommendations,
-      status: asDraft ? 'draft' : 'submitted',
-    };
-    setSasaReports(prev => [report, ...prev]);
-    setCreating(false);
-    showToast(asDraft ? 'Report saved as draft' : 'Monthly report submitted');
-    setForm({ month: CURRENT_MONTH, highlights: '', challenges: '', recommendations: '' });
+    try {
+      const data = await sasaReportsApi.create({
+        month: form.month,
+        totalCases: monthCases,
+        publicCases,
+        referrals: monthRefs,
+        resolvedReferrals: resolved,
+        highlights: form.highlights,
+        challenges: form.challenges,
+        recommendations: form.recommendations,
+        status,
+      });
+      if (data.error) { showToast(`⚠️ ${data.error}`); return; }
+      setSasaReports(prev => [mapSasaReport(data), ...prev]);
+      setCreating(false);
+      showToast(asDraft ? 'Report saved as draft' : 'Monthly report submitted');
+      setForm({ month: CURRENT_MONTH, highlights: '', challenges: '', recommendations: '' });
+    } catch {
+      showToast('⚠️ Failed to save report');
+    }
   };
 
   return (
@@ -546,56 +593,22 @@ export const SasaPage: React.FC<SasaPageProps> = ({ user, reports, showToast }) 
   const [referrals, setReferrals] = useState<CaseReferral[]>([]);
   const [sasaReports, setSasaReports] = useState<SasaMonthlyReport[]>([]);
   const [referTarget, setReferTarget] = useState<Report | null>(null);
-  const [gbvCases, setGbvCases] = useState<any[]>([]);
 
   const canAccess = user && (user.role === 'sasa_officer' || user.role === 'admin');
+  const [gbvCases, setGbvCases] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!canAccess) return;
-
-    // Load GBV cases
-    gbvCasesApi.getAll().then(data => {
-      if (Array.isArray(data)) setGbvCases(data);
-    });
-
-    // Load referrals from DB
-    api.get('/api/case-referrals').then(data => {
-      if (Array.isArray(data)) {
-        setReferrals(data.map((r: any) => ({
-          id: r.id,
-          caseId: r.case_id,
-          caseSchool: r.case_school || '',
-          caseDistrict: r.case_district || '',
-          agency: r.agency || '',
-          agencyLabel: r.agency_label || r.agency || '',
-          referredBy: r.referred_by || '',
-          referredAt: r.referred_at || r.created_at || '',
-          status: r.status || 'pending',
-          outcome: r.outcome || '',
-          notes: r.notes || '',
-        })));
-      }
-    });
-
-    // Load SASA monthly reports from DB
-    api.get('/api/sasa-reports').then(data => {
-      if (Array.isArray(data)) {
-        setSasaReports(data.map((r: any) => ({
-          id: r.id,
-          month: r.month,
-          submittedBy: r.submitted_by_name || r.submitted_by || '',
-          submittedAt: r.submitted_at ? r.submitted_at.split('T')[0] : '',
-          totalCases: r.total_cases || 0,
-          publicCases: r.public_cases || 0,
-          referrals: r.referrals || 0,
-          resolvedReferrals: r.resolved_referrals || 0,
-          highlights: r.highlights || '',
-          challenges: r.challenges || '',
-          recommendations: r.recommendations || '',
-          status: r.status || 'draft',
-        })));
-      }
-    });
+    if (user?.role === 'sasa_officer' || user?.role === 'admin') {
+      gbvCasesApi.getAll().then(data => {
+        if (Array.isArray(data)) setGbvCases(data);
+      });
+      caseReferralsApi.getAll().then(data => {
+        if (Array.isArray(data)) setReferrals(data.map(mapReferral));
+      });
+      sasaReportsApi.getAll().then(data => {
+        if (Array.isArray(data)) setSasaReports(data.map(mapSasaReport));
+      });
+    }
   }, [user]);
   if (!canAccess) {
     return (
