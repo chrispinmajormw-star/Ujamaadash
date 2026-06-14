@@ -1,13 +1,117 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { MapPin, Navigation, Map as MapIcon, Sliders, Info, HelpCircle } from 'lucide-react';
+import {
+  MapPin, Sliders, Info, RefreshCw,
+  ChevronRight, Clock,
+  AlertCircle, CheckCircle, Eye, EyeOff, Layers,
+  Edit2,
+} from 'lucide-react';
 import { Card, Kicker, Btn, Modal } from './SubComponents';
-import { DISTRICTS, DISTRICT_INFO, MAP_CLUSTERS, MapCluster } from '../data';
+import { mapClustersApi, mapSchoolsApi } from '../api';
 
-// Active districts lookup
-const ACTIVE_DISTRICTS = new Set([
-  "Mzimba", "Mzunzu", "Lilongwe", "Dowa", "Kasungu", "Dedza", "Ntcheu", "Ntchisi", "Nkhotakota", "Salima",
-  "Blantyre", "Zomba", "Mangochi", "Machinga", "Balaka"
-]);
+// ─── TYPES ───────────────────────────────────────────────────────────────────
+
+interface MapSchool {
+  id: number;
+  cluster_id: number;
+  name: string;
+  district: string;
+  region: string;
+  zone_name?: string;
+  lat: number;
+  lng: number;
+  headteacher?: string;
+  headteacher_phone?: string;
+  him_running: boolean;
+  gesd_running: boolean;
+  boys_enrolled: number;
+  girls_enrolled: number;
+  total_learners: number;
+  trained_teachers: number;
+  tots: number;
+  stots: number;
+  teachbacks: number;
+  sessions_completed: number;
+  sessions_planned: number;
+  last_session_date?: string;
+  ett_trained: boolean;
+  verified: boolean;
+  status: 'active' | 'inactive' | 'planned';
+  notes?: string;
+  visit_logs?: VisitLog[];
+}
+
+interface MapCluster {
+  id: number;
+  name: string;
+  district: string;
+  region: string;
+  zone_name?: string;
+  pea_officer?: string;
+  lat: number;
+  lng: number;
+  lead?: string;
+  lead_phone?: string;
+  lead_email?: string;
+  students: number;
+  boys: number;
+  girls: number;
+  trained: number;
+  tots: number;
+  stots: number;
+  teachbacks: number;
+  progress: number;
+  verified: boolean;
+  school_count: number;
+  schools: MapSchool[];
+}
+
+interface VisitLog {
+  id: number;
+  visit_date: string;
+  purpose: string;
+  findings?: string;
+  visitor_name?: string;
+}
+
+// ─── LAYER CONFIG ─────────────────────────────────────────────────────────────
+
+type LayerKey = 'clusters' | 'trainedSchools' | 'untrainedSchools' | 'connectors' | 'heatmap';
+
+const LAYERS: { key: LayerKey; label: string; activeClass: string }[] = [
+  { key: 'clusters',         label: 'Cluster Centres',  activeClass: 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' },
+  { key: 'trainedSchools',   label: 'Trained Schools',  activeClass: 'bg-emerald-600 text-white' },
+  { key: 'untrainedSchools', label: 'Untrained Schools',activeClass: 'bg-amber-500 text-white' },
+  { key: 'connectors',       label: 'Connectors',        activeClass: 'bg-orange-500 text-white' },
+  { key: 'heatmap',          label: '🔥 Heat Map',       activeClass: 'bg-red-600 text-white' },
+];
+
+// ─── SMALL UI HELPERS ─────────────────────────────────────────────────────────
+
+const StatTile = ({ label, value, sub }: { label: string; value: string | number; sub?: string }) => (
+  <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-3">
+    <div className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 mb-1">{label}</div>
+    <div className="text-lg font-black text-slate-900 dark:text-slate-50 leading-none">{value}</div>
+    {sub && <div className="text-[10px] text-slate-400 mt-0.5">{sub}</div>}
+  </div>
+);
+
+const MiniBar = ({ value }: { value: number }) => (
+  <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+    <div className="h-full rounded-full" style={{ width: `${Math.min(value, 100)}%`, background: '#e85d04' }} />
+  </div>
+);
+
+const CurrPill = ({ label, active }: { label: string; active: boolean }) => (
+  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border
+    ${active
+      ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/30 dark:text-orange-400 dark:border-orange-800'
+      : 'bg-slate-100 text-slate-400 border-slate-200 dark:bg-slate-800 dark:text-slate-600 dark:border-slate-700 line-through opacity-60'
+    }`}>
+    {active ? 'checkmark' : 'x'} {label}
+  </span>
+);
+
+// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 
 interface MapsPageProps {
   setPage: (p: string) => void;
@@ -16,312 +120,580 @@ interface MapsPageProps {
 }
 
 export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) => {
-  const [selectedRegion, setSelectedRegion] = useState<string>("All");
-  const [activeClusterId, setActiveClusterId] = useState<number | null>(null);
-  const [selectedCluster, setSelectedCluster] = useState<MapCluster | null>(null);
-  const mapRef = useRef<any>(null);
-  const regions = ["All", "Northern", "Central", "Southern"];
-  const [showDistricts, setShowDistricts] = useState(true);
-  const [showClusters, setShowClusters] = useState(true);
-  const [showSchools, setShowSchools] = useState(true);
-  const [searchLocation, setSearchLocation] = useState<string>("");
-  const [showHeatMap, setShowHeatMap] = useState(false);
+  const isCartographer = user?.role === 'cartographer';
 
-  const clustersWithRegion = MAP_CLUSTERS.map(c => {
-    const d = DISTRICTS.find(x => x.name === c.district);
-    return { ...c, region: d?.r || "Central" };
+  const [clusters, setClusters]               = useState<MapCluster[]>([]);
+  const [loading, setLoading]                 = useState(true);
+  const [error, setError]                     = useState<string | null>(null);
+  const [selectedRegion, setSelectedRegion]   = useState('All');
+  const [activeClusterId, setActiveClusterId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery]         = useState('');
+
+  const [layers, setLayers] = useState<Record<LayerKey, boolean>>({
+    clusters: true,
+    trainedSchools: true,
+    untrainedSchools: true,
+    connectors: true,
+    heatmap: false,
+  });
+  const toggleLayer = (key: LayerKey) => setLayers(prev => ({ ...prev, [key]: !prev[key] }));
+
+  const [selectedCluster, setSelectedCluster] = useState<MapCluster | null>(null);
+  const [selectedSchool,  setSelectedSchool]  = useState<MapSchool | null>(null);
+  const [schoolDetail,    setSchoolDetail]    = useState<MapSchool | null>(null);
+  const [loadingSchool,   setLoadingSchool]   = useState(false);
+
+  const mapRef = useRef<any>(null);
+
+  // ── Fetch ────────────────────────────────────────────────────────────────
+  const fetchClusters = useCallback(async () => {
+    setLoading(true); setError(null);
+    try {
+      const params: any = {};
+      if (selectedRegion !== 'All') params.region = selectedRegion;
+      const data = await mapClustersApi.getAll(params);
+      if (Array.isArray(data)) setClusters(data);
+      else setError('Unexpected response from server.');
+    } catch { setError('Could not load map data. Check your connection.'); }
+    finally { setLoading(false); }
+  }, [selectedRegion]);
+
+  useEffect(() => { fetchClusters(); }, [fetchClusters]);
+
+  // ── School detail ─────────────────────────────────────────────────────────
+  const openSchool = async (school: MapSchool) => {
+    setSelectedSchool(school); setLoadingSchool(true);
+    try { const d = await mapSchoolsApi.getById(school.id); setSchoolDetail(d); }
+    catch { setSchoolDetail(school); }
+    finally { setLoadingSchool(false); }
+  };
+
+  const filteredClusters = clusters.filter(c => {
+    const q = searchQuery.toLowerCase();
+    return !q || c.name.toLowerCase().includes(q) || c.district.toLowerCase().includes(q);
   });
 
-  const filteredClusters = selectedRegion === "All"
-    ? clustersWithRegion
-    : clustersWithRegion.filter(c => c.region === selectedRegion);
-
+  // ── Fly to cluster ────────────────────────────────────────────────────────
   const flyToCluster = useCallback((cluster: MapCluster) => {
     const L = (window as any).L;
     if (!mapRef.current || !L) return;
     setActiveClusterId(cluster.id);
-    const pts = [[cluster.lat, cluster.lng], ...cluster.schools.map(s => [s.lat, s.lng])];
-    mapRef.current.flyToBounds(pts, { padding: [55, 55], maxZoom: 13, duration: 1.2 });
+    const pts: [number, number][] = [[cluster.lat, cluster.lng], ...cluster.schools.map(s => [s.lat, s.lng] as [number, number])];
+    if (pts.length > 1) mapRef.current.flyToBounds(pts, { padding: [55, 55], maxZoom: 13, duration: 1.1 });
+    else mapRef.current.flyTo([cluster.lat, cluster.lng], 12, { duration: 1.1 });
   }, []);
 
+  // ── Build Leaflet map ──────────────────────────────────────────────────────
   useEffect(() => {
     const L = (window as any).L;
-    if (!L) return;
+    if (!L || loading || error) return;
+    if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
 
-    const map = L.map("ett-map", { zoomControl: true }).setView([-13.2, 34.0], 7);
+    const map = L.map('ett-map', { zoomControl: true }).setView([-13.2, 34.0], 7);
     mapRef.current = map;
 
-    // Load CARTO dark tiles in dark mode, light tiles in light mode
-    const tileUrl = darkMode
-      ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-      : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
-
-    L.tileLayer(tileUrl, {
-      attribution: '&copy; OpenStreetMap &copy; CARTO',
-      maxZoom: 18
-    }).addTo(map);
-
+    L.tileLayer(
+      darkMode
+        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+        : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+      { attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 18 }
+    ).addTo(map);
     L.control.scale({ imperial: false }).addTo(map);
 
-    // Render district overlays
-    DISTRICTS.forEach(district => {
-      const coords = DISTRICT_INFO[district.name];
-      if (!coords) return;
-      const isActive = ACTIVE_DISTRICTS.has(district.name);
-      
-      const fillColor = isActive ? "#16a34a" : (darkMode ? "#4b5563" : "#9ca3af");
-      const radius = isActive ? 7 : 5;
-
-      L.circleMarker([coords.lat, coords.lng], {
-        radius,
-        fillColor,
-        color: darkMode ? "#111827" : "#fff",
-        weight: 1.8,
-        fillOpacity: isActive ? 0.85 : 0.5
-      }).addTo(map).bindTooltip(district.name, {
-        permanent: false,
-        direction: "top",
-        offset: [0, -6]
-      });
-    });
-
-    // Render heat map layer if enabled
-    if (showHeatMap) {
-      filteredClusters.forEach(cluster => {
-        const heatIntensity = cluster.students / 1000; // Normalize for heat map
-        L.circle([cluster.lat, cluster.lng], {
-          radius: 15000 * (cluster.schools.length / 10), // Scale radius by school count
-          fillColor: `rgba(232, 93, 4, ${Math.min(heatIntensity, 0.8)})`,
-          color: "#e85d04",
-          weight: 1,
-          fillOpacity: 0.6
+    // Heat rings
+    if (layers.heatmap) {
+      filteredClusters.forEach(c => {
+        L.circle([c.lat, c.lng], {
+          radius: 18000 * Math.max(c.school_count / 8, 0.5),
+          fillColor: `rgba(232,93,4,${Math.min(c.students / 500, 0.7)})`,
+          color: '#e85d04', weight: 1, fillOpacity: 0.4,
         }).addTo(map);
       });
     }
 
-    // Render clusters and schools connectives
     filteredClusters.forEach(cluster => {
-      // Connect schools with lines to cluster center
-      cluster.schools.forEach(school => {
-        L.polyline([[cluster.lat, cluster.lng], [school.lat, school.lng]], {
-          color: "#e85d04",
-          weight: 1.8,
-          opacity: 0.65,
-          dashArray: "5 5"
-        }).addTo(map);
-      });
-
-      // Render schools
-      cluster.schools.forEach(school => {
-        const schoolIcon = L.divIcon({
-          className: "custom-leaflet-school-marker",
-          html: `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer">
-            <div style="width:10px;height:10px;border-radius:50%;background:#e85d04;border:2px solid ${darkMode ? '#0f1623' : '#fff'};box-shadow:0 1px 4px rgba(0,0,0,.35);flex-shrink:0"></div>
-          </div>`,
-          iconAnchor: [5, 5]
+      // Connector lines
+      if (layers.connectors) {
+        cluster.schools.forEach(s => {
+          const vis = s.ett_trained ? layers.trainedSchools : layers.untrainedSchools;
+          if (!vis) return;
+          L.polyline([[cluster.lat, cluster.lng], [s.lat, s.lng]], {
+            color: '#e85d04', weight: 1.5, opacity: 0.4, dashArray: '5 5',
+          }).addTo(map);
         });
+      }
 
-        L.marker([school.lat, school.lng], { icon: schoolIcon, zIndexOffset: 200 })
+      // School markers
+      cluster.schools.forEach(school => {
+        const trained = school.ett_trained;
+        if (trained && !layers.trainedSchools)     return;
+        if (!trained && !layers.untrainedSchools)  return;
+
+        const markerHtml = trained
+          ? `<div style="width:11px;height:11px;border-radius:50%;background:#16a34a;border:2.5px solid ${darkMode ? '#0f1623' : '#fff'};box-shadow:0 1px 5px rgba(0,0,0,.4);cursor:pointer;"></div>`
+          : `<div style="width:11px;height:11px;border-radius:50%;background:transparent;border:2.5px dashed #d97706;cursor:pointer;"></div>`;
+
+        const icon = L.divIcon({ className: '', html: markerHtml, iconAnchor: [5, 5] });
+        const curricula = [school.him_running && 'HIM', school.gesd_running && 'GESD'].filter(Boolean).join('+') || 'None';
+        const totalL = (school.boys_enrolled || 0) + (school.girls_enrolled || 0);
+
+        L.marker([school.lat, school.lng], { icon, zIndexOffset: 200 })
           .addTo(map)
-          .bindPopup(
-            `<div style="font-family:'Plus Jakarta Sans',sans-serif;min-width:180px;padding:2px 0;color:${darkMode ? '#f3f4f6' : '#111827'}">
-              <div style="font-weight:800;font-size:12.5px;margin-bottom:3px;color:${darkMode ? '#f8fafc' : '#111827'}">${school.name}</div>
-              <div style="font-size:11px;color:${darkMode ? '#94a3b8' : '#6b7280'};margin-bottom:4px">
-                <span style="color:#e85d04">●</span> ${cluster.district} · Lead: <b>${cluster.lead}</b>
+          .bindPopup(`
+            <div style="font-family:'Plus Jakarta Sans',sans-serif;min-width:210px;color:${darkMode ? '#f3f4f6' : '#111827'}">
+              <div style="font-weight:900;font-size:13px;margin-bottom:2px">${school.name}</div>
+              <div style="font-size:10px;font-weight:700;margin-bottom:6px;color:${trained ? '#16a34a' : '#d97706'}">
+                ${trained ? 'ETT Trained' : 'Not Yet Trained'}
               </div>
-              <span style="display:inline-block;padding:1px 7px;border-radius:20px;font-size:10px;font-weight:700;background:${darkMode ? '#2c1e13' : '#fff1e6'};color:${darkMode ? '#ff9a44' : '#c44d00'} font-sans">✅ ETT Trained</span>
-            </div>`
-          );
+              <div style="font-size:10px;color:#e85d04;font-weight:700;margin-bottom:6px">${school.district}</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px;font-size:10.5px">
+                <div><span style="color:#9ca3af">Learners</span><br><b>${totalL.toLocaleString()}</b></div>
+                <div><span style="color:#9ca3af">Trained</span><br><b>${school.trained_teachers}</b></div>
+                <div><span style="color:#9ca3af">TOTs</span><br><b>${school.tots}</b></div>
+                <div><span style="color:#9ca3af">STOTs</span><br><b>${school.stots}</b></div>
+                <div><span style="color:#9ca3af">Teachbacks</span><br><b>${school.teachbacks}</b></div>
+                <div><span style="color:#9ca3af">Curriculum</span><br><b style="font-size:9.5px">${curricula}</b></div>
+              </div>
+              ${school.headteacher ? `<div style="font-size:10px;color:#6b7280">HT: <b>${school.headteacher}</b></div>` : ''}
+            </div>`, { maxWidth: 260 })
+          .on('click', () => openSchool(school));
       });
 
-      // Render center
-      const centerIcon = L.divIcon({
-        className: "custom-leaflet-center-marker",
-        html: `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer">
-          <div style="width:14px;height:14px;border-radius:50%;background:${darkMode ? '#1e293b' : '#0f1623'};border:3px solid #e85d04;box-shadow:0 2px 6px rgba(0,0,0,.4);flex-shrink:0"></div>
-        </div>`,
-        iconAnchor: [7, 7]
-      });
+      // Cluster centre
+      if (!layers.clusters) return;
+      const centerHtml = `<div style="width:16px;height:16px;border-radius:50%;background:${darkMode ? '#1e293b' : '#0f1623'};border:3px solid #e85d04;box-shadow:0 2px 8px rgba(0,0,0,.45);cursor:pointer;"></div>`;
+      const centerIcon = L.divIcon({ className: '', html: centerHtml, iconAnchor: [8, 8] });
 
-      const centerMarker = L.marker([cluster.lat, cluster.lng], { icon: centerIcon, zIndexOffset: 500 }).addTo(map);
-      
-      const schoolListHTML = cluster.schools.map(s =>
-        `<div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid ${darkMode ? 'rgba(255,255,255,0.06)' : '#f3f4f6'}">
-          <span style="width:6px;height:6px;border-radius:50%;background:#e85d04;flex-shrink:0;display:inline-block"></span>
-          <span style="font-size:11px;color:${darkMode ? '#cbd5e1' : '#374151'}">${s.name}</span>
-        </div>`
-      ).join("");
-
-      centerMarker.bindPopup(
-        `<div style="font-family:'Plus Jakarta Sans',sans-serif;min-width:220px;padding:2px 0;color:${darkMode ? '#f8fafc' : '#0f1623'}">
-          <div style="font-weight:800;font-size:14px;margin-bottom:4px;color:${darkMode ? '#f8fafc' : '#0f1623'}">${cluster.name}</div>
-          <div style="font-size:11px;color:${darkMode ? '#94a3b8' : '#4b5563'};margin-bottom:4px">📍 District: <b>${cluster.district}</b> · Lead: <b>${cluster.lead}</b></div>
-          <div style="font-size:11px;color:${darkMode ? '#94a3b8' : '#4b5563'};margin-bottom:8px">👥 Learners: <b>${cluster.students}</b> · Trained: <b>${cluster.trained}/${cluster.schools.length}</b></div>
-          <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;color:${darkMode ? '#64748b' : '#9ca3af'};margin-bottom:4px">Schools connected</div>
-          ${schoolListHTML}
-        </div>`
-      );
-
-      centerMarker.on("click", () => {
-        setActiveClusterId(cluster.id);
-      });
+      const marker = L.marker([cluster.lat, cluster.lng], { icon: centerIcon, zIndexOffset: 500 }).addTo(map);
+      marker.bindPopup(`
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;min-width:230px;color:${darkMode ? '#f8fafc' : '#0f1623'}">
+          <div style="font-weight:900;font-size:14px;margin-bottom:2px">${cluster.name}</div>
+          <div style="font-size:10px;color:#e85d04;font-weight:700;margin-bottom:8px">${cluster.district} · ${cluster.region}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:8px;font-size:10.5px">
+            <div><span style="color:#9ca3af">Learners</span><br><b>${cluster.students.toLocaleString()}</b></div>
+            <div><span style="color:#9ca3af">Schools</span><br><b>${cluster.school_count}</b></div>
+            <div><span style="color:#9ca3af">TOTs</span><br><b>${cluster.tots}</b></div>
+            <div><span style="color:#9ca3af">STOTs</span><br><b>${cluster.stots}</b></div>
+            <div><span style="color:#9ca3af">Teachbacks</span><br><b>${cluster.teachbacks}</b></div>
+            <div><span style="color:#9ca3af">Trained</span><br><b>${cluster.trained}</b></div>
+          </div>
+          ${cluster.lead ? `<div style="font-size:10px;color:#6b7280">Lead: <b>${cluster.lead}</b></div>` : ''}
+          <div style="background:#f1f5f9;border-radius:4px;height:6px;overflow:hidden;margin-top:6px">
+            <div style="width:${cluster.progress}%;height:100%;background:#e85d04;border-radius:4px"></div>
+          </div>
+          <div style="font-size:9px;color:#9ca3af;text-align:right;margin-top:2px">${cluster.progress}% progress</div>
+        </div>`, { maxWidth: 280 });
+      marker.on('click', () => { setActiveClusterId(cluster.id); setSelectedCluster(cluster); });
     });
 
-    return () => {
-      map.remove();
-      mapRef.current = null;
-    };
-  }, [selectedRegion, darkMode, showHeatMap]);
+    return () => { map.remove(); mapRef.current = null; };
+  }, [filteredClusters, darkMode, layers, loading, error]);
 
+  // ── Stats ─────────────────────────────────────────────────────────────────
+  const allSchools     = clusters.flatMap(c => c.schools);
+  const totalLearners  = clusters.reduce((a, c) => a + c.students, 0);
+  const trainedCount   = allSchools.filter(s => s.ett_trained).length;
+  const untrainedCount = allSchools.length - trainedCount;
+  const totalTeachbacks = clusters.reduce((a, c) => a + c.teachbacks, 0);
+
+  // ─── RENDER ──────────────────────────────────────────────────────────────
   return (
     <div className="space-y-4 flex flex-col h-full animate-fade-in-up">
-      <div>
-        <Kicker text="Malawi Interactive coverage map" />
-        <h1 className="text-2xl font-black text-gray-900 leading-tight">
-          School Clusters & Hubs
-        </h1>
-      </div>
 
-      <div className="bg-white border border-gray-200 rounded-t-2xl p-4 flex flex-wrap items-center gap-4 text-xs font-semibold text-gray-600">
-        {[
-          { color: "bg-emerald-600", label: "Active District" },
-          { color: "bg-slate-400 dark:bg-slate-600", label: "Planned Expansion" },
-          { color: "bg-orange-500", label: "Trained School" },
-          { color: "bg-slate-900 dark:bg-slate-700 border-2 border-orange-500", label: "Cluster Centre" }
-        ].map(item => (
-          <span key={item.label} className="flex items-center gap-2">
-            <span className={`w-3 h-3 rounded-full ${item.color} shadow-sm`} />
-            <span>{item.label}</span>
-          </span>
-        ))}
-        <div className="ml-auto flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <label className="text-[10px] text-slate-500">Layers:</label>
-            <button
-              onClick={() => setShowDistricts(!showDistricts)}
-              className={`px-2 py-1 rounded text-[10px] font-bold ${showDistricts ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}
-            >
-              Districts
-            </button>
-            <button
-              onClick={() => setShowClusters(!showClusters)}
-              className={`px-2 py-1 rounded text-[10px] font-bold ${showClusters ? 'bg-orange-100 text-orange-700' : 'bg-slate-100 text-slate-500'}`}
-            >
-              Clusters
-            </button>
-            <button
-              onClick={() => setShowSchools(!showSchools)}
-              className={`px-2 py-1 rounded text-[10px] font-bold ${showSchools ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'}`}
-            >
-              Schools
-            </button>
-            <button
-              onClick={() => setShowHeatMap(!showHeatMap)}
-              className={`px-2 py-1 rounded text-[10px] font-bold ${showHeatMap ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-500'}`}
-            >
-              Heat Map
-            </button>
-          </div>
+      {/* HEADER */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
+        <div>
+          <Kicker text="Malawi Interactive Coverage Map" />
+          <h1 className="text-2xl font-black text-slate-900 dark:text-slate-50 leading-tight tracking-tight">
+            School Clusters & Hubs
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Live school data across all ETT ScaleUp districts</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {isCartographer && (
+            <Btn size="sm" onClick={() => setPage('cartographer_home')}>
+              <Edit2 size={12} className="inline mr-1" /> Edit Map Data
+            </Btn>
+          )}
+          <button onClick={fetchClusters} className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 hover:text-orange-500 transition">
+            <RefreshCw size={12} className={loading ? 'animate-spin' : ''} /> Refresh
+          </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 border border-gray-200 rounded-b-2xl overflow-hidden h-[60vh] sm:h-[65vh]">
-        {/* Navigation Rail */}
-        <div className="bg-white border-r border-gray-200 flex flex-col overflow-hidden max-h-[160px] md:max-h-none md:col-span-1">
-          <div className="p-3 border-b border-gray-100 shrink-0">
-            <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5 flex items-center gap-1">
-              <Sliders size={12} /> Region scope
+      {/* STAT STRIP */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <StatTile label="Total Learners"   value={totalLearners.toLocaleString()} sub="across all clusters" />
+        <StatTile label="ETT Trained"      value={trainedCount}   sub={`${allSchools.length > 0 ? Math.round(trainedCount / allSchools.length * 100) : 0}% of schools`} />
+        <StatTile label="Not Yet Trained"  value={untrainedCount} sub="schools pending" />
+        <StatTile label="Teachbacks Done"  value={totalTeachbacks} sub="cumulative" />
+      </div>
+
+      {/* LAYER CONTROLS + LEGEND */}
+      <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-t-2xl px-4 py-3 space-y-3">
+        {/* Legend */}
+        <div className="flex flex-wrap items-center gap-4 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full bg-emerald-600 shrink-0" />
+            Trained School (solid)
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full border-2 border-dashed border-amber-500 shrink-0 bg-transparent" />
+            Untrained School (hollow)
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full border-2 border-orange-500 bg-slate-900 shrink-0" />
+            Cluster Centre
+          </span>
+        </div>
+        {/* Toggle buttons */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mr-1 flex items-center gap-1">
+            <Layers size={11} /> Layers:
+          </span>
+          {LAYERS.map(layer => (
+            <button
+              key={layer.key}
+              onClick={() => toggleLayer(layer.key)}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10.5px] font-bold transition-all border ${
+                layers[layer.key]
+                  ? `${layer.activeClass} border-transparent shadow-sm`
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 opacity-55'
+              }`}
+            >
+              {layers[layer.key] ? <Eye size={10} /> : <EyeOff size={10} />}
+              {layer.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* MAP + SIDEBAR */}
+      <div className="grid grid-cols-1 md:grid-cols-4 border border-slate-200 dark:border-slate-800 rounded-b-2xl overflow-hidden" style={{ height: '60vh' }}>
+
+        {/* SIDEBAR */}
+        <div className="bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden max-h-[180px] md:max-h-none md:col-span-1">
+          <div className="p-3 border-b border-slate-100 dark:border-slate-800 shrink-0 space-y-3">
+            <div>
+              <div className="text-[9.5px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1">
+                <Sliders size={11} /> Region
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {['All', 'Northern', 'Central', 'Southern'].map(r => (
+                  <button key={r} onClick={() => setSelectedRegion(r)}
+                    className={`px-2 py-1 rounded-full text-[10px] font-bold cursor-pointer transition-all ${
+                      selectedRegion === r
+                        ? 'bg-slate-900 text-white dark:bg-orange-600'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'
+                    }`}>{r}</button>
+                ))}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-1 mb-2">
-              {regions.map(r => (
-                <button
-                  key={r}
-                  onClick={() => setSelectedRegion(r)}
-                  className={`px-2.5 py-1 rounded-full text-[10.5px] font-bold cursor-pointer transition-all ${
-                    selectedRegion === r
-                      ? "bg-slate-900 text-white dark:bg-orange-600"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
-                >
-                  {r}
-                </button>
-              ))}
+            <div>
+              <div className="text-[9.5px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1">
+                <MapPin size={11} /> Search
+              </div>
+              <input
+                type="text" placeholder="Cluster or district…" value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full px-2 py-1.5 text-[11px] bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 dark:text-slate-200"
+              />
             </div>
-            <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5 flex items-center gap-1">
-              <MapPin size={12} /> Search location
-            </div>
-            <input
-              type="text"
-              placeholder="Search district or cluster..."
-              value={searchLocation}
-              onChange={(e) => setSearchLocation(e.target.value)}
-              className="w-full px-2 py-1.5 text-[11px] border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
-            />
           </div>
 
           <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
-            <div className="text-[9.5px] font-extrabold text-gray-400 uppercase tracking-wider px-2 py-1 select-none">
-              Clusters ({filteredClusters.length})
-            </div>
-            {filteredClusters.map(c => {
-              const isActive = activeClusterId === c.id;
-              return (
-                <div
-                  key={c.id}
-                  onClick={() => { flyToCluster(c); setSelectedCluster(c); }}
-                  className={`p-2.5 rounded-lg border text-left cursor-pointer transition-all ${
-                    isActive
-                      ? "border-orange-500 bg-orange-50/20 dark:bg-orange-950/15"
-                      : "border-gray-100 bg-white hover:border-orange-200"
-                  }`}
-                >
-                  <div className="font-bold text-xs text-gray-900 truncate">{c.name}</div>
-                  <div className="text-[10px] text-gray-400 mt-0.5">
-                    📍 {c.district} · {c.schools.length} schools
-                  </div>
+            {loading ? (
+              <div className="flex items-center justify-center h-16 text-xs text-slate-400 gap-2">
+                <RefreshCw size={12} className="animate-spin" /> Loading…
+              </div>
+            ) : error ? (
+              <div className="p-2 text-xs text-red-500 flex items-center gap-1"><AlertCircle size={12} /> {error}</div>
+            ) : filteredClusters.length === 0 ? (
+              <div className="p-3 text-xs text-slate-400 text-center">No clusters</div>
+            ) : (
+              <>
+                <div className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider px-1 py-1">
+                  Clusters ({filteredClusters.length})
                 </div>
-              );
-            })}
+                {filteredClusters.map(c => {
+                  const cTrained   = c.schools.filter(s => s.ett_trained).length;
+                  const cUntrained = c.schools.length - cTrained;
+                  return (
+                    <button key={c.id} onClick={() => { flyToCluster(c); setSelectedCluster(c); }}
+                      className={`w-full text-left p-2.5 rounded-xl border transition-all ${
+                        activeClusterId === c.id
+                          ? 'border-orange-500 bg-orange-50/30 dark:bg-orange-950/20'
+                          : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-orange-200'
+                      }`}>
+                      <div className="font-bold text-[11px] text-slate-900 dark:text-slate-100 truncate">{c.name}</div>
+                      <div className="text-[9.5px] text-slate-400 mt-0.5">📍 {c.district}</div>
+                      <div className="flex gap-2 mt-1 text-[9px] font-bold">
+                        <span className="text-emerald-600">{cTrained} trained</span>
+                        {cUntrained > 0 && <span className="text-amber-500">{cUntrained} untrained</span>}
+                      </div>
+                      <div className="mt-1.5"><MiniBar value={c.progress} /></div>
+                    </button>
+                  );
+                })}
+              </>
+            )}
           </div>
         </div>
 
-        {/* Live Map Panel */}
+        {/* MAP */}
         <div className="md:col-span-3 relative h-full w-full">
-          <div id="ett-map" className="h-full w-full z-0 font-sans" />
+          {loading && (
+            <div className="absolute inset-0 bg-white/70 dark:bg-slate-950/70 z-10 flex items-center justify-center">
+              <div className="flex items-center gap-2 text-sm font-bold text-slate-500">
+                <RefreshCw size={16} className="animate-spin" /> Loading map…
+              </div>
+            </div>
+          )}
+          {error && (
+            <div className="absolute inset-0 bg-white dark:bg-slate-950 z-10 flex flex-col items-center justify-center gap-3">
+              <AlertCircle size={28} className="text-red-500" />
+              <p className="text-sm text-slate-600 dark:text-slate-400">{error}</p>
+              <Btn size="sm" onClick={fetchClusters}>Retry</Btn>
+            </div>
+          )}
+          <div id="ett-map" className="h-full w-full z-0" />
+          <div className="absolute bottom-3 left-3 z-10 flex items-center gap-1.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-[10px] text-slate-500 font-mono">
+            <Info size={10} /> Click any marker for details
+          </div>
         </div>
       </div>
 
+      {/* CLUSTER MODAL */}
       {selectedCluster && (
-        <Modal title={selectedCluster.name} onClose={() => setSelectedCluster(null)} width={460}>
-          <div className="grid grid-cols-2 gap-3 mb-4 text-xs">
-            {[
-              ["District alignment", selectedCluster.district],
-              ["Geographical Region", DISTRICTS.find(d => d.name === selectedCluster.district)?.r || "—"],
-              ["Unified Schools count", selectedCluster.schools.length],
-              ["Learners Registered", selectedCluster.students.toLocaleString()],
-              ["Trained Teachers", selectedCluster.trained],
-              ["Cluster Coordinator", selectedCluster.lead],
-            ].map(([l, v]) => (
-              <div key={l} className="bg-orange-50 p-2.5 rounded-xl border border-orange-100">
-                <div className="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">{l}</div>
-                <div className="font-bold text-gray-800">{v}</div>
-              </div>
-            ))}
-          </div>
+        <Modal title={selectedCluster.name} onClose={() => setSelectedCluster(null)} width={520}>
+          <div className="space-y-5">
+            <div className="flex flex-wrap gap-2 text-[10px] font-bold">
+              <span className="px-2 py-1 rounded-full bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-950/30 dark:text-orange-400 dark:border-orange-900">
+                📍 {selectedCluster.district}
+              </span>
+              <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700">
+                {selectedCluster.region}
+              </span>
+              {selectedCluster.zone_name && (
+                <span className="px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/30 dark:text-blue-400">
+                  {selectedCluster.zone_name}
+                </span>
+              )}
+              {selectedCluster.verified && (
+                <span className="px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400">
+                  GIS Verified
+                </span>
+              )}
+            </div>
 
-          <div>
-            <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-2">
-              Affiliated Schools
+            <div className="grid grid-cols-3 gap-2">
+              <StatTile label="Learners"   value={selectedCluster.students.toLocaleString()} />
+              <StatTile label="Schools"    value={selectedCluster.school_count} />
+              <StatTile label="Trained Teachers" value={selectedCluster.trained} />
+              <StatTile label="TOTs"       value={selectedCluster.tots} />
+              <StatTile label="STOTs"      value={selectedCluster.stots} />
+              <StatTile label="Teachbacks" value={selectedCluster.teachbacks} />
             </div>
-            <div className="space-y-1">
-              {selectedCluster.schools.map((s, i) => (
-                <div key={i} className="flex items-center gap-2 py-1.5 border-b border-gray-50 text-xs text-gray-700">
-                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                  <span>{s.name}</span>
+
+            <div>
+              <div className="flex justify-between text-[10px] font-bold text-slate-500 mb-1">
+                <span>Programme Progress</span>
+                <span className="text-orange-600">{selectedCluster.progress}%</span>
+              </div>
+              <MiniBar value={selectedCluster.progress} />
+            </div>
+
+            {selectedCluster.lead && (
+              <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-100 dark:border-slate-800">
+                <div className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 mb-1.5">Cluster Coordinator</div>
+                <div className="font-bold text-sm text-slate-800 dark:text-slate-200">{selectedCluster.lead}</div>
+                {selectedCluster.lead_phone && <div className="text-xs text-slate-500 mt-0.5">📞 {selectedCluster.lead_phone}</div>}
+                {selectedCluster.lead_email && <div className="text-xs text-slate-500 mt-0.5">✉️ {selectedCluster.lead_email}</div>}
+              </div>
+            )}
+
+            {selectedCluster.schools.length > 0 && (
+              <div>
+                <div className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">
+                  Schools ({selectedCluster.schools.length})
                 </div>
-              ))}
-            </div>
+                <div className="flex gap-4 mb-2 text-[10px] font-bold">
+                  <span className="text-emerald-600">● {selectedCluster.schools.filter(s => s.ett_trained).length} ETT Trained</span>
+                  <span className="text-amber-500">○ {selectedCluster.schools.filter(s => !s.ett_trained).length} Not Yet Trained</span>
+                </div>
+                <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+                  {selectedCluster.schools.map(s => (
+                    <button key={s.id} onClick={() => { setSelectedCluster(null); openSchool(s); }}
+                      className={`w-full flex items-center justify-between p-2.5 rounded-xl border group transition text-left ${
+                        s.ett_trained
+                          ? 'border-emerald-100 dark:border-emerald-900/30 hover:border-emerald-300'
+                          : 'border-amber-100 dark:border-amber-900/20 hover:border-amber-300'
+                      }`}>
+                      <div className="flex items-center gap-2.5">
+                        <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${s.ett_trained ? 'bg-emerald-500' : 'border-2 border-dashed border-amber-500 bg-transparent'}`} />
+                        <div>
+                          <div className="text-xs font-bold text-slate-800 dark:text-slate-200">{s.name}</div>
+                          <div className="text-[9.5px] text-slate-400">
+                            {((s.boys_enrolled || 0) + (s.girls_enrolled || 0)).toLocaleString()} learners
+                            {' · '}
+                            {s.ett_trained ? 'ETT trained' : 'Untrained'}
+                          </div>
+                        </div>
+                      </div>
+                      <ChevronRight size={12} className="text-slate-300 group-hover:text-orange-500 transition" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {isCartographer && (
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                <Btn size="sm" onClick={() => { setSelectedCluster(null); setPage('cartographer_home'); }}>
+                  <Edit2 size={11} className="inline mr-1" /> Edit in Cartographer Console
+                </Btn>
+              </div>
+            )}
           </div>
+        </Modal>
+      )}
+
+      {/* SCHOOL MODAL */}
+      {selectedSchool && (
+        <Modal
+          title={loadingSchool ? 'Loading…' : (schoolDetail?.name ?? selectedSchool.name)}
+          onClose={() => { setSelectedSchool(null); setSchoolDetail(null); }}
+          width={500}
+        >
+          {loadingSchool ? (
+            <div className="flex items-center justify-center h-28 text-sm text-slate-400 gap-2">
+              <RefreshCw size={16} className="animate-spin" /> Fetching school record…
+            </div>
+          ) : (() => {
+            const s = schoolDetail ?? selectedSchool;
+            const total = (s.boys_enrolled || 0) + (s.girls_enrolled || 0);
+            return (
+              <div className="space-y-5">
+
+                {/* Training status banner */}
+                <div className={`flex items-center gap-3 p-3 rounded-xl border ${
+                  s.ett_trained
+                    ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-900/40'
+                    : 'bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900/40'
+                }`}>
+                  {s.ett_trained
+                    ? <CheckCircle size={18} className="text-emerald-600 shrink-0" />
+                    : <AlertCircle size={18} className="text-amber-600 shrink-0" />
+                  }
+                  <div>
+                    <div className={`text-xs font-extrabold ${s.ett_trained ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'}`}>
+                      {s.ett_trained ? 'ETT Trained School' : 'Not Yet ETT Trained'}
+                    </div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">
+                      {s.ett_trained
+                        ? 'Actively running ETT sessions with trained teachers.'
+                        : 'Yet to receive ETT training from a certified TOT.'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2 text-[10px] font-bold">
+                  <span className="px-2 py-1 rounded-full bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-950/30 dark:text-orange-400 dark:border-orange-900">
+                    📍 {s.district}
+                  </span>
+                  {s.zone_name && (
+                    <span className="px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/30 dark:text-blue-400">
+                      {s.zone_name}
+                    </span>
+                  )}
+                  {s.verified && (
+                    <span className="px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/30 dark:text-blue-400">
+                      GIS Verified
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex gap-2 flex-wrap">
+                  <CurrPill label="HIM (Boys)"   active={s.him_running} />
+                  <CurrPill label="GESD (Girls)" active={s.gesd_running} />
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <StatTile label="Boys"    value={s.boys_enrolled || 0}  sub="enrolled" />
+                  <StatTile label="Girls"   value={s.girls_enrolled || 0} sub="enrolled" />
+                  <StatTile label="Total"   value={total}                 sub="learners" />
+                  <StatTile label="Trained" value={s.trained_teachers}    sub="teachers" />
+                  <StatTile label="TOTs"    value={s.tots} />
+                  <StatTile label="STOTs"   value={s.stots} />
+                  <StatTile label="Teachbacks" value={s.teachbacks} />
+                  <StatTile label="Sessions Done"    value={s.sessions_completed} />
+                  <StatTile label="Sessions Planned" value={s.sessions_planned} />
+                </div>
+
+                {s.sessions_planned > 0 && (
+                  <div>
+                    <div className="flex justify-between text-[10px] font-bold text-slate-500 mb-1">
+                      <span>Session Completion</span>
+                      <span className="text-orange-600">{Math.round((s.sessions_completed / s.sessions_planned) * 100)}%</span>
+                    </div>
+                    <MiniBar value={(s.sessions_completed / s.sessions_planned) * 100} />
+                  </div>
+                )}
+
+                {s.last_session_date && (
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
+                    <Clock size={11} /> Last session: <b>{new Date(s.last_session_date).toLocaleDateString()}</b>
+                  </div>
+                )}
+
+                {s.headteacher && (
+                  <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-100 dark:border-slate-800">
+                    <div className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 mb-1">Headteacher</div>
+                    <div className="font-bold text-sm text-slate-800 dark:text-slate-200">{s.headteacher}</div>
+                    {s.headteacher_phone && <div className="text-xs text-slate-500 mt-0.5">📞 {s.headteacher_phone}</div>}
+                  </div>
+                )}
+
+                <div className="text-[10px] font-mono text-slate-400 flex items-center gap-1.5">
+                  <MapPin size={10} /> {Number(s.lat).toFixed(5)}, {Number(s.lng).toFixed(5)}
+                </div>
+
+                {schoolDetail?.visit_logs && schoolDetail.visit_logs.length > 0 && (
+                  <div>
+                    <div className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Recent Field Visits</div>
+                    <div className="space-y-1.5">
+                      {schoolDetail.visit_logs.map(v => (
+                        <div key={v.id} className="flex gap-2.5 text-[10.5px] p-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                          <CheckCircle size={12} className="text-emerald-500 mt-0.5 shrink-0" />
+                          <div>
+                            <div className="font-bold text-slate-700 dark:text-slate-300">
+                              {v.visitor_name ?? 'Field Officer'} · <span className="capitalize">{v.purpose}</span>
+                            </div>
+                            <div className="text-slate-400">{new Date(v.visit_date).toLocaleDateString()}</div>
+                            {v.findings && <div className="text-slate-500 mt-0.5 italic">{v.findings}</div>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {s.notes && (
+                  <div className="text-[11px] text-slate-500 bg-slate-50 dark:bg-slate-900 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <Info size={10} className="inline mr-1" /> {s.notes}
+                  </div>
+                )}
+
+                {isCartographer && (
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <Btn size="sm" onClick={() => { setSelectedSchool(null); setSchoolDetail(null); setPage('cartographer_home'); }}>
+                      <Edit2 size={11} className="inline mr-1" /> Edit in Cartographer Console
+                    </Btn>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </Modal>
       )}
     </div>

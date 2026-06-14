@@ -192,3 +192,35 @@ export const sasaReportsApi = {
   update: (id: number, data: any) => api.put(`/api/sasa-reports/${id}`, data),
   delete: (id: number) => api.delete(`/api/sasa-reports/${id}`),
 };
+
+// ─── MAP — CLUSTERS ──────────────────────────────────────────────────────────
+
+export const mapClustersApi = {
+  getAll: (params?: { region?: string; district?: string }) => {
+    const query = params ? '?' + new URLSearchParams(params as any).toString() : '';
+    return api.get(`/api/map/clusters${query}`);
+  },
+  getById:  (id: number) => api.get(`/api/map/clusters/${id}`),
+  create:   (data: any)  => api.post('/api/map/clusters', data),
+  update:   (id: number, data: any) => api.put(`/api/map/clusters/${id}`, data),
+  delete:   (id: number) => api.delete(`/api/map/clusters/${id}`),
+};
+
+// ─── MAP — SCHOOLS ────────────────────────────────────────────────────────────
+
+export const mapSchoolsApi = {
+  getAll: (params?: { cluster_id?: number; district?: string; region?: string; status?: string }) => {
+    const query = params ? '?' + new URLSearchParams(params as any).toString() : '';
+    return api.get(`/api/map/schools${query}`);
+  },
+  getById:   (id: number) => api.get(`/api/map/schools/${id}`),
+  create:    (data: any)  => api.post('/api/map/schools', data),
+  update:    (id: number, data: any) => api.put(`/api/map/schools/${id}`, data),
+  logVisit:  (id: number, data: any) => api.post(`/api/map/schools/${id}/visits`, data),
+};
+
+// ─── MAP — EDUCATION ZONES ───────────────────────────────────────────────────
+
+export const mapZonesApi = {
+  getAll: () => api.get('/api/map/zones'),
+};
