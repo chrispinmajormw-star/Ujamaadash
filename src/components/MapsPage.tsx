@@ -507,7 +507,6 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
               <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-100 dark:border-slate-800">
                 <div className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 mb-1.5">Cluster Coordinator</div>
                 <div className="font-bold text-sm text-slate-800 dark:text-slate-200">{selectedCluster.lead}</div>
-                {selectedCluster.lead_phone && <div className="text-xs text-slate-500 mt-0.5">📞 {selectedCluster.lead_phone}</div>}
                 {selectedCluster.lead_email && <div className="text-xs text-slate-500 mt-0.5">✉️ {selectedCluster.lead_email}</div>}
               </div>
             )}
@@ -650,7 +649,6 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
                   <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-100 dark:border-slate-800">
                     <div className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 mb-1">Headteacher</div>
                     <div className="font-bold text-sm text-slate-800 dark:text-slate-200">{s.headteacher}</div>
-                    {s.headteacher_phone && <div className="text-xs text-slate-500 mt-0.5">📞 {s.headteacher_phone}</div>}
                   </div>
                 )}
 
