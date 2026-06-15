@@ -224,3 +224,19 @@ export const mapSchoolsApi = {
 export const mapZonesApi = {
   getAll: () => api.get('/api/map/zones'),
 };
+
+// ─── USERS — PROFILE & PASSWORD ──────────────────────────────────────────────
+// Replace the existing usersApi block with this expanded version:
+
+export const usersApi = {
+  getAll:    () => api.get('/api/users'),
+  login:     (email: string, password: string) => api.post('/api/users/login', { email, password }),
+
+  // Update own profile (name + email)
+  updateProfile: (data: { name: string; email: string }) =>
+    api.put('/api/users/me', data),
+
+  // Change own password
+  changePassword: (data: { currentPassword: string; newPassword: string }) =>
+    api.post('/api/users/change-password', data),
+};
