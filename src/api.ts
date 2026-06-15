@@ -63,8 +63,12 @@ export const reportsApi = {
 // ─── USERS ───────────────────────────────────────────────────────────────────
 
 export const usersApi = {
-  getAll: () => api.get('/api/users'),
-  login: (email: string, password: string) => api.post('/api/users/login', { email, password }),
+  getAll:    () => api.get('/api/users'),
+  login:     (email: string, password: string) => api.post('/api/users/login', { email, password }),
+  updateProfile:  (data: { name: string; email: string }) =>
+    api.put('/api/users/me', data),
+  changePassword: (data: { currentPassword: string; newPassword: string }) =>
+    api.post('/api/users/change-password', data),
 };
 
 // ─── STATS ───────────────────────────────────────────────────────────────────
@@ -217,26 +221,4 @@ export const mapSchoolsApi = {
   create:    (data: any)  => api.post('/api/map/schools', data),
   update:    (id: number, data: any) => api.put(`/api/map/schools/${id}`, data),
   logVisit:  (id: number, data: any) => api.post(`/api/map/schools/${id}/visits`, data),
-};
-
-// ─── MAP — EDUCATION ZONES ───────────────────────────────────────────────────
-
-export const mapZonesApi = {
-  getAll: () => api.get('/api/map/zones'),
-};
-
-// ─── USERS — PROFILE & PASSWORD ──────────────────────────────────────────────
-// Replace the existing usersApi block with this expanded version:
-
-export const usersApi = {
-  getAll:    () => api.get('/api/users'),
-  login:     (email: string, password: string) => api.post('/api/users/login', { email, password }),
-
-  // Update own profile (name + email)
-  updateProfile: (data: { name: string; email: string }) =>
-    api.put('/api/users/me', data),
-
-  // Change own password
-  changePassword: (data: { currentPassword: string; newPassword: string }) =>
-    api.post('/api/users/change-password', data),
 };
