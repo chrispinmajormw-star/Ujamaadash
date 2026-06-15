@@ -164,30 +164,30 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
         const iconHtml = `
           <div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;">
             <div style="
-              width:28px;height:28px;border-radius:6px;
-              background:${bg};border:2px solid ${border};
-              box-shadow:0 2px 6px rgba(0,0,0,.35);
+              width:18px;height:18px;border-radius:4px;
+              background:${bg};border:1.5px solid ${border};
+              box-shadow:0 1px 4px rgba(0,0,0,.3);
               display:flex;align-items:center;justify-content:center;
             ">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
                 <polyline points="9 22 9 12 15 12 15 22"/>
               </svg>
             </div>
             <div style="
-              margin-top:3px;
-              background:${darkMode?'rgba(15,22,35,0.92)':'rgba(255,255,255,0.92)'};
+              margin-top:2px;
+              background:${darkMode?'rgba(15,22,35,0.88)':'rgba(255,255,255,0.88)'};
               color:${darkMode?'#f1f5f9':'#1e293b'};
-              font-size:9px;font-weight:700;
-              padding:1px 5px;border-radius:4px;
-              white-space:nowrap;max-width:90px;overflow:hidden;text-overflow:ellipsis;
-              border:1px solid ${darkMode?'rgba(255,255,255,0.1)':'rgba(0,0,0,0.08)'};
-              box-shadow:0 1px 3px rgba(0,0,0,.15);
+              font-size:8px;font-weight:700;
+              padding:1px 4px;border-radius:3px;
+              white-space:nowrap;max-width:72px;overflow:hidden;text-overflow:ellipsis;
+              border:1px solid ${darkMode?'rgba(255,255,255,0.1)':'rgba(0,0,0,0.07)'};
+              box-shadow:0 1px 2px rgba(0,0,0,.12);
               pointer-events:none;
-            ">${school.name.length > 18 ? school.name.slice(0,18)+'…' : school.name}</div>
+            ">${school.name.length > 14 ? school.name.slice(0,14)+'…' : school.name}</div>
           </div>`;
 
-        const icon = L.divIcon({ className:'', html:iconHtml, iconAnchor:[14,14] });
+        const icon = L.divIcon({ className:'', html:iconHtml, iconAnchor:[9,9] });
         const curricula = [school.him_running&&'HIM', school.gesd_running&&'GESD'].filter(Boolean).join('+') || 'None';
         const totalL = (school.boys_enrolled||0)+(school.girls_enrolled||0);
 
@@ -220,29 +220,29 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
       const clusterHtml = `
         <div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;">
           <div style="
-            width:36px;height:36px;border-radius:50%;
+            width:22px;height:22px;border-radius:50%;
             background:${darkMode?'#1e293b':'#0f1623'};
-            border:3px solid #e85d04;
-            box-shadow:0 3px 10px rgba(0,0,0,.5);
+            border:2.5px solid #e85d04;
+            box-shadow:0 2px 6px rgba(0,0,0,.45);
             display:flex;align-items:center;justify-content:center;
           ">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e85d04" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#e85d04" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="3"/>
               <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
             </svg>
           </div>
           <div style="
-            margin-top:3px;
+            margin-top:2px;
             background:#e85d04;color:white;
-            font-size:9px;font-weight:800;
-            padding:2px 6px;border-radius:4px;
-            white-space:nowrap;max-width:100px;overflow:hidden;text-overflow:ellipsis;
-            box-shadow:0 1px 4px rgba(232,93,4,.4);
+            font-size:8px;font-weight:800;
+            padding:1px 5px;border-radius:3px;
+            white-space:nowrap;max-width:80px;overflow:hidden;text-overflow:ellipsis;
+            box-shadow:0 1px 3px rgba(232,93,4,.35);
             pointer-events:none;
-          ">${cluster.name.length>20?cluster.name.slice(0,20)+'…':cluster.name}</div>
+          ">${cluster.name.length>16?cluster.name.slice(0,16)+'…':cluster.name}</div>
         </div>`;
 
-      const centerIcon = L.divIcon({className:'',html:clusterHtml,iconAnchor:[18,18]});
+      const centerIcon = L.divIcon({className:'',html:clusterHtml,iconAnchor:[11,11]});
       const marker = L.marker([cluster.lat,cluster.lng],{icon:centerIcon,zIndexOffset:500}).addTo(map);
 
       marker.bindPopup(`
