@@ -222,3 +222,7 @@ export const mapSchoolsApi = {
   update:    (id: number, data: any) => api.put(`/api/map/schools/${id}`, data),
   logVisit:  (id: number, data: any) => api.post(`/api/map/schools/${id}/visits`, data),
 };
+
+export const mapZonesApi = {
+  getAll: () => api.get('/api/map/zones'),
+};
