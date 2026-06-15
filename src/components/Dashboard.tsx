@@ -555,11 +555,35 @@ useEffect(() => {
             ))}
           </div>
           <div className="flex gap-2 justify-end pt-4">
-            <Btn size="sm" variant="ghost" onClick={() => { setStatsOverride({}); setEditingKPI(false); }}>
+            <Btn size="sm" variant="ghost" onClick={() => {
+              setStatsOverride({});
+              setEditingKPI(false);
+              loadStats();
+            }}>
               Reset to DB values
             </Btn>
-            <Btn size="sm" onClick={() => { setStatsOverride({ ...kpiDraft }); setEditingKPI(false); }}>
-              Apply Overrides
+            <Btn size="sm" onClick={async () => {
+              try {
+                const res = await api.put('/api/stats', {
+                  learners: kpiDraft.learners ?? 0,
+                  teachers: kpiDraft.teachers ?? 0,
+                  schools:  kpiDraft.schools  ?? 0,
+                  tots:     kpiDraft.tots     ?? 0,
+                  stots:    kpiDraft.stots    ?? 0,
+                });
+                if (res.error) {
+                  alert(`Failed to save: ${res.error}`);
+                  return;
+                }
+                // Reload fresh from DB so UI reflects saved values
+                loadStats();
+                setStatsOverride({});
+                setEditingKPI(false);
+              } catch (err) {
+                alert('Failed to save stats to database.');
+              }
+            }}>
+              Save to Database
             </Btn>
           </div>
         </Modal>
