@@ -48,7 +48,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
   const userDistrict = user?.district;
 
   const loadStats = useCallback(() => {
-    if (!userId) return;
+    // Load global stats — works for both public and logged-in users
     if ((userRole === 'district_coordinator' || userRole === 'tot') && userDistrict) {
       api.get(`/api/stats/district/${encodeURIComponent(userDistrict)}`).then(data => {
         if (!data.error) { setStats(prev => ({ ...prev, ...data })); setStatsLoaded(true); }
@@ -58,7 +58,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
         if (!data.error) { setStats(prev => ({ ...prev, ...data })); setStatsLoaded(true); }
       });
     }
-  }, [userId, userRole, userDistrict]);
+  }, [userRole, userDistrict]);
 
   useEffect(() => { loadStats(); }, [loadStats]);
   const [editStats, setEditStats] = useState(false);
