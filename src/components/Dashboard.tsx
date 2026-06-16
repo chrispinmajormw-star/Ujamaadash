@@ -49,7 +49,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
       });
     } else {
       statsApi.get().then(data => {
-        if (!data.error) setStats(prev => ({ ...prev, ...data }));
+      console.log('Stats API response:', data);
+      if (data && !data.error) setStats(prev => ({ ...prev, ...data }));
       });
     }
   }, [user]);
