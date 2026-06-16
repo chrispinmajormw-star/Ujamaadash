@@ -37,23 +37,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
     learners: 0, teachers: 0, schools: 0, tots: 0, stots: 0,
     approvedReports: 0, clusters: 0,
   });
+  const [statsLoaded, setStatsLoaded] = useState(false);
   const [statsOverride, setStatsOverride] = useState<Record<string, number>>({});
   const [editingKPI, setEditingKPI] = useState(false);
   const [kpiDraft, setKpiDraft] = useState<Record<string, number>>({});
 
+  // Stable user identifiers to prevent loadStats from re-firing on every render
+  const userId   = user?.id;
+  const userRole = user?.role;
+  const userDistrict = user?.district;
+
   const loadStats = useCallback(() => {
-    if (!user) return;
-    if ((user.role === 'district_coordinator' || user.role === 'tot') && user.district) {
-      api.get(`/api/stats/district/${encodeURIComponent(user.district)}`).then(data => {
-        if (!data.error) setStats(prev => ({ ...prev, ...data }));
+    if (!userId) return;
+    if ((userRole === 'district_coordinator' || userRole === 'tot') && userDistrict) {
+      api.get(`/api/stats/district/${encodeURIComponent(userDistrict)}`).then(data => {
+        if (!data.error) { setStats(prev => ({ ...prev, ...data })); setStatsLoaded(true); }
       });
     } else {
       statsApi.get().then(data => {
-      console.log('Stats API response:', data);
-      if (data && !data.error) setStats(prev => ({ ...prev, ...data }));
+        if (!data.error) { setStats(prev => ({ ...prev, ...data })); setStatsLoaded(true); }
       });
     }
-  }, [user]);
+  }, [userId, userRole, userDistrict]);
 
   useEffect(() => { loadStats(); }, [loadStats]);
   const [editStats, setEditStats] = useState(false);
@@ -61,13 +66,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
   const approved = my.filter(r => r.status === "approved").length;
   const students = my.reduce((acc, r) => acc + r.boys + r.girls, 0);
 
-  // Merge live stats with admin overrides
+  // Merge live stats with admin overrides.
+  // Once loaded, never go back to 0 — keep last known values during reload.
   const displayStats = {
-    learners:  statsOverride.learners  ?? stats.learners,
-    teachers:  statsOverride.teachers  ?? stats.teachers,
-    schools:   statsOverride.schools   ?? stats.schools,
-    tots:      statsOverride.tots      ?? stats.tots,
-    stots:     statsOverride.stots     ?? stats.stots,
+    learners: statsOverride.learners ?? (statsLoaded ? stats.learners : stats.learners || 0),
+    teachers: statsOverride.teachers ?? (statsLoaded ? stats.teachers : stats.teachers || 0),
+    schools:  statsOverride.schools  ?? (statsLoaded ? stats.schools  : stats.schools  || 0),
+    tots:     statsOverride.tots     ?? (statsLoaded ? stats.tots     : stats.tots     || 0),
+    stots:    statsOverride.stots    ?? (statsLoaded ? stats.stots    : stats.stots    || 0),
   };
 
   const [YEARLY_DATA, setYEARLY_DATA] = useState<any[]>([
@@ -572,17 +578,11 @@ useEffect(() => {
                   tots:     kpiDraft.tots     ?? 0,
                   stots:    kpiDraft.stots    ?? 0,
                 });
-                if (res.error) {
-                  alert(`Failed to save: ${res.error}`);
-                  return;
-                }
-                // Reload fresh from DB so UI reflects saved values
-                loadStats();
+                if (res.error) { alert(`Failed to save: ${res.error}`); return; }
                 setStatsOverride({});
                 setEditingKPI(false);
-              } catch (err) {
-                alert('Failed to save stats to database.');
-              }
+                setTimeout(loadStats, 300);
+              } catch { alert('Failed to save stats to database.'); }
             }}>
               Save to Database
             </Btn>
