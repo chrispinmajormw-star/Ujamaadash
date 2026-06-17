@@ -3,7 +3,7 @@ import { programmeStatsApi, statsApi, api } from '../api';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Shield, FilePlus, GraduationCap, School, TrendingUp, FileText, Clock,BookOpen, CheckSquare, Users, Map, MapPin, Edit2, RefreshCw, Star } from 'lucide-react';
 import { User, Report } from '../types';
-import { ROLE_CFG, can, DISTRICTS, DISTRICT_INFO, MAP_CLUSTERS } from '../data';
+import { ROLE_CFG, can, DISTRICTS, DISTRICT_INFO } from '../data';
 import { Card, PageHeader, Btn, Pill, TrendIndicator } from './SubComponents';
 
 interface DashboardProps {
@@ -208,69 +208,89 @@ useEffect(() => {
     };
   }, [darkMode, YEARLY_DATA]);
 
+  // Live clusters for dashboard map
+  const [dashClusters, setDashClusters] = useState<any[]>([]);
+  useEffect(() => {
+    import('../api').then(({ mapClustersApi }) => {
+      mapClustersApi.getAll().then((data: any) => {
+        if (Array.isArray(data)) setDashClusters(data);
+      }).catch(() => {});
+    });
+  }, []);
+
   useEffect(() => {
     const L = (window as any).L;
     if (!L) return;
     const mapEl = document.getElementById("dashboard-ett-map");
     if (!mapEl) return;
 
-    const map = L.map("dashboard-ett-map", { zoomControl: true }).setView([-13.2, 34.0], 6.5);
+    const map = L.map("dashboard-ett-map", { zoomControl: false, scrollWheelZoom: false }).setView([-13.2, 34.0], 6.5);
     mapRef.current = map;
 
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-      attribution: '&copy; OpenStreetMap &copy; CARTO',
-      maxZoom: 18
-    }).addTo(map);
+    L.tileLayer(
+      darkMode
+        ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+      { attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 18 }
+    ).addTo(map);
 
-    L.control.scale({ imperial: false }).addTo(map);
-
-    const ACTIVE_DISTRICTS = new Set([
-      "Mzimba", "Mzunzu", "Lilongwe", "Dowa", "Kasungu", "Dedza", "Ntcheu", "Ntchisi", "Nkhotakota", "Salima",
-      "Blantyre", "Zomba", "Mangochi", "Machinga", "Balaka"
-    ]);
-
-    DISTRICTS.forEach(district => {
-      const coords = DISTRICT_INFO[district.name];
-      if (!coords) return;
-      const isActive = ACTIVE_DISTRICTS.has(district.name);
-      L.circleMarker([coords.lat, coords.lng], {
-        radius: isActive ? 6 : 4,
-        fillColor: isActive ? "#e85d04" : "#d1d5db",
-        color: "#fff",
-        weight: 1.5,
-        fillOpacity: isActive ? 0.9 : 0.4
-      }).addTo(map).bindTooltip(district.name, { permanent: false, direction: "top", offset: [0, -4] });
-    });
-
-    MAP_CLUSTERS.forEach(cluster => {
-      cluster.schools.forEach(school => {
+    // Render live clusters + schools with same icons as MapsPage
+    dashClusters.forEach(cluster => {
+      // Connector lines
+      cluster.schools?.forEach((school: any) => {
         L.polyline([[cluster.lat, cluster.lng], [school.lat, school.lng]], {
-          color: "#e85d04", weight: 1.5, opacity: 0.4, dashArray: "4 4"
+          color: "#e85d04", weight: 1.2, opacity: 0.35, dashArray: "4 4"
         }).addTo(map);
       });
 
-      cluster.schools.forEach(school => {
-        const schoolIcon = L.divIcon({
-          className: "custom-leaflet-school-marker",
-          html: `<div style="width:8px;height:8px;border-radius:50%;background:#e85d04;border:1.5px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.25)"></div>`,
-          iconAnchor: [4, 4]
-        });
-        L.marker([school.lat, school.lng], { icon: schoolIcon, zIndexOffset: 100 })
+      // School markers — trained=green square, untrained=amber hollow
+      cluster.schools?.forEach((school: any) => {
+        const trained = school.ett_trained;
+        const bg     = trained ? '#16a34a' : '#d97706';
+        const border = trained ? '#064e3b' : '#78350f';
+        const html = `
+          <div style="display:flex;flex-direction:column;align-items:center;">
+            <div style="width:10px;height:10px;border-radius:2px;background:${trained ? bg : 'transparent'};border:1.5px ${trained ? 'solid' : 'dashed'} ${trained ? border : '#d97706'};box-shadow:0 1px 3px rgba(0,0,0,.25);"></div>
+          </div>`;
+        const icon = L.divIcon({ className: '', html, iconAnchor: [5, 5] });
+        L.marker([school.lat, school.lng], { icon, zIndexOffset: 100 })
           .addTo(map)
-          .bindPopup(`<div style="font-size:12px;font-weight:700">${school.name}</div><div style="font-size:10px;color:#6b7280">${cluster.district} · Lead: ${cluster.lead}</div>`);
+          .bindPopup(`
+            <div style="font-family:sans-serif;min-width:160px">
+              <div style="font-weight:800;font-size:12px">${school.name}</div>
+              <div style="font-size:10px;color:${trained ? '#16a34a' : '#d97706'};font-weight:700;margin:2px 0">${trained ? '✓ ETT Trained' : '○ Not Trained'}</div>
+              <div style="font-size:10px;color:#6b7280">${cluster.district}</div>
+              <div style="font-size:10px;color:#6b7280">👥 ${((school.boys_enrolled||0)+(school.girls_enrolled||0)).toLocaleString()} learners</div>
+            </div>`);
       });
 
-      const centerIcon = L.divIcon({
-        className: "custom-leaflet-center-marker",
-        html: `<div style="width:13px;height:13px;border-radius:50%;background:#0f1623;border:2.5px solid #e85d04;box-shadow:0 2px 5px rgba(0,0,0,.3)"></div>`,
-        iconAnchor: [6, 6]
-      });
-      L.marker([cluster.lat, cluster.lng], { icon: centerIcon, zIndexOffset: 300 }).addTo(map)
-        .bindPopup(`<div style="font-size:13px;font-weight:800">${cluster.name}</div><div style="font-size:11px;color:#6b7280">District: ${cluster.district} · Lead: ${cluster.lead}</div><div style="font-size:11px;color:#6b7280">Learners: ${cluster.students} · Trained: ${cluster.trained}/${cluster.schools.length}</div>`);
+      // Cluster centre — dark circle with orange ring + orange name label
+      const clusterHtml = `
+        <div style="display:flex;flex-direction:column;align-items:center;">
+          <div style="width:14px;height:14px;border-radius:50%;background:${darkMode?'#1e293b':'#0f1623'};border:2px solid #e85d04;box-shadow:0 2px 5px rgba(0,0,0,.4);"></div>
+          <div style="margin-top:2px;background:#e85d04;color:white;font-size:7px;font-weight:800;padding:1px 4px;border-radius:3px;white-space:nowrap;max-width:70px;overflow:hidden;text-overflow:ellipsis;pointer-events:none;">
+            ${cluster.name.length > 14 ? cluster.name.slice(0, 14) + '…' : cluster.name}
+          </div>
+        </div>`;
+      const centerIcon = L.divIcon({ className: '', html: clusterHtml, iconAnchor: [7, 7] });
+      L.marker([cluster.lat, cluster.lng], { icon: centerIcon, zIndexOffset: 300 })
+        .addTo(map)
+        .bindPopup(`
+          <div style="font-family:sans-serif;min-width:180px">
+            <div style="font-weight:800;font-size:13px">${cluster.name}</div>
+            <div style="font-size:10px;color:#e85d04;font-weight:700;margin-bottom:4px">${cluster.district} · ${cluster.region}</div>
+            <div style="font-size:10px;color:#6b7280">👥 ${cluster.students?.toLocaleString()} learners</div>
+            <div style="font-size:10px;color:#6b7280">🏫 ${cluster.school_count} schools · ${cluster.trained} trained</div>
+            ${cluster.lead ? `<div style="font-size:10px;color:#6b7280">Lead: <b>${cluster.lead}</b></div>` : ''}
+            <div style="background:#f1f5f9;border-radius:3px;height:5px;overflow:hidden;margin-top:5px">
+              <div style="width:${cluster.progress||0}%;height:100%;background:#e85d04;border-radius:3px"></div>
+            </div>
+            <div style="font-size:9px;color:#9ca3af;text-align:right;margin-top:1px">${cluster.progress||0}% progress</div>
+          </div>`);
     });
 
     return () => { map.remove(); mapRef.current = null; };
-  }, [darkMode]);
+  }, [darkMode, dashClusters]);
 
   return (
     <div className="space-y-4">

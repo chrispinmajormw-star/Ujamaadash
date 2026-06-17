@@ -56,6 +56,7 @@ interface MapsPageProps { setPage:(p:string)=>void; user:any; darkMode:boolean; 
 export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) => {
   const isCartographer = user?.role === 'cartographer';
   const [clusters, setClusters]               = useState<MapCluster[]>([]);
+  const [plannedSchools, setPlannedSchools]   = useState<MapSchool[]>([]);
   const [loading, setLoading]                 = useState(true);
   const [error, setError]                     = useState<string|null>(null);
   const [selectedRegion, setSelectedRegion]   = useState('All');
@@ -74,9 +75,14 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
     try {
       const params:any = {};
       if (selectedRegion !== 'All') params.region = selectedRegion;
-      const data = await mapClustersApi.getAll(params);
-      if (Array.isArray(data)) setClusters(data);
+      const [clusterData, plannedData] = await Promise.all([
+        mapClustersApi.getAll(params),
+        mapSchoolsApi.getAll({ status: 'planned' }),
+      ]);
+      if (Array.isArray(clusterData)) setClusters(clusterData);
       else setError('Unexpected response from server.');
+      if (Array.isArray(plannedData))
+        setPlannedSchools(plannedData.filter((s:MapSchool) => !s.cluster_id || s.cluster_id === 0));
     } catch { setError('Could not load map data.'); }
     finally { setLoading(false); }
   }, [selectedRegion]);
@@ -267,8 +273,42 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
       marker.on('click',()=>{setActiveClusterId(cluster.id);setSelectedCluster(cluster);});
     });
 
+    // Planned schools — hollow purple diamond markers (no cluster)
+    plannedSchools.forEach(school => {
+      const html = `
+        <div style="display:flex;flex-direction:column;align-items:center;">
+          <div style="
+            width:12px;height:12px;
+            transform:rotate(45deg);
+            background:transparent;
+            border:2px dashed #7c3aed;
+            box-shadow:0 1px 3px rgba(0,0,0,.2);
+          "></div>
+          <div style="
+            margin-top:3px;
+            background:rgba(124,58,237,0.9);color:white;
+            font-size:7px;font-weight:700;
+            padding:1px 3px;border-radius:3px;
+            white-space:nowrap;max-width:60px;overflow:hidden;text-overflow:ellipsis;
+            pointer-events:none;
+          ">${school.name.length>12?school.name.slice(0,12)+'…':school.name}</div>
+        </div>`;
+      const icon = L.divIcon({className:'',html,iconAnchor:[6,6]});
+      L.marker([school.lat,school.lng],{icon,zIndexOffset:150})
+        .addTo(map)
+        .bindPopup(`
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;min-width:180px;color:${darkMode?'#f3f4f6':'#111827'}">
+            <div style="font-weight:900;font-size:12px;margin-bottom:2px">${school.name}</div>
+            <div style="font-size:10px;font-weight:700;color:#7c3aed;margin-bottom:4px">📋 Planned School</div>
+            <div style="font-size:10px;color:#e85d04;font-weight:700">${school.district}</div>
+            ${school.headteacher?`<div style="font-size:10px;color:#6b7280;margin-top:3px">HT: <b>${school.headteacher}</b></div>`:''}
+            <div style="font-size:9px;color:#9ca3af;margin-top:4px;font-style:italic">Not yet assigned to a cluster</div>
+          </div>`,{maxWidth:220})
+        .on('click',()=>openSchool(school));
+    });
+
     return () => { map.remove(); mapRef.current = null; };
-  }, [filteredClusters, darkMode, layers, loading, error]);
+  }, [filteredClusters, plannedSchools, darkMode, layers, loading, error]);
 
   const allSchools      = clusters.flatMap(c=>c.schools);
   const totalLearners   = clusters.reduce((a,c)=>a+c.students,0);
@@ -313,6 +353,7 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
           <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-emerald-600 shrink-0"/> Trained School</span>
           <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-amber-500 shrink-0"/> Untrained School</span>
           <span className="flex items-center gap-1.5"><span className="w-4 h-4 rounded-full border-2 border-orange-500 bg-slate-900 shrink-0"/><span>Cluster Centre</span></span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 border-2 border-dashed border-violet-500 shrink-0" style={{transform:'rotate(45deg)'}}/><span>Planned ({plannedSchools.length})</span></span>
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mr-1 flex items-center gap-1">

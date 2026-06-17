@@ -289,10 +289,27 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
   const [saving,   setSaving]   = useState(false);
 
   // ── UI state ──────────────────────────────────────────────────────────────
-  const [view, setView]               = useState<'clusters' | 'schools' | 'queue'>('clusters');
+  const [view, setView]               = useState<'clusters' | 'schools' | 'planned' | 'queue'>('clusters');
   const [searchQ, setSearchQ]         = useState('');
   const [regionFilter, setRegionFilter] = useState('All');
   const [expandedId, setExpandedId]   = useState<number | null>(null);
+
+  // ── Planned schools (standalone — no cluster) ─────────────────────────────
+  const [plannedSchools,    setPlannedSchools]    = useState<MapSchool[]>([]);
+  const [editPlanned,       setEditPlanned]       = useState<Partial<MapSchool> | null>(null);
+  const [isNewPlanned,      setIsNewPlanned]      = useState(false);
+  const [savingPlanned,     setSavingPlanned]     = useState(false);
+
+  const BLANK_PLANNED: Partial<MapSchool> = {
+    cluster_id: 0, district: 'Lilongwe', region: 'Central',
+    name: '', lat: -13.9, lng: 33.7,
+    headteacher: '', headteacher_phone: '',
+    him_running: false, gesd_running: false,
+    boys_enrolled: 0, girls_enrolled: 0,
+    trained_teachers: 0, tots: 0, stots: 0, teachbacks: 0,
+    sessions_completed: 0, sessions_planned: 0,
+    ett_trained: false, verified: false, status: 'planned', notes: '',
+  };
 
   // ── Modal state ───────────────────────────────────────────────────────────
   const [editCluster,  setEditCluster]  = useState<Partial<MapCluster> | null>(null);
@@ -328,12 +345,16 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
   const fetch = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      const [clusterData, zoneData] = await Promise.all([
+      const [clusterData, zoneData, plannedData] = await Promise.all([
         mapClustersApi.getAll(),
         mapZonesApi.getAll(),
+        mapSchoolsApi.getAll({ status: 'planned' }),
       ]);
       if (Array.isArray(clusterData)) setClusters(clusterData);
       if (Array.isArray(zoneData))    setZones(zoneData);
+      // Planned schools = status 'planned' AND no cluster (cluster_id = 0 or null)
+      if (Array.isArray(plannedData))
+        setPlannedSchools(plannedData.filter((s: MapSchool) => !s.cluster_id || s.cluster_id === 0));
     } catch {
       setError('Could not load data from server.');
     } finally {
@@ -395,6 +416,31 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
       showToast('❌ Save failed — check console');
     } finally {
       setSaving(false);
+    }
+  };
+
+  // ── Save planned school (standalone, no cluster) ─────────────────────────
+  const savePlannedSchool = async () => {
+    if (!editPlanned?.name || !editPlanned.lat || !editPlanned.lng) {
+      showToast('❌ Name and coordinates are required'); return;
+    }
+    setSavingPlanned(true);
+    try {
+      const payload = { ...editPlanned, cluster_id: null, status: 'planned' };
+      if (isNewPlanned) {
+        const created = await mapSchoolsApi.create(payload);
+        setPlannedSchools(prev => [created, ...prev]);
+        showToast('✅ Planned school added');
+      } else {
+        const updated = await mapSchoolsApi.update(editPlanned.id!, payload);
+        setPlannedSchools(prev => prev.map(s => s.id === updated.id ? { ...s, ...updated } : s));
+        showToast('✅ Planned school updated');
+      }
+      setEditPlanned(null);
+    } catch {
+      showToast('❌ Save failed — check console');
+    } finally {
+      setSavingPlanned(false);
     }
   };
 
@@ -484,6 +530,11 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
               <Plus size={12} className="inline mr-1" /> Add School
             </Btn>
           )}
+          {view === 'planned' && (
+            <Btn size="sm" onClick={() => { setEditPlanned({ ...BLANK_PLANNED }); setIsNewPlanned(true); }}>
+              <Plus size={12} className="inline mr-1" /> Add Planned School
+            </Btn>
+          )}
         </div>
       </div>
 
@@ -520,6 +571,7 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
         {[
           { v: 'clusters', l: 'Clusters' },
           { v: 'schools',  l: 'Schools' },
+          { v: 'planned',  l: `Planned Schools ${plannedSchools.length > 0 ? `(${plannedSchools.length})` : ''}` },
           { v: 'queue',    l: `Verification Queue ${queueClusters.length + queueSchools.length > 0 ? `(${queueClusters.length + queueSchools.length})` : ''}` },
         ].map(tab => (
           <button
@@ -749,6 +801,65 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
       )}
 
       {/* ══════════════════════════════════════════════════════════════════
+          PLANNED SCHOOLS VIEW
+      ══════════════════════════════════════════════════════════════════ */}
+      {view === 'planned' && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40">
+            <AlertTriangle size={14} className="text-amber-500 shrink-0" />
+            <p className="text-xs text-amber-700 dark:text-amber-400">
+              Planned schools are standalone — not yet assigned to a cluster. They appear on the map as hollow markers. Assign them to a cluster once ready.
+            </p>
+          </div>
+
+          {plannedSchools.length === 0 ? (
+            <div className="text-center py-12">
+              <MapPin size={32} className="text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+              <p className="text-xs text-slate-400">No planned schools yet. Add one to place it on the map.</p>
+            </div>
+          ) : (
+            plannedSchools.filter(s =>
+              !searchQ || s.name.toLowerCase().includes(searchQ.toLowerCase()) ||
+              s.district.toLowerCase().includes(searchQ.toLowerCase())
+            ).map(school => (
+              <div key={school.id} className="rounded-xl border border-amber-200 dark:border-amber-900/30 bg-amber-50/30 dark:bg-amber-950/10 p-3 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-950/40 border-2 border-dashed border-amber-400 flex items-center justify-center shrink-0">
+                  <MapPin size={14} className="text-amber-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-bold text-slate-900 dark:text-white truncate">{school.name}</div>
+                  <div className="text-[10px] text-slate-500 mt-0.5 flex flex-wrap gap-x-2">
+                    <span>📍 {school.district} · {school.region}</span>
+                    <span>{Number(school.lat).toFixed(4)}, {Number(school.lng).toFixed(4)}</span>
+                    {school.headteacher && <span>👤 {school.headteacher}</span>}
+                  </div>
+                  <div className="flex gap-1.5 mt-1 flex-wrap">
+                    {school.him_running  && <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-100 text-orange-700 dark:bg-orange-950/30 dark:text-orange-400">HIM</span>}
+                    {school.gesd_running && <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-pink-100 text-pink-700 dark:bg-pink-950/30 dark:text-pink-400">GESD</span>}
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400">📋 Planned</span>
+                  </div>
+                </div>
+                <div className="flex gap-1 shrink-0">
+                  <Btn size="sm" variant="secondary" onClick={() => { setEditPlanned({ ...school }); setIsNewPlanned(false); }}>
+                    <Edit2 size={10} />
+                  </Btn>
+                  <Btn size="sm" variant="success" onClick={async () => {
+                    try {
+                      await mapSchoolsApi.update(school.id, { status: 'active', ett_trained: true });
+                      setPlannedSchools(prev => prev.filter(s => s.id !== school.id));
+                      showToast('✅ School activated and marked ETT trained');
+                    } catch { showToast('❌ Update failed'); }
+                  }}>
+                    <Check size={10} /> Activate
+                  </Btn>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════
           VERIFICATION QUEUE
       ══════════════════════════════════════════════════════════════════ */}
       {view === 'queue' && (
@@ -891,6 +1002,34 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
           <div className="flex gap-2 justify-end">
             <Btn variant="secondary" size="sm" onClick={() => setConfirmDelete(null)}>Cancel</Btn>
             <Btn size="sm" variant="danger" onClick={doDelete}>Delete</Btn>
+          </div>
+        </Modal>
+      )}
+
+      {/* ── PLANNED SCHOOL MODAL ── */}
+      {editPlanned && (
+        <Modal
+          title={isNewPlanned ? 'Add Planned School' : `Edit: ${editPlanned.name}`}
+          onClose={() => setEditPlanned(null)}
+          width={600}
+        >
+          <div className="max-h-[70vh] overflow-y-auto pr-1">
+            <div className="mb-4 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 text-xs text-amber-700 dark:text-amber-400">
+              <AlertTriangle size={12} className="inline mr-1" />
+              Planned schools appear on the map as hollow amber markers. No cluster assignment needed yet — assign later when ready.
+            </div>
+            <SchoolForm
+              data={{ ...editPlanned, status: 'planned' }}
+              clusters={[]}
+              onChange={updated => setEditPlanned({ ...updated, status: 'planned', cluster_id: 0 })}
+            />
+          </div>
+          <div className="flex gap-2 justify-end pt-4 border-t border-slate-100 dark:border-slate-800 mt-4">
+            <Btn variant="secondary" size="sm" onClick={() => setEditPlanned(null)}>Cancel</Btn>
+            <Btn size="sm" onClick={savePlannedSchool} disabled={savingPlanned}>
+              <Save size={11} className="inline mr-1" />
+              {savingPlanned ? 'Saving…' : isNewPlanned ? 'Add Planned School' : 'Save Changes'}
+            </Btn>
           </div>
         </Modal>
       )}
