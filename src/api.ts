@@ -49,6 +49,24 @@ export const api = {
   },
 };
 
+// ─── apiFetch — used by analyticsApi, monitoringApi, mapApi ──────────────────
+async function apiFetch<T = any>(path: string, options: RequestInit = {}): Promise<T> {
+  const token = localStorage.getItem('token') || '';
+  const res = await fetch(`${BASE_URL}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
+    },
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
 // ─── REPORTS ─────────────────────────────────────────────────────────────────
 
 export const reportsApi = {
@@ -99,10 +117,15 @@ export const documentReportsApi = {
   },
   getDownloadUrl: (filename: string) => `${BASE_URL}/api/document-reports/download/${filename}`,
 };
-// ─── ANALYTICS ───────────────────────────────────────────────────────────────
 
+// ─── Analytics API ────────────────────────────────────────────────────────────
 export const analyticsApi = {
-  get: () => api.get('/api/analytics'),
+  /** GET /api/analytics */
+  get: () =>
+    apiFetch('/api/analytics').catch(err => {
+      console.error('analyticsApi.get failed:', err.message);
+      return { error: err.message };
+    }),
 };
 // ─── DISTRICT MANAGEMENT ─────────────────────────────────────────────────────
 
@@ -163,14 +186,33 @@ export const programmeStatsApi = {
 export const trainingsApi = {
   getAll: () => api.get('/api/trainings'),
 };
-// ─── MONITORING DATA ──────────────────────────────────────────────────────────
 
+// ─── Monitoring API ───────────────────────────────────────────────────────────
 export const monitoringApi = {
-  getActivities: () => api.get('/api/monitoring/activities'),
-  submitActivity: (data: any) => api.post('/api/monitoring/activities', data),
-  getIssues: () => api.get('/api/monitoring/issues'),
-  submitIssue: (data: any) => api.post('/api/monitoring/issues', data),
+  /** GET /api/monitoring/activities */
+  getActivities: (params?: { district?: string; month?: string }) => {
+    const qs = params ? '?' + new URLSearchParams(params as any).toString() : '';
+    return apiFetch(`/api/monitoring/activities${qs}`);
+  },
+
+  /** POST /api/monitoring/activities */
+  postActivity: (body: Record<string, any>) =>
+    apiFetch('/api/monitoring/activities', { method: 'POST', body: JSON.stringify(body) }),
+
+  /** GET /api/monitoring/issues */
+  getIssues: (params?: { district?: string; month?: string }) => {
+    const qs = params ? '?' + new URLSearchParams(params as any).toString() : '';
+    return apiFetch(`/api/monitoring/issues${qs}`);
+  },
+
+  /** POST /api/monitoring/issues */
+  postIssue: (body: Record<string, any>) =>
+    apiFetch('/api/monitoring/issues', { method: 'POST', body: JSON.stringify(body) }),
+
+  /** GET /api/monitoring/summary  (aggregate for charts) */
+  getSummary: () => apiFetch('/api/monitoring/summary'),
 };
+
 // ─── CASE REFERRALS ────────────────────────────────────────────────────────
 
 export const caseReferralsApi = {
@@ -225,4 +267,10 @@ export const mapSchoolsApi = {
 
 export const mapZonesApi = {
   getAll: () => api.get('/api/map/zones'),
+};
+
+// ─── Map / Clusters API ───────────────────────────────────────────────────────
+export const mapApi = {
+  /** GET /api/map/clusters  (or /api/clusters — whichever your server uses) */
+  getClusters: () => apiFetch('/api/map/clusters').catch(() => apiFetch('/api/clusters')),
 };

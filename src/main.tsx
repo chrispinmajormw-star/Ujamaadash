@@ -16,6 +16,12 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/Ujamaadash/sw.js', {
+    scope: '/Ujamaadash/'
+  });
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
