@@ -4,7 +4,6 @@ import {
   ChevronDown, ChevronUp, Calendar, BarChart2, Trash2
 } from 'lucide-react';
 import { User } from '../types';
-import { monitoringApi } from '../api';
 import { useMonitoring } from '../context/MonitoringContext';
 import { Card, Kicker, PageHeader, Btn, FInput, FSelect, StatCard, Badge } from './SubComponents';
 
@@ -15,29 +14,6 @@ interface DataOfficerPageProps {
 
 type TabId = 'activities' | 'issues' | 'history';
 
-// ─── Seed data matching analytics charts ─────────────────────────────────────
-const SEED_ACTIVITIES = [
-  { id: 1, district: 'Lilongwe', month: 'Jan 2026', teachbacks: 8, pea_monitoring: 5, cluster_meetings: 4, issue_based: 3, routine: 6, submitted_by: 'Data Officer', created_at: '2026-01-31' },
-  { id: 2, district: 'Blantyre', month: 'Jan 2026', teachbacks: 6, pea_monitoring: 4, cluster_meetings: 3, issue_based: 2, routine: 5, submitted_by: 'Data Officer', created_at: '2026-01-31' },
-  { id: 3, district: 'Mzimba',   month: 'Feb 2026', teachbacks: 5, pea_monitoring: 3, cluster_meetings: 5, issue_based: 1, routine: 4, submitted_by: 'Data Officer', created_at: '2026-02-28' },
-  { id: 4, district: 'Mangochi', month: 'Feb 2026', teachbacks: 7, pea_monitoring: 4, cluster_meetings: 2, issue_based: 4, routine: 3, submitted_by: 'Data Officer', created_at: '2026-02-28' },
-  { id: 5, district: 'Zomba',    month: 'Mar 2026', teachbacks: 4, pea_monitoring: 6, cluster_meetings: 3, issue_based: 2, routine: 5, submitted_by: 'Data Officer', created_at: '2026-03-31' },
-  { id: 6, district: 'Kasungu',  month: 'Mar 2026', teachbacks: 9, pea_monitoring: 3, cluster_meetings: 6, issue_based: 1, routine: 4, submitted_by: 'Data Officer', created_at: '2026-03-31' },
-  { id: 7, district: 'Lilongwe', month: 'Apr 2026', teachbacks: 10, pea_monitoring: 7, cluster_meetings: 5, issue_based: 3, routine: 7, submitted_by: 'Data Officer', created_at: '2026-04-30' },
-  { id: 8, district: 'Blantyre', month: 'Apr 2026', teachbacks: 7, pea_monitoring: 5, cluster_meetings: 4, issue_based: 2, routine: 6, submitted_by: 'Data Officer', created_at: '2026-04-30' },
-];
-
-const SEED_ISSUES = [
-  { id: 1, district: 'Lilongwe', month: 'Jan 2026', teacher_transfers: 3, lack_of_interest: 5, other_issues: 2, lack_of_admin_support: 1, learner_behaviour: 4, submitted_by: 'Data Officer', created_at: '2026-01-31' },
-  { id: 2, district: 'Blantyre', month: 'Jan 2026', teacher_transfers: 2, lack_of_interest: 3, other_issues: 1, lack_of_admin_support: 2, learner_behaviour: 2, submitted_by: 'Data Officer', created_at: '2026-01-31' },
-  { id: 3, district: 'Mzimba',   month: 'Feb 2026', teacher_transfers: 4, lack_of_interest: 2, other_issues: 3, lack_of_admin_support: 0, learner_behaviour: 3, submitted_by: 'Data Officer', created_at: '2026-02-28' },
-  { id: 4, district: 'Mangochi', month: 'Feb 2026', teacher_transfers: 1, lack_of_interest: 6, other_issues: 2, lack_of_admin_support: 3, learner_behaviour: 5, submitted_by: 'Data Officer', created_at: '2026-02-28' },
-  { id: 5, district: 'Zomba',    month: 'Mar 2026', teacher_transfers: 2, lack_of_interest: 4, other_issues: 1, lack_of_admin_support: 2, learner_behaviour: 3, submitted_by: 'Data Officer', created_at: '2026-03-31' },
-  { id: 6, district: 'Kasungu',  month: 'Mar 2026', teacher_transfers: 5, lack_of_interest: 3, other_issues: 4, lack_of_admin_support: 1, learner_behaviour: 2, submitted_by: 'Data Officer', created_at: '2026-03-31' },
-  { id: 7, district: 'Lilongwe', month: 'Apr 2026', teacher_transfers: 2, lack_of_interest: 4, other_issues: 2, lack_of_admin_support: 2, learner_behaviour: 3, submitted_by: 'Data Officer', created_at: '2026-04-30' },
-  { id: 8, district: 'Blantyre', month: 'Apr 2026', teacher_transfers: 3, lack_of_interest: 2, other_issues: 1, lack_of_admin_support: 1, learner_behaviour: 4, submitted_by: 'Data Officer', created_at: '2026-04-30' },
-];
-
 const DISTRICTS = ['Lilongwe','Blantyre','Mzimba','Mangochi','Zomba','Kasungu','Karonga','Dedza','Dowa','Ntcheu','Salima','Chiradzulu','Thyolo','Mulanje','Phalombe','Balaka','Machinga','Chiradzulu','Nsanje','Chikwawa'];
 const MONTHS = ['Jan 2026','Feb 2026','Mar 2026','Apr 2026','May 2026','Jun 2026','Jul 2026','Aug 2026','Sep 2026','Oct 2026','Nov 2026','Dec 2026'];
 
@@ -45,7 +21,7 @@ const BLANK_ACTIVITY = { district: '', month: '', teachbacks: '', pea_monitoring
 const BLANK_ISSUE = { district: '', month: '', teacher_transfers: '', lack_of_interest: '', other_issues: '', lack_of_admin_support: '', learner_behaviour: '' };
 
 export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToast }) => {
-  const { activities, issues, addActivity, addIssue } = useMonitoring();
+  const { activities, issues, addActivity, addIssue, loading } = useMonitoring();
   const [tab, setTab] = useState<TabId>('activities');
   const [actForm, setActForm] = useState({ ...BLANK_ACTIVITY });
   const [issueForm, setIssueForm] = useState({ ...BLANK_ISSUE });
@@ -65,16 +41,11 @@ export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToas
       submitted_by: user.name,
     };
     try {
-      const data = await monitoringApi.submitActivity(payload);
-      const newRecord = data.id ? data : { ...payload, id: Date.now(), created_at: new Date().toISOString().split('T')[0] };
-      addActivity(newRecord);
+      await addActivity(payload);
       setActForm({ ...BLANK_ACTIVITY });
-      showToast('✅ Monitoring activities saved');
-    } catch {
-      // Optimistic fallback
-      addActivity({ ...payload, id: Date.now(), created_at: new Date().toISOString().split('T')[0] });
-      setActForm({ ...BLANK_ACTIVITY });
-      showToast('✅ Activities saved locally');
+      showToast('✅ Monitoring activities saved to database');
+    } catch (err: any) {
+      showToast(`❌ Failed to save: ${err.message || 'server error'}`);
     }
     setSaving(false);
   };
@@ -92,15 +63,11 @@ export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToas
       submitted_by: user.name,
     };
     try {
-      const data = await monitoringApi.submitIssue(payload);
-      const newRecord = data.id ? data : { ...payload, id: Date.now(), created_at: new Date().toISOString().split('T')[0] };
-      addIssue(newRecord);
+      await addIssue(payload);
       setIssueForm({ ...BLANK_ISSUE });
-      showToast('✅ Prevailing issues saved');
-    } catch {
-      addIssue({ ...payload, id: Date.now(), created_at: new Date().toISOString().split('T')[0] });
-      setIssueForm({ ...BLANK_ISSUE });
-      showToast('✅ Issues saved locally');
+      showToast('✅ Prevailing issues saved to database');
+    } catch (err: any) {
+      showToast(`❌ Failed to save: ${err.message || 'server error'}`);
     }
     setSaving(false);
   };
@@ -125,7 +92,7 @@ export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToas
         subtitle={`Monitoring data entry · ${user.district || 'National'}`}
         actions={
           <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">
-            📝 {user.name}
+            {loading ? '⏳ Loading…' : `📝 ${user.name}`}
           </span>
         }
       />

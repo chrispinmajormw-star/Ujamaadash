@@ -1,4 +1,4 @@
-import { analyticsApi } from '../api';
+import { analyticsApi, districtsApi, mapClustersApi } from '../api';
 import { useMonitoring } from '../context/MonitoringContext';
 import React, { useState, useEffect } from 'react';
 import {
@@ -13,41 +13,49 @@ import {
 import { Report } from '../types';
 import { Card, Kicker, StatCard, ProgBar } from './SubComponents';
 
-// ─── PDF IMPACT REPORT DATA ──────────────────
-const REGIONAL_DATA = [
-  { region: 'Northern', districts: 6, tots: 249, schools: 83, clusters: 28, color: '#185fa5' },
-  { region: 'Central',  districts: 9, tots: 384, schools: 128, clusters: 44, color: '#e85d04' },
-  { region: 'Southern', districts: 13, tots: 501, schools: 167, clusters: 55, color: '#059669' },
-];
+// ─── LIVE DATA SHAPING HELPERS ───────────────
+// These take raw rows from /api/districts and /api/map/clusters and reshape
+// them into exactly the structures the charts below expect — replacing what
+// used to be hardcoded REGIONAL_DATA / TOP15_DISTRICTS / CLUSTER_DATA arrays.
 
-const TOP15_DISTRICTS = [
-  { district: 'Lilongwe',  tots: 105, schools: 35, coverage: 29, region: 'Central' },
-  { district: 'Blantyre',  tots: 84,  schools: 28, coverage: 27, region: 'Southern' },
-  { district: 'Mzimba',    tots: 72,  schools: 24, coverage: 25, region: 'Northern' },
-  { district: 'Mangochi',  tots: 66,  schools: 22, coverage: 24, region: 'Southern' },
-  { district: 'Kasungu',   tots: 60,  schools: 20, coverage: 24, region: 'Central' },
-  { district: 'Karonga',   tots: 54,  schools: 18, coverage: 29, region: 'Northern' },
-  { district: 'Zomba',     tots: 54,  schools: 18, coverage: 25, region: 'Southern' },
-  { district: 'Thyolo',    tots: 48,  schools: 16, coverage: 24, region: 'Southern' },
-  { district: 'Rumphi',    tots: 45,  schools: 15, coverage: 31, region: 'Northern' },
-  { district: 'Dowa',      tots: 45,  schools: 15, coverage: 21, region: 'Central' },
-  { district: 'Dedza',     tots: 42,  schools: 14, coverage: 21, region: 'Central' },
-  { district: 'Mulanje',   tots: 42,  schools: 14, coverage: 22, region: 'Southern' },
-  { district: 'Chitipa',   tots: 36,  schools: 12, coverage: 27, region: 'Northern' },
-  { district: 'Ntcheu',    tots: 36,  schools: 12, coverage: 21, region: 'Central' },
-  { district: 'Machinga',  tots: 36,  schools: 12, coverage: 18, region: 'Southern' },
-];
+const REGION_COLOR: Record<string, string> = { Northern: '#185fa5', Central: '#e85d04', Southern: '#059669' };
 
-const CLUSTER_DATA = [
-  { cluster: 'Karonga Lakeshore', district: 'Karonga',  students: 720,  progress: 90 },
-  { cluster: 'Blantyre South',    district: 'Blantyre', students: 890,  progress: 85 },
-  { cluster: 'Lilongwe Central',  district: 'Lilongwe', students: 1240, progress: 78 },
-  { cluster: 'Zomba Urban',       district: 'Zomba',    students: 1380, progress: 72 },
-  { cluster: 'Mzimba Heritage',   district: 'Mzimba',   students: 1050, progress: 62 },
-  { cluster: 'Dowa Central',      district: 'Dowa',     students: 1100, progress: 68 },
-  { cluster: 'Mangochi Stars',    district: 'Mangochi', students: 680,  progress: 55 },
-  { cluster: 'Dedza Highland',    district: 'Dedza',    students: 560,  progress: 45 },
-];
+function buildRegionalData(districts: any[]) {
+  const byRegion: Record<string, { region: string; districts: number; tots: number; schools: number; clusters: number; color: string }> = {};
+  districts.forEach(d => {
+    const region = d.region || 'Other';
+    if (!byRegion[region]) {
+      byRegion[region] = { region, districts: 0, tots: 0, schools: 0, clusters: 0, color: REGION_COLOR[region] || '#64748b' };
+    }
+    byRegion[region].districts += 1;
+    byRegion[region].tots += Number(d.tots) || 0;
+    byRegion[region].schools += Number(d.schools) || 0;
+    byRegion[region].clusters += Number(d.zones) || 0;
+  });
+  return Object.values(byRegion);
+}
+
+function buildTop15Districts(districts: any[]) {
+  return [...districts]
+    .sort((a, b) => (Number(b.tots) || 0) - (Number(a.tots) || 0))
+    .slice(0, 15)
+    .map(d => ({
+      district: d.name,
+      tots: Number(d.tots) || 0,
+      schools: Number(d.schools) || 0,
+      coverage: Number(d.coverage) || 0,
+      region: d.region,
+    }));
+}
+
+function buildClusterData(clusters: any[]) {
+  return clusters.map(c => ({
+    cluster: c.name,
+    district: c.district,
+    students: Number(c.students) || 0,
+    progress: Number(c.progress) || 0,
+  }));
+}
 
 const OR = '#e85d04';
 const COLORS = { Northern: '#185fa5', Central: '#e85d04', Southern: '#059669' };
@@ -91,12 +99,24 @@ interface AnalyticsPageProps { reports: Report[]; }
     learnersByDistrict: [],
     topSchools: [],
   });
+  const [districts, setDistricts] = useState<any[]>([]);
+  const [clusters, setClusters] = useState<any[]>([]);
 
   useEffect(() => {
     analyticsApi.get().then(data => {
       if (!data.error) setAnalytics(data);
     });
+    districtsApi.getAll().then(data => {
+      if (Array.isArray(data)) setDistricts(data);
+    });
+    mapClustersApi.getAll().then(data => {
+      if (Array.isArray(data)) setClusters(data);
+    });
   }, []);
+
+  const REGIONAL_DATA = buildRegionalData(districts);
+  const TOP15_DISTRICTS = buildTop15Districts(districts);
+  const CLUSTER_DATA = buildClusterData(clusters);
 
   // Use monitoring context for real-time data sync
   const { activities: monActivities, issues: monIssues } = useMonitoring();
@@ -118,6 +138,12 @@ interface AnalyticsPageProps { reports: Report[]; }
   const currPieData = analytics.reportsByCurriculum.map((r: any) => ({ name: r.curriculum, value: parseInt(r.count) }));
   const distBarData = analytics.reportsByDistrict.map((r: any) => ({ district: r.district, reports: parseInt(r.count) }));
 
+  const totalTots = districts.reduce((a, d) => a + (Number(d.tots) || 0), 0);
+  const totalSchools = districts.reduce((a, d) => a + (Number(d.schools) || 0), 0);
+  const totalStudents = clusters.reduce((a, c) => a + (Number(c.students) || 0), 0);
+  const activeDistricts = districts.filter(d => d.status === 'Active').length;
+  const plannedDistricts = districts.filter(d => d.status === 'Planned').length;
+
   const filteredDistricts = activeRegion === 'all'
     ? TOP15_DISTRICTS
     : TOP15_DISTRICTS.filter(d => d.region === activeRegion);
@@ -138,7 +164,7 @@ interface AnalyticsPageProps { reports: Report[]; }
         <div>
           <Kicker text="Statistical Ledger" />
           <h1 className="text-base font-bold text-black dark:text-white m-0">Interactive Analytics</h1>
-          <p className="text-xs text-slate-400 mt-0.5">ETT Malawi impact data — 22 districts · 1,134 TOTs · 7,620 students</p>
+          <p className="text-xs text-slate-400 mt-0.5">ETT Malawi impact data — {districts.length} districts · {totalTots.toLocaleString()} TOTs · {totalStudents.toLocaleString()} students</p>
         </div>
         <button
           onClick={() => downloadReport(reports, boys, girls)}
@@ -151,10 +177,10 @@ interface AnalyticsPageProps { reports: Report[]; }
       {/* KPI row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { icon: <GraduationCap size={18} className="text-orange-500" />, label: 'TOTs Trained', value: '1,134', sub: '+12% this quarter' },
-          { icon: <School size={18} className="text-blue-500" />, label: 'Schools Covered', value: '378', sub: '127 clusters' },
-          { icon: <Users size={18} className="text-emerald-500" />, label: 'Students Reached', value: '7,620', sub: `${boys + girls} from reports` },
-          { icon: <MapPin size={18} className="text-purple-500" />, label: 'Active Districts', value: '22', sub: '3 completed' },
+          { icon: <GraduationCap size={18} className="text-orange-500" />, label: 'TOTs Trained', value: totalTots.toLocaleString(), sub: `${districts.length} districts tracked` },
+          { icon: <School size={18} className="text-blue-500" />, label: 'Schools Covered', value: totalSchools.toLocaleString(), sub: `${clusters.length} clusters` },
+          { icon: <Users size={18} className="text-emerald-500" />, label: 'Students Reached', value: totalStudents.toLocaleString(), sub: `${boys + girls} from reports` },
+          { icon: <MapPin size={18} className="text-purple-500" />, label: 'Active Districts', value: String(activeDistricts), sub: `${plannedDistricts} planned` },
         ].map((s, i) => (
           <Card key={i} className="p-3">
             <div className="flex items-center gap-2 mb-1">{s.icon}<span className="text-[10px] text-black dark:text-white opacity-70 font-medium">{s.label}</span></div>

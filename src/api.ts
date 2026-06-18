@@ -81,10 +81,10 @@ export const reportsApi = {
 // ─── USERS ───────────────────────────────────────────────────────────────────
 
 export const usersApi = {
-  getAll:    () => api.get('/api/users'),
-  login:     (email: string, password: string) => api.post('/api/users/login', { email, password }),
-  updateProfile:  (data: { name: string; email: string }) =>
-    api.put('/api/users/me', data),
+  getAll: () => api.get('/api/users'),
+  login: (email: string, password: string) => api.post('/api/users/login', { email, password }),
+  updateProfile: (userId: string, data: { name: string; email: string }) =>
+    api.put(`/api/users/${userId}`, data),
   changePassword: (data: { currentPassword: string; newPassword: string }) =>
     api.post('/api/users/change-password', data),
 };
