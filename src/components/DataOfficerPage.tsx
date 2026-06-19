@@ -21,12 +21,39 @@ const BLANK_ACTIVITY = { district: '', month: '', teachbacks: '', pea_monitoring
 const BLANK_ISSUE = { district: '', month: '', teacher_transfers: '', lack_of_interest: '', other_issues: '', lack_of_admin_support: '', learner_behaviour: '' };
 
 export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToast }) => {
-  const { activities, issues, addActivity, addIssue, loading } = useMonitoring();
+  const { activities, issues, addActivity, addIssue, updateActivity, deleteActivity, updateIssue, deleteIssue, loading } = useMonitoring();
   const [tab, setTab] = useState<TabId>('activities');
   const [actForm, setActForm] = useState({ ...BLANK_ACTIVITY });
   const [issueForm, setIssueForm] = useState({ ...BLANK_ISSUE });
   const [saving, setSaving] = useState(false);
   const [expandedHistory, setExpandedHistory] = useState<number | null>(null);
+  const [editingActivityId, setEditingActivityId] = useState<number | null>(null);
+  const [editingIssueId, setEditingIssueId] = useState<number | null>(null);
+
+  const startEditActivity = (a: any) => {
+    setEditingActivityId(a.id);
+    setActForm({
+      district: a.district, month: a.month,
+      teachbacks: String(a.teachbacks ?? ''), pea_monitoring: String(a.pea_monitoring ?? ''),
+      cluster_meetings: String(a.cluster_meetings ?? ''), issue_based: String(a.issue_based ?? ''),
+      routine: String(a.routine ?? ''),
+    });
+    setTab('activities');
+  };
+
+  const startEditIssue = (r: any) => {
+    setEditingIssueId(r.id);
+    setIssueForm({
+      district: r.district, month: r.month,
+      teacher_transfers: String(r.teacher_transfers ?? ''), lack_of_interest: String(r.lack_of_interest ?? ''),
+      other_issues: String(r.other_issues ?? ''), lack_of_admin_support: String(r.lack_of_admin_support ?? ''),
+      learner_behaviour: String(r.learner_behaviour ?? ''),
+    });
+    setTab('issues');
+  };
+
+  const cancelEditActivity = () => { setEditingActivityId(null); setActForm({ ...BLANK_ACTIVITY }); };
+  const cancelEditIssue = () => { setEditingIssueId(null); setIssueForm({ ...BLANK_ISSUE }); };
 
   const submitActivity = async () => {
     if (!actForm.district || !actForm.month) { showToast('⚠️ District and month are required'); return; }
@@ -38,12 +65,17 @@ export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToas
       cluster_meetings: parseInt(actForm.cluster_meetings) || 0,
       issue_based: parseInt(actForm.issue_based) || 0,
       routine: parseInt(actForm.routine) || 0,
-      submitted_by: user.name,
     };
     try {
-      await addActivity(payload);
+      if (editingActivityId) {
+        await updateActivity(editingActivityId, payload);
+        showToast('✅ Monitoring activity updated');
+        setEditingActivityId(null);
+      } else {
+        await addActivity({ ...payload, submitted_by: user.name } as any);
+        showToast('✅ Monitoring activities saved to database');
+      }
       setActForm({ ...BLANK_ACTIVITY });
-      showToast('✅ Monitoring activities saved to database');
     } catch (err: any) {
       showToast(`❌ Failed to save: ${err.message || 'server error'}`);
     }
@@ -60,16 +92,43 @@ export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToas
       other_issues: parseInt(issueForm.other_issues) || 0,
       lack_of_admin_support: parseInt(issueForm.lack_of_admin_support) || 0,
       learner_behaviour: parseInt(issueForm.learner_behaviour) || 0,
-      submitted_by: user.name,
     };
     try {
-      await addIssue(payload);
+      if (editingIssueId) {
+        await updateIssue(editingIssueId, payload);
+        showToast('✅ Prevailing issue updated');
+        setEditingIssueId(null);
+      } else {
+        await addIssue({ ...payload, submitted_by: user.name } as any);
+        showToast('✅ Prevailing issues saved to database');
+      }
       setIssueForm({ ...BLANK_ISSUE });
-      showToast('✅ Prevailing issues saved to database');
     } catch (err: any) {
       showToast(`❌ Failed to save: ${err.message || 'server error'}`);
     }
     setSaving(false);
+  };
+
+  const handleDeleteActivity = async (id: number) => {
+    if (!window.confirm('Delete this monitoring activity record? This cannot be undone.')) return;
+    try {
+      await deleteActivity(id);
+      showToast('🗑️ Activity record deleted');
+      if (editingActivityId === id) cancelEditActivity();
+    } catch (err: any) {
+      showToast(`❌ Failed to delete: ${err.message || 'server error'}`);
+    }
+  };
+
+  const handleDeleteIssue = async (id: number) => {
+    if (!window.confirm('Delete this prevailing issue record? This cannot be undone.')) return;
+    try {
+      await deleteIssue(id);
+      showToast('🗑️ Issue record deleted');
+      if (editingIssueId === id) cancelEditIssue();
+    } catch (err: any) {
+      showToast(`❌ Failed to delete: ${err.message || 'server error'}`);
+    }
   };
 
   // Summary totals for stat cards
@@ -161,9 +220,17 @@ export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToas
               ))}
             </div>
 
-            <Btn onClick={submitActivity} disabled={saving} className="w-full">
-              <Save size={13} className="mr-1" />{saving ? 'Saving...' : 'Save Activities'}
-            </Btn>
+            <div className="flex gap-2">
+              {editingActivityId && (
+                <Btn variant="secondary" onClick={cancelEditActivity} disabled={saving} className="flex-1">
+                  Cancel
+                </Btn>
+              )}
+              <Btn onClick={submitActivity} disabled={saving} className="flex-1">
+                <Save size={13} className="mr-1" />
+                {saving ? 'Saving...' : editingActivityId ? 'Update Activity' : 'Save Activities'}
+              </Btn>
+            </div>
           </Card>
 
           {/* Recent entries */}
@@ -178,7 +245,7 @@ export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToas
                       <span className="font-bold text-xs text-black dark:text-white">{a.district}</span>
                       <span className="ml-2 text-[10px] text-slate-400">{a.month}</span>
                     </div>
-                    <Badge text={a.submitted_by} color="#e85d04" bg="#fff4ec" />
+                    <Badge text={a.submitted_by_name || 'Unknown'} color="#e85d04" bg="#fff4ec" />
                   </div>
                   <div className="grid grid-cols-5 gap-1 text-center">
                     {[
@@ -247,9 +314,17 @@ export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToas
               ))}
             </div>
 
-            <Btn onClick={submitIssue} disabled={saving} className="w-full">
-              <Save size={13} className="mr-1" />{saving ? 'Saving...' : 'Save Issues'}
-            </Btn>
+            <div className="flex gap-2">
+              {editingIssueId && (
+                <Btn variant="secondary" onClick={cancelEditIssue} disabled={saving} className="flex-1">
+                  Cancel
+                </Btn>
+              )}
+              <Btn onClick={submitIssue} disabled={saving} className="flex-1">
+                <Save size={13} className="mr-1" />
+                {saving ? 'Saving...' : editingIssueId ? 'Update Issue' : 'Save Issues'}
+              </Btn>
+            </div>
           </Card>
 
           {/* Recent issue entries */}
@@ -301,23 +376,44 @@ export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToas
                 <table className="w-full text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-neutral-100 dark:border-slate-800">
-                      {['District','Month','TB','PEA','CM','IB','RT'].map(h => (
+                      {['District','Month','TB','PEA','CM','IB','RT',''].map(h => (
                         <th key={h} className="py-2 px-2 text-left font-bold text-slate-500 uppercase text-[10px]">{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {activities.map(a => (
-                      <tr key={a.id} className="border-b border-neutral-50 dark:border-slate-800/40 hover:bg-neutral-50 dark:hover:bg-slate-800/20">
-                        <td className="py-2 px-2 font-semibold text-black dark:text-white">{a.district}</td>
-                        <td className="py-2 px-2 text-slate-500">{a.month}</td>
-                        <td className="py-2 px-2 font-bold text-orange-600">{a.teachbacks}</td>
-                        <td className="py-2 px-2 font-bold text-blue-600">{a.pea_monitoring}</td>
-                        <td className="py-2 px-2 font-bold text-green-600">{a.cluster_meetings}</td>
-                        <td className="py-2 px-2 font-bold text-purple-600">{a.issue_based}</td>
-                        <td className="py-2 px-2 font-bold text-amber-600">{a.routine}</td>
-                      </tr>
-                    ))}
+                    {activities.map(a => {
+                      const canEdit = user.role === 'admin' || a.submitted_by === user.id;
+                      return (
+                        <tr key={a.id} className="border-b border-neutral-50 dark:border-slate-800/40 hover:bg-neutral-50 dark:hover:bg-slate-800/20">
+                          <td className="py-2 px-2 font-semibold text-black dark:text-white">{a.district}</td>
+                          <td className="py-2 px-2 text-slate-500">{a.month}</td>
+                          <td className="py-2 px-2 font-bold text-orange-600">{a.teachbacks}</td>
+                          <td className="py-2 px-2 font-bold text-blue-600">{a.pea_monitoring}</td>
+                          <td className="py-2 px-2 font-bold text-green-600">{a.cluster_meetings}</td>
+                          <td className="py-2 px-2 font-bold text-purple-600">{a.issue_based}</td>
+                          <td className="py-2 px-2 font-bold text-amber-600">{a.routine}</td>
+                          <td className="py-2 px-2 whitespace-nowrap">
+                            {canEdit && (
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => startEditActivity(a)}
+                                  className="text-[10px] font-bold text-blue-600 hover:underline"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteActivity(a.id)}
+                                  className="text-[10px] font-bold text-red-600 hover:underline"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -331,23 +427,44 @@ export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToas
                 <table className="w-full text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-neutral-100 dark:border-slate-800">
-                      {['District','Month','TT','LI','OI','AS','LB'].map(h => (
+                      {['District','Month','TT','LI','OI','AS','LB',''].map(h => (
                         <th key={h} className="py-2 px-2 text-left font-bold text-slate-500 uppercase text-[10px]">{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {issues.map(r => (
-                      <tr key={r.id} className="border-b border-neutral-50 dark:border-slate-800/40 hover:bg-neutral-50 dark:hover:bg-slate-800/20">
-                        <td className="py-2 px-2 font-semibold text-black dark:text-white">{r.district}</td>
-                        <td className="py-2 px-2 text-slate-500">{r.month}</td>
-                        <td className="py-2 px-2 font-bold text-red-600">{r.teacher_transfers}</td>
-                        <td className="py-2 px-2 font-bold text-amber-600">{r.lack_of_interest}</td>
-                        <td className="py-2 px-2 font-bold text-slate-500">{r.other_issues}</td>
-                        <td className="py-2 px-2 font-bold text-purple-600">{r.lack_of_admin_support}</td>
-                        <td className="py-2 px-2 font-bold text-sky-600">{r.learner_behaviour}</td>
-                      </tr>
-                    ))}
+                    {issues.map(r => {
+                      const canEdit = user.role === 'admin' || r.submitted_by === user.id;
+                      return (
+                        <tr key={r.id} className="border-b border-neutral-50 dark:border-slate-800/40 hover:bg-neutral-50 dark:hover:bg-slate-800/20">
+                          <td className="py-2 px-2 font-semibold text-black dark:text-white">{r.district}</td>
+                          <td className="py-2 px-2 text-slate-500">{r.month}</td>
+                          <td className="py-2 px-2 font-bold text-red-600">{r.teacher_transfers}</td>
+                          <td className="py-2 px-2 font-bold text-amber-600">{r.lack_of_interest}</td>
+                          <td className="py-2 px-2 font-bold text-slate-500">{r.other_issues}</td>
+                          <td className="py-2 px-2 font-bold text-purple-600">{r.lack_of_admin_support}</td>
+                          <td className="py-2 px-2 font-bold text-sky-600">{r.learner_behaviour}</td>
+                          <td className="py-2 px-2 whitespace-nowrap">
+                            {canEdit && (
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => startEditIssue(r)}
+                                  className="text-[10px] font-bold text-blue-600 hover:underline"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteIssue(r.id)}
+                                  className="text-[10px] font-bold text-red-600 hover:underline"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

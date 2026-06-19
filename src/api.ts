@@ -199,6 +199,14 @@ export const monitoringApi = {
   postActivity: (body: Record<string, any>) =>
     apiFetch('/api/monitoring/activities', { method: 'POST', body: JSON.stringify(body) }),
 
+  /** PUT /api/monitoring/activities/:id */
+  updateActivity: (id: number, body: Record<string, any>) =>
+    apiFetch(`/api/monitoring/activities/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+
+  /** DELETE /api/monitoring/activities/:id */
+  deleteActivity: (id: number) =>
+    apiFetch(`/api/monitoring/activities/${id}`, { method: 'DELETE' }),
+
   /** GET /api/monitoring/issues */
   getIssues: (params?: { district?: string; month?: string }) => {
     const qs = params ? '?' + new URLSearchParams(params as any).toString() : '';
@@ -208,6 +216,14 @@ export const monitoringApi = {
   /** POST /api/monitoring/issues */
   postIssue: (body: Record<string, any>) =>
     apiFetch('/api/monitoring/issues', { method: 'POST', body: JSON.stringify(body) }),
+
+  /** PUT /api/monitoring/issues/:id */
+  updateIssue: (id: number, body: Record<string, any>) =>
+    apiFetch(`/api/monitoring/issues/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+
+  /** DELETE /api/monitoring/issues/:id */
+  deleteIssue: (id: number) =>
+    apiFetch(`/api/monitoring/issues/${id}`, { method: 'DELETE' }),
 
   /** GET /api/monitoring/summary  (aggregate for charts) */
   getSummary: () => apiFetch('/api/monitoring/summary'),
