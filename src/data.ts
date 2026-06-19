@@ -485,7 +485,12 @@ export const SESSION_LISTS: Record<string, string[]> = {
   Combined: ["Topic 6 / Session 6: Boys & Girls Combined"],
 };
 
-export const DISTRICT_LIST = ["Lilongwe", "Blantyre", "Zomba", "Mzimba", "Karonga", "Mangochi", "Kasungu", "Dedza", "Dowa", "Thyolo", "Rumphi", "Chitipa", "Machinga", "Balaka", "Chikwawa", "Nkhotakota", "Nkhata Bay", "Mulanje", "Ntcheu", "Chiradzulu"];
+export const DISTRICT_LIST = [
+  "Balaka", "Blantyre", "Chikwawa", "Chiradzulu", "Chitipa", "Dedza", "Dowa",
+  "Karonga", "Kasungu", "Likoma", "Lilongwe", "Machinga", "Mangochi", "Mchinji",
+  "Mulanje", "Mwanza", "Mzimba", "Neno", "Nkhata Bay", "Nkhotakota", "Nsanje",
+  "Ntcheu", "Ntchisi", "Phalombe", "Rumphi", "Salima", "Thyolo", "Zomba",
+];
 
 export const TOP15 = [
   { rank: 1, name: "Lilongwe", r: "Central", tots: 105, cov: "35/120", pct: 29 }, { rank: 2, name: "Blantyre", r: "Southern", tots: 84, cov: "28/105", pct: 27 },

@@ -14,7 +14,12 @@ interface DataOfficerPageProps {
 
 type TabId = 'activities' | 'issues' | 'history';
 
-const DISTRICTS = ['Lilongwe','Blantyre','Mzimba','Mangochi','Zomba','Kasungu','Karonga','Dedza','Dowa','Ntcheu','Salima','Chiradzulu','Thyolo','Mulanje','Phalombe','Balaka','Machinga','Chiradzulu','Nsanje','Chikwawa'];
+const DISTRICTS = [
+  'Balaka', 'Blantyre', 'Chikwawa', 'Chiradzulu', 'Chitipa', 'Dedza', 'Dowa',
+  'Karonga', 'Kasungu', 'Likoma', 'Lilongwe', 'Machinga', 'Mangochi', 'Mchinji',
+  'Mulanje', 'Mwanza', 'Mzimba', 'Neno', 'Nkhata Bay', 'Nkhotakota', 'Nsanje',
+  'Ntcheu', 'Ntchisi', 'Phalombe', 'Rumphi', 'Salima', 'Thyolo', 'Zomba',
+];
 const MONTHS = ['Jan 2026','Feb 2026','Mar 2026','Apr 2026','May 2026','Jun 2026','Jul 2026','Aug 2026','Sep 2026','Oct 2026','Nov 2026','Dec 2026'];
 
 const BLANK_ACTIVITY = { district: '', month: '', teachbacks: '', pea_monitoring: '', cluster_meetings: '', issue_based: '', routine: '' };
