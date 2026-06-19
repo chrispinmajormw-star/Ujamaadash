@@ -154,7 +154,9 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
           dueDate: t.due_date ? t.due_date.split('T')[0] : '',
           district: t.district || 'National',
           category: t.category || 'General',
-          status: t.status === 'in_progress' ? 'progress' : (t.status || 'todo'),
+          status: t.status === 'in_progress' ? 'progress'
+                : t.status === 'completed'   ? 'completed'
+                : 'todo', // pending, todo, or anything else → todo
         })));
       }
     } catch { }
@@ -185,8 +187,20 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
         assigned_to: null,
         assigned_by: user?.id || null,
       });
-      if (created.id) {
-        await loadTasks();
+      if (created && !created.error) {
+        // Add immediately to UI — don't wait for reload
+        const mapped: TaskItem = {
+          id: String(created.id),
+          title: created.title,
+          description: created.description || '',
+          priority: created.priority || 'medium',
+          assignedRole: created.assigned_role || newTask.assignedRole,
+          dueDate: created.due_date ? created.due_date.split('T')[0] : newTask.dueDate,
+          district: created.district || newTask.district,
+          category: created.category || newTask.category,
+          status: 'todo',
+        };
+        setTasks(prev => [mapped, ...prev]);
         setShowAddModal(false);
         setNewTask({
           title: '', description: '', priority: 'medium',
