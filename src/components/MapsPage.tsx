@@ -199,25 +199,10 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
 
         L.marker([school.lat,school.lng],{icon,zIndexOffset:200})
           .addTo(map)
-          .bindPopup(`
-            <div style="font-family:'Plus Jakarta Sans',sans-serif;min-width:210px;color:${darkMode?'#f3f4f6':'#111827'}">
-              <div style="font-weight:900;font-size:13px;margin-bottom:2px">${school.name}</div>
-              <div style="font-size:10px;font-weight:700;margin-bottom:6px;color:${trained?'#16a34a':'#d97706'}">
-                ${trained?'✓ ETT Trained':'○ Not Yet Trained'}
-              </div>
-              <div style="font-size:10px;color:#e85d04;font-weight:700;margin-bottom:6px">${school.district}</div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px;font-size:10.5px">
-                <div><span style="color:#9ca3af">Learners</span><br><b>${totalL.toLocaleString()}</b></div>
-                <div><span style="color:#9ca3af">Trained</span><br><b>${school.trained_teachers}</b></div>
-                <div><span style="color:#9ca3af">TOTs</span><br><b>${school.tots}</b></div>
-                <div><span style="color:#9ca3af">STOTs</span><br><b>${school.stots}</b></div>
-                <div><span style="color:#9ca3af">Teachbacks</span><br><b>${school.teachbacks}</b></div>
-                <div><span style="color:#9ca3af">Curriculum</span><br><b style="font-size:9.5px">${curricula}</b></div>
-              </div>
-              ${school.headteacher?`<div style="font-size:10px;color:#6b7280">HT: <b>${school.headteacher}</b></div>`:''}
-              <div style="margin-top:8px;font-size:9px;color:#9ca3af;font-style:italic">Click marker to open full details →</div>
-            </div>`,{maxWidth:270})
-          .on('click',()=>openSchool(school));
+          .on('click',()=>{
+            map.flyTo([school.lat, school.lng], 15, {duration: 0.8});
+            openSchool(school);
+          });
       });
 
       // Cluster centre — larger pin with name label
@@ -251,26 +236,11 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
       const centerIcon = L.divIcon({className:'',html:clusterHtml,iconAnchor:[9,9]});
       const marker = L.marker([cluster.lat,cluster.lng],{icon:centerIcon,zIndexOffset:500}).addTo(map);
 
-      marker.bindPopup(`
-        <div style="font-family:'Plus Jakarta Sans',sans-serif;min-width:240px;color:${darkMode?'#f8fafc':'#0f1623'}">
-          <div style="font-weight:900;font-size:14px;margin-bottom:2px">${cluster.name}</div>
-          <div style="font-size:10px;color:#e85d04;font-weight:700;margin-bottom:8px">${cluster.district} · ${cluster.region}</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:8px;font-size:10.5px">
-            <div><span style="color:#9ca3af">Learners</span><br><b>${cluster.students.toLocaleString()}</b></div>
-            <div><span style="color:#9ca3af">Schools</span><br><b>${cluster.school_count}</b></div>
-            <div><span style="color:#9ca3af">TOTs</span><br><b>${cluster.tots}</b></div>
-            <div><span style="color:#9ca3af">STOTs</span><br><b>${cluster.stots}</b></div>
-            <div><span style="color:#9ca3af">Teachbacks</span><br><b>${cluster.teachbacks}</b></div>
-            <div><span style="color:#9ca3af">Trained</span><br><b>${cluster.trained}</b></div>
-          </div>
-          ${cluster.lead?`<div style="font-size:10px;color:#6b7280;margin-bottom:6px">Lead: <b>${cluster.lead}</b></div>`:''}
-          <div style="background:#f1f5f9;border-radius:4px;height:6px;overflow:hidden">
-            <div style="width:${cluster.progress}%;height:100%;background:#e85d04;border-radius:4px"></div>
-          </div>
-          <div style="font-size:9px;color:#9ca3af;text-align:right;margin-top:2px">${cluster.progress}% progress</div>
-          <div style="margin-top:8px;font-size:9px;color:#9ca3af;font-style:italic">Click to open cluster panel →</div>
-        </div>`,{maxWidth:290});
-      marker.on('click',()=>{setActiveClusterId(cluster.id);setSelectedCluster(cluster);});
+      marker.on('click',()=>{
+        map.flyTo([cluster.lat, cluster.lng], 14, {duration: 0.8});
+        setActiveClusterId(cluster.id);
+        setSelectedCluster(cluster);
+      });
     });
 
     // Planned schools — hollow purple diamond markers (no cluster)

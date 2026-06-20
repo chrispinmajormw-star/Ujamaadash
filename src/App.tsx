@@ -127,7 +127,7 @@ const PAGE_LABELS: Record<string, string> = {
   ett: "ETT Standards",
   analytics: "Analytics",
   users: "Staff Directory",
-  impact: "Impact Stories",
+  impact: "Success Stories",
   calendar: "Calendar",
   tasks: "Tasks",
   settings: "Settings",
@@ -468,7 +468,7 @@ const pendingCount = (user && can(user.role, "approveReport")
         { id: "districts", label: "Districts", icon: MapPin },
         { id: "trainings", label: "Trainings", icon: GraduationCap },
         { id: "maps", label: "Clusters Map", icon: Map },
-        { id: "impact", label: "Impact Stories", icon: Heart },
+        { id: "impact", label: "Success Stories", icon: Heart },
       ]},
       { title: "More", items: [
         { id: "calendar", label: "Calendar", icon: Calendar, protected: true },
@@ -555,7 +555,7 @@ if (role === 'district_coordinator') return [
     { id: "submit", label: "Submit a Case", icon: FilePlus },
     { id: "curriculum", label: "Curriculum", icon: BookOpen },
     { id: "analytics", label: "Analytics", icon: BarChart2, protected: true },
-    { id: "impact", label: "Impact Stories", icon: Heart },
+    { id: "impact", label: "Success Stories", icon: Heart },
   ]},
   { title: "More", items: [
     { id: "calendar", label: "Calendar", icon: Calendar, protected: true },
@@ -597,7 +597,7 @@ if (role === 'district_coordinator') return [
         items: [
           { id: "analytics", label: "Analytics", icon: BarChart2 },
           ...(user?.role === 'admin' ? [{ id: "sasa", label: "SASA Workspace", icon: Shield, protected: true }] : []),
-          { id: "impact", label: "Impact stories", icon: Heart },
+          { id: "impact", label: "Success Stories", icon: Heart },
           { id: 'teacher_resources', label: 'Teacher Resources', icon: BookOpen },
           ...(user?.role === 'admin' ? [{ id: "users", label: "Staff", icon: Users, protected: true }] : []),
           { id: "settings", label: "Settings", icon: Settings }
@@ -694,8 +694,8 @@ if (role === 'district_coordinator') return [
             </aside>
 
             <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#0f1623]">
-              <header className="h-14 sm:h-12 shrink-0 flex items-center justify-between gap-3 px-3 sm:px-4 border-b border-neutral-200 dark:border-slate-800 bg-white dark:bg-[#0f1623]">
-                <div className="flex items-center gap-2 min-w-0">
+              <header className="h-14 sm:h-12 shrink-0 flex items-center justify-between gap-3 px-3 sm:px-4 border-b border-neutral-200 dark:border-slate-800 bg-white dark:bg-[#0f1623] relative z-20">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
                   <button
                     type="button"
                     onClick={() => setPage("dashboard")}

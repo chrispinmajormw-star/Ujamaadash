@@ -76,13 +76,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
     stots:    statsOverride.stots    ?? (statsLoaded ? stats.stots    : stats.stots    || 0),
   };
 
-  const [YEARLY_DATA, setYEARLY_DATA] = useState<any[]>([
-  { year: "2023", schools: 116, teachers: 228, learners: 45600, targetSchools: 225, targetLearners: 45000 },
-  { year: "2024", schools: 357, teachers: 727, learners: 145400, targetSchools: 950, targetLearners: 190005 },
-  { year: "2025", schools: 975, teachers: 1973, learners: 395000, targetSchools: 3000, targetLearners: 600000 },
-  { year: "2026", schools: 1482, teachers: 2964, learners: 592200, targetSchools: 6000, targetLearners: 1200000, current: true },
-  { year: "2027", schools: 0, teachers: 0, learners: 0, targetSchools: 10000, targetLearners: 2000000, planned: true },
-]);
+  const [YEARLY_DATA, setYEARLY_DATA] = useState<any[]>([]);
 
 useEffect(() => {
   programmeStatsApi.getAll().then(data => {

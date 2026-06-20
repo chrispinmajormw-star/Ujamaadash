@@ -120,7 +120,7 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
           <Kicker text="Field Outcomes" />
-          <h1 className="text-base font-bold text-black dark:text-white m-0">Impact Stories</h1>
+          <h1 className="text-base font-bold text-black dark:text-white m-0">Success Stories</h1>
           <p className="text-xs text-black dark:text-white opacity-60 mt-1 m-0">
             Real outcomes from active districts and clusters across Malawi.
           </p>
@@ -138,7 +138,7 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
           ['592,200+', 'Learners Reached'],
           ['1,134', 'TOTs Certified'],
           ['127', 'School Clusters'],
-          [stories.length.toString(), 'Impact Stories'],
+          [stories.length.toString(), 'Success Stories'],
         ].map(([v, l]) => (
           <Card key={l} className="p-3 text-center">
             <div className="text-base font-bold text-[#e85d04]">{v}</div>
