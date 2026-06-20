@@ -378,7 +378,7 @@ export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToas
               <Kicker text="Monitoring Activities" />
               <h2 className="font-bold text-sm text-black dark:text-white mb-3">All Activity Records ({activities.length})</h2>
               <div className="overflow-x-auto">
-                <table className="w-full text-xs border-collapse">
+                <table className="w-full text-xs border-collapse min-w-[600px]">
                   <thead>
                     <tr className="border-b border-neutral-100 dark:border-slate-800">
                       {['District','Month','TB','PEA','CM','IB','RT',''].map(h => (
@@ -429,7 +429,7 @@ export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToas
               <Kicker text="Prevailing Issues" />
               <h2 className="font-bold text-sm text-black dark:text-white mb-3">All Issue Records ({issues.length})</h2>
               <div className="overflow-x-auto">
-                <table className="w-full text-xs border-collapse">
+                <table className="w-full text-xs border-collapse min-w-[600px]">
                   <thead>
                     <tr className="border-b border-neutral-100 dark:border-slate-800">
                       {['District','Month','TT','LI','OI','AS','LB',''].map(h => (

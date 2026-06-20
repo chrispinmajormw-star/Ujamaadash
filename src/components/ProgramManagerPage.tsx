@@ -210,8 +210,8 @@ export const ProgramManagerPage: React.FC<Props> = ({ reports, user, setPage }) 
       {activeTab === 'districts' && (
         <Card>
           <h3 className="text-sm font-bold text-black dark:text-white mb-4">District Performance Ranking</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs border-collapse">
+          <div className="overflow-x-auto w-full">
+            <table className="w-full text-xs border-collapse min-w-[600px]">
               <thead>
                 <tr className="border-b border-slate-100 dark:border-slate-800">
                   {['District', 'Region', 'TOTs', 'Teachers', 'Coverage', 'Reports', 'Rating'].map(h => (

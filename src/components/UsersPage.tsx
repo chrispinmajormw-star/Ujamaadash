@@ -231,8 +231,8 @@ export const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers,
         </div>
 
         {/* ── Users Table ─────────────────────────────────────────────────────── */}
-        <div className="overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800/60">
-          <table className="w-full border-collapse text-left text-xs">
+        <div className="overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800/60 w-full">
+          <table className="w-full border-collapse text-left text-xs min-w-[800px]">
             <TH cols={['Consultant Details', 'Designation', 'Location', 'Status', 'Actions']} />
             <tbody>
               {visible.length === 0 && (

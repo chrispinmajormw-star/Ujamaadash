@@ -178,8 +178,8 @@ export const TeacherChampionPage: React.FC = () => {
           <Card>
             <Kicker text="Non-Violent" />
             <h2 className="font-bold text-sm text-black dark:text-white mb-4">Positive Discipline Framework</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs border-collapse">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full text-xs border-collapse min-w-[600px]">
                 <thead>
                   <tr>
                     {['Type', 'Description', 'Examples'].map(h => (
@@ -273,8 +273,8 @@ export const TeacherChampionPage: React.FC = () => {
       {/* ── GUIDANCE vs COUNSELLING ──────────────────────────────────────── */}
       {activeTab === 'guidance' && (
         <div className="space-y-4">
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs border-collapse rounded-xl overflow-hidden">
+          <div className="overflow-x-auto w-full">
+            <table className="w-full text-xs border-collapse rounded-xl overflow-hidden min-w-[600px]">
               <thead>
                 <tr>
                   <th className="px-4 py-3 text-left font-bold text-white bg-[#e85d04] text-[10px] uppercase tracking-wide">Dimension</th>
@@ -370,8 +370,8 @@ export const TeacherChampionPage: React.FC = () => {
           <Card>
             <Kicker text="Course Assessment" />
             <h2 className="font-bold text-sm text-black dark:text-white mb-4">Assessment Types</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs border-collapse">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full text-xs border-collapse min-w-[600px]">
                 <thead>
                   <tr>
                     {['Assessment Type', 'Description', 'When'].map(h => (
