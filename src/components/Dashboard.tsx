@@ -377,9 +377,9 @@ useEffect(() => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         {/* Recent submissions / activity */}
-        <Card className="lg:col-span-2 p-0 overflow-hidden">
+        <Card className="p-0 overflow-hidden">
           <div className="px-4 py-3 border-b border-neutral-200 dark:border-slate-800 flex items-center justify-between">
             <h3 className="text-xs font-semibold text-black dark:text-white m-0">
               {isStaff ? "Recent submissions" : "Program milestones"}
@@ -432,28 +432,6 @@ useEffect(() => {
             </div>
           )}
         </Card>
-
-        {/* Quick links */}
-        <Card>
-          <h3 className="text-xs font-semibold text-black dark:text-white mb-3 m-0">Quick links</h3>
-          <div className="space-y-1.5">
-            {[
-              { label: "Clusters map", page: "maps", icon: Map },
-              { label: "Districts", page: "districts", icon: School },
-              { label: "Curriculum", page: "curriculum", icon: BookOpen },
-              { label: "Analytics", page: "analytics", icon: TrendingUp },
-            ].map(({ label, page: p, icon: Icon }) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPage(p)}
-                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium text-black dark:text-white hover:bg-orange-50 dark:hover:bg-slate-800 hover:text-orange-600 border border-transparent hover:border-orange-200 dark:hover:border-orange-900/40"
-              >
-                <Icon size={14} className="text-orange-600" /> {label}
-              </button>
-            ))}
-          </div>
-        </Card>
       </div>
 
       {/* Map + charts row */}
@@ -479,6 +457,29 @@ useEffect(() => {
           </Card>
         </div>
       </div>
+
+      {/* Quick links — always last */}
+      <Card>
+        <h3 className="text-xs font-semibold text-black dark:text-white mb-3 m-0">Quick links</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {[
+            { label: "Clusters map", page: "maps", icon: Map },
+            { label: "Districts", page: "districts", icon: School },
+            { label: "Curriculum", page: "curriculum", icon: BookOpen },
+            { label: "Analytics", page: "analytics", icon: TrendingUp },
+          ].map(({ label, page: p, icon: Icon }) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => setPage(p)}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-black dark:text-white hover:bg-orange-50 dark:hover:bg-slate-800 hover:text-orange-600 border border-neutral-200 dark:border-slate-800 hover:border-orange-200 dark:hover:border-orange-900/40 transition-colors"
+            >
+              <Icon size={14} className="text-orange-600 shrink-0" /> {label}
+            </button>
+          ))}
+        </div>
+      </Card>
+
       {editStats && user?.role === 'admin' && (
   <Modal title="Programme Statistics" onClose={() => { setEditStats(false); setEditingYear(null); }} width={600}>
     <div className="space-y-2 max-h-96 overflow-y-auto">

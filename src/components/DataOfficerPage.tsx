@@ -213,12 +213,12 @@ export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToas
                 { key: 'issue_based',      label: 'Issue Based Monitoring' },
                 { key: 'routine',          label: 'Routine Monitoring' },
               ].map(({ key, label }) => (
-                <div key={key} className="flex items-center gap-3">
-                  <label className="text-xs text-slate-700 dark:text-slate-300 w-52 shrink-0">{label}</label>
+                <div key={key} className="flex flex-wrap items-center gap-2 py-1">
+                  <label className="text-xs text-slate-700 dark:text-slate-300 flex-1 min-w-[140px]">{label}</label>
                   <input type="number" min="0"
                     value={(actForm as any)[key]}
                     onChange={e => setActForm(p => ({ ...p, [key]: e.target.value }))}
-                    className="flex-1 px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-slate-700 bg-white dark:bg-[#0f1623] text-black dark:text-white text-sm focus:outline-none focus:border-orange-400"
+                    className="w-20 px-2 py-1.5 rounded-lg border border-neutral-200 dark:border-slate-700 bg-white dark:bg-[#0f1623] text-black dark:text-white text-sm focus:outline-none focus:border-orange-400 text-center"
                     placeholder="0"
                   />
                 </div>

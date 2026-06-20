@@ -22,16 +22,17 @@ const TODAY = new Date().toISOString().split('T')[0];
 const CURRENT_YEAR = new Date().getFullYear();
 
 const getStatus = (t: Training): 'active' | 'upcoming' | 'completed' => {
-  // Use backend computed_status if available
-  if (t.computed_status) return t.computed_status as any;
-  if (t.status && ['active', 'upcoming', 'completed'].includes(t.status)) return t.status as any;
   if (!t.start_date) return 'upcoming';
-  // Normalize dates to YYYY-MM-DD format for proper comparison
-  const start = t.start_date.split('T')[0];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const start = new Date(t.start_date.split('T')[0]);
+  start.setHours(0, 0, 0, 0);
   // Auto-calculate end date as 6 days after start if not provided
-  const end = t.end_date ? t.end_date.split('T')[0] : new Date(new Date(start).getTime() + 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-  if (TODAY < start) return 'upcoming';
-  if (TODAY > end) return 'completed';
+  const rawEnd = t.end_date ? t.end_date.split('T')[0] : new Date(start.getTime() + 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const end = new Date(rawEnd);
+  end.setHours(23, 59, 59, 999);
+  if (today < start) return 'upcoming';
+  if (today > end) return 'completed';
   return 'active';
 };
 
@@ -75,11 +76,11 @@ export const TrainingsPage: React.FC = () => {
 
   useEffect(() => { load(); }, []);
 
-  // Filter by year first, then by status
+  // "All Years" strictly means current year. Filter by year then by status.
   const trainingsInYear = trainings.filter(t => {
-    if (!t.start_date) return yearFilt === 'all'; // Include trainings without dates when showing all
+    if (!t.start_date) return false;
     const trainingYear = new Date(t.start_date).getFullYear();
-    return yearFilt === 'all' || trainingYear === parseInt(yearFilt);
+    return trainingYear === CURRENT_YEAR;
   });
 
   const visible = trainingsInYear.filter(t => {
@@ -124,14 +125,6 @@ export const TrainingsPage: React.FC = () => {
           options={['all', 'active', 'upcoming', 'completed'].map(x => ({ v: x, l: x.toUpperCase() }))}
           active={filt}
           onChange={setFilt}
-        />
-        <FilterBar
-          options={[
-            { v: String(CURRENT_YEAR), l: String(CURRENT_YEAR) },
-            { v: 'all', l: 'All Years' },
-          ]}
-          active={yearFilt}
-          onChange={setYearFilt}
         />
       </div>
 

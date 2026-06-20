@@ -132,20 +132,37 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
         )}
       </div>
 
-      {/* KPI row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[
-          ['592,200+', 'Learners Reached'],
-          ['1,134', 'TOTs Certified'],
-          ['127', 'School Clusters'],
-          [stories.length.toString(), 'Success Stories'],
-        ].map(([v, l]) => (
-          <Card key={l} className="p-3 text-center">
-            <div className="text-base font-bold text-[#e85d04]">{v}</div>
-            <div className="text-[10px] text-slate-400 font-medium mt-0.5">{l}</div>
-          </Card>
-        ))}
-      </div>
+      {/* Story-derived stats */}
+      {!loading && stories.length > 0 && (() => {
+        const published = stories.filter(s => s.is_published);
+        const totalRating = stories.reduce((acc, s) => acc + (Number(s.rating) || 0), 0);
+        const avgRating = stories.length > 0 && totalRating > 0 ? (totalRating / stories.filter(s => Number(s.rating) > 0).length).toFixed(1) : null;
+        const curriculums = [...new Set(stories.map(s => s.curriculum).filter(Boolean))].length;
+        const districts = [...new Set(stories.map(s => s.district_id).filter(Boolean))].length;
+        return (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <Card className="p-3 text-center border-l-4 border-l-[#e85d04]">
+              <div className="text-xl font-black text-[#e85d04]">{stories.length}</div>
+              <div className="text-[10px] text-slate-400 font-medium mt-0.5">Total Stories</div>
+            </Card>
+            <Card className="p-3 text-center border-l-4 border-l-emerald-500">
+              <div className="text-xl font-black text-emerald-600">{published.length}</div>
+              <div className="text-[10px] text-slate-400 font-medium mt-0.5">Published</div>
+            </Card>
+            <Card className="p-3 text-center border-l-4 border-l-amber-500">
+              <div className="flex items-center justify-center gap-1">
+                <Star size={14} className="text-amber-500 fill-amber-400" />
+                <div className="text-xl font-black text-amber-600">{avgRating ?? '—'}</div>
+              </div>
+              <div className="text-[10px] text-slate-400 font-medium mt-0.5">Avg Star Rating</div>
+            </Card>
+            <Card className="p-3 text-center border-l-4 border-l-violet-500">
+              <div className="text-xl font-black text-violet-600">{districts > 0 ? districts : curriculums}</div>
+              <div className="text-[10px] text-slate-400 font-medium mt-0.5">{districts > 0 ? 'Districts' : 'Curricula'} Covered</div>
+            </Card>
+          </div>
+        );
+      })()}
 
       {/* Filter tabs */}
       <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-900 rounded-lg w-fit border border-neutral-200 dark:border-slate-800 flex-wrap">

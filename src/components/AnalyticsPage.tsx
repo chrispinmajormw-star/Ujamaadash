@@ -191,20 +191,22 @@ interface AnalyticsPageProps { reports: Report[]; }
       </div>
 
       {/* Tab switcher */}
-      <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-900 rounded-lg w-fit border border-neutral-200 dark:border-slate-800">
-        {tabs.map(t => (
-          <button
-            key={t.id}
-            onClick={() => setActiveTab(t.id)}
-            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-              activeTab === t.id
-                ? 'bg-white dark:bg-[#0f1623] text-black dark:text-white shadow-sm border border-neutral-200 dark:border-slate-700'
-                : 'text-slate-500 dark:text-slate-400 hover:text-black dark:hover:text-white'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+      <div className="overflow-x-auto pb-1 -mb-1">
+        <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-900 rounded-lg w-max min-w-full border border-neutral-200 dark:border-slate-800">
+          {tabs.map(t => (
+            <button
+              key={t.id}
+              onClick={() => setActiveTab(t.id)}
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap ${
+                activeTab === t.id
+                  ? 'bg-white dark:bg-[#0f1623] text-black dark:text-white shadow-sm border border-neutral-200 dark:border-slate-700'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-black dark:hover:text-white'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* ── OVERVIEW TAB ── */}
