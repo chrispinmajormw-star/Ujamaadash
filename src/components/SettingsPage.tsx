@@ -10,7 +10,7 @@ import { User } from '../types';
 import { Card, Kicker } from './SubComponents';
 import { ROLE_CFG } from '../data';
 import { safeStorage } from '../utils/storage';
-import { usersApi, statsApi } from '../api';
+import { usersApi, statsApi, api } from '../api';
 
 interface SettingsPageProps {
   user: User | null;
@@ -155,8 +155,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   useEffect(()=>{
     if (activeTab!=='system') return;
     const start=Date.now();
-    fetch(`${(window as any).__BASE_URL__||''}/health/db`)
-      .then(r=>r.json())
+    api.get('/health/db')
       .then(d=>{
         setDbStatus(d.status==='ok'?'ok':'error');
         setApiLatency(Date.now()-start);

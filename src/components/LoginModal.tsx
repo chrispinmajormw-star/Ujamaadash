@@ -304,7 +304,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onRegi
                 onSuccess={handleGoogleSuccess}
                 onError={handleGoogleError}
                 useOneTap={false}
-                width="100%"
               />
             </div>
 
