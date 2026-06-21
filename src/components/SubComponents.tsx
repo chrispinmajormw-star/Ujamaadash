@@ -202,7 +202,7 @@ export const Modal: React.FC<ModalProps> = ({ title, children, onClose, width = 
     >
       <div
         className="bg-white dark:bg-[#0f1623] rounded-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-neutral-200 dark:border-slate-800 position-relative animate-fade-in-up"
-        style={{ maxWidth: `${width}px` }}
+        style={{ maxWidth: `min(${width}px, calc(100vw - 2rem))` }}
       >
         <div className="px-5 py-4 border-b border-neutral-200 dark:border-slate-800 flex items-center justify-between sticky top-0 bg-white dark:bg-[#0f1623] z-10">
           <h3 className="m-0 text-base font-bold text-black dark:text-white">{title}</h3>

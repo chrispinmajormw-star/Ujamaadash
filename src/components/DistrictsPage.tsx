@@ -122,12 +122,17 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
 
   const canManage = (district: any) => {
     if (isAdmin) return true;
-    if (isDC && district.district_coordinator_user_id === user?.id) return true;
+    if (isDC && String(district.district_coordinator_user_id) === String(user?.id)) return true;
     return false;
   };
 
   const assignDC = async () => {
     if (!assignModal || !assignUserId) return;
+    // Prevent duplicate assignment: warn if district already has a DC and user is assigning a different one
+    if (assignModal.district_coordinator_user_id && String(assignModal.district_coordinator_user_id) === String(assignUserId)) {
+      showToast('⚠️ This DC is already assigned to this district');
+      return;
+    }
     const data = await districtsApi.assignDC(assignModal.id, assignUserId);
     if (data.error) { showToast(`⚠️ ${data.error}`); return; }
     setDistricts(prev => prev.map(d => d.id === assignModal.id ? {
@@ -189,18 +194,18 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
     }
   };
 
-  const validateTrainingForm = () => {
+  const validateTrainingForm = (isEdit = false) => {
     const errors: Record<string, string> = {};
     if (!trainingForm.training_name || trainingForm.training_name.trim().length < 3) {
       errors.training_name = 'Training name must be at least 3 characters';
     }
     if (!trainingForm.start_date) {
       errors.start_date = 'Start date is required';
-    } else {
+    } else if (!isEdit) {
+      // Only enforce future-date rule for NEW trainings, not when editing existing ones
       const selectedDate = new Date(trainingForm.start_date);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      // Allow dates from today onwards (no past dates)
       if (selectedDate < today) {
         errors.start_date = 'Start date cannot be in the past';
       }
@@ -214,12 +219,12 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
 
   const submitTraining = async () => {
     if (!trainingModal) return;
-    if (!validateTrainingForm()) {
+    const { district, training } = trainingModal;
+    const isEdit = !!training;
+    if (!validateTrainingForm(isEdit)) {
       showToast('⚠️ Please fix the form errors');
       return;
     }
-    const { district, training } = trainingModal;
-    const isEdit = !!training;
     setIsSubmitting(true);
     try {
       const fn = isEdit
@@ -350,8 +355,17 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
                           <Badge text="Planned" color="#64748b" bg="#f1f5f9" />
                         )}
                       </div>
-                      <div className="text-[11px] text-black/50 dark:text-white/50 mt-0.5">
-                        DC: {d.coordinator_name || 'Not assigned'} · TOTs: {d.number_of_tots || d.tots || 0} · Teachers: {d.teachers_trained || 0}
+                      <div className="text-[11px] text-black/50 dark:text-white/50 mt-0.5 flex flex-wrap items-center gap-1.5">
+                        {d.coordinator_name ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                            <CheckCircle size={10} /> DC: {d.coordinator_name}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                            <AlertCircle size={10} /> No DC Assigned
+                          </span>
+                        )}
+                        <span className="text-[10px]">TOTs: {d.number_of_tots || d.tots || 0} · Teachers: {d.teachers_trained || 0}</span>
                       </div>
                     </div>
 
@@ -449,18 +463,34 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
       {/* Assign DC Modal */}
       {assignModal && (
         <Modal title={`Assign DC — ${assignModal.name}`} onClose={() => setAssignModal(null)} width={420}>
-          <p className="text-xs text-black/50 dark:text-white/50 mb-4">
-            Current DC: <strong>{assignModal.coordinator_name || 'Not assigned'}</strong>
-          </p>
+          {assignModal.coordinator_name ? (
+            <div className="mb-4 flex items-start gap-2 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 text-xs text-emerald-800 dark:text-emerald-300">
+              <CheckCircle size={14} className="mt-0.5 shrink-0" />
+              <span>
+                Currently assigned: <strong>{assignModal.coordinator_name}</strong>. Selecting a new DC below will replace them.
+              </span>
+            </div>
+          ) : (
+            <div className="mb-4 flex items-start gap-2 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 text-xs text-amber-800 dark:text-amber-300">
+              <AlertCircle size={14} className="mt-0.5 shrink-0" />
+              <span>No District Coordinator assigned yet. Select one below.</span>
+            </div>
+          )}
           <FSelect label="Select District Coordinator *" value={assignUserId} onChange={e => setAssignUserId(e.target.value)}>
             <option value="">Choose a DC…</option>
             {dcUsers.map(u => (
               <option key={u.id} value={u.id}>{u.name} — {u.district || 'No district'}</option>
             ))}
           </FSelect>
+          {assignUserId && assignModal.district_coordinator_user_id &&
+            String(assignUserId) !== String(assignModal.district_coordinator_user_id) && (
+            <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-2">
+              ⚠️ This will replace <strong>{assignModal.coordinator_name}</strong> as DC for {assignModal.name}.
+            </p>
+          )}
           <div className="flex gap-2 justify-end mt-3">
             <Btn size="sm" variant="ghost" onClick={() => setAssignModal(null)}>Cancel</Btn>
-            <Btn size="sm" variant="primary" onClick={assignDC}>Assign</Btn>
+            <Btn size="sm" variant="primary" onClick={assignDC} disabled={!assignUserId}>Assign</Btn>
           </div>
         </Modal>
       )}

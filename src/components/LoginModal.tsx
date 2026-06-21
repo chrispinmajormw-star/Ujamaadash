@@ -58,12 +58,13 @@ const ROLE_LOCATION: Record<string, LocationType> = {
 };
 
 export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onRegister, users }) => {
-  const [mode, setMode] = useState<'login' | 'register' | 'pending'>('login');
+  const [mode, setMode] = useState<'login' | 'register' | 'pending' | 'forgot' | 'reset-sent'>('login');
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
+  const [resetEmail, setResetEmail] = useState('');
 
   const [reg, setReg] = useState({
     name: '',
@@ -87,6 +88,26 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onRegi
 
   const locationType: LocationType = ROLE_LOCATION[reg.role] || 'hq';
   const availableDistricts = reg.region ? (DISTRICTS_BY_REGION[reg.region] || []) : [];
+
+  // ─── FORGOT PASSWORD ────────────────────────────────────────────────────────
+  const doForgotPassword = async () => {
+    if (!resetEmail.trim()) { setErr('Please enter your email address'); return; }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(resetEmail.trim())) { setErr('Please enter a valid email address'); return; }
+    setLoading(true);
+    setErr('');
+    try {
+      const data = await api.post('/api/users/forgot-password', { email: resetEmail.trim() });
+      if (data.error) {
+        setErr(data.error);
+      } else {
+        setMode('reset-sent');
+      }
+    } catch {
+      setErr('Unable to connect to server. Please try again.');
+    }
+    setLoading(false);
+  };
 
   // ─── LOGIN ──────────────────────────────────────────────────────────────────
   const doLogin = async () => {
@@ -278,7 +299,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onRegi
                   <input type="checkbox" className="w-4 h-4 rounded text-orange-500 focus:ring-orange-500 focus:ring-offset-0 bg-white/50 border-slate-300 dark:border-slate-600" />
                   <span className="text-xs text-slate-600 dark:text-slate-300">Remember me</span>
                 </label>
-                <button className="text-xs text-slate-600 dark:text-slate-300 hover:text-orange-500 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 rounded px-2 py-1">
+                <button
+                  onClick={() => { setMode('forgot'); setErr(''); setResetEmail(email); }}
+                  className="text-xs text-slate-600 dark:text-slate-300 hover:text-orange-500 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 rounded px-2 py-1">
                   Forgot password?
                 </button>
               </div>
@@ -443,6 +466,78 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onRegi
                 Log In
               </button>
             </div>
+          </div>
+        )}
+
+        {/* ── FORGOT PASSWORD MODE ───────────────────────────────────────── */}
+        {mode === 'forgot' && (
+          <div className="flex flex-col">
+            <div className="flex justify-center mb-5">
+              <AfricaLogo size={38} variant="full" />
+            </div>
+            <h2 className="text-2xl font-light text-center text-slate-900 dark:text-white mb-2">
+              Reset <span className="font-semibold">password</span>
+            </h2>
+            <p className="text-[11.5px] text-center text-slate-600 dark:text-slate-300 mb-8 px-2 leading-relaxed">
+              Enter the email address linked to your account and we'll send you a reset link.
+            </p>
+
+            <div>
+              <label className={labelCls}>Email Address</label>
+              <input
+                type="email"
+                value={resetEmail}
+                onChange={e => setResetEmail(e.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
+                className={inputCls}
+                onKeyDown={e => e.key === 'Enter' && doForgotPassword()}
+              />
+            </div>
+
+            {err && (
+              <div className="mt-4 bg-red-500/10 text-red-600 border border-red-500/20 rounded-xl p-3 text-xs text-center font-semibold">{err}</div>
+            )}
+
+            <button
+              onClick={doForgotPassword}
+              disabled={loading}
+              className="w-full mt-6 py-3 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-sm shadow-lg shadow-orange-500/20 transition-all active:scale-[0.98] disabled:opacity-70 min-h-[44px]">
+              {loading ? 'Sending…' : 'Send Reset Link'}
+            </button>
+
+            <div className="mt-5 text-center text-[11px] text-slate-500 dark:text-slate-400">
+              Remembered it?{' '}
+              <button
+                onClick={() => { setMode('login'); setErr(''); }}
+                className="font-bold text-slate-900 dark:text-white hover:text-orange-500 transition-colors">
+                Back to Login
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── RESET LINK SENT MODE ───────────────────────────────────────── */}
+        {mode === 'reset-sent' && (
+          <div className="flex flex-col items-center text-center gap-4 py-6">
+            <div className="w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-3xl">📧</div>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Check your inbox!</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed px-2">
+              A password reset link has been sent to <strong className="text-slate-700 dark:text-slate-200">{resetEmail}</strong>. Click the link in the email to set a new password.
+            </p>
+            <p className="text-xs text-slate-400 dark:text-slate-500">
+              Didn't receive it? Check your spam folder or{' '}
+              <button
+                onClick={() => { setMode('forgot'); setErr(''); }}
+                className="underline hover:text-orange-500 transition-colors">
+                try again
+              </button>.
+            </p>
+            <button
+              onClick={() => { setMode('login'); setErr(''); }}
+              className="w-full py-3 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-sm mt-2">
+              Back to Login
+            </button>
           </div>
         )}
 

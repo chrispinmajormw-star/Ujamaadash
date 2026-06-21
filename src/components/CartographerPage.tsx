@@ -492,17 +492,17 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
     <div className="space-y-5 animate-fade-in-up">
 
       {/* ── HEADER ── */}
-      <div className="flex items-start justify-between gap-3">
-        <div>
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div className="min-w-0">
           <Kicker text="Geospatial Data Management" />
-          <h1 className="text-xl font-black text-slate-900 dark:text-white m-0 tracking-tight">
+          <h1 className="text-xl font-black text-slate-900 dark:text-white m-0 tracking-tight text-balance">
             GIS Cartographer Console
           </h1>
           <p className="text-xs text-slate-500 mt-1 m-0">
             Manage school coordinates, cluster groups, and field verification status.
           </p>
         </div>
-        <div className="flex gap-2 shrink-0">
+        <div className="flex flex-wrap gap-2 shrink-0">
           <button
             onClick={fetch}
             className="flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-orange-500 transition"
@@ -559,17 +559,17 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
       </Card>
 
       {/* ── TABS ── */}
-      <div className="flex gap-2 flex-wrap">
+      <div className="overflow-x-auto whitespace-nowrap flex gap-2 pb-1 -mx-1 px-1">
         {[
           { v: 'clusters', l: 'Clusters' },
           { v: 'schools',  l: 'Schools' },
-          { v: 'planned',  l: `Planned Schools ${plannedSchools.length > 0 ? `(${plannedSchools.length})` : ''}` },
-          { v: 'queue',    l: `Verification Queue ${queueClusters.length + queueSchools.length > 0 ? `(${queueClusters.length + queueSchools.length})` : ''}` },
+          { v: 'planned',  l: `Planned${plannedSchools.length > 0 ? ` (${plannedSchools.length})` : ''}` },
+          { v: 'queue',    l: `Verify Queue${queueClusters.length + queueSchools.length > 0 ? ` (${queueClusters.length + queueSchools.length})` : ''}` },
         ].map(tab => (
           <button
             key={tab.v}
             onClick={() => setView(tab.v as any)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+            className={`inline-flex px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors shrink-0 min-h-[36px] items-center ${
               view === tab.v
                 ? tab.v === 'planned' ? 'bg-purple-600 text-white' : 'bg-emerald-600 text-white'
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-slate-700'
@@ -582,20 +582,20 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
 
       {/* ── SEARCH + FILTER ── */}
       {view !== 'queue' && (
-        <div className="flex gap-2">
-          <div className="relative flex-1">
+        <div className="flex flex-col gap-2 md:flex-row">
+          <div className="relative flex-1 min-w-0">
             <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               value={searchQ}
               onChange={e => setSearchQ(e.target.value)}
               placeholder={view === 'clusters' ? 'Search clusters or districts…' : 'Search schools or districts…'}
-              className="w-full pl-8 pr-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-emerald-500"
+              className="w-full pl-8 pr-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-emerald-500 min-h-[36px]"
             />
           </div>
           <select
             value={regionFilter}
             onChange={e => setRegionFilter(e.target.value)}
-            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs text-slate-800 dark:text-slate-200 focus:outline-none"
+            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs text-slate-800 dark:text-slate-200 focus:outline-none min-h-[36px]"
           >
             {['All', ...REGIONS].map(r => <option key={r}>{r}</option>)}
           </select>
@@ -622,7 +622,7 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
                 }`}
               >
                 {/* Row header */}
-                <div className={`flex items-center justify-between gap-3 p-4 cursor-pointer select-none ${
+                <div className={`flex flex-col gap-2 md:flex-row md:items-center md:justify-between p-4 cursor-pointer select-none ${
                   cluster.verified
                     ? 'bg-emerald-50/40 dark:bg-emerald-950/10'
                     : 'bg-amber-50/40 dark:bg-amber-950/10'
@@ -636,12 +636,12 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
                     }
                     <div className="min-w-0">
                       <div className="text-sm font-bold text-slate-900 dark:text-white truncate">{cluster.name}</div>
-                      <div className="text-[10.5px] text-slate-500">
+                      <div className="text-[10.5px] text-slate-500 text-pretty">
                         📍 {cluster.district} · {cluster.region} · {cluster.school_count} schools · Lead: {cluster.lead || '—'}
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
                     <Btn size="sm" onClick={e => { e.stopPropagation(); setEditCluster({ ...cluster }); setIsNewCluster(false); }}>
                       <Edit2 size={10} className="inline mr-0.5" /> Edit
                     </Btn>
@@ -652,7 +652,7 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
                     )}
                     <button
                       onClick={e => { e.stopPropagation(); setConfirmDelete({ type: 'cluster', id: cluster.id, name: cluster.name }); }}
-                      className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition"
+                      className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition"
                     >
                       <Trash2 size={12} />
                     </button>

@@ -83,6 +83,7 @@ export const reportsApi = {
 export const usersApi = {
   getAll: () => api.get('/api/users'),
   login: (email: string, password: string) => api.post('/api/users/login', { email, password }),
+  forgotPassword: (email: string) => api.post('/api/users/forgot-password', { email }),
   updateProfile: (userId: string, data: { name: string; email: string }) =>
     api.put(`/api/users/${userId}`, data),
   changePassword: (data: { currentPassword: string; newPassword: string }) =>
