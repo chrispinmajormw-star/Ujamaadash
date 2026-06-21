@@ -127,7 +127,7 @@ const PAGE_LABELS: Record<string, string> = {
   ett: "ETT Standards",
   analytics: "Analytics",
   users: "Staff Directory",
-  impact: "Success Stories",
+  impact: "Impact Stories",
   calendar: "Calendar",
   tasks: "Tasks",
   settings: "Settings",
@@ -342,33 +342,21 @@ useEffect(() => {
   const [docUnread, setDocUnread] = useState(0);
 const [notifications, setNotifications] = useState<any[]>([]);
 const [notifUnread, setNotifUnread] = useState(0);
-const [notifLoading, setNotifLoading] = useState(false);
-
-const fetchNotifications = useCallback(async () => {
-  if (!user) return;
-  setNotifLoading(true);
-  try {
-    if (['district_coordinator', 'program_manager', 'admin'].includes(user.role)) {
-      documentReportsApi.getUnreadCount().then(data => {
-        if (data && data.count !== undefined) setDocUnread(data.count);
-      }).catch(() => {});
-    }
-    const [notifData, countData] = await Promise.all([
-      notificationsApi.getAll(),
-      notificationsApi.getUnreadCount(),
-    ]);
-    if (Array.isArray(notifData)) setNotifications(notifData);
-    if (countData && countData.count !== undefined) setNotifUnread(countData.count);
-  } catch (e) {
-    // silently fail
-  } finally {
-    setNotifLoading(false);
-  }
-}, [user]);
 
 useEffect(() => {
-  fetchNotifications();
-}, [fetchNotifications, page]);
+  if (!user) return;
+  if (['district_coordinator', 'program_manager', 'admin'].includes(user.role)) {
+    documentReportsApi.getUnreadCount().then(data => {
+      if (data.count !== undefined) setDocUnread(data.count);
+    });
+  }
+  notificationsApi.getAll().then(data => {
+    if (Array.isArray(data)) setNotifications(data);
+  });
+  notificationsApi.getUnreadCount().then(data => {
+    if (data.count !== undefined) setNotifUnread(data.count);
+  });
+}, [user, page]);
 
 const pendingCount = (user && can(user.role, "approveReport")
   ? reports.filter(r => r.status === "pending" && (user.role === "district_coordinator" ? r.district === user.district : true)).length
@@ -432,7 +420,9 @@ const pendingCount = (user && can(user.role, "approveReport")
       case "ett":
         return <ETTPage />;
       case "analytics":
-        return <AnalyticsPage reports={reports} />;
+        return user?.role !== 'tot'
+          ? <AnalyticsPage reports={reports} />
+          : <div className="p-12 text-center text-slate-400 font-semibold italic">This page is restricted for your role.</div>;
       case "users":
         return user?.role === 'admin' ? <UsersPage user={user} users={users} setUsers={setUsers} showToast={showToast} refreshUsers={refreshUsers} /> : <div className="p-12 text-center text-slate-400 font-semibold italic">Restricted to National Admin only.</div>;
       case "impact":
@@ -480,7 +470,7 @@ const pendingCount = (user && can(user.role, "approveReport")
         { id: "districts", label: "Districts", icon: MapPin },
         { id: "trainings", label: "Trainings", icon: GraduationCap },
         { id: "maps", label: "Clusters Map", icon: Map },
-        { id: "impact", label: "Success Stories", icon: Heart },
+        { id: "impact", label: "Impact Stories", icon: Heart },
       ]},
       { title: "More", items: [
         { id: "calendar", label: "Calendar", icon: Calendar, protected: true },
@@ -567,7 +557,7 @@ if (role === 'district_coordinator') return [
     { id: "submit", label: "Submit a Case", icon: FilePlus },
     { id: "curriculum", label: "Curriculum", icon: BookOpen },
     { id: "analytics", label: "Analytics", icon: BarChart2, protected: true },
-    { id: "impact", label: "Success Stories", icon: Heart },
+    { id: "impact", label: "Impact Stories", icon: Heart },
   ]},
   { title: "More", items: [
     { id: "calendar", label: "Calendar", icon: Calendar, protected: true },
@@ -586,7 +576,7 @@ if (role === 'district_coordinator') return [
     { id: "trainings", label: "Trainings", icon: GraduationCap },
     { id: "curriculum", label: "Curriculum", icon: BookOpen },
     { id: "standards", label: "Standards & Policies", icon: Shield, protected: true },
-    { id: 'data_officer', label: 'Monitoring Data', icon: ClipboardList, protected: true },
+    ...(user?.role !== 'tot' ? [{ id: 'data_officer', label: 'Monitoring Data', icon: ClipboardList, protected: true }] : []),
   ]
 },
       {
@@ -607,9 +597,9 @@ if (role === 'district_coordinator') return [
       {
         title: "More",
         items: [
-          { id: "analytics", label: "Analytics", icon: BarChart2 },
+          ...(user?.role !== 'tot' ? [{ id: "analytics", label: "Analytics", icon: BarChart2 }] : []),
           ...(user?.role === 'admin' ? [{ id: "sasa", label: "SASA Workspace", icon: Shield, protected: true }] : []),
-          { id: "impact", label: "Success Stories", icon: Heart },
+          { id: "impact", label: "Impact stories", icon: Heart },
           { id: 'teacher_resources', label: 'Teacher Resources', icon: BookOpen },
           ...(user?.role === 'admin' ? [{ id: "users", label: "Staff", icon: Users, protected: true }] : []),
           { id: "settings", label: "Settings", icon: Settings }
@@ -706,8 +696,8 @@ if (role === 'district_coordinator') return [
             </aside>
 
             <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#0f1623]">
-              <header className="h-14 sm:h-12 shrink-0 flex items-center justify-between gap-3 px-3 sm:px-4 border-b border-neutral-200 dark:border-slate-800 bg-white dark:bg-[#0f1623] relative z-20">
-                <div className="flex items-center gap-2 flex-1 min-w-0">
+              <header className="h-14 sm:h-12 shrink-0 flex items-center justify-between gap-3 px-3 sm:px-4 border-b border-neutral-200 dark:border-slate-800 bg-white dark:bg-[#0f1623]">
+                <div className="flex items-center gap-2 min-w-0">
                   <button
                     type="button"
                     onClick={() => setPage("dashboard")}
@@ -743,72 +733,32 @@ if (role === 'district_coordinator') return [
                       <Search size={14} className="hidden sm:block" />
                     </button>
                     {searchOpen && (
-                      <>
-                        {/* Mobile: fixed full-screen centered overlay */}
-                        <div className="md:hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => { setSearchOpen(false); setSearchQuery(''); }}>
-                          <div className="w-full max-w-sm bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-xl shadow-2xl p-3" onClick={e => e.stopPropagation()}>
-                            <div className="flex items-center gap-2 mb-2">
-                              <Search size={14} className="text-slate-400 shrink-0" />
-                              <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Search reports, pages..."
-                                className="flex-1 px-2 py-1.5 text-sm border-none outline-none bg-transparent text-black dark:text-white"
-                                autoFocus
-                              />
-                              <button onClick={() => { setSearchOpen(false); setSearchQuery(''); }} className="text-slate-400 hover:text-black dark:hover:text-white p-1">✕</button>
-                            </div>
-                            <div className="h-px bg-neutral-200 dark:bg-slate-700 mb-2" />
-                            {searchResults.length > 0 && (
-                              <div className="max-h-64 overflow-y-auto">
-                                {searchResults.map(result => (
-                                  <button
-                                    key={result.id}
-                                    onClick={() => { setPage(result.page); setSearchOpen(false); setSearchQuery(''); }}
-                                    className="w-full text-left px-2 py-2 text-sm text-black dark:text-white hover:bg-orange-50 dark:hover:bg-slate-800 rounded transition-colors"
-                                  >
-                                    {result.label}
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-                            {searchQuery && searchResults.length === 0 && (
-                              <p className="text-xs text-center py-3 text-slate-400">No results found</p>
-                            )}
-                            {!searchQuery && (
-                              <p className="text-xs text-center py-3 text-slate-400">Type to search…</p>
-                            )}
+                      <div className="absolute right-0 top-10 bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg shadow-lg p-2 w-72 z-50">
+                        <input
+                          type="text"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="Search reports, pages..."
+                          className="w-full px-3 py-2 text-xs border border-neutral-200 dark:border-slate-700 rounded bg-white dark:bg-[#0f1623] text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          autoFocus
+                        />
+                        {searchResults.length > 0 && (
+                          <div className="mt-2 max-h-60 overflow-y-auto">
+                            {searchResults.map(result => (
+                              <button
+                                key={result.id}
+                                onClick={() => { setPage(result.page); setSearchOpen(false); setSearchQuery(''); }}
+                                className="w-full text-left px-2 py-1.5 text-xs text-black dark:text-white hover:bg-orange-50 dark:hover:bg-slate-800 rounded transition-colors"
+                              >
+                                {result.label}
+                              </button>
+                            ))}
                           </div>
-                        </div>
-                        {/* Desktop: absolute dropdown */}
-                        <div className="hidden md:block absolute right-0 top-10 bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg shadow-lg p-2 w-72 z-50">
-                          <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Search reports, pages..."
-                            className="w-full px-3 py-2 text-xs border border-neutral-200 dark:border-slate-700 rounded bg-white dark:bg-[#0f1623] text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-                            autoFocus
-                          />
-                          {searchResults.length > 0 && (
-                            <div className="mt-2 max-h-60 overflow-y-auto">
-                              {searchResults.map(result => (
-                                <button
-                                  key={result.id}
-                                  onClick={() => { setPage(result.page); setSearchOpen(false); setSearchQuery(''); }}
-                                  className="w-full text-left px-2 py-1.5 text-xs text-black dark:text-white hover:bg-orange-50 dark:hover:bg-slate-800 rounded transition-colors"
-                                >
-                                  {result.label}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                          {searchQuery && searchResults.length === 0 && (
-                            <p className="text-xs text-center py-2 text-slate-400">No results found</p>
-                          )}
-                        </div>
-                      </>
+                        )}
+                        {searchQuery && searchResults.length === 0 && (
+                          <p className="text-xs text-center py-2 text-slate-400">No results found</p>
+                        )}
+                      </div>
                     )}
                   </div>
 
@@ -816,7 +766,7 @@ if (role === 'district_coordinator') return [
                     <div className="relative">
                       <button
                         type="button"
-                        onClick={() => { setNotifOpen(!notifOpen); if (!notifOpen) fetchNotifications(); }}
+                        onClick={() => setNotifOpen(!notifOpen)}
                         className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-slate-700 hover:border-orange-400 text-black dark:text-white relative focus:outline-none focus:ring-2 focus:ring-orange-500"
                         title={`${pendingCount} pending reviews`}
                         aria-label="Notifications"
@@ -833,16 +783,15 @@ if (role === 'district_coordinator') return [
                       {notifOpen && (
                         <>
                           <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
-                          <div className="absolute right-0 top-10 bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg shadow-lg p-3 w-72 z-50 text-black dark:text-white">
+                          <div className="absolute right-0 top-10 bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg shadow-lg p-3 w-64 z-50 text-black dark:text-white">
                           <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 mb-2">
-  <span className="font-semibold text-xs">Notifications {notifLoading && <span className="text-[9px] text-slate-400 ml-1">Loading…</span>}</span>
+  <span className="font-semibold text-xs">Notifications</span>
   {notifUnread > 0 && (
     <button
       onClick={() => {
-        notificationsApi.markAllRead().then(() => {
-          setNotifUnread(0);
-          setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-        }).catch(() => {});
+        notificationsApi.markAllRead();
+        setNotifUnread(0);
+        setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
       }}
       className="text-[10px] text-orange-600 font-semibold hover:underline"
     >
@@ -861,11 +810,8 @@ if (role === 'district_coordinator') return [
       <div className="text-[10px] opacity-60">Click to view inbox</div>
     </button>
   )}
-  {notifications.length === 0 && docUnread === 0 && !notifLoading && (
+  {notifications.length === 0 && docUnread === 0 && (
     <p className="text-xs py-3 text-center m-0 opacity-60">No notifications.</p>
-  )}
-  {notifLoading && notifications.length === 0 && (
-    <p className="text-xs py-3 text-center m-0 opacity-60">Loading notifications…</p>
   )}
   {notifications.map(n => (
     <button
@@ -873,10 +819,9 @@ if (role === 'district_coordinator') return [
       type="button"
       onClick={() => {
         if (!n.is_read) {
-          notificationsApi.markRead(n.id).then(() => {
-            setNotifUnread(prev => Math.max(0, prev - 1));
-            setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, is_read: true } : x));
-          }).catch(() => {});
+          notificationsApi.markRead(n.id);
+          setNotifUnread(prev => Math.max(0, prev - 1));
+          setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, is_read: true } : x));
         }
         if (n.link) setPage(n.link.replace('/', ''));
         setNotifOpen(false);
