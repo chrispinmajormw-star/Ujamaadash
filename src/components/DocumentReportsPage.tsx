@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User } from '../types';
 import { documentReportsApi } from '../api';
-import { Card, PageHeader, Btn, Badge, FInput, FArea, Modal } from './SubComponents';
-import { Inbox, Send, Upload, Download, CheckCircle, XCircle, Clock, FileText } from 'lucide-react';
+import { Card, PageHeader, Btn, FInput, FArea, Modal } from './SubComponents';
+import { Inbox, Send, Upload, Download, CheckCircle, XCircle, FileText, Eye, ExternalLink } from 'lucide-react';
+
+const BASE_URL = 'https://13.61.100.62.nip.io';
 
 interface DocumentReportsPageProps {
   user: User | null;
@@ -23,21 +25,76 @@ const RECIPIENT_LABEL: Record<string, string> = {
   district_coordinator: 'Program Manager',
 };
 
-const canSubmit = (role: string) => ['tot', 'sasa_officer', 'data_entry', 'district_coordinator'].includes(role);
+const canSubmit  = (role: string) => ['tot', 'sasa_officer', 'data_entry', 'district_coordinator'].includes(role);
 const canReceive = (role: string) => ['district_coordinator', 'program_manager', 'admin'].includes(role);
 
+const isPdf  = (name: string) => name?.toLowerCase().endsWith('.pdf');
+const isDocx = (name: string) => name?.toLowerCase().match(/\.(doc|docx)$/);
+
+// ─── Document Viewer Modal ────────────────────────────────────────────────────
+const DocViewer: React.FC<{ report: any; onClose: () => void }> = ({ report, onClose }) => {
+  const fileName = report.file_name || report.file_path || '';
+  const fileUrl  = `${BASE_URL}/uploads/document-reports/${fileName.split('/').pop() || fileName}`;
+
+  // Google Docs viewer works for both PDF and DOCX without auth
+  const googleViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`;
+
+  return (
+    <Modal title={report.title} onClose={onClose} width={900}>
+      <div className="space-y-3">
+        {/* File info bar */}
+        <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <FileText size={13} className="text-orange-500" />
+            <span className="font-semibold text-slate-700 dark:text-slate-300">{report.file_name}</span>
+            <span>·</span>
+            <span>From <strong>{report.sender_name}</strong></span>
+            <span>·</span>
+            <span>{new Date(report.created_at).toLocaleDateString()}</span>
+          </div>
+          <a
+            href={fileUrl}
+            download={report.file_name}
+            className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 hover:border-orange-400 text-slate-700 dark:text-slate-300 transition"
+          >
+            <Download size={12} /> Download
+          </a>
+        </div>
+
+        {/* Viewer — Google Docs Viewer embeds both PDF and DOCX */}
+        <div className="w-full rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700" style={{ height: '65vh' }}>
+          <iframe
+            src={googleViewerUrl}
+            className="w-full h-full"
+            frameBorder="0"
+            title={report.title}
+            allow="autoplay"
+          />
+        </div>
+
+        <p className="text-[10px] text-slate-400 text-center">
+          Powered by Google Docs Viewer · If the document doesn't load,{' '}
+          <a href={fileUrl} download className="text-orange-500 underline">download it directly</a>
+        </p>
+      </div>
+    </Modal>
+  );
+};
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 export const DocumentReportsPage: React.FC<DocumentReportsPageProps> = ({ user, showToast }) => {
-  const [tab, setTab] = useState<'inbox' | 'sent' | 'submit'>('inbox');
-  const [inbox, setInbox] = useState<any[]>([]);
-  const [sent, setSent] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [tab, setTab]           = useState<'inbox' | 'sent' | 'submit'>('inbox');
+  const [inbox, setInbox]       = useState<any[]>([]);
+  const [sent, setSent]         = useState<any[]>([]);
+  const [loading, setLoading]   = useState(false);
   const [reviewing, setReviewing] = useState<any | null>(null);
+  const [viewing, setViewing]   = useState<any | null>(null);
   const [feedback, setFeedback] = useState('');
 
-  // Submit form state
-  const [title, setTitle] = useState('');
+  // Submit form
+  const [title, setTitle]         = useState('');
   const [description, setDescription] = useState('');
-  const [file, setFile] = useState<File | null>(null);
+  const [file, setFile]           = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -48,10 +105,10 @@ export const DocumentReportsPage: React.FC<DocumentReportsPageProps> = ({ user, 
     setLoading(true);
     Promise.all([
       canReceive(role) ? documentReportsApi.getInbox() : Promise.resolve([]),
-      canSubmit(role) ? documentReportsApi.getSent() : Promise.resolve([]),
+      canSubmit(role)  ? documentReportsApi.getSent()  : Promise.resolve([]),
     ]).then(([inboxData, sentData]) => {
       if (Array.isArray(inboxData)) setInbox(inboxData);
-      if (Array.isArray(sentData)) setSent(sentData);
+      if (Array.isArray(sentData))  setSent(sentData);
       setLoading(false);
     });
   }, [user]);
@@ -88,30 +145,86 @@ export const DocumentReportsPage: React.FC<DocumentReportsPageProps> = ({ user, 
 
   const formatSize = (bytes: number) => {
     if (!bytes) return '';
-    return bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(0)} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-  };
-
-  const openFile = async (filename: string, displayName: string) => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${documentReportsApi.getDownloadUrl(filename)}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) { showToast('⚠️ Could not open file'); return; }
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      window.open(url, '_blank');
-    } catch {
-      showToast('⚠️ Failed to open file');
-    }
+    return bytes < 1024 * 1024
+      ? `${(bytes / 1024).toFixed(0)} KB`
+      : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
   };
 
   const TABS = [
-    ...(canReceive(role) ? [{ id: 'inbox', label: 'Inbox', icon: <Inbox size={14} />, count: inbox.filter(r => r.status === 'pending').length }] : []),
-    ...(canSubmit(role) ? [{ id: 'sent', label: 'Sent', icon: <Send size={14} /> }, { id: 'submit', label: 'Submit Report', icon: <Upload size={14} /> }] : []),
+    ...(canReceive(role) ? [{ id: 'inbox',  label: 'Inbox',         icon: <Inbox size={14}/>,  count: inbox.filter(r => r.status === 'pending').length }] : []),
+    ...(canSubmit(role)  ? [{ id: 'sent',   label: 'Sent',          icon: <Send size={14}/>  },
+                             { id: 'submit', label: 'Submit Report', icon: <Upload size={14}/> }] : []),
   ] as any[];
 
   if (!user) return <div className="p-12 text-center text-black/40 dark:text-white/40">Sign in to access this page.</div>;
+
+  // ─── Report card ───────────────────────────────────────────────────────────
+  const ReportCard = ({ r, showReview }: { r: any; showReview?: boolean }) => (
+    <Card key={r.id} className="p-4">
+      <div className="flex flex-wrap items-start gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            <FileText size={14} className="text-orange-500 shrink-0" />
+            <span className="font-bold text-sm text-black dark:text-white">{r.title}</span>
+            <span
+              className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
+              style={{ color: STATUS_CFG[r.status]?.color, background: STATUS_CFG[r.status]?.bg }}
+            >
+              {STATUS_CFG[r.status]?.label}
+            </span>
+          </div>
+          <div className="text-[11px] text-black/60 dark:text-white/60 mb-1">
+            {showReview
+              ? <>From: <strong>{r.sender_name}</strong> · {r.district} · {new Date(r.created_at).toLocaleDateString()}</>
+              : <>To: <strong>{RECIPIENT_LABEL[role]}</strong> · {new Date(r.created_at).toLocaleDateString()}</>
+            }
+          </div>
+          {r.sender_role && (
+            <div className="text-[10px] text-orange-600 font-semibold mb-1">
+              {r.sender_role === 'sasa_officer'          ? '🛡️ From SASA Officer' :
+               r.sender_role === 'district_coordinator'  ? '🗺️ From District Coordinator' :
+               r.sender_role === 'program_manager'       ? '📊 Forwarded by Manager' : ''}
+            </div>
+          )}
+          {r.description && <p className="text-xs text-black/70 dark:text-white/70 mb-1">{r.description}</p>}
+          {r.feedback && (
+            <div className="mt-1 text-xs text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/20 rounded p-2">
+              💬 Feedback: {r.feedback}
+            </div>
+          )}
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex flex-col gap-1.5 shrink-0">
+          {/* View button — opens in-app viewer */}
+          {r.file_name && (
+            <button
+              onClick={() => setViewing(r)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-400 hover:bg-orange-100 transition"
+            >
+              <Eye size={12}/> View Document
+            </button>
+          )}
+          {/* Download button */}
+          {r.file_name && (
+            <a
+              href={`${BASE_URL}/uploads/document-reports/${(r.file_name || '').split('/').pop()}`}
+              download={r.file_name}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 hover:border-orange-400 text-slate-600 dark:text-slate-300 transition"
+            >
+              <Download size={12}/> Download
+            </a>
+          )}
+          {/* Review button (inbox only, pending only) */}
+          {showReview && r.status === 'pending' && (
+            <Btn size="sm" variant="secondary" onClick={() => setReviewing(r)}>
+              Review & Decide
+            </Btn>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
 
   return (
     <div>
@@ -143,98 +256,22 @@ export const DocumentReportsPage: React.FC<DocumentReportsPageProps> = ({ user, 
       {/* INBOX */}
       {tab === 'inbox' && (
         <div className="space-y-2">
-          {loading && <div className="text-center py-8 text-sm text-black/40 dark:text-white/40">Loading...</div>}
+          {loading && <div className="text-center py-8 text-sm text-black/40">Loading...</div>}
           {!loading && inbox.length === 0 && (
-            <div className="text-center py-12 text-sm text-black/40 dark:text-white/40">No reports received yet.</div>
+            <div className="text-center py-12 text-sm text-black/40">No reports received yet.</div>
           )}
-          {inbox.map(r => (
-            <Card key={r.id} className="p-4">
-              <div className="flex flex-wrap items-start gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <FileText size={14} className="text-orange-500 shrink-0" />
-                    <span className="font-bold text-sm text-black dark:text-white">{r.title}</span>
-                    <span
-                      className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
-                      style={{ color: STATUS_CFG[r.status]?.color, background: STATUS_CFG[r.status]?.bg }}
-                    >
-                      {STATUS_CFG[r.status]?.label}
-                    </span>
-                  </div>
-                  <div className="text-[11px] text-black/60 dark:text-white/60 mb-1">
-                    From: <strong>{r.sender_name}</strong> · {r.district} · {new Date(r.created_at).toLocaleDateString()}
-                  </div>
-                  <div className="text-[10px] text-orange-600 font-semibold">
-                    {r.sender_role === 'sasa_officer' ? '🛡️ From SASA Officer' :
-                    r.sender_role === 'district_coordinator' ? '🗺️ From District Coordinator' :
-                    r.sender_role === 'program_manager' ? '📊 Forwarded by Manager' : ''}
-                  </div>
-                  {r.description && <p className="text-xs text-black/70 dark:text-white/70">{r.description}</p>}
-                  {r.feedback && (
-                    <div className="mt-2 text-xs text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/20 rounded p-2">
-                      Feedback: {r.feedback}
-                    </div>
-                  )}
-                </div>
-                <div className="flex gap-2 shrink-0 flex-wrap">
-                  <button
-                    onClick={() => openFile(r.file_path, r.file_name)}
-                    className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md border border-neutral-200 dark:border-slate-700 hover:border-orange-400 text-black dark:text-white"
-                  >
-                    <Download size={12} /> {r.file_name} {r.file_size ? `(${formatSize(r.file_size)})` : ''}
-                  </button>
-                  {r.status === 'pending' && (
-                    <Btn size="sm" variant="secondary" onClick={() => setReviewing(r)}>
-                      Review
-                    </Btn>
-                  )}
-                </div>
-              </div>
-            </Card>
-          ))}
+          {inbox.map(r => <ReportCard key={r.id} r={r} showReview />)}
         </div>
       )}
 
       {/* SENT */}
       {tab === 'sent' && (
         <div className="space-y-2">
-          {loading && <div className="text-center py-8 text-sm text-black/40 dark:text-white/40">Loading...</div>}
+          {loading && <div className="text-center py-8 text-sm text-black/40">Loading...</div>}
           {!loading && sent.length === 0 && (
-            <div className="text-center py-12 text-sm text-black/40 dark:text-white/40">No reports submitted yet.</div>
+            <div className="text-center py-12 text-sm text-black/40">No reports submitted yet.</div>
           )}
-          {sent.map(r => (
-            <Card key={r.id} className="p-4">
-              <div className="flex flex-wrap items-start gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <FileText size={14} className="text-orange-500 shrink-0" />
-                    <span className="font-bold text-sm text-black dark:text-white">{r.title}</span>
-                    <span
-                      className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
-                      style={{ color: STATUS_CFG[r.status]?.color, background: STATUS_CFG[r.status]?.bg }}
-                    >
-                      {STATUS_CFG[r.status]?.label}
-                    </span>
-                  </div>
-                  <div className="text-[11px] text-black/60 dark:text-white/60 mb-1">
-                    To: <strong>{RECIPIENT_LABEL[role]}</strong> · {new Date(r.created_at).toLocaleDateString()}
-                  </div>
-                  {r.description && <p className="text-xs text-black/70 dark:text-white/70">{r.description}</p>}
-                  {r.feedback && (
-                    <div className="mt-2 text-xs text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/20 rounded p-2">
-                      Feedback: {r.feedback}
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={() => openFile(r.file_path, r.file_name)}
-                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md border border-neutral-200 dark:border-slate-700 hover:border-orange-400 text-black dark:text-white shrink-0"
-                >
-                  <Download size={12} /> {r.file_name}
-                </button>
-              </div>
-            </Card>
-          ))}
+          {sent.map(r => <ReportCard key={r.id} r={r} />)}
         </div>
       )}
 
@@ -281,53 +318,60 @@ export const DocumentReportsPage: React.FC<DocumentReportsPageProps> = ({ user, 
               Clear
             </Btn>
             <Btn size="sm" variant="primary" onClick={handleSubmit} disabled={submitting}>
-              <Upload size={13} /> {submitting ? 'Submitting…' : 'Submit Report'}
+              <Upload size={13}/> {submitting ? 'Submitting…' : 'Submit Report'}
             </Btn>
           </div>
         </Card>
       )}
 
-      {/* Review modal */}
+      {/* ── DOCUMENT VIEWER MODAL ─────────────────────────────────────────── */}
+      {viewing && <DocViewer report={viewing} onClose={() => setViewing(null)} />}
+
+      {/* ── REVIEW MODAL ─────────────────────────────────────────────────── */}
       {reviewing && (
-        <Modal title={`Review — ${reviewing.title}`} onClose={() => { setReviewing(null); setFeedback(''); }} width={480}>
-          <p className="text-xs text-black/60 dark:text-white/60 mb-4">
-            From <strong>{reviewing.sender_name}</strong> · {reviewing.district} · {new Date(reviewing.created_at).toLocaleDateString()}
-          </p>
-          <div className="mb-4">
+        <Modal title={`Review — ${reviewing.title}`} onClose={() => { setReviewing(null); setFeedback(''); }} width={520}>
+          <div className="space-y-4">
+            <div className="text-xs text-black/60 dark:text-white/60">
+              From <strong>{reviewing.sender_name}</strong> · {reviewing.district} · {new Date(reviewing.created_at).toLocaleDateString()}
+            </div>
+
+            {/* View inline before deciding */}
             <button
-              onClick={() => openFile(reviewing.file_path, reviewing.file_name)}
-              className="flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-md border border-neutral-200 dark:border-slate-700 hover:border-orange-400 text-black dark:text-white w-fit"
+              onClick={() => setViewing(reviewing)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-orange-50 dark:bg-orange-950/20 border-2 border-dashed border-orange-300 dark:border-orange-700 text-orange-700 dark:text-orange-400 font-semibold text-sm hover:bg-orange-100 transition"
             >
-              <Download size={13} /> Open {reviewing.file_name}
+              <Eye size={16}/> View Document Before Deciding
             </button>
-          </div>
-          <FArea
-            label="Feedback (optional)"
-            value={feedback}
-            onChange={e => setFeedback(e.target.value)}
-            rows={3}
-            placeholder="Add feedback or comments for the sender…"
-          />
-          <div className="flex gap-2 justify-end mt-3 flex-wrap">
-            <Btn size="sm" variant="ghost" onClick={() => { setReviewing(null); setFeedback(''); }}>Cancel</Btn>
-            <Btn size="sm" variant="secondary" onClick={() => handleUpdateStatus(reviewing.id, 'rejected')}>
-            <XCircle size={13} /> Reject
+
+            <FArea
+              label="Feedback (optional)"
+              value={feedback}
+              onChange={e => setFeedback(e.target.value)}
+              rows={3}
+              placeholder="Add feedback or comments for the sender…"
+            />
+
+            <div className="flex gap-2 justify-end flex-wrap pt-2 border-t border-slate-100 dark:border-slate-800">
+              <Btn size="sm" variant="ghost" onClick={() => { setReviewing(null); setFeedback(''); }}>Cancel</Btn>
+              <Btn size="sm" variant="secondary" onClick={() => handleUpdateStatus(reviewing.id, 'rejected')}>
+                <XCircle size={13}/> Reject
               </Btn>
-            <Btn size="sm" variant="success" onClick={() => handleUpdateStatus(reviewing.id, 'approved')}>
-            <CheckCircle size={13} /> Approve
-            </Btn>
-            {role === 'program_manager' && (
-            <Btn size="sm" variant="primary" onClick={async () => {
-            const data = await documentReportsApi.forward(reviewing.id);
-              if (data.error) { showToast(`⚠️ ${data.error}`); return; }
-            setInbox(prev => prev.filter(r => r.id !== reviewing.id));
-            setReviewing(null);
-            showToast('📨 Report forwarded to Admin');
-            }}>
-            Forward to Admin
-            </Btn>
-            )}
-        </div>
+              <Btn size="sm" variant="success" onClick={() => handleUpdateStatus(reviewing.id, 'approved')}>
+                <CheckCircle size={13}/> Approve
+              </Btn>
+              {role === 'program_manager' && (
+                <Btn size="sm" variant="primary" onClick={async () => {
+                  const data = await documentReportsApi.forward(reviewing.id);
+                  if (data.error) { showToast(`⚠️ ${data.error}`); return; }
+                  setInbox(prev => prev.filter(r => r.id !== reviewing.id));
+                  setReviewing(null);
+                  showToast('📨 Report forwarded to Admin');
+                }}>
+                  Forward to Admin
+                </Btn>
+              )}
+            </div>
+          </div>
         </Modal>
       )}
     </div>

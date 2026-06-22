@@ -202,7 +202,7 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
           .bindPopup(`
             <div style="font-family:'Plus Jakarta Sans',sans-serif;min-width:210px;color:${darkMode?'#f3f4f6':'#111827'}">
               <div style="font-weight:900;font-size:13px;margin-bottom:2px">${school.name}</div>
-              <div style="font-size:10px;font-weight:700;margin-bottom:6px;color:${trained?'#16a34a':'#d97706'}">
+              <div style="font-size:10px;font-weight:700;margin-bottom:6px;color:${trained?'#d53d01':'#d97706'}">
                 ${trained?'✓ ETT Trained':'○ Not Yet Trained'}
               </div>
               <div style="font-size:10px;color:#e85d04;font-weight:700;margin-bottom:6px">${school.district}</div>
