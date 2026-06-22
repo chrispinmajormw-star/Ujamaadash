@@ -34,7 +34,7 @@ const isDocx = (name: string) => name?.toLowerCase().match(/\.(doc|docx)$/);
 // ─── Document Viewer Modal ────────────────────────────────────────────────────
 const DocViewer: React.FC<{ report: any; onClose: () => void }> = ({ report, onClose }) => {
   const fileName = report.file_name || report.file_path || '';
-  const fileUrl  = `${BASE_URL}/uploads/document-reports/${fileName.split('/').pop() || fileName}`;
+  const fileUrl = `${BASE_URL}${report.file_path}`;
 
   // Google Docs viewer works for both PDF and DOCX without auth
   const googleViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`;
@@ -208,7 +208,7 @@ export const DocumentReportsPage: React.FC<DocumentReportsPageProps> = ({ user, 
           {/* Download button */}
           {r.file_name && (
             <a
-              href={`${BASE_URL}/uploads/document-reports/${(r.file_name || '').split('/').pop()}`}
+              href={`${BASE_URL}${r.file_path}`}
               download={r.file_name}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 hover:border-orange-400 text-slate-600 dark:text-slate-300 transition"
             >

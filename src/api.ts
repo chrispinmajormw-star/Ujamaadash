@@ -116,7 +116,7 @@ export const documentReportsApi = {
     });
     return res.json();
   },
-  getDownloadUrl: (filename: string) => `${BASE_URL}/api/document-reports/download/${filename}`,
+  getDownloadUrl: (filePath: string) => `${BASE_URL}${filePath}`,
 };
 
 // ─── Analytics API ────────────────────────────────────────────────────────────
