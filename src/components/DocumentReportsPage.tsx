@@ -37,7 +37,8 @@ const DocViewer: React.FC<{ report: any; onClose: () => void }> = ({ report, onC
   const fileUrl = `${BASE_URL}${report.file_path}`;
 
   // Google Docs viewer works for both PDF and DOCX without auth
-  const googleViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`;
+  const googleViewerUrl =
+  `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`;
 
   return (
     <Modal title={report.title} onClose={onClose} width={900}>
@@ -62,18 +63,27 @@ const DocViewer: React.FC<{ report: any; onClose: () => void }> = ({ report, onC
         </div>
 
         {/* Viewer — Google Docs Viewer embeds both PDF and DOCX */}
-        <div className="w-full rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700" style={{ height: '65vh' }}>
-          <iframe
-            src={googleViewerUrl}
-            className="w-full h-full"
-            frameBorder="0"
-            title={report.title}
-            allow="autoplay"
-          />
-        </div>
+      <div
+        className="w-full rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700"
+        style={{ height: '65vh' }}>
+        {isPdf(fileName) ? (
+        <iframe
+         src={fileUrl}
+         className="w-full h-full"
+         title={report.title}
+         />
+         ) : (
+        <iframe
+         src={`https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`}
+          className="w-full h-full"
+          frameBorder="0"
+          title={report.title}
+        />
+       )}
+      </div>
 
         <p className="text-[10px] text-slate-400 text-center">
-          Powered by Google Docs Viewer · If the document doesn't load,{' '}
+          Google Docs Viewer · If the document doesn't load,{' '}
           <a href={fileUrl} download className="text-orange-500 underline">download it directly</a>
         </p>
       </div>
