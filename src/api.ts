@@ -102,10 +102,10 @@ export const documentReportsApi = {
   getInbox: () => api.get('/api/document-reports/inbox'),
   getSent: () => api.get('/api/document-reports/sent'),
   getUnreadCount: () => api.get('/api/document-reports/unread-count'),
-  delete: (id: number) => api.delete(`/api/document-reports/${id}`),
   updateStatus: (id: number, status: string, feedback?: string) =>
     api.put(`/api/document-reports/${id}`, { status, feedback }),
   forward: (id: number) => api.put(`/api/document-reports/${id}`, { status: 'forwarded' }),
+  delete: (id: number) => api.delete(`/api/document-reports/${id}`),
   submit: async (formData: FormData) => {
     const token = localStorage.getItem('token');
     const res = await fetch(`${BASE_URL}/api/document-reports`, {
