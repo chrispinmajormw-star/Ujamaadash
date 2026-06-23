@@ -114,6 +114,7 @@ import { ETTPage } from './components/ETTPage';
 import { UsersPage } from './components/UsersPage';
 import { DataOfficerPage } from './components/DataOfficerPage';
 import { MonitoringProvider } from './context/MonitoringContext';
+import { SessionRecordsPage } from './components/SessionRecordsPage';
 
 const PAGE_LABELS: Record<string, string> = {
   dashboard: "ETT ScaleUp Program",
@@ -138,6 +139,7 @@ const PAGE_LABELS: Record<string, string> = {
   standards: "Standards & Policies",
   document_reports: "Document Reports",
   sasa: "SASA Officer Dashboard",
+  session_records: "Session Records",
 };
 
 // ─── APPS MAIN CONTAINER / CORE ENGINE ────────

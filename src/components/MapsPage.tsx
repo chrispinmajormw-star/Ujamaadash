@@ -31,7 +31,7 @@ const LAYERS: {key:LayerKey;label:string;activeClass:string}[] = [
   {key:'trainedSchools',   label:'Trained Schools',  activeClass:'bg-emerald-600 text-white'},
   {key:'untrainedSchools', label:'Untrained Schools',activeClass:'bg-amber-500 text-white'},
   {key:'connectors',       label:'Connectors',        activeClass:'bg-orange-500 text-white'},
-  {key:'heatmap',          label:'🔥 Heat Map',       activeClass:'bg-red-600 text-white'},
+  {key:'heatmap',          label:'Heat Map',       activeClass:'bg-red-600 text-white'},
 ];
 
 const StatTile = ({label,value,sub}:{label:string;value:string|number;sub?:string}) => (

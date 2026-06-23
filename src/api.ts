@@ -102,6 +102,7 @@ export const documentReportsApi = {
   getInbox: () => api.get('/api/document-reports/inbox'),
   getSent: () => api.get('/api/document-reports/sent'),
   getUnreadCount: () => api.get('/api/document-reports/unread-count'),
+  delete: (id: number) => api.delete(`/api/document-reports/${id}`),
   updateStatus: (id: number, status: string, feedback?: string) =>
     api.put(`/api/document-reports/${id}`, { status, feedback }),
   forward: (id: number) => api.put(`/api/document-reports/${id}`, { status: 'forwarded' }),
@@ -150,10 +151,11 @@ export const gbvCasesApi = {
 };
 
 // ─── SESSION RECORDS ──────────────────────────────────────────────────────────
-
 export const sessionRecordsApi = {
-  getAll: () => api.get('/api/session-records'),
-  submit: (data: any) => api.post('/api/session-records', data),
+  getAll:  ()             => api.get('/api/session-records'),
+  submit:  (data: any)    => api.post('/api/session-records', data),
+  update:  (id: number, data: any) => api.put(`/api/session-records/${id}`, data),
+  delete:  (id: number)   => api.delete(`/api/session-records/${id}`),
 };
 
 // ─── NOTIFICATIONS ────────────────────────────────────────────────────────────

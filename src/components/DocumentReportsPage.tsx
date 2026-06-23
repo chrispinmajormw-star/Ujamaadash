@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { User } from '../types';
 import { documentReportsApi } from '../api';
 import { Card, PageHeader, Btn, FInput, FArea, Modal } from './SubComponents';
-import { Inbox, Send, Upload, Download, CheckCircle, XCircle, FileText, Eye, ExternalLink } from 'lucide-react';
+import { Inbox, Send, Upload, Download, CheckCircle, XCircle, FileText, Eye, ExternalLink, Trash2 } from 'lucide-react';
 
 const BASE_URL = 'https://13.61.100.62.nip.io';
 
@@ -26,6 +26,7 @@ const RECIPIENT_LABEL: Record<string, string> = {
 };
 
 const canSubmit  = (role: string) => ['tot', 'sasa_officer', 'data_entry', 'district_coordinator'].includes(role);
+const canDelete  = (role: string) => ['admin', 'program_manager', 'district_coordinator', 'sasa_officer'].includes(role);
 const canReceive = (role: string) => ['district_coordinator', 'program_manager', 'admin'].includes(role);
 
 const isPdf  = (name: string) => name?.toLowerCase().endsWith('.pdf');
@@ -100,6 +101,8 @@ export const DocumentReportsPage: React.FC<DocumentReportsPageProps> = ({ user, 
   const [reviewing, setReviewing] = useState<any | null>(null);
   const [viewing, setViewing]   = useState<any | null>(null);
   const [feedback, setFeedback] = useState('');
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Submit form
   const [title, setTitle]         = useState('');
@@ -151,6 +154,22 @@ export const DocumentReportsPage: React.FC<DocumentReportsPageProps> = ({ user, 
     showToast(`Report marked as ${status}`);
     setReviewing(null);
     setFeedback('');
+  };
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    setDeleting(true);
+    try {
+      const data = await documentReportsApi.delete(deleteId);
+      if (data?.error) { showToast(`⚠️ ${data.error}`); setDeleting(false); return; }
+      setInbox(prev => prev.filter(r => r.id !== deleteId));
+      setSent(prev => prev.filter(r => r.id !== deleteId));
+      showToast('🗑️ Report deleted');
+      setDeleteId(null);
+    } catch {
+      showToast('⚠️ Failed to delete report');
+    }
+    setDeleting(false);
   };
 
   const formatSize = (bytes: number) => {
@@ -233,6 +252,15 @@ export const DocumentReportsPage: React.FC<DocumentReportsPageProps> = ({ user, 
             <Btn size="sm" variant="secondary" onClick={() => setReviewing(r)}>
               Review & Decide
             </Btn>
+          )}
+          {/* Delete button — privileged roles only */}
+          {canDelete(role) && (
+            <button
+              onClick={() => setDeleteId(r.id)}
+              className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg border border-red-200 dark:border-red-900/40 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition"
+            >
+              <Trash2 size={12}/> Delete
+            </button>
           )}
         </div>
       </div>
@@ -383,6 +411,26 @@ export const DocumentReportsPage: React.FC<DocumentReportsPageProps> = ({ user, 
                   Forward to Admin
                 </Btn>
               )}
+            </div>
+          </div>
+        </Modal>
+      )}
+      {/* ── DELETE CONFIRM MODAL ─────────────────────────────────────────── */}
+      {deleteId && (
+        <Modal title="Delete Report" onClose={() => setDeleteId(null)} width={380}>
+          <div className="space-y-4">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Are you sure you want to permanently delete this report? This cannot be undone.
+            </p>
+            <div className="flex gap-2 justify-end pt-2 border-t border-slate-100 dark:border-slate-800">
+              <Btn size="sm" variant="ghost" onClick={() => setDeleteId(null)}>Cancel</Btn>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white transition"
+              >
+                <Trash2 size={12}/> {deleting ? 'Deleting…' : 'Delete Report'}
+              </button>
             </div>
           </div>
         </Modal>
