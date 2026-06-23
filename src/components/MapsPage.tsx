@@ -83,6 +83,7 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
 
   // Change 1: Mobile sidebar toggle
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(true);
 
   const fetchClusters = useCallback(async () => {
     setLoading(true); setError(null);
@@ -342,7 +343,7 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
   const coveragePct     = allSchools.length > 0 ? Math.round((trainedCount / allSchools.length) * 100) : 0;
 
   return (
-    <div className="flex flex-col h-full animate-fade-in-up" style={{minHeight:0}}>
+    <div className="relative h-screen w-full overflow-hidden">
 
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-2 mb-3">
