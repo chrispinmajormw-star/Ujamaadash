@@ -311,7 +311,7 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
       {/* Add/Edit Story Modal (admin/sasa_officer only) */}
       {showForm && canManage && (
         <Modal
-          title={editingStory ? 'Edit Story' : 'Add Impact Story'}
+          title={editingStory ? 'Edit Story' : 'Add Success Story'}
           onClose={() => { setShowForm(false); setSubmitted(false); setEditingStory(null); }}
         >
           {submitted ? (
@@ -326,7 +326,7 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
               <FSelect label="Curriculum" value={storyForm.curriculum} onChange={sf('curriculum')}>
                 {['GESD', 'HIM', 'ETT', 'Combined', 'Community'].map(c => <option key={c}>{c}</option>)}
               </FSelect>
-              <FArea label="Story Content *" value={storyForm.content} onChange={sf('content')} rows={5} placeholder="Share the impact story in detail…" />
+              <FArea label="Story Content *" value={storyForm.content} onChange={sf('content')} rows={5} placeholder="Share the success story in detail…" />
               <FInput label="Author Name (or role)" value={storyForm.author_name} onChange={sf('author_name')} placeholder="e.g. Student, GESD Graduate" />
               <FSelect label="District (optional)" value={storyForm.district_id} onChange={sf('district_id')}>
                 <option value="">Select district…</option>
