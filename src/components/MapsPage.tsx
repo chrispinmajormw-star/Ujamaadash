@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   MapPin, Sliders, Info, RefreshCw,
-  ChevronRight, Clock,
+  ChevronRight, Clock, Navigation,
   AlertCircle, CheckCircle, Eye, EyeOff, Layers, Edit2,
+  Wifi, WifiOff,
 } from 'lucide-react';
 import { Kicker, Btn, Modal } from './SubComponents';
 import { mapClustersApi, mapSchoolsApi } from '../api';
@@ -70,6 +71,19 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
   const [loadingSchool,   setLoadingSchool]   = useState(false);
   const mapRef = useRef<any>(null);
 
+  // Change 2: Online/offline indicator
+  const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+  useEffect(() => {
+    const goOnline = () => setIsOnline(true);
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    return () => { window.removeEventListener('online', goOnline); window.removeEventListener('offline', goOffline); };
+  }, []);
+
+  // Change 1: Mobile sidebar toggle
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const fetchClusters = useCallback(async () => {
     setLoading(true); setError(null);
     try {
@@ -106,8 +120,8 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
     if (!mapRef.current || !L) return;
     setActiveClusterId(cluster.id);
     const pts:[number,number][] = [[cluster.lat,cluster.lng],...cluster.schools.map(s=>[s.lat,s.lng] as [number,number])];
-    if (pts.length > 1) mapRef.current.flyToBounds(pts,{padding:[60,60],maxZoom:13,duration:1.1});
-    else mapRef.current.flyTo([cluster.lat,cluster.lng],12,{duration:1.1});
+    if (pts.length > 1) mapRef.current.flyToBounds(pts,{padding:[80,80],maxZoom:15,duration:1.1});
+    else mapRef.current.flyTo([cluster.lat,cluster.lng],14,{duration:1.1});
   }, []);
 
   // ── Build Leaflet map ────────────────────────────────────────────────────
@@ -121,6 +135,11 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
       zoomControl: true,
       scrollWheelZoom: true,
       zoomSnap: 0.5,
+      // Change 8: explicit mobile touch/zoom options
+      tap: true,
+      dragging: true,
+      touchZoom: true,
+      bounceAtZoomLimits: false,
     }).setView([-13.2, 34.0], 7);
     mapRef.current = map;
 
@@ -169,31 +188,33 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
         // Icon: school building SVG + name label below
         const iconHtml = `
           <div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;">
-            <div style="
-              width:14px;height:14px;border-radius:3px;
-              background:${bg};border:1.5px solid ${border};
-              box-shadow:0 1px 3px rgba(0,0,0,.3);
-              display:flex;align-items:center;justify-content:center;
-            ">
-              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                <polyline points="9 22 9 12 15 12 15 22"/>
-              </svg>
+            <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;">
+              <div style="
+                width:28px;height:28px;border-radius:5px;
+                background:${bg};border:2px solid ${border};
+                box-shadow:0 2px 6px rgba(0,0,0,.3);
+                display:flex;align-items:center;justify-content:center;
+              ">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+              </div>
             </div>
             <div style="
-              margin-top:2px;
+              margin-top:-4px;
               background:${darkMode?'rgba(15,22,35,0.88)':'rgba(255,255,255,0.88)'};
               color:${darkMode?'#f1f5f9':'#1e293b'};
-              font-size:7px;font-weight:700;
-              padding:1px 3px;border-radius:3px;
-              white-space:nowrap;max-width:60px;overflow:hidden;text-overflow:ellipsis;
+              font-size:10px;font-weight:700;
+              padding:2px 5px;border-radius:4px;
+              white-space:nowrap;max-width:80px;overflow:hidden;text-overflow:ellipsis;
               border:1px solid ${darkMode?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.06)'};
               box-shadow:0 1px 2px rgba(0,0,0,.1);
               pointer-events:none;
             ">${school.name.length > 12 ? school.name.slice(0,12)+'…' : school.name}</div>
           </div>`;
 
-        const icon = L.divIcon({ className:'', html:iconHtml, iconAnchor:[7,7] });
+        const icon = L.divIcon({ className:'', html:iconHtml, iconAnchor:[22,22] });
         const curricula = [school.him_running&&'HIM', school.gesd_running&&'GESD'].filter(Boolean).join('+') || 'None';
         const totalL = (school.boys_enrolled||0)+(school.girls_enrolled||0);
 
@@ -225,30 +246,32 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
 
       const clusterHtml = `
         <div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;">
-          <div style="
-            width:18px;height:18px;border-radius:50%;
-            background:${darkMode?'#1e293b':'#0f1623'};
-            border:2px solid #e85d04;
-            box-shadow:0 2px 6px rgba(0,0,0,.4);
-            display:flex;align-items:center;justify-content:center;
-          ">
-            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#e85d04" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
-            </svg>
+          <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;">
+            <div style="
+              width:30px;height:30px;border-radius:50%;
+              background:${darkMode?'#1e293b':'#0f1623'};
+              border:2.5px solid #e85d04;
+              box-shadow:0 2px 8px rgba(0,0,0,.4);
+              display:flex;align-items:center;justify-content:center;
+            ">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e85d04" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+              </svg>
+            </div>
           </div>
           <div style="
-            margin-top:2px;
+            margin-top:-4px;
             background:#e85d04;color:white;
-            font-size:7px;font-weight:800;
-            padding:1px 4px;border-radius:3px;
-            white-space:nowrap;max-width:70px;overflow:hidden;text-overflow:ellipsis;
-            box-shadow:0 1px 3px rgba(232,93,4,.35);
+            font-size:10px;font-weight:800;
+            padding:2px 6px;border-radius:4px;
+            white-space:nowrap;max-width:90px;overflow:hidden;text-overflow:ellipsis;
+            box-shadow:0 1px 4px rgba(232,93,4,.4);
             pointer-events:none;
           ">${cluster.name.length>14?cluster.name.slice(0,14)+'…':cluster.name}</div>
         </div>`;
 
-      const centerIcon = L.divIcon({className:'',html:clusterHtml,iconAnchor:[9,9]});
+      const centerIcon = L.divIcon({className:'',html:clusterHtml,iconAnchor:[22,22]});
       const marker = L.marker([cluster.lat,cluster.lng],{icon:centerIcon,zIndexOffset:500}).addTo(map);
 
       marker.bindPopup(`
@@ -315,6 +338,8 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
   const trainedCount    = allSchools.filter(s=>s.ett_trained).length;
   const untrainedCount  = allSchools.length - trainedCount;
   const totalTeachbacks = clusters.reduce((a,c)=>a+c.teachbacks,0);
+  // Change 3: live coverage percentage
+  const coveragePct     = allSchools.length > 0 ? Math.round((trainedCount / allSchools.length) * 100) : 0;
 
   return (
     <div className="flex flex-col h-full animate-fade-in-up" style={{minHeight:0}}>
@@ -327,7 +352,11 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
             School Clusters & Hubs
           </h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Change 2: online/offline indicator */}
+          <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full border ${isOnline ? 'text-emerald-600 border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20 dark:border-emerald-800 dark:text-emerald-400' : 'text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 dark:text-amber-400'}`}>
+            {isOnline ? <><Wifi size={10}/> Online</> : <><WifiOff size={10}/> Offline</>}
+          </span>
           {isCartographer && (
             <Btn size="sm" onClick={()=>setPage('cartographer_home')}>
               <Edit2 size={12} className="inline mr-1"/> Edit Map Data
@@ -340,11 +369,13 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
       </div>
 
       {/* STAT STRIP */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3">
         <StatTile label="Total Learners"  value={totalLearners.toLocaleString()} sub="across all clusters"/>
-        <StatTile label="ETT Trained"     value={trainedCount}   sub={`${allSchools.length>0?Math.round(trainedCount/allSchools.length*100):0}% of schools`}/>
+        <StatTile label="ETT Trained"     value={trainedCount}   sub={`${coveragePct}% of schools`}/>
         <StatTile label="Not Yet Trained" value={untrainedCount} sub="schools pending"/>
         <StatTile label="Teachbacks Done" value={totalTeachbacks} sub="cumulative"/>
+        {/* Change 3: coverage tile */}
+        <StatTile label="Coverage" value={`${coveragePct}%`} sub={`${trainedCount} of ${allSchools.length} schools`}/>
       </div>
 
       {/* LAYER CONTROLS + LEGEND */}
@@ -376,8 +407,17 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
       {/* MAP + SIDEBAR — takes all remaining height */}
       <div className="grid grid-cols-1 md:grid-cols-4 border border-slate-200 dark:border-slate-800 border-t-0 rounded-b-2xl overflow-hidden flex-1" style={{minHeight:'420px'}}>
 
-        {/* SIDEBAR */}
-        <div className="bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden max-h-[200px] md:max-h-none md:col-span-1">
+        {/* Change 1: Mobile sidebar toggle button — only visible on small screens */}
+        <button
+          className="md:hidden flex items-center justify-between px-4 py-2.5 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 col-span-1"
+          onClick={() => setSidebarOpen(o => !o)}
+        >
+          <span className="flex items-center gap-1.5"><Sliders size={12}/> Clusters & Filters</span>
+          <span className="text-slate-400">{sidebarOpen ? '▲ Hide' : '▼ Show'}</span>
+        </button>
+
+        {/* SIDEBAR — collapsible on mobile, always visible on md+ */}
+        <div className={`bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden md:col-span-1 transition-all duration-300 ${sidebarOpen ? 'max-h-[320px]' : 'max-h-0'} md:max-h-none`}>
           <div className="p-3 border-b border-slate-100 dark:border-slate-800 shrink-0 space-y-2.5">
             <div>
               <div className="text-[9.5px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1">
@@ -418,6 +458,8 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
                 {filteredClusters.map(c=>{
                   const cTrained=c.schools.filter(s=>s.ett_trained).length;
                   const cUntrained=c.schools.length-cTrained;
+                  // Change 7: live-computed progress instead of stale c.progress
+                  const livePct = c.schools.length > 0 ? Math.round((cTrained / c.schools.length) * 100) : 0;
                   return (
                     <button key={c.id} onClick={()=>{flyToCluster(c);setSelectedCluster(c);}}
                       className={`w-full text-left p-2.5 rounded-xl border transition-all ${activeClusterId===c.id?'border-orange-500 bg-orange-50/30 dark:bg-orange-950/20':'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-orange-200'}`}>
@@ -426,8 +468,9 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
                       <div className="flex gap-2 mt-1 text-[9px] font-bold">
                         <span className="text-emerald-600">{cTrained} trained</span>
                         {cUntrained>0&&<span className="text-amber-500">{cUntrained} untrained</span>}
+                        <span className="text-slate-400 ml-auto">{livePct}%</span>
                       </div>
-                      <div className="mt-1.5"><MiniBar value={c.progress}/></div>
+                      <div className="mt-1.5"><MiniBar value={livePct}/></div>
                     </button>
                   );
                 })}
@@ -594,6 +637,16 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
                 <div className="text-[10px] font-mono text-slate-400 flex items-center gap-1.5">
                   <MapPin size={10}/> {Number(s.lat).toFixed(5)}, {Number(s.lng).toFixed(5)}
                 </div>
+                {/* Change 4: GPS navigate button */}
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-white text-xs font-bold shadow-sm transition hover:opacity-90"
+                  style={{ background: '#e85d04' }}
+                >
+                  <Navigation size={13}/> Navigate with Google Maps
+                </a>
                 {schoolDetail?.visit_logs&&schoolDetail.visit_logs.length>0&&(
                   <div>
                     <div className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Recent Field Visits</div>

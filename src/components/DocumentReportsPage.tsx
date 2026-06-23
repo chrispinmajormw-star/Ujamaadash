@@ -209,7 +209,10 @@ export const DocumentReportsPage: React.FC<DocumentReportsPageProps> = ({ user, 
           {/* View button — opens in-app viewer */}
           {r.file_name && (
             <button
-              onClick={() => setViewing(r)}
+              onClick={() => {
+              console.log('REPORT', r);
+              setViewing(r);
+              }}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-400 hover:bg-orange-100 transition"
             >
               <Eye size={12}/> View Document
