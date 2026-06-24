@@ -56,7 +56,7 @@ export const SessionRecordsPage: React.FC<SessionRecordsPageProps> = ({ user, sh
     setLoading(true);
     try {
       const data = await sessionRecordsApi.getAll();
-      if (Array.isArray(data)) setRecords(data);
+      setRecords(data);
     } catch { showToast('⚠️ Could not load session records'); }
     finally { setLoading(false); }
   };

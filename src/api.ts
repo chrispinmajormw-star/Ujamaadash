@@ -1,53 +1,48 @@
-const BASE_URL = 'https://13.61.100.62.nip.io';
+import { unwrapList } from './utils/mapFallback';
+
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://13.61.100.62.nip.io';
 
 const getToken = () => localStorage.getItem('token');
 
+async function apiRequest(path: string, options: RequestInit = {}) {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}),
+      ...(options.headers || {}),
+    },
+  });
+
+  let data: unknown = null;
+  try {
+    data = await res.json();
+  } catch {
+    data = null;
+  }
+
+  if (!res.ok) {
+    const message =
+      (data && typeof data === 'object' && ('error' in data || 'message' in data))
+        ? String((data as { error?: string; message?: string }).error || (data as { message?: string }).message)
+        : `HTTP ${res.status}`;
+    throw new Error(message);
+  }
+
+  return data;
+}
+
 export const api = {
-  get: async (path: string) => {
-    const res = await fetch(`${BASE_URL}${path}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(getToken() && { Authorization: `Bearer ${getToken()}` }),
-      },
-    });
-    return res.json();
-  },
-
-  post: async (path: string, body: any) => {
-    const res = await fetch(`${BASE_URL}${path}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(getToken() && { Authorization: `Bearer ${getToken()}` }),
-      },
-      body: JSON.stringify(body),
-    });
-    return res.json();
-  },
-
-  put: async (path: string, body: any) => {
-    const res = await fetch(`${BASE_URL}${path}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(getToken() && { Authorization: `Bearer ${getToken()}` }),
-      },
-      body: JSON.stringify(body),
-    });
-    return res.json();
-  },
-
-  delete: async (path: string) => {
-    const res = await fetch(`${BASE_URL}${path}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(getToken() && { Authorization: `Bearer ${getToken()}` }),
-      },
-    });
-    return res.json();
-  },
+  get: (path: string) => apiRequest(path),
+  post: (path: string, body: any) => apiRequest(path, { method: 'POST', body: JSON.stringify(body) }),
+  put: (path: string, body: any) => apiRequest(path, { method: 'PUT', body: JSON.stringify(body) }),
+  delete: (path: string) => apiRequest(path, { method: 'DELETE' }),
 };
+
+async function apiGetList(path: string, keys: string[]) {
+  const data = await api.get(path);
+  return unwrapList(data, keys);
+}
 
 // ─── apiFetch — used by analyticsApi, monitoringApi, mapApi ──────────────────
 async function apiFetch<T = any>(path: string, options: RequestInit = {}): Promise<T> {
@@ -70,7 +65,7 @@ async function apiFetch<T = any>(path: string, options: RequestInit = {}): Promi
 // ─── REPORTS ─────────────────────────────────────────────────────────────────
 
 export const reportsApi = {
-  getAll: () => api.get('/api/reports'),
+  getAll: () => apiGetList('/api/reports', ['reports', 'data', 'items']),
   getById: (id: number) => api.get(`/api/reports/${id}`),
   create: (data: any) => api.post('/api/reports', data),
   update: (id: number, data: any) => api.put(`/api/reports/${id}`, data),
@@ -81,7 +76,7 @@ export const reportsApi = {
 // ─── USERS ───────────────────────────────────────────────────────────────────
 
 export const usersApi = {
-  getAll: () => api.get('/api/users'),
+  getAll: () => apiGetList('/api/users', ['users', 'data', 'items']),
   login: (email: string, password: string) => api.post('/api/users/login', { email, password }),
   forgotPassword: (email: string) => api.post('/api/users/forgot-password', { email }),
   updateProfile: (userId: string, data: { name: string; email: string }) =>
@@ -99,8 +94,8 @@ export const statsApi = {
 // ─── DOCUMENT REPORTS ────────────────────────────────────────────────────────
 
 export const documentReportsApi = {
-  getInbox: () => api.get('/api/document-reports/inbox'),
-  getSent: () => api.get('/api/document-reports/sent'),
+  getInbox: () => apiGetList('/api/document-reports/inbox', ['inbox', 'reports', 'data', 'items']),
+  getSent: () => apiGetList('/api/document-reports/sent', ['sent', 'reports', 'data', 'items']),
   getUnreadCount: () => api.get('/api/document-reports/unread-count'),
   updateStatus: (id: number, status: string, feedback?: string) =>
     api.put(`/api/document-reports/${id}`, { status, feedback }),
@@ -132,11 +127,11 @@ export const analyticsApi = {
 // ─── DISTRICT MANAGEMENT ─────────────────────────────────────────────────────
 
 export const districtsApi = {
-  getAll: () => api.get('/api/districts'),
+  getAll: () => apiGetList('/api/districts', ['districts', 'data', 'items']),
   getOne: (id: number) => api.get(`/api/districts/${id}`),
-  getReports: (id: number) => api.get(`/api/districts/${id}/reports`),
+  getReports: (id: number) => apiGetList(`/api/districts/${id}/reports`, ['reports', 'data', 'items']),
   submitReport: (id: number, data: any) => api.post(`/api/districts/${id}/reports`, data),
-  getTrainings: (id: number) => api.get(`/api/districts/${id}/trainings`),
+  getTrainings: (id: number) => apiGetList(`/api/districts/${id}/trainings`, ['trainings', 'data', 'items']),
   createTraining: (id: number, data: any) => api.post(`/api/districts/${id}/trainings`, data),
   updateTraining: (id: number, data: any) => api.put(`/api/trainings/${id}`, data),
   deleteTraining: (id: number) => api.delete(`/api/trainings/${id}`),
@@ -145,14 +140,14 @@ export const districtsApi = {
 // ─── GBV CASES ───────────────────────────────────────────────────────────────
 
 export const gbvCasesApi = {
-  getAll: () => api.get('/api/gbv-cases'),
+  getAll: () => apiGetList('/api/gbv-cases', ['cases', 'data', 'items']),
   submit: (data: any) => api.post('/api/gbv-cases', data),
   updateStatus: (id: number, status: string) => api.put(`/api/gbv-cases/${id}/status`, { status }),
 };
 
 // ─── SESSION RECORDS ──────────────────────────────────────────────────────────
 export const sessionRecordsApi = {
-  getAll:  ()             => api.get('/api/session-records'),
+  getAll:  ()             => apiGetList('/api/session-records', ['records', 'data', 'items']),
   submit:  (data: any)    => api.post('/api/session-records', data),
   update:  (id: number, data: any) => api.put(`/api/session-records/${id}`, data),
   delete:  (id: number)   => api.delete(`/api/session-records/${id}`),
@@ -161,7 +156,7 @@ export const sessionRecordsApi = {
 // ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
 
 export const notificationsApi = {
-  getAll: () => api.get('/api/notifications'),
+  getAll: () => apiGetList('/api/notifications', ['notifications', 'data', 'items']),
   getUnreadCount: () => api.get('/api/notifications/unread-count'),
   markRead: (id: number) => api.put(`/api/notifications/${id}/read`, {}),
   markAllRead: () => api.put('/api/notifications/mark-all-read', {}),
@@ -170,7 +165,7 @@ export const notificationsApi = {
 // ─── IMPACT STORIES ───────────────────────────────────────────────────────────
 
 export const impactStoriesApi = {
-  getAll: () => api.get('/api/impact-stories'),
+  getAll: () => apiGetList('/api/impact-stories', ['stories', 'data', 'items']),
   getOne: (id: number) => api.get(`/api/impact-stories/${id}`),
   create: (data: any) => api.post('/api/impact-stories', data),
   update: (id: number, data: any) => api.put(`/api/impact-stories/${id}`, data),
@@ -187,15 +182,16 @@ export const programmeStatsApi = {
 // ─── TRAININGS ────────────────────────────────────────────────────────────────
 
 export const trainingsApi = {
-  getAll: () => api.get('/api/trainings'),
+  getAll: () => apiGetList('/api/trainings', ['trainings', 'data', 'items']),
 };
 
 // ─── Monitoring API ───────────────────────────────────────────────────────────
 export const monitoringApi = {
   /** GET /api/monitoring/activities */
-  getActivities: (params?: { district?: string; month?: string }) => {
+  getActivities: async (params?: { district?: string; month?: string }) => {
     const qs = params ? '?' + new URLSearchParams(params as any).toString() : '';
-    return apiFetch(`/api/monitoring/activities${qs}`);
+    const data = await apiFetch(`/api/monitoring/activities${qs}`);
+    return unwrapList(data, ['activities', 'data', 'items']);
   },
 
   /** POST /api/monitoring/activities */
@@ -211,9 +207,10 @@ export const monitoringApi = {
     apiFetch(`/api/monitoring/activities/${id}`, { method: 'DELETE' }),
 
   /** GET /api/monitoring/issues */
-  getIssues: (params?: { district?: string; month?: string }) => {
+  getIssues: async (params?: { district?: string; month?: string }) => {
     const qs = params ? '?' + new URLSearchParams(params as any).toString() : '';
-    return apiFetch(`/api/monitoring/issues${qs}`);
+    const data = await apiFetch(`/api/monitoring/issues${qs}`);
+    return unwrapList(data, ['issues', 'data', 'items']);
   },
 
   /** POST /api/monitoring/issues */
@@ -237,7 +234,7 @@ export const monitoringApi = {
 export const caseReferralsApi = {
   getAll: (params?: { status?: string; district?: string }) => {
     const query = params ? '?' + new URLSearchParams(params as any).toString() : '';
-    return api.get(`/api/case-referrals${query}`);
+    return apiGetList(`/api/case-referrals${query}`, ['referrals', 'cases', 'data', 'items']);
   },
   getById: (id: number) => api.get(`/api/case-referrals/${id}`),
   create: (data: any) => api.post('/api/case-referrals', data),
@@ -250,7 +247,7 @@ export const caseReferralsApi = {
 export const sasaReportsApi = {
   getAll: (params?: { status?: string; month?: string }) => {
     const query = params ? '?' + new URLSearchParams(params as any).toString() : '';
-    return api.get(`/api/sasa-reports${query}`);
+    return apiGetList(`/api/sasa-reports${query}`, ['reports', 'sasa_reports', 'data', 'items']);
   },
   getById: (id: number) => api.get(`/api/sasa-reports/${id}`),
   create: (data: any) => api.post('/api/sasa-reports', data),
@@ -261,9 +258,10 @@ export const sasaReportsApi = {
 // ─── MAP — CLUSTERS ──────────────────────────────────────────────────────────
 
 export const mapClustersApi = {
-  getAll: (params?: { region?: string; district?: string }) => {
+  getAll: async (params?: { region?: string; district?: string }) => {
     const query = params ? '?' + new URLSearchParams(params as any).toString() : '';
-    return api.get(`/api/map/clusters${query}`);
+    const data = await api.get(`/api/map/clusters${query}`);
+    return unwrapList(data, ['clusters', 'data', 'items', 'results']);
   },
   getById:  (id: number) => api.get(`/api/map/clusters/${id}`),
   create:   (data: any)  => api.post('/api/map/clusters', data),
@@ -274,9 +272,10 @@ export const mapClustersApi = {
 // ─── MAP — SCHOOLS ────────────────────────────────────────────────────────────
 
 export const mapSchoolsApi = {
-  getAll: (params?: { cluster_id?: number; district?: string; region?: string; status?: string }) => {
+  getAll: async (params?: { cluster_id?: number; district?: string; region?: string; status?: string }) => {
     const query = params ? '?' + new URLSearchParams(params as any).toString() : '';
-    return api.get(`/api/map/schools${query}`);
+    const data = await api.get(`/api/map/schools${query}`);
+    return unwrapList(data, ['schools', 'data', 'items', 'results']);
   },
   getById:   (id: number) => api.get(`/api/map/schools/${id}`),
   create:    (data: any)  => api.post('/api/map/schools', data),
@@ -285,7 +284,10 @@ export const mapSchoolsApi = {
 };
 
 export const mapZonesApi = {
-  getAll: () => api.get('/api/map/zones'),
+  getAll: async () => {
+    const data = await api.get('/api/map/zones');
+    return unwrapList(data, ['zones', 'data', 'items']);
+  },
 };
 
 // ─── Map / Clusters API ───────────────────────────────────────────────────────

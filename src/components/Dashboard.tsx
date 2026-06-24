@@ -1,5 +1,6 @@
 import { Modal } from './SubComponents';
 import { programmeStatsApi, statsApi, api } from '../api';
+import { getStaticMapClusters } from '../utils/mapFallback';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Shield, FilePlus, GraduationCap, School, TrendingUp, FileText, Clock,BookOpen, CheckSquare, Users, Map, MapPin, Edit2, RefreshCw, Star } from 'lucide-react';
 import { User, Report } from '../types';
@@ -206,9 +207,11 @@ useEffect(() => {
   const [dashClusters, setDashClusters] = useState<any[]>([]);
   useEffect(() => {
     import('../api').then(({ mapClustersApi }) => {
-      mapClustersApi.getAll().then((data: any) => {
-        if (Array.isArray(data)) setDashClusters(data);
-      }).catch(() => {});
+      mapClustersApi.getAll().then((data) => {
+        setDashClusters(data.length > 0 ? data : getStaticMapClusters());
+      }).catch(() => {
+        setDashClusters(getStaticMapClusters());
+      });
     });
   }, []);
 

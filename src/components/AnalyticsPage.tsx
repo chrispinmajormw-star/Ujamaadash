@@ -106,12 +106,8 @@ interface AnalyticsPageProps { reports: Report[]; }
     analyticsApi.get().then(data => {
       if (!data.error) setAnalytics(data);
     });
-    districtsApi.getAll().then(data => {
-      if (Array.isArray(data)) setDistricts(data);
-    });
-    mapClustersApi.getAll().then(data => {
-      if (Array.isArray(data)) setClusters(data);
-    });
+    districtsApi.getAll().then(setDistricts);
+    mapClustersApi.getAll().then(setClusters);
   }, []);
 
   const REGIONAL_DATA = buildRegionalData(districts);

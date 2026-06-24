@@ -55,7 +55,7 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
 
   useEffect(() => {
     impactStoriesApi.getAll().then(data => {
-      if (Array.isArray(data)) setStories(data);
+      setStories(data);
       setLoading(false);
     });
   }, []);

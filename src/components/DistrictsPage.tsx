@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
-import { districtsApi, api } from '../api';
+import { districtsApi, usersApi } from '../api';
 import {
   Card, PageHeader, Btn, ProgBar, Badge, FInput, FArea, FSelect, Modal, FilterBar
 } from './SubComponents';
@@ -81,17 +81,15 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
 
   useEffect(() => {
     if (isAdmin) {
-      api.get('/api/users').then(data => {
-        if (Array.isArray(data)) {
-          setDcUsers(data.filter((u: any) => u.role === 'district_coordinator'));
-        }
+      usersApi.getAll().then(data => {
+        setDcUsers(data.filter((u: any) => u.role === 'district_coordinator'));
       });
     }
   }, [user]);
 
   useEffect(() => {
     districtsApi.getAll().then(data => {
-      if (Array.isArray(data)) setDistricts(data);
+      setDistricts(data);
       setLoading(false);
     });
   }, []);
@@ -105,8 +103,8 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
     setDistrictData(prev => ({
       ...prev,
       [districtId]: {
-        reports: Array.isArray(reports) ? reports : [],
-        trainings: Array.isArray(trainings) ? trainings : [],
+        reports,
+        trainings,
       }
     }));
   };

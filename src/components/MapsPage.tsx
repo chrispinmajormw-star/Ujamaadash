@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Btn, Modal } from './SubComponents';
 import { mapClustersApi, mapSchoolsApi } from '../api';
+import { getStaticMapClusters } from '../utils/mapFallback';
 
 interface MapSchool {
   id: number; cluster_id: number; name: string; district: string; region: string;
@@ -87,18 +88,27 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
   const fetchClusters = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      const params:any = {};
+      const params: any = {};
       if (selectedRegion !== 'All') params.region = selectedRegion;
       const [clusterData, plannedData] = await Promise.all([
         mapClustersApi.getAll(params),
         mapSchoolsApi.getAll({ status: 'planned' }),
       ]);
-      if (Array.isArray(clusterData)) setClusters(clusterData);
-      else setError('Unexpected response from server.');
-      if (Array.isArray(plannedData))
-        setPlannedSchools(plannedData.filter((s:MapSchool) => !s.cluster_id || s.cluster_id === 0));
-    } catch { setError('Could not load map data.'); }
-    finally { setLoading(false); }
+      const nextClusters = clusterData.length > 0 ? clusterData : getStaticMapClusters(selectedRegion);
+      setClusters(nextClusters);
+      setPlannedSchools(
+        plannedData.filter((s: MapSchool) => !s.cluster_id || s.cluster_id === 0)
+      );
+      if (clusterData.length === 0) {
+        setError('Using offline map data — live server unavailable.');
+      }
+    } catch {
+      setClusters(getStaticMapClusters(selectedRegion));
+      setPlannedSchools([]);
+      setError('Using offline map data — could not reach server.');
+    } finally {
+      setLoading(false);
+    }
   }, [selectedRegion]);
 
   useEffect(() => { fetchClusters(); }, [fetchClusters]);
@@ -127,7 +137,7 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
   // ── Build Leaflet map ────────────────────────────────────────────────────
   useEffect(() => {
     const L = (window as any).L;
-    if (!L || loading || error) return;
+    if (!L || loading) return;
     if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
 
     // Full-screen map, no auto-zoom-on-resize
@@ -331,7 +341,7 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
     });
 
     return () => { map.remove(); mapRef.current = null; };
-  }, [filteredClusters, plannedSchools, darkMode, layers, loading, error]);
+  }, [filteredClusters, plannedSchools, darkMode, layers, loading]);
 
   const allSchools      = clusters.flatMap(c=>c.schools);
   const totalLearners   = clusters.reduce((a,c)=>a+c.students,0);
@@ -361,11 +371,10 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
           </div>
         </div>
       )}
-      {error && (
-        <div className="absolute inset-0 z-20 bg-white dark:bg-slate-950 flex flex-col items-center justify-center gap-3">
-          <AlertCircle size={28} className="text-red-500"/>
-          <p className="text-sm text-slate-600 dark:text-slate-400">{error}</p>
-          <button onClick={fetchClusters} className="px-4 py-2 rounded-lg bg-orange-500 text-white text-xs font-bold hover:bg-orange-600 transition">Retry</button>
+      {error && !loading && (
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20 max-w-md w-[calc(100%-1.5rem)] bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-800 rounded-lg px-4 py-2.5 shadow-lg flex items-center justify-between gap-3">
+          <p className="text-xs text-black dark:text-white m-0">{error}</p>
+          <button onClick={fetchClusters} className="shrink-0 px-3 py-1.5 rounded-md bg-orange-500 text-white text-xs font-bold hover:bg-orange-600 transition">Retry</button>
         </div>
       )}
 

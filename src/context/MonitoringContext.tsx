@@ -54,6 +54,14 @@ export const MonitoringProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
+    // Don't hit authenticated endpoints if we have no token yet
+    // (e.g. app just loaded and the user hasn't logged in).
+    if (!localStorage.getItem('token')) {
+      setActivities([]);
+      setIssues([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -61,8 +69,8 @@ export const MonitoringProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         monitoringApi.getActivities(),
         monitoringApi.getIssues(),
       ]);
-      setActivities(Array.isArray(activitiesData) ? activitiesData : []);
-      setIssues(Array.isArray(issuesData) ? issuesData : []);
+      setActivities(activitiesData);
+      setIssues(issuesData);
     } catch (err: any) {
       console.error('MonitoringContext: failed to load monitoring data', err);
       setError(err.message || 'Failed to load monitoring data');

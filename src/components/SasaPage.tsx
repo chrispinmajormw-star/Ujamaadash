@@ -599,15 +599,9 @@ export const SasaPage: React.FC<SasaPageProps> = ({ user, reports, showToast }) 
 
   useEffect(() => {
     if (user?.role === 'sasa_officer' || user?.role === 'admin') {
-      gbvCasesApi.getAll().then(data => {
-        if (Array.isArray(data)) setGbvCases(data);
-      });
-      caseReferralsApi.getAll().then(data => {
-        if (Array.isArray(data)) setReferrals(data.map(mapReferral));
-      });
-      sasaReportsApi.getAll().then(data => {
-        if (Array.isArray(data)) setSasaReports(data.map(mapSasaReport));
-      });
+      gbvCasesApi.getAll().then(setGbvCases);
+      caseReferralsApi.getAll().then(data => setReferrals(data.map(mapReferral)));
+      sasaReportsApi.getAll().then(data => setSasaReports(data.map(mapSasaReport)));
     }
   }, [user]);
   if (!canAccess) {

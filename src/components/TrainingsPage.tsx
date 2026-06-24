@@ -63,10 +63,9 @@ export const TrainingsPage: React.FC = () => {
     setError('');
     try {
       const data = await trainingsApi.getAll();
-      if (Array.isArray(data)) {
-        setTrainings(data);
-      } else {
-        setError('Failed to load trainings');
+      setTrainings(data);
+      if (data.length === 0) {
+        setError('No trainings found for the current year.');
       }
     } catch {
       setError('Could not connect to server. Please check your internet connection and try again.');

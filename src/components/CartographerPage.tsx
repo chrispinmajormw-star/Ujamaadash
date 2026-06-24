@@ -8,6 +8,7 @@ import {
 import { Card, Kicker, Btn, FInput, FSelect, FArea, Modal, StatCard, ProgBar } from './SubComponents';
 import { DISTRICT_LIST } from '../data';
 import { mapClustersApi, mapSchoolsApi, mapZonesApi } from '../api';
+import { getStaticMapClusters } from '../utils/mapFallback';
 import { User } from '../types';
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
@@ -348,12 +349,17 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
         mapZonesApi.getAll(),
         mapSchoolsApi.getAll({ status: 'planned' }),
       ]);
-      if (Array.isArray(clusterData)) setClusters(clusterData);
-      if (Array.isArray(zoneData))    setZones(zoneData);
-      // Planned schools = status 'planned' OR cluster_id is 0/null
-      if (Array.isArray(plannedData)) setPlannedSchools(plannedData);
+      setClusters(clusterData.length > 0 ? clusterData : getStaticMapClusters());
+      setZones(zoneData);
+      setPlannedSchools(plannedData);
+      if (clusterData.length === 0) {
+        setError('Using offline map data — live server unavailable.');
+      }
     } catch {
-      setError('Could not load data from server.');
+      setClusters(getStaticMapClusters());
+      setZones([]);
+      setPlannedSchools([]);
+      setError('Using offline data — could not reach server.');
     } finally {
       setLoading(false);
     }
@@ -479,17 +485,15 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
     </div>
   );
 
-  if (error) return (
-    <div className="flex flex-col items-center justify-center h-48 gap-3">
-      <AlertCircle size={28} className="text-red-500" />
-      <p className="text-sm text-slate-500">{error}</p>
-      <Btn size="sm" onClick={fetch}>Retry</Btn>
-    </div>
-  );
-
   // ═══════════════════════════════════════════════════════════════════════════
   return (
     <div className="space-y-5 animate-fade-in-up">
+      {error && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-300 dark:border-amber-800 bg-white dark:bg-slate-900 px-4 py-2.5">
+          <p className="text-xs text-black dark:text-white m-0">{error}</p>
+          <Btn size="sm" onClick={fetch}>Retry</Btn>
+        </div>
+      )}
 
       {/* ── HEADER ── */}
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">

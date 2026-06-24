@@ -159,8 +159,7 @@ export default function App() {
 useEffect(() => {
   if (user) {
     reportsApi.getAll().then(data => {
-      if (Array.isArray(data)) {
-        setReports(data.map((r: any) => ({
+      setReports(data.map((r: any) => ({
           id: r.id,
           school: r.school,
           district: r.district,
@@ -176,8 +175,7 @@ useEffect(() => {
           submitted_at: r.submitted_at?.split('T')[0],
           submitted_role: r.submitted_role,
           workflow_status: r.workflow_status,
-        })));
-      }
+      })));
     });
   }
 }, [user]);
@@ -187,7 +185,25 @@ useEffect(() => {
 useEffect(() => {
   if (user?.role === 'admin') {
     usersApi.getAll().then(data => {
-      if (Array.isArray(data)) {
+      setUsers(data.map((u: any) => ({
+        id: u.id,
+        email: u.email,
+        role: u.role,
+        name: u.name,
+        region: u.region ?? null,
+        district: u.district ?? null,
+        avatar: u.avatar || u.name?.split(' ').map((x: string) => x[0]).join('').toUpperCase(),
+        status: u.status,
+        clusterId: u.cluster_id,
+      })));
+    });
+  }
+}, [user]);
+
+  // Refresh users list from server — called after activate/suspend/delete in UsersPage
+  const refreshUsers = useCallback(() => {
+    if (user?.role === 'admin') {
+      usersApi.getAll().then(data => {
         setUsers(data.map((u: any) => ({
           id: u.id,
           email: u.email,
@@ -199,28 +215,6 @@ useEffect(() => {
           status: u.status,
           clusterId: u.cluster_id,
         })));
-      }
-    });
-  }
-}, [user]);
-
-  // Refresh users list from server — called after activate/suspend/delete in UsersPage
-  const refreshUsers = useCallback(() => {
-    if (user?.role === 'admin') {
-      usersApi.getAll().then(data => {
-        if (Array.isArray(data)) {
-          setUsers(data.map((u: any) => ({
-            id: u.id,
-            email: u.email,
-            role: u.role,
-            name: u.name,
-            region: u.region ?? null,
-            district: u.district ?? null,
-            avatar: u.avatar || u.name?.split(' ').map((x: string) => x[0]).join('').toUpperCase(),
-            status: u.status,
-            clusterId: u.cluster_id,
-          })));
-        }
       });
     }
   }, [user]);
@@ -352,9 +346,7 @@ useEffect(() => {
       if (data.count !== undefined) setDocUnread(data.count);
     });
   }
-  notificationsApi.getAll().then(data => {
-    if (Array.isArray(data)) setNotifications(data);
-  });
+  notificationsApi.getAll().then(setNotifications);
   notificationsApi.getUnreadCount().then(data => {
     if (data.count !== undefined) setNotifUnread(data.count);
   });
@@ -648,7 +640,7 @@ if (role === 'district_coordinator') return [
   );
 
   return (
-    <MonitoringProvider>
+    <MonitoringProvider key={user?.id ?? 'guest'}>
       <>
       <div className="h-screen flex overflow-hidden bg-white dark:bg-[#0f1623] text-black dark:text-white transition-colors">
         <AnimatePresence>
