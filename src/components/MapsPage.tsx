@@ -170,8 +170,8 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
         if (trained && !layers.trainedSchools)    return;
         if (!trained && !layers.untrainedSchools) return;
 
-        const bg    = trained ? '#16a34a' : '#d97706';
-        const border= trained ? '#064e3b' : '#78350f';
+        const bg    = trained ? '#16a34a' : '#595958';
+        const border= trained ? '#064e3b' : '#fffdfc';
         // Icon: school building SVG + name label below
         const iconHtml = `
           <div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;">
