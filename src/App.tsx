@@ -551,7 +551,7 @@ if (role === 'district_coordinator') return [
     { id: "submit", label: "Submit a Case", icon: FilePlus },
     { id: "curriculum", label: "Curriculum", icon: BookOpen },
     { id: "analytics", label: "Analytics", icon: BarChart2, protected: true },
-    { id: "impact", label: "Impact Stories", icon: Heart },
+    { id: "impact", label: "Success Stories", icon: Heart },
   ]},
   { title: "More", items: [
     { id: "calendar", label: "Calendar", icon: Calendar, protected: true },
@@ -593,7 +593,7 @@ if (role === 'district_coordinator') return [
         items: [
           ...(user?.role !== 'tot' ? [{ id: "analytics", label: "Analytics", icon: BarChart2 }] : []),
           ...(user?.role === 'admin' ? [{ id: "sasa", label: "SASA Workspace", icon: Shield, protected: true }] : []),
-          { id: "impact", label: "Impact stories", icon: Heart },
+          { id: "impact", label: "Success Stories", icon: Heart },
           { id: 'teacher_resources', label: 'Teacher Resources', icon: BookOpen },
           ...(user?.role === 'admin' ? [{ id: "users", label: "Staff", icon: Users, protected: true }] : []),
           { id: "settings", label: "Settings", icon: Settings }
