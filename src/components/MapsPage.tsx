@@ -71,10 +71,10 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
   const mapRef = useRef<any>(null);
 
   const fetchClusters = useCallback(async () => {
-    const token = localStorage.getItem('token');
-    if (!token) { setLoading(false); return; }
-    setLoading(true); setError(null);
-    try {
+  setLoading(true); setError(null);
+  const token = localStorage.getItem('token');
+  // No token guard needed — map routes are now public
+  try {
       const params:any = {};
       if (selectedRegion !== 'All') params.region = selectedRegion;
       const [clusterData, plannedData] = await Promise.all([
