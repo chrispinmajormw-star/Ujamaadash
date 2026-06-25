@@ -387,7 +387,7 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
         <div className="flex items-center gap-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 shadow-lg shrink-0">
           <MapPin size={13} className="text-orange-500 shrink-0"/>
           <div>
-            <div className="text-xs font-black text-slate-900 dark:text-white leading-none">ETT Malawi</div>
+            <div className="text-xs font-black text-slate-900 dark:text-white leading-none">Cluster Map</div>
             <div className={`text-[9px] leading-none mt-0.5 font-semibold flex items-center gap-1 ${isOnline ? 'text-emerald-500' : 'text-amber-500'}`}>
               <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'}`}/>
               {isOnline ? 'Online' : 'Offline'}
