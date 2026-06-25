@@ -464,7 +464,7 @@ const pendingCount = (user && can(user.role, "approveReport")
         { id: "districts", label: "Districts", icon: MapPin },
         { id: "trainings", label: "Trainings", icon: GraduationCap },
         { id: "maps", label: "Clusters Map", icon: Map },
-        { id: "impact", label: "Impact Stories", icon: Heart },
+        { id: "impact", label: "Success Stories", icon: Heart },
       ]},
       { title: "More", items: [
         { id: "calendar", label: "Calendar", icon: Calendar, protected: true },
