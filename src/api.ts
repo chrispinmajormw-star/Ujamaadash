@@ -295,11 +295,3 @@ export const mapApi = {
   /** GET /api/map/clusters  (or /api/clusters — whichever your server uses) */
   getClusters: () => apiFetch('/api/map/clusters').catch(() => apiFetch('/api/clusters')),
 };
-
-export const mapSchoolsApi = {
-  getAll: (params?: { district?: string; region?: string; cluster_id?: number }) => {
-    const query = params ? '?' + new URLSearchParams(params as any).toString() : '';
-    return api.get(`/api/map/schools${query}`);
-  },
-  getById: (id: number) => api.get(`/api/map/schools/${id}`),
-};
