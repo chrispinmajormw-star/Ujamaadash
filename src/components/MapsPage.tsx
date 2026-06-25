@@ -127,6 +127,7 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
       scrollWheelZoom: true,
       zoomSnap: 0.5,
     }).setView([-13.2, 34.0], 7);
+    L.control.zoom({ position: 'bottomleft'}).addTo(map);
     mapRef.current = map;
 
     // Lock zoom when user has manually zoomed/panned
