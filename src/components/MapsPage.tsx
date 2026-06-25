@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   MapPin, Sliders, Info, RefreshCw,
-  ChevronRight, Clock, Navigation,
+  ChevronRight, Clock,
   AlertCircle, CheckCircle, Eye, EyeOff, Layers, Edit2,
-  Wifi, WifiOff,
 } from 'lucide-react';
 import { Btn, Modal } from './SubComponents';
 import { mapClustersApi, mapSchoolsApi } from '../api';
-import { getStaticMapClusters } from '../utils/mapFallback';
 
 interface MapSchool {
   id: number; cluster_id: number; name: string; district: string; region: string;
@@ -32,7 +30,7 @@ const LAYERS: {key:LayerKey;label:string;activeClass:string}[] = [
   {key:'trainedSchools',   label:'Trained Schools',  activeClass:'bg-emerald-600 text-white'},
   {key:'untrainedSchools', label:'Untrained Schools',activeClass:'bg-amber-500 text-white'},
   {key:'connectors',       label:'Connectors',        activeClass:'bg-orange-500 text-white'},
-  {key:'heatmap',          label:'Heat Map',       activeClass:'bg-red-600 text-white'},
+  {key:'heatmap',          label:'🔥 Heat Map',       activeClass:'bg-red-600 text-white'},
 ];
 
 const StatTile = ({label,value,sub}:{label:string;value:string|number;sub?:string}) => (
@@ -72,43 +70,23 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
   const [loadingSchool,   setLoadingSchool]   = useState(false);
   const mapRef = useRef<any>(null);
 
-  // Change 2: Online/offline indicator
-  const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
-  useEffect(() => {
-    const goOnline = () => setIsOnline(true);
-    const goOffline = () => setIsOnline(false);
-    window.addEventListener('online', goOnline);
-    window.addEventListener('offline', goOffline);
-    return () => { window.removeEventListener('online', goOnline); window.removeEventListener('offline', goOffline); };
-  }, []);
-
-  // Change 1: Mobile sidebar toggle
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
   const fetchClusters = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    if (!token) { setLoading(false); return; }
     setLoading(true); setError(null);
     try {
-      const params: any = {};
+      const params:any = {};
       if (selectedRegion !== 'All') params.region = selectedRegion;
       const [clusterData, plannedData] = await Promise.all([
         mapClustersApi.getAll(params),
         mapSchoolsApi.getAll({ status: 'planned' }),
       ]);
-      const nextClusters = clusterData.length > 0 ? clusterData : getStaticMapClusters(selectedRegion);
-      setClusters(nextClusters);
-      setPlannedSchools(
-        plannedData.filter((s: MapSchool) => !s.cluster_id || s.cluster_id === 0)
-      );
-      if (clusterData.length === 0) {
-        setError('Using offline map data — live server unavailable.');
-      }
-    } catch {
-      setClusters(getStaticMapClusters(selectedRegion));
-      setPlannedSchools([]);
-      setError('Using offline map data — could not reach server.');
-    } finally {
-      setLoading(false);
-    }
+      if (Array.isArray(clusterData)) setClusters(clusterData);
+      else setError('Unexpected response from server.');
+      if (Array.isArray(plannedData))
+        setPlannedSchools(plannedData.filter((s:MapSchool) => !s.cluster_id || s.cluster_id === 0));
+    } catch { setError('Could not load map data.'); }
+    finally { setLoading(false); }
   }, [selectedRegion]);
 
   useEffect(() => { fetchClusters(); }, [fetchClusters]);
@@ -130,14 +108,14 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
     if (!mapRef.current || !L) return;
     setActiveClusterId(cluster.id);
     const pts:[number,number][] = [[cluster.lat,cluster.lng],...cluster.schools.map(s=>[s.lat,s.lng] as [number,number])];
-    if (pts.length > 1) mapRef.current.flyToBounds(pts,{padding:[80,80],maxZoom:15,duration:1.1});
-    else mapRef.current.flyTo([cluster.lat,cluster.lng],14,{duration:1.1});
+    if (pts.length > 1) mapRef.current.flyToBounds(pts,{padding:[60,60],maxZoom:13,duration:1.1});
+    else mapRef.current.flyTo([cluster.lat,cluster.lng],12,{duration:1.1});
   }, []);
 
   // ── Build Leaflet map ────────────────────────────────────────────────────
   useEffect(() => {
     const L = (window as any).L;
-    if (!L || loading) return;
+    if (!L || loading || error) return;
     if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
 
     // Full-screen map, no auto-zoom-on-resize
@@ -145,11 +123,6 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
       zoomControl: true,
       scrollWheelZoom: true,
       zoomSnap: 0.5,
-      // Change 8: explicit mobile touch/zoom options
-      tap: true,
-      dragging: true,
-      touchZoom: true,
-      bounceAtZoomLimits: false,
     }).setView([-13.2, 34.0], 7);
     mapRef.current = map;
 
@@ -198,33 +171,31 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
         // Icon: school building SVG + name label below
         const iconHtml = `
           <div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;">
-            <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;">
-              <div style="
-                width:28px;height:28px;border-radius:5px;
-                background:${bg};border:2px solid ${border};
-                box-shadow:0 2px 6px rgba(0,0,0,.3);
-                display:flex;align-items:center;justify-content:center;
-              ">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                  <polyline points="9 22 9 12 15 12 15 22"/>
-                </svg>
-              </div>
+            <div style="
+              width:14px;height:14px;border-radius:3px;
+              background:${bg};border:1.5px solid ${border};
+              box-shadow:0 1px 3px rgba(0,0,0,.3);
+              display:flex;align-items:center;justify-content:center;
+            ">
+              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
             </div>
             <div style="
-              margin-top:-4px;
+              margin-top:2px;
               background:${darkMode?'rgba(15,22,35,0.88)':'rgba(255,255,255,0.88)'};
               color:${darkMode?'#f1f5f9':'#1e293b'};
-              font-size:10px;font-weight:700;
-              padding:2px 5px;border-radius:4px;
-              white-space:nowrap;max-width:80px;overflow:hidden;text-overflow:ellipsis;
+              font-size:7px;font-weight:700;
+              padding:1px 3px;border-radius:3px;
+              white-space:nowrap;max-width:60px;overflow:hidden;text-overflow:ellipsis;
               border:1px solid ${darkMode?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.06)'};
               box-shadow:0 1px 2px rgba(0,0,0,.1);
               pointer-events:none;
             ">${school.name.length > 12 ? school.name.slice(0,12)+'…' : school.name}</div>
           </div>`;
 
-        const icon = L.divIcon({ className:'', html:iconHtml, iconAnchor:[22,22] });
+        const icon = L.divIcon({ className:'', html:iconHtml, iconAnchor:[7,7] });
         const curricula = [school.him_running&&'HIM', school.gesd_running&&'GESD'].filter(Boolean).join('+') || 'None';
         const totalL = (school.boys_enrolled||0)+(school.girls_enrolled||0);
 
@@ -256,32 +227,30 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
 
       const clusterHtml = `
         <div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;">
-          <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;">
-            <div style="
-              width:30px;height:30px;border-radius:50%;
-              background:${darkMode?'#1e293b':'#0f1623'};
-              border:2.5px solid #e85d04;
-              box-shadow:0 2px 8px rgba(0,0,0,.4);
-              display:flex;align-items:center;justify-content:center;
-            ">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e85d04" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="3"/>
-                <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
-              </svg>
-            </div>
+          <div style="
+            width:18px;height:18px;border-radius:50%;
+            background:${darkMode?'#1e293b':'#0f1623'};
+            border:2px solid #e85d04;
+            box-shadow:0 2px 6px rgba(0,0,0,.4);
+            display:flex;align-items:center;justify-content:center;
+          ">
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#e85d04" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+            </svg>
           </div>
           <div style="
-            margin-top:-4px;
+            margin-top:2px;
             background:#e85d04;color:white;
-            font-size:10px;font-weight:800;
-            padding:2px 6px;border-radius:4px;
-            white-space:nowrap;max-width:90px;overflow:hidden;text-overflow:ellipsis;
-            box-shadow:0 1px 4px rgba(232,93,4,.4);
+            font-size:7px;font-weight:800;
+            padding:1px 4px;border-radius:3px;
+            white-space:nowrap;max-width:70px;overflow:hidden;text-overflow:ellipsis;
+            box-shadow:0 1px 3px rgba(232,93,4,.35);
             pointer-events:none;
           ">${cluster.name.length>14?cluster.name.slice(0,14)+'…':cluster.name}</div>
         </div>`;
 
-      const centerIcon = L.divIcon({className:'',html:clusterHtml,iconAnchor:[22,22]});
+      const centerIcon = L.divIcon({className:'',html:clusterHtml,iconAnchor:[9,9]});
       const marker = L.marker([cluster.lat,cluster.lng],{icon:centerIcon,zIndexOffset:500}).addTo(map);
 
       marker.bindPopup(`
@@ -341,289 +310,229 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
     });
 
     return () => { map.remove(); mapRef.current = null; };
-  }, [filteredClusters, plannedSchools, darkMode, layers, loading]);
+  }, [filteredClusters, plannedSchools, darkMode, layers, loading, error]);
 
   const allSchools      = clusters.flatMap(c=>c.schools);
   const totalLearners   = clusters.reduce((a,c)=>a+c.students,0);
   const trainedCount    = allSchools.filter(s=>s.ett_trained).length;
   const untrainedCount  = allSchools.length - trainedCount;
   const totalTeachbacks = clusters.reduce((a,c)=>a+c.teachbacks,0);
-  // Change 3: live coverage percentage
-  const coveragePct     = allSchools.length > 0 ? Math.round((trainedCount / allSchools.length) * 100) : 0;
 
-
-  // Panel toggle states
-  const [statsPanelOpen,  setStatsPanelOpen]  = useState(false);
-  const [sidebarPanelOpen, setSidebarPanelOpen] = useState(true);
+  const coveragePct = allSchools.length > 0 ? Math.round((trainedCount / allSchools.length) * 100) : 0;
+  const [panelOpen,   setPanelOpen]   = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isOnline,    setIsOnline]    = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+  useEffect(() => {
+    const on = () => setIsOnline(true); const off = () => setIsOnline(false);
+    window.addEventListener('online', on); window.addEventListener('offline', off);
+    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); };
+  }, []);
 
   return (
-    // Full-screen container — fills whatever height the parent gives
-    <div className="relative w-full animate-fade-in-up" style={{ height: 'calc(100vh - 56px)', minHeight: 400 }}>
+    <div className="relative animate-fade-in-up -mx-4 sm:-mx-6 -mt-4" style={{ height: 'calc(100vh - 56px)' }}>
 
-      {/* ═══════════ LEAFLET MAP — absolute fills everything ═══════════ */}
-      <div id="ett-map" className="absolute inset-0 z-0 w-full h-full"/>
-
-      {/* Loading overlay */}
+      {/* ── FULL-PAGE MAP (z-0) ─────────────────────────────────────── */}
       {loading && (
-        <div className="absolute inset-0 z-20 bg-white/70 dark:bg-slate-950/70 flex items-center justify-center">
-          <div className="flex items-center gap-2 text-sm font-bold text-slate-500 bg-white dark:bg-slate-900 px-4 py-2.5 rounded-xl shadow-lg border border-slate-200 dark:border-slate-800">
-            <RefreshCw size={15} className="animate-spin text-orange-500"/> Loading map data…
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70 dark:bg-slate-950/70">
+          <div className="flex items-center gap-2 text-sm font-bold text-slate-500">
+            <RefreshCw size={16} className="animate-spin"/> Loading map…
           </div>
         </div>
       )}
-      {error && !loading && (
-        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20 max-w-md w-[calc(100%-1.5rem)] bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-800 rounded-lg px-4 py-2.5 shadow-lg flex items-center justify-between gap-3">
-          <p className="text-xs text-black dark:text-white m-0">{error}</p>
-          <button onClick={fetchClusters} className="shrink-0 px-3 py-1.5 rounded-md bg-orange-500 text-white text-xs font-bold hover:bg-orange-600 transition">Retry</button>
+      {error && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-white dark:bg-slate-950">
+          <AlertCircle size={28} className="text-red-500"/>
+          <p className="text-sm text-slate-600 dark:text-slate-400">{error}</p>
+          <Btn size="sm" onClick={fetchClusters}>Retry</Btn>
         </div>
       )}
+      <div id="ett-map" className="absolute inset-0 z-0"/>
 
-      {/* ═══════════ TOP BAR — floating header ═══════════ */}
-      <div className="absolute top-3 left-3 right-3 z-10 flex items-center gap-2 pointer-events-none">
+      {/* ── TOP BAR — floating over map ────────────────────────────── */}
+      <div className="absolute top-3 left-3 right-3 z-20 flex items-center gap-2">
         {/* Title pill */}
-        <div className="flex items-center gap-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-3 py-2 rounded-xl shadow-lg border border-slate-200/80 dark:border-slate-700/80 pointer-events-auto">
+        <div className="flex items-center gap-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 shadow-lg shrink-0">
+          <MapPin size={13} className="text-orange-500 shrink-0"/>
           <div>
-            <div className="text-[9px] font-extrabold uppercase tracking-widest text-orange-500">Malawi Interactive Coverage Map</div>
-            <div className="text-sm font-black text-slate-900 dark:text-white leading-tight">School Clusters & Hubs</div>
+            <div className="text-xs font-black text-slate-900 dark:text-white leading-none">ETT Malawi</div>
+            <div className={`text-[9px] leading-none mt-0.5 font-semibold flex items-center gap-1 ${isOnline ? 'text-emerald-500' : 'text-amber-500'}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'}`}/>
+              {isOnline ? 'Online' : 'Offline'}
+            </div>
           </div>
         </div>
 
-        {/* Search bar */}
-        <div className="flex-1 max-w-xs pointer-events-auto">
-          <input
-            type="text"
-            placeholder="Search cluster or district…"
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="w-full px-3 py-2 text-xs bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/80 dark:border-slate-700/80 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-orange-500 dark:text-slate-200"
-          />
-        </div>
+        <div className="flex-1"/>
 
-        <div className="flex items-center gap-1.5 ml-auto pointer-events-auto">
-          {/* Online indicator */}
-          <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1.5 rounded-lg shadow-md border backdrop-blur-md ${isOnline ? 'text-orange-600 border-orange-200/80 bg-white/95 dark:bg-slate-900/95 dark:border-slate-700/80 dark:text-orange-400' : 'text-red-600 border-red-200 bg-white/95 dark:bg-slate-900/95 dark:text-red-400'}`}>
-            {isOnline ? <><Wifi size={10}/> Online</> : <><WifiOff size={10}/> Offline</>}
-          </span>
+        {/* Stats toggle */}
+        <button onClick={() => setPanelOpen(o => !o)}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold shadow-lg border backdrop-blur-sm transition-all min-h-[36px] ${panelOpen ? 'bg-orange-500 text-white border-orange-500' : 'bg-white/95 dark:bg-slate-900/95 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'}`}>
+          <Sliders size={13}/><span className="hidden sm:inline">Stats</span>
+        </button>
 
-          {/* Stats toggle */}
-          <button
-            onClick={() => setStatsPanelOpen(o => !o)}
-            className="flex items-center gap-1 text-[10.5px] font-bold px-2.5 py-1.5 rounded-lg shadow-md border bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-300 hover:border-orange-400 transition"
-          >
-            <Layers size={11}/> Stats
+        {/* Clusters/sidebar toggle */}
+        <button onClick={() => setSidebarOpen(o => !o)}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold shadow-lg border backdrop-blur-sm transition-all min-h-[36px] ${sidebarOpen ? 'bg-orange-500 text-white border-orange-500' : 'bg-white/95 dark:bg-slate-900/95 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'}`}>
+          <Layers size={13}/><span className="hidden sm:inline">Clusters</span>
+        </button>
+
+        {isCartographer && (
+          <button onClick={() => setPage('cartographer_home')}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold shadow-lg border backdrop-blur-sm bg-white/95 dark:bg-slate-900/95 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 min-h-[36px]">
+            <Edit2 size={13}/>
           </button>
+        )}
 
-          {/* Refresh */}
-          <button
-            onClick={fetchClusters}
-            className="flex items-center gap-1 text-[10.5px] font-bold px-2.5 py-1.5 rounded-lg shadow-md border bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-slate-200/80 dark:border-slate-700/80 text-slate-400 hover:text-orange-500 hover:border-orange-400 transition"
-          >
-            <RefreshCw size={11} className={loading ? 'animate-spin' : ''}/>
-          </button>
-
-          {/* Cartographer edit */}
-          {isCartographer && (
-            <button
-              onClick={() => setPage('cartographer_home')}
-              className="flex items-center gap-1 text-[10.5px] font-bold px-2.5 py-1.5 rounded-lg shadow-md border bg-orange-500 border-orange-500 text-white hover:bg-orange-600 transition"
-            >
-              <Edit2 size={11}/> Edit
-            </button>
-          )}
-        </div>
+        <button onClick={fetchClusters}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold shadow-lg border backdrop-blur-sm bg-white/95 dark:bg-slate-900/95 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 min-h-[36px]">
+          <RefreshCw size={13} className={loading ? 'animate-spin' : ''}/>
+        </button>
       </div>
 
-      {/* ═══════════ STATS PANEL — collapsible floating top-left ═══════════ */}
-      {statsPanelOpen && (
-        <div className="absolute top-16 left-3 z-10 w-64 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200/80 dark:border-slate-700/80 p-3 space-y-2">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Programme Stats</span>
-            <button onClick={() => setStatsPanelOpen(false)} className="text-slate-400 hover:text-slate-600 transition text-xs">✕</button>
+      {/* ── STATS PANEL — floating, toggled ────────────────────────── */}
+      {panelOpen && (
+        <div className="absolute top-16 left-3 right-3 sm:right-auto sm:w-[500px] z-20 bg-white/97 dark:bg-slate-900/97 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl p-3 animate-fade-in-up">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+            <StatTile label="Total Learners"  value={totalLearners.toLocaleString()} sub="all clusters"/>
+            <StatTile label="ETT Trained"     value={trainedCount}   sub={`${coveragePct}% coverage`}/>
+            <StatTile label="Not Yet Trained" value={untrainedCount} sub="schools pending"/>
+            <StatTile label="Teachbacks"      value={totalTeachbacks} sub="cumulative"/>
           </div>
-          {[
-            { label: 'Total Learners',  value: totalLearners.toLocaleString(), sub: 'across all clusters' },
-            { label: 'ETT Trained',     value: trainedCount, sub: `${coveragePct}% of schools` },
-            { label: 'Not Yet Trained', value: untrainedCount, sub: 'schools pending' },
-            { label: 'Teachbacks Done', value: totalTeachbacks, sub: 'cumulative' },
-            { label: 'Coverage',        value: `${coveragePct}%`, sub: `${trainedCount} of ${allSchools.length} schools` },
-          ].map(s => (
-            <div key={s.label} className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-800 last:border-0">
-              <div>
-                <div className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">{s.label}</div>
-                <div className="text-[10px] text-slate-400">{s.sub}</div>
-              </div>
-              <div className="text-base font-black text-slate-900 dark:text-white">{s.value}</div>
+          <div className="border-t border-slate-100 dark:border-slate-800 pt-2.5 space-y-2">
+            <div className="flex flex-wrap items-center gap-3 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-emerald-600 shrink-0"/> Trained</span>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-amber-500 shrink-0"/> Untrained</span>
+              <span className="flex items-center gap-1.5"><span className="w-4 h-4 rounded-full border-2 border-orange-500 bg-slate-900 shrink-0"/> Cluster</span>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 border-2 border-dashed border-violet-500 shrink-0" style={{transform:'rotate(45deg)'}}/> Planned ({plannedSchools.length})</span>
             </div>
-          ))}
-
-          {/* Layer toggles inside stats panel */}
-          <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-            <div className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 mb-2 flex items-center gap-1">
-              <Layers size={9}/> Map Layers
-            </div>
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1.5">
+              <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1 mr-1">
+                <Layers size={11}/> Layers:
+              </span>
               {LAYERS.map(layer => (
                 <button key={layer.key} onClick={() => toggleLayer(layer.key)}
-                  className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[9.5px] font-bold transition-all border ${
-                    layers[layer.key]
-                      ? `${layer.activeClass} border-transparent`
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 opacity-60'
-                  }`}>
-                  {layers[layer.key] ? <Eye size={9}/> : <EyeOff size={9}/>}
-                  {layer.label}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10.5px] font-bold transition-all border ${layers[layer.key] ? `${layer.activeClass} border-transparent shadow-sm` : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 opacity-50'}`}>
+                  {layers[layer.key] ? <Eye size={10}/> : <EyeOff size={10}/>} {layer.label}
                 </button>
               ))}
             </div>
           </div>
-
-          {/* Legend */}
-          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-1">
-            <div className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 mb-1">Legend</div>
-            {[
-              { cls: 'w-3 h-3 rounded bg-emerald-600', label: 'Trained School' },
-              { cls: 'w-3 h-3 rounded bg-amber-500',   label: 'Untrained School' },
-              { cls: 'w-3.5 h-3.5 rounded-full border-2 border-orange-500 bg-slate-900', label: 'Cluster Centre' },
-              { cls: 'w-3 h-3 border-2 border-dashed border-violet-500', label: `Planned (${plannedSchools.length})`, rotate: true },
-            ].map(item => (
-              <div key={item.label} className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-                <span className={`shrink-0 ${item.cls}`} style={item.rotate ? { transform: 'rotate(45deg)' } : {}}/>
-                {item.label}
-              </div>
-            ))}
-          </div>
         </div>
       )}
 
-      {/* ═══════════ LEFT SIDEBAR PANEL — floating collapsible ═══════════ */}
-      <div className="absolute left-3 z-10 flex flex-col" style={{ top: sidebarPanelOpen ? '56px' : 'auto', bottom: sidebarPanelOpen ? '12px' : 'auto', top: '56px' }}>
-
-        {/* Toggle button */}
-        <button
-          onClick={() => setSidebarPanelOpen(o => !o)}
-          className="mb-1.5 self-start flex items-center gap-1 text-[10px] font-bold px-2.5 py-1.5 rounded-lg shadow-md border bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-slate-200/80 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 hover:border-orange-400 transition"
-          style={{ marginTop: statsPanelOpen ? '0' : '0' }}
-        >
-          <Sliders size={10}/> {sidebarPanelOpen ? 'Hide Clusters' : 'Show Clusters'}
-        </button>
-
-        {/* Panel */}
-        {sidebarPanelOpen && (
-          <div className="w-56 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200/80 dark:border-slate-700/80 flex flex-col overflow-hidden" style={{ maxHeight: 'calc(100vh - 160px)' }}>
-
-            {/* Region filter */}
-            <div className="p-2.5 border-b border-slate-100 dark:border-slate-800 shrink-0">
-              <div className="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1">
-                <Sliders size={10}/> Region
+      {/* ── SIDEBAR PANEL — floating left, toggled ─────────────────── */}
+      {sidebarOpen && (
+        <div className="absolute top-16 bottom-4 left-3 z-20 w-64 bg-white/97 dark:bg-slate-900/97 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl flex flex-col overflow-hidden animate-fade-in-up">
+          <div className="p-3 border-b border-slate-100 dark:border-slate-800 shrink-0 space-y-2.5">
+            <div>
+              <div className="text-[9.5px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1">
+                <Sliders size={11}/> Region
               </div>
               <div className="flex flex-wrap gap-1">
-                {['All', 'Northern', 'Central', 'Southern'].map(r => (
+                {['All','Northern','Central','Southern'].map(r => (
                   <button key={r} onClick={() => setSelectedRegion(r)}
-                    className={`px-2 py-0.5 rounded-full text-[9.5px] font-bold cursor-pointer transition-all ${selectedRegion === r ? 'bg-orange-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'}`}>
+                    className={`px-2 py-1 rounded-full text-[10px] font-bold cursor-pointer transition-all ${selectedRegion===r?'bg-slate-900 text-white dark:bg-orange-600':'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'}`}>
                     {r}
                   </button>
                 ))}
               </div>
             </div>
-
-            {/* Cluster list */}
-            <div className="flex-1 overflow-y-auto p-2 space-y-1">
-              {loading ? (
-                <div className="flex items-center justify-center h-16 text-xs text-slate-400 gap-1">
-                  <RefreshCw size={11} className="animate-spin"/> Loading…
-                </div>
-              ) : filteredClusters.length === 0 ? (
-                <div className="p-3 text-xs text-slate-400 text-center">No clusters found</div>
-              ) : (
-                <>
-                  <div className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider px-1 py-0.5">
-                    Clusters ({filteredClusters.length})
-                  </div>
-                  {filteredClusters.map(c => {
-                    const cTrained   = c.schools.filter(s => s.ett_trained).length;
-                    const cUntrained = c.schools.length - cTrained;
-                    return (
-                      <button key={c.id} onClick={() => { flyToCluster(c); setSelectedCluster(c); }}
-                        className={`w-full text-left p-2 rounded-xl border transition-all ${
-                          activeClusterId === c.id
-                            ? 'border-orange-500 bg-orange-50/60 dark:bg-orange-950/30'
-                            : 'border-slate-100 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 hover:border-orange-200'
-                        }`}>
-                        <div className="font-bold text-[10.5px] text-slate-900 dark:text-slate-100 truncate">{c.name}</div>
-                        <div className="text-[9px] text-slate-400 mt-0.5">📍 {c.district}</div>
-                        <div className="flex gap-2 mt-0.5 text-[9px] font-bold">
-                          <span className="text-orange-500">{cTrained} trained</span>
-                          {cUntrained > 0 && <span className="text-amber-500">{cUntrained} untrained</span>}
-                        </div>
-                        <div className="mt-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1 overflow-hidden">
-                          <div className="h-full rounded-full" style={{ width: `${Math.min(c.progress, 100)}%`, background: '#e85d04' }}/>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </>
-              )}
+            <div>
+              <div className="text-[9.5px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1">
+                <MapPin size={11}/> Search
+              </div>
+              <input type="text" placeholder="Cluster or district…" value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full px-2 py-1.5 text-[11px] bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 dark:text-slate-200"/>
             </div>
           </div>
-        )}
+          <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
+            {loading ? (
+              <div className="flex items-center justify-center h-16 text-xs text-slate-400 gap-2">
+                <RefreshCw size={12} className="animate-spin"/> Loading…
+              </div>
+            ) : filteredClusters.length === 0 ? (
+              <div className="p-3 text-xs text-slate-400 text-center">No clusters found.</div>
+            ) : (
+              <>
+                <div className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider px-1 py-1">
+                  Clusters ({filteredClusters.length})
+                </div>
+                {filteredClusters.map(c => {
+                  const cTrained   = c.schools.filter(s => s.ett_trained).length;
+                  const cUntrained = c.schools.length - cTrained;
+                  const livePct    = c.schools.length > 0 ? Math.round((cTrained / c.schools.length) * 100) : 0;
+                  return (
+                    <button key={c.id} onClick={() => { flyToCluster(c); setSelectedCluster(c); }}
+                      className={`w-full text-left p-2.5 rounded-xl border transition-all ${activeClusterId===c.id?'border-orange-500 bg-orange-50/30 dark:bg-orange-950/20':'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-orange-200'}`}>
+                      <div className="font-bold text-[11px] text-slate-900 dark:text-slate-100 truncate">{c.name}</div>
+                      <div className="text-[9.5px] text-slate-400 mt-0.5">📍 {c.district}</div>
+                      <div className="flex gap-2 mt-1 text-[9px] font-bold">
+                        <span className="text-emerald-600">{cTrained} trained</span>
+                        {cUntrained > 0 && <span className="text-amber-500">{cUntrained} untrained</span>}
+                        <span className="text-slate-400 ml-auto">{livePct}%</span>
+                      </div>
+                      <div className="mt-1.5"><MiniBar value={livePct}/></div>
+                    </button>
+                  );
+                })}
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── BOTTOM HINT ─────────────────────────────────────────────── */}
+      <div className="absolute bottom-3 right-3 z-10 flex items-center gap-1.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-[10px] text-slate-500 font-mono pointer-events-none">
+        <Info size={10}/> Click any marker for details
       </div>
 
-      {/* ═══════════ HINT — top right ═══════════ */}
-      <div className="absolute top-3 right-3 z-10 pointer-events-none" style={{ marginTop: '44px' }}>
-        {/* pushed down by top bar */}
-      </div>
-
-      {/* ═══════════ CLUSTER MODAL ═══════════ */}
-      {selectedCluster && (
-        <Modal title={selectedCluster.name} onClose={() => setSelectedCluster(null)} width={520}>
+      {/* CLUSTER MODAL */}
+      {selectedCluster&&(
+        <Modal title={selectedCluster.name} onClose={()=>setSelectedCluster(null)} width={520}>
           <div className="space-y-4">
             <div className="flex flex-wrap gap-2 text-[10px] font-bold">
               <span className="px-2 py-1 rounded-full bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-950/30 dark:text-orange-400 dark:border-orange-900">📍 {selectedCluster.district}</span>
               <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700">{selectedCluster.region}</span>
-              {selectedCluster.zone_name && <span className="px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/30 dark:text-blue-400">{selectedCluster.zone_name}</span>}
-              {selectedCluster.verified  && <span className="px-2 py-1 rounded-full bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-950/30 dark:text-orange-400">✓ GIS Verified</span>}
+              {selectedCluster.zone_name&&<span className="px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/30 dark:text-blue-400">{selectedCluster.zone_name}</span>}
+              {selectedCluster.verified&&<span className="px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400">✓ GIS Verified</span>}
             </div>
             <div className="grid grid-cols-3 gap-2">
-              {[
-                {label:'Learners',   value:selectedCluster.students.toLocaleString()},
-                {label:'Schools',    value:selectedCluster.school_count},
-                {label:'Trained',    value:selectedCluster.trained},
-                {label:'TOTs',       value:selectedCluster.tots},
-                {label:'STOTs',      value:selectedCluster.stots},
-                {label:'Teachbacks', value:selectedCluster.teachbacks},
-              ].map(t=>(
-                <div key={t.label} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-3">
-                  <div className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 mb-1">{t.label}</div>
-                  <div className="text-lg font-black text-slate-900 dark:text-slate-50 leading-none">{t.value}</div>
-                </div>
-              ))}
+              <StatTile label="Learners"   value={selectedCluster.students.toLocaleString()}/>
+              <StatTile label="Schools"    value={selectedCluster.school_count}/>
+              <StatTile label="Trained"    value={selectedCluster.trained} sub="teachers"/>
+              <StatTile label="TOTs"       value={selectedCluster.tots}/>
+              <StatTile label="STOTs"      value={selectedCluster.stots}/>
+              <StatTile label="Teachbacks" value={selectedCluster.teachbacks}/>
             </div>
             <div>
               <div className="flex justify-between text-[10px] font-bold text-slate-500 mb-1">
-                <span>Programme Progress</span><span className="text-orange-600">{selectedCluster.progress}%</span>
+                <span>Programme Progress</span>
+                <span className="text-orange-600">{selectedCluster.progress}%</span>
               </div>
               <MiniBar value={selectedCluster.progress}/>
             </div>
-            {selectedCluster.lead && (
+            {selectedCluster.lead&&(
               <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-100 dark:border-slate-800">
                 <div className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 mb-1">Cluster Coordinator</div>
                 <div className="font-bold text-sm text-slate-800 dark:text-slate-200">{selectedCluster.lead}</div>
-                {selectedCluster.lead_phone && <div className="text-xs text-slate-500 mt-0.5">📞 {selectedCluster.lead_phone}</div>}
-                {selectedCluster.lead_email && <div className="text-xs text-slate-500 mt-0.5">✉️ {selectedCluster.lead_email}</div>}
+                {selectedCluster.lead_phone&&<div className="text-xs text-slate-500 mt-0.5">📞 {selectedCluster.lead_phone}</div>}
+                {selectedCluster.lead_email&&<div className="text-xs text-slate-500 mt-0.5">✉️ {selectedCluster.lead_email}</div>}
               </div>
             )}
-            {selectedCluster.schools.length > 0 && (
+            {selectedCluster.schools.length>0&&(
               <div>
                 <div className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Schools ({selectedCluster.schools.length})</div>
                 <div className="flex gap-4 mb-2 text-[10px] font-bold">
-                  <span className="text-orange-500">● {selectedCluster.schools.filter(s=>s.ett_trained).length} ETT Trained</span>
+                  <span className="text-emerald-600">● {selectedCluster.schools.filter(s=>s.ett_trained).length} ETT Trained</span>
                   <span className="text-amber-500">○ {selectedCluster.schools.filter(s=>!s.ett_trained).length} Not Yet Trained</span>
                 </div>
                 <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
-                  {selectedCluster.schools.map(s => (
-                    <button key={s.id} onClick={() => { setSelectedCluster(null); openSchool(s); }}
-                      className={`w-full flex items-center justify-between p-2.5 rounded-xl border group transition text-left ${s.ett_trained ? 'border-orange-100 dark:border-orange-900/30 hover:border-orange-300' : 'border-amber-100 dark:border-amber-900/20 hover:border-amber-300'}`}>
+                  {selectedCluster.schools.map(s=>(
+                    <button key={s.id} onClick={()=>{setSelectedCluster(null);openSchool(s);}}
+                      className={`w-full flex items-center justify-between p-2.5 rounded-xl border group transition text-left ${s.ett_trained?'border-emerald-100 dark:border-emerald-900/30 hover:border-emerald-300':'border-amber-100 dark:border-amber-900/20 hover:border-amber-300'}`}>
                       <div className="flex items-center gap-2.5">
-                        <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${s.ett_trained ? 'bg-orange-500' : 'border-2 border-dashed border-amber-500 bg-transparent'}`}/>
+                        <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${s.ett_trained?'bg-emerald-500':'border-2 border-dashed border-amber-500 bg-transparent'}`}/>
                         <div>
                           <div className="text-xs font-bold text-slate-800 dark:text-slate-200">{s.name}</div>
                           <div className="text-[9.5px] text-slate-400">{((s.boys_enrolled||0)+(s.girls_enrolled||0)).toLocaleString()} learners · {s.ett_trained?'ETT trained':'Untrained'}</div>
@@ -635,9 +544,9 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
                 </div>
               </div>
             )}
-            {isCartographer && (
+            {isCartographer&&(
               <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-                <Btn size="sm" onClick={() => { setSelectedCluster(null); setPage('cartographer_home'); }}>
+                <Btn size="sm" onClick={()=>{setSelectedCluster(null);setPage('cartographer_home');}}>
                   <Edit2 size={11} className="inline mr-1"/> Edit in Cartographer Console
                 </Btn>
               </div>
@@ -646,58 +555,50 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
         </Modal>
       )}
 
-      {/* ═══════════ SCHOOL MODAL ═══════════ */}
-      {selectedSchool && (
-        <Modal title={loadingSchool ? 'Loading…' : (schoolDetail?.name ?? selectedSchool.name)} onClose={() => { setSelectedSchool(null); setSchoolDetail(null); }} width={500}>
-          {loadingSchool ? (
+      {/* SCHOOL MODAL */}
+      {selectedSchool&&(
+        <Modal title={loadingSchool?'Loading…':(schoolDetail?.name??selectedSchool.name)} onClose={()=>{setSelectedSchool(null);setSchoolDetail(null);}} width={500}>
+          {loadingSchool?(
             <div className="flex items-center justify-center h-28 text-sm text-slate-400 gap-2">
               <RefreshCw size={16} className="animate-spin"/> Fetching school record…
             </div>
-          ) : (() => {
-            const s = schoolDetail ?? selectedSchool;
-            const total = (s.boys_enrolled||0) + (s.girls_enrolled||0);
+          ):((()=>{
+            const s=schoolDetail??selectedSchool;
+            const total=(s.boys_enrolled||0)+(s.girls_enrolled||0);
             return (
               <div className="space-y-4">
-                <div className={`flex items-center gap-3 p-3 rounded-xl border ${s.ett_trained ? 'bg-orange-50 border-orange-200 dark:bg-orange-950/20 dark:border-orange-900/40' : 'bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900/40'}`}>
-                  {s.ett_trained ? <CheckCircle size={18} className="text-orange-600 shrink-0"/> : <AlertCircle size={18} className="text-amber-600 shrink-0"/>}
+                <div className={`flex items-center gap-3 p-3 rounded-xl border ${s.ett_trained?'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-900/40':'bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900/40'}`}>
+                  {s.ett_trained?<CheckCircle size={18} className="text-emerald-600 shrink-0"/>:<AlertCircle size={18} className="text-amber-600 shrink-0"/>}
                   <div>
-                    <div className={`text-xs font-extrabold ${s.ett_trained ? 'text-orange-700 dark:text-orange-400' : 'text-amber-700 dark:text-amber-400'}`}>
-                      {s.ett_trained ? 'ETT Trained School' : 'Not Yet ETT Trained'}
+                    <div className={`text-xs font-extrabold ${s.ett_trained?'text-emerald-700 dark:text-emerald-400':'text-amber-700 dark:text-amber-400'}`}>
+                      {s.ett_trained?'ETT Trained School':'Not Yet ETT Trained'}
                     </div>
                     <div className="text-[10px] text-slate-500 mt-0.5">
-                      {s.ett_trained ? 'Actively running ETT sessions with trained teachers.' : 'Yet to receive ETT training from a certified TOT.'}
+                      {s.ett_trained?'Actively running ETT sessions with trained teachers.':'Yet to receive ETT training from a certified TOT.'}
                     </div>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 text-[10px] font-bold">
                   <span className="px-2 py-1 rounded-full bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-950/30 dark:text-orange-400 dark:border-orange-900">📍 {s.district}</span>
-                  {s.zone_name && <span className="px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/30 dark:text-blue-400">{s.zone_name}</span>}
-                  {s.verified  && <span className="px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/30 dark:text-blue-400">✓ GIS Verified</span>}
+                  {s.zone_name&&<span className="px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/30 dark:text-blue-400">{s.zone_name}</span>}
+                  {s.verified&&<span className="px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/30 dark:text-blue-400">✓ GIS Verified</span>}
                 </div>
                 <div className="flex gap-2 flex-wrap">
                   <CurrPill label="HIM (Boys)"   active={s.him_running}/>
                   <CurrPill label="GESD (Girls)" active={s.gesd_running}/>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
-                  {[
-                    {label:'Boys',    value:s.boys_enrolled||0,    sub:'enrolled'},
-                    {label:'Girls',   value:s.girls_enrolled||0,   sub:'enrolled'},
-                    {label:'Total',   value:total,                  sub:'learners'},
-                    {label:'Trained', value:s.trained_teachers,     sub:'teachers'},
-                    {label:'TOTs',    value:s.tots},
-                    {label:'STOTs',   value:s.stots},
-                    {label:'Teachbacks',       value:s.teachbacks},
-                    {label:'Sessions Done',    value:s.sessions_completed},
-                    {label:'Sessions Planned', value:s.sessions_planned},
-                  ].map(t=>(
-                    <div key={t.label} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-3">
-                      <div className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 mb-1">{t.label}</div>
-                      <div className="text-lg font-black text-slate-900 dark:text-slate-50 leading-none">{t.value}</div>
-                      {t.sub && <div className="text-[10px] text-slate-400 mt-0.5">{t.sub}</div>}
-                    </div>
-                  ))}
+                  <StatTile label="Boys"    value={s.boys_enrolled||0}  sub="enrolled"/>
+                  <StatTile label="Girls"   value={s.girls_enrolled||0} sub="enrolled"/>
+                  <StatTile label="Total"   value={total}               sub="learners"/>
+                  <StatTile label="Trained" value={s.trained_teachers}  sub="teachers"/>
+                  <StatTile label="TOTs"    value={s.tots}/>
+                  <StatTile label="STOTs"   value={s.stots}/>
+                  <StatTile label="Teachbacks"       value={s.teachbacks}/>
+                  <StatTile label="Sessions Done"    value={s.sessions_completed}/>
+                  <StatTile label="Sessions Planned" value={s.sessions_planned}/>
                 </div>
-                {s.sessions_planned > 0 && (
+                {s.sessions_planned>0&&(
                   <div>
                     <div className="flex justify-between text-[10px] font-bold text-slate-500 mb-1">
                       <span>Session Completion</span>
@@ -706,57 +607,49 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
                     <MiniBar value={(s.sessions_completed/s.sessions_planned)*100}/>
                   </div>
                 )}
-                {s.last_session_date && (
+                {s.last_session_date&&(
                   <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
                     <Clock size={11}/> Last session: <b>{new Date(s.last_session_date).toLocaleDateString()}</b>
                   </div>
                 )}
-                {s.headteacher && (
+                {s.headteacher&&(
                   <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-100 dark:border-slate-800">
                     <div className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 mb-1">Headteacher</div>
                     <div className="font-bold text-sm text-slate-800 dark:text-slate-200">{s.headteacher}</div>
-                    {s.headteacher_phone && <div className="text-xs text-slate-500 mt-0.5">📞 {s.headteacher_phone}</div>}
+                    {s.headteacher_phone&&<div className="text-xs text-slate-500 mt-0.5">📞 {s.headteacher_phone}</div>}
                   </div>
                 )}
                 <div className="text-[10px] font-mono text-slate-400 flex items-center gap-1.5">
                   <MapPin size={10}/> {Number(s.lat).toFixed(5)}, {Number(s.lng).toFixed(5)}
                 </div>
-                <a
-                  href={`https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-white text-xs font-bold shadow-sm transition hover:opacity-90"
-                  style={{ background: '#e85d04' }}
-                >
-                  <Navigation size={13}/> Navigate with Google Maps
-                </a>
-                {schoolDetail?.visit_logs && schoolDetail.visit_logs.length > 0 && (
+                {schoolDetail?.visit_logs&&schoolDetail.visit_logs.length>0&&(
                   <div>
                     <div className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Recent Field Visits</div>
                     <div className="space-y-1.5">
-                      {schoolDetail.visit_logs.map(v => (
+                      {schoolDetail.visit_logs.map(v=>(
                         <div key={v.id} className="flex gap-2.5 text-[10.5px] p-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
-                          <CheckCircle size={12} className="text-orange-500 mt-0.5 shrink-0"/>
+                          <CheckCircle size={12} className="text-emerald-500 mt-0.5 shrink-0"/>
                           <div>
-                            <div className="font-bold text-slate-700 dark:text-slate-300">{v.visitor_name ?? 'Field Officer'} · <span className="capitalize">{v.purpose}</span></div>
+                            <div className="font-bold text-slate-700 dark:text-slate-300">{v.visitor_name??'Field Officer'} · <span className="capitalize">{v.purpose}</span></div>
                             <div className="text-slate-400">{new Date(v.visit_date).toLocaleDateString()}</div>
-                            {v.findings && <div className="text-slate-500 mt-0.5 italic">{v.findings}</div>}
+                            {v.findings&&<div className="text-slate-500 mt-0.5 italic">{v.findings}</div>}
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
-                {s.notes && <div className="text-[11px] text-slate-500 bg-slate-50 dark:bg-slate-900 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800"><Info size={10} className="inline mr-1"/>{s.notes}</div>}
-                {isCartographer && (
+                {s.notes&&<div className="text-[11px] text-slate-500 bg-slate-50 dark:bg-slate-900 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800"><Info size={10} className="inline mr-1"/>{s.notes}</div>}
+                {isCartographer&&(
                   <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-                    <Btn size="sm" onClick={() => { setSelectedSchool(null); setSchoolDetail(null); setPage('cartographer_home'); }}>
+                    <Btn size="sm" onClick={()=>{setSelectedSchool(null);setSchoolDetail(null);setPage('cartographer_home');}}>
                       <Edit2 size={11} className="inline mr-1"/> Edit in Cartographer Console
                     </Btn>
                   </div>
                 )}
               </div>
             );
-          })()}
+          })())}
         </Modal>
       )}
     </div>

@@ -54,8 +54,10 @@ export const MonitoringProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
+    const token = localStorage.getItem('token');
     // Don't hit authenticated endpoints if we have no token yet
     // (e.g. app just loaded and the user hasn't logged in).
+     if (!token) { setLoading(false); return; }
     if (!localStorage.getItem('token')) {
       setActivities([]);
       setIssues([]);
