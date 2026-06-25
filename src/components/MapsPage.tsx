@@ -24,13 +24,14 @@ interface MapCluster {
 }
 interface VisitLog { id: number; visit_date: string; purpose: string; findings?: string; visitor_name?: string; }
 
-type LayerKey = 'clusters'|'trainedSchools'|'untrainedSchools'|'connectors'|'heatmap';
+type LayerKey = 'clusters'|'trainedSchools'|'untrainedSchools'|'connectors'|'heatmap'|'unassigned';
 const LAYERS: {key:LayerKey;label:string;activeClass:string}[] = [
-  {key:'clusters',         label:'Cluster Centres',  activeClass:'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'},
-  {key:'trainedSchools',   label:'Trained Schools',  activeClass:'bg-emerald-600 text-white'},
-  {key:'untrainedSchools', label:'Untrained Schools',activeClass:'bg-amber-500 text-white'},
-  {key:'connectors',       label:'Connectors',        activeClass:'bg-orange-500 text-white'},
-  {key:'heatmap',          label:'🔥 Heat Map',       activeClass:'bg-red-600 text-white'},
+  {key:'clusters',         label:'Cluster Centres',   activeClass:'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'},
+  {key:'trainedSchools',   label:'Trained Schools',   activeClass:'bg-emerald-600 text-white'},
+  {key:'untrainedSchools', label:'Untrained Schools', activeClass:'bg-amber-500 text-white'},
+  {key:'unassigned',       label:'Unassigned Schools',activeClass:'bg-blue-600 text-white'},
+  {key:'connectors',       label:'Connectors',         activeClass:'bg-orange-500 text-white'},
+  {key:'heatmap',          label:'Heat Map',        activeClass:'bg-red-600 text-white'},
 ];
 
 const StatTile = ({label,value,sub}:{label:string;value:string|number;sub?:string}) => (
@@ -57,12 +58,13 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
   const isCartographer = user?.role === 'cartographer';
   const [clusters, setClusters]               = useState<MapCluster[]>([]);
   const [plannedSchools, setPlannedSchools]   = useState<MapSchool[]>([]);
+  const [unassignedSchools, setUnassignedSchools] = useState<MapSchool[]>([]);
   const [loading, setLoading]                 = useState(true);
   const [error, setError]                     = useState<string|null>(null);
   const [selectedRegion, setSelectedRegion]   = useState('All');
   const [activeClusterId, setActiveClusterId] = useState<number|null>(null);
   const [searchQuery, setSearchQuery]         = useState('');
-  const [layers, setLayers] = useState<Record<LayerKey,boolean>>({clusters:true,trainedSchools:true,untrainedSchools:true,connectors:true,heatmap:false});
+  const [layers, setLayers] = useState<Record<LayerKey,boolean>>({clusters:true,trainedSchools:true,untrainedSchools:true,connectors:true,heatmap:false,unassigned:true});
   const toggleLayer = (key:LayerKey) => setLayers(prev=>({...prev,[key]:!prev[key]}));
   const [selectedCluster, setSelectedCluster] = useState<MapCluster|null>(null);
   const [selectedSchool,  setSelectedSchool]  = useState<MapSchool|null>(null);
@@ -71,20 +73,21 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
   const mapRef = useRef<any>(null);
 
   const fetchClusters = useCallback(async () => {
-  setLoading(true); setError(null);
-  const token = localStorage.getItem('token');
-  // No token guard needed — map routes are now public
-  try {
+    setLoading(true); setError(null);
+    try {
       const params:any = {};
       if (selectedRegion !== 'All') params.region = selectedRegion;
-      const [clusterData, plannedData] = await Promise.all([
+      const [clusterData, plannedData, unassignedData] = await Promise.all([
         mapClustersApi.getAll(params),
         mapSchoolsApi.getAll({ status: 'planned' }),
+        mapSchoolsApi.getAll(selectedRegion !== 'All' ? { region: selectedRegion } : {}),
       ]);
       if (Array.isArray(clusterData)) setClusters(clusterData);
       else setError('Unexpected response from server.');
       if (Array.isArray(plannedData))
-        setPlannedSchools(plannedData.filter((s:MapSchool) => !s.cluster_id || s.cluster_id === 0));
+        setPlannedSchools(plannedData.filter((s:MapSchool) => !s.cluster_id));
+      if (Array.isArray(unassignedData))
+        setUnassignedSchools(unassignedData.filter((s:MapSchool) => !s.cluster_id && s.status !== 'planned' && s.lat && s.lng));
     } catch { setError('Could not load map data.'); }
     finally { setLoading(false); }
   }, [selectedRegion]);
@@ -309,8 +312,38 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
         .on('click',()=>openSchool(school));
     });
 
+    // Unassigned schools — blue dot markers, shown so cartographer can group them
+    if (layers.unassigned) {
+      unassignedSchools.forEach(school => {
+        const trained = school.ett_trained;
+        const dotColor = trained ? '#16a34a' : '#2563eb'; // green if trained, blue if not yet assigned
+        const html = `
+          <div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;">
+            <div style="
+              width:10px;height:10px;border-radius:50%;
+              background:${dotColor};
+              border:1.5px solid white;
+              box-shadow:0 1px 3px rgba(0,0,0,.3);
+            "></div>
+          </div>`;
+        const icon = L.divIcon({className:'',html,iconAnchor:[5,5]});
+        L.marker([school.lat, school.lng],{icon,zIndexOffset:100})
+          .addTo(map)
+          .bindPopup(`
+            <div style="font-family:'Plus Jakarta Sans',sans-serif;min-width:180px;color:${darkMode?'#f3f4f6':'#111827'}">
+              <div style="font-weight:900;font-size:12px;margin-bottom:2px">${school.name}</div>
+              <div style="font-size:10px;font-weight:700;color:#2563eb;margin-bottom:4px">📍 Unassigned School</div>
+              <div style="font-size:10px;color:#e85d04;font-weight:700">${school.district}${school.region ? ' · ' + school.region : ''}</div>
+              ${school.boys_enrolled||school.girls_enrolled ? `<div style="font-size:10px;color:#6b7280;margin-top:3px">👦 ${school.boys_enrolled||0} boys · 👧 ${school.girls_enrolled||0} girls</div>` : ''}
+              ${school.ett_trained ? '<div style="font-size:10px;color:#16a34a;margin-top:3px;font-weight:700">✅ ETT Trained</div>' : '<div style="font-size:10px;color:#d97706;margin-top:3px;">⏳ Not yet trained</div>'}
+              <div style="font-size:9px;color:#9ca3af;margin-top:4px;font-style:italic">Awaiting cluster assignment</div>
+            </div>`,{maxWidth:220})
+          .on('click',()=>openSchool(school));
+      });
+    }
+
     return () => { map.remove(); mapRef.current = null; };
-  }, [filteredClusters, plannedSchools, darkMode, layers, loading, error]);
+  }, [filteredClusters, plannedSchools, unassignedSchools, darkMode, layers, loading, error]);
 
   const allSchools      = clusters.flatMap(c=>c.schools);
   const totalLearners   = clusters.reduce((a,c)=>a+c.students,0);
@@ -354,7 +387,7 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
         <div className="flex items-center gap-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 shadow-lg shrink-0">
           <MapPin size={13} className="text-orange-500 shrink-0"/>
           <div>
-            <div className="text-xs font-black text-slate-900 dark:text-white leading-none">Cluster Map</div>
+            <div className="text-xs font-black text-slate-900 dark:text-white leading-none">ETT Malawi</div>
             <div className={`text-[9px] leading-none mt-0.5 font-semibold flex items-center gap-1 ${isOnline ? 'text-emerald-500' : 'text-amber-500'}`}>
               <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'}`}/>
               {isOnline ? 'Online' : 'Offline'}
