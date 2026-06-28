@@ -131,7 +131,7 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
       showToast('⚠️ This DC is already assigned to this district');
       return;
     }
-    const data = await districtsApi.assignDC(assignModal.id, assignUserId);
+    const data = await districtsApi.assignDC(assignModal.name, assignUserId);
     if (data.error) { showToast(`⚠️ ${data.error}`); return; }
     setDistricts(prev => prev.map(d => d.id === assignModal.id ? {
       ...d,

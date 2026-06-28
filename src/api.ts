@@ -135,7 +135,7 @@ export const districtsApi = {
   createTraining: (id: number, data: any) => api.post(`/api/districts/${id}/trainings`, data),
   updateTraining: (id: number, data: any) => api.put(`/api/trainings/${id}`, data),
   deleteTraining: (id: number) => api.delete(`/api/trainings/${id}`),
-  assignDC: (id: number, userId: string) => api.put(`/api/districts/${id}/assign-dc`, { userId }),
+  assignDC: (name: string, userId: string) => api.put(`/api/districts/${name}/assign-dc`, { userId }),
 };
 // ─── GBV CASES ───────────────────────────────────────────────────────────────
 
