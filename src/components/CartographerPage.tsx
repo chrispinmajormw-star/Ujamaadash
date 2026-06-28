@@ -317,6 +317,10 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
   const [isNewSchool,  setIsNewSchool]  = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<{ type: 'cluster' | 'school'; id: number; name: string } | null>(null);
 
+  // ── School picker (used inside the cluster modal) ───────────────────────
+  const [selectedSchoolIds, setSelectedSchoolIds] = useState<Set<number>>(new Set());
+  const [pickerSearch, setPickerSearch] = useState('');
+
   // ── Derived lists ─────────────────────────────────────────────────────────
   const allSchools = clusters.flatMap(c => c.schools);
 
@@ -334,6 +338,22 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
 
   const queueClusters = clusters.filter(c => !c.verified);
   const queueSchools  = allSchools.filter(s => !s.verified);
+
+  // Schools the cartographer can pick from when building/editing a cluster:
+  // unassigned ("planned") schools, plus whatever already belongs to the
+  // cluster currently open in the modal (so they show as pre-checked).
+  const currentClusterSchools = (!isNewCluster && editCluster?.id)
+    ? (clusters.find(c => c.id === editCluster.id)?.schools || [])
+    : [];
+  const pickableSchools = [
+    ...plannedSchools,
+    ...currentClusterSchools.filter(s => !plannedSchools.some(p => p.id === s.id)),
+  ];
+  const filteredPickableSchools = pickableSchools.filter(s =>
+    !pickerSearch ||
+    s.name.toLowerCase().includes(pickerSearch.toLowerCase()) ||
+    s.district.toLowerCase().includes(pickerSearch.toLowerCase())
+  );
 
   // ── Stats ─────────────────────────────────────────────────────────────────
   const verifiedClusters = clusters.filter(c => c.verified).length;
@@ -374,15 +394,35 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
     }
     setSaving(true);
     try {
+      let clusterId: number;
       if (isNewCluster) {
         const created = await mapClustersApi.create(editCluster);
+        clusterId = created.id;
         setClusters(prev => [{ ...created, schools: [] }, ...prev]);
         showToast('✅ Cluster created');
       } else {
         const updated = await mapClustersApi.update(editCluster.id!, editCluster);
+        clusterId = updated.id;
         setClusters(prev => prev.map(c => c.id === updated.id ? { ...c, ...updated } : c));
         showToast('✅ Cluster updated');
       }
+
+      // Apply school picker changes: anything newly checked gets assigned
+      // to this cluster; anything that was assigned but got unchecked goes
+      // back to Planned (unassigned).
+      const previouslyAssignedIds = new Set(currentClusterSchools.map(s => s.id));
+      const toAssign   = [...selectedSchoolIds].filter(id => !previouslyAssignedIds.has(id));
+      const toUnassign = [...previouslyAssignedIds].filter(id => !selectedSchoolIds.has(id));
+
+      await Promise.all([
+        ...toAssign.map(id => mapSchoolsApi.update(id, { cluster_id: clusterId, status: 'active' })),
+        ...toUnassign.map(id => mapSchoolsApi.update(id, { cluster_id: null, status: 'planned' })),
+      ]);
+
+      if (toAssign.length || toUnassign.length) {
+        await fetch(); // re-sync clusters + planned lists from the server
+      }
+
       setEditCluster(null);
     } catch {
       showToast('❌ Save failed — check console');
@@ -514,7 +554,12 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
             <RefreshCw size={12} /> Refresh
           </button>
           {view === 'clusters' && (
-            <Btn size="sm" onClick={() => { setEditCluster({ ...BLANK_CLUSTER }); setIsNewCluster(true); }}>
+            <Btn size="sm" onClick={() => {
+              setEditCluster({ ...BLANK_CLUSTER });
+              setIsNewCluster(true);
+              setSelectedSchoolIds(new Set());
+              setPickerSearch('');
+            }}>
               <Plus size={12} className="inline mr-1" /> New Cluster
             </Btn>
           )}
@@ -840,7 +885,12 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
                           </div>
                         </div>
                         <div className="flex gap-1.5 shrink-0">
-                          <Btn size="sm" onClick={() => { setEditCluster({ ...c }); setIsNewCluster(false); }}>
+                          <Btn size="sm" onClick={() => {
+                            setEditCluster({ ...c });
+                            setIsNewCluster(false);
+                            setSelectedSchoolIds(new Set(c.schools.map(s => s.id)));
+                            setPickerSearch('');
+                          }}>
                             <Edit2 size={10} className="inline mr-0.5" /> Edit
                           </Btn>
                           <Btn size="sm" variant="success" onClick={() => verifyCluster(c)}>
@@ -945,6 +995,51 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
         >
           <div className="max-h-[70vh] overflow-y-auto pr-1">
             <ClusterForm data={editCluster} onChange={setEditCluster} />
+
+            <SectionHead title={`Schools in this Cluster (${selectedSchoolIds.size} selected)`} />
+            <div className="relative mb-2">
+              <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                value={pickerSearch}
+                onChange={e => setPickerSearch(e.target.value)}
+                placeholder="Search schools by name or district…"
+                className="w-full pl-7 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+            {filteredPickableSchools.length === 0 && (
+              <p className="text-[11px] text-slate-400 italic py-2">
+                No unassigned schools found. Add a Planned School first if it isn't in the database yet.
+              </p>
+            )}
+            <div className="space-y-1 max-h-48 overflow-y-auto border border-slate-100 dark:border-slate-800 rounded-lg p-2">
+              {filteredPickableSchools.map(s => {
+                const checked = selectedSchoolIds.has(s.id);
+                return (
+                  <label
+                    key={s.id}
+                    className="flex items-center gap-2 text-xs py-1 px-1.5 rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => {
+                        setSelectedSchoolIds(prev => {
+                          const next = new Set(prev);
+                          if (checked) next.delete(s.id); else next.add(s.id);
+                          return next;
+                        });
+                      }}
+                      className="w-3.5 h-3.5 rounded accent-emerald-500"
+                    />
+                    <span className="font-semibold text-slate-700 dark:text-slate-300">{s.name}</span>
+                    <span className="text-slate-400">— {s.district} · {Number(s.lat).toFixed(4)}, {Number(s.lng).toFixed(4)}</span>
+                  </label>
+                );
+              })}
+            </div>
+            <p className="text-[10px] text-slate-400 mt-1.5">
+              Pulled from existing school records in the database. Checking a school assigns it to this cluster; unchecking sends it back to Planned.
+            </p>
           </div>
           <div className="flex gap-2 justify-end pt-4 border-t border-slate-100 dark:border-slate-800 mt-4">
             <Btn variant="secondary" size="sm" onClick={() => setEditCluster(null)}>Cancel</Btn>
