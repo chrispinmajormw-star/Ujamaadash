@@ -1,6 +1,6 @@
 import { unwrapList } from './utils/mapFallback';
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'https://13.61.100.62.nip.io';
+const BASE_URL = import.meta.env.VITE_API_URL || '';
 
 const getToken = () => localStorage.getItem('token');
 
@@ -294,4 +294,9 @@ export const mapZonesApi = {
 export const mapApi = {
   /** GET /api/map/clusters  (or /api/clusters — whichever your server uses) */
   getClusters: () => apiFetch('/api/map/clusters').catch(() => apiFetch('/api/clusters')),
+};
+// ─── YOUTH MEDIA (S3-backed videos & documents) ──────────────────────────────
+
+export const youthApi = {
+  getMedia: () => apiFetch('/api/youth/media'),
 };

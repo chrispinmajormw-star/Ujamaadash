@@ -115,6 +115,7 @@ import { UsersPage } from './components/UsersPage';
 import { DataOfficerPage } from './components/DataOfficerPage';
 import { MonitoringProvider } from './context/MonitoringContext';
 import { SessionRecordsPage } from './components/SessionRecordsPage';
+import { YouthPage } from './components/YouthPage';
 
 const PAGE_LABELS: Record<string, string> = {
   dashboard: "ETT ScaleUp Program",
@@ -288,7 +289,7 @@ useEffect(() => {
       workflow_status: "sent",
       submitted_role: user?.role || "public",
     };
-    setReports(p => [newReport, ...p]);
+    setReports((p: Report[]) => [newReport, ...p]);
     showToast(`✅ Report submitted successfully`);
   } catch (err) {
     showToast(`⚠️ Failed to save report`);
@@ -298,7 +299,7 @@ useEffect(() => {
   const updateStatus = async (id: number, status: 'approved' | 'rejected' | 'forwarded') => {
   try {
     await reportsApi.update(id, { status });
-    setReports(p => p.map(r => r.id === id ? { ...r, status } : r));
+    setReports((p: Report[]) => p.map(r => r.id === id ? { ...r, status } : r));
     showToast(`✅ Report ${status}`);
   } catch {
     showToast('⚠️ Failed to update report status');
@@ -309,7 +310,7 @@ useEffect(() => {
   const forwardReport = async (id: number) => {
   try {
     await reportsApi.update(id, { status: 'forwarded' });
-    setReports(p => p.map(r => r.id === id ? {
+    setReports((p: Report[]) => p.map(r => r.id === id ? {
       ...r,
       status: "forwarded" as const,
       sentTo: "admin",
@@ -324,7 +325,7 @@ useEffect(() => {
 
   // Data Officer inline edit persistence
   const saveEditedReport = (updated: Report) => {
-    setReports(p => p.map(r => r.id === updated.id ? { ...r, ...updated } : r));
+    setReports((p: Report[]) => p.map(r => r.id === updated.id ? { ...r, ...updated } : r));
     showToast("💾 File record updated successfully");
   };
 
@@ -421,6 +422,8 @@ const pendingCount = (user && can(user.role, "approveReport")
         return user?.role === 'admin' ? <UsersPage user={user} users={users} setUsers={setUsers} showToast={showToast} refreshUsers={refreshUsers} /> : <div className="p-12 text-center text-slate-400 font-semibold italic">Restricted to National Admin only.</div>;
       case "impact":
         return <ImpactPage reports={reports} showToast={showToast} user={user} />;
+      case 'youth':
+        return <YouthPage />;
       case 'sasa':
         return <SasaPage user={user} reports={reports} showToast={showToast} />;
       case 'document_reports':
@@ -465,6 +468,7 @@ const pendingCount = (user && can(user.role, "approveReport")
         { id: "trainings", label: "Trainings", icon: GraduationCap },
         { id: "maps", label: "Clusters Map", icon: Map },
         { id: "impact", label: "Success Stories", icon: Heart },
+        { id: "youth", label: "Ujamaa Youth", icon: Play },
       ]},
       { title: "More", items: [
         { id: "calendar", label: "Calendar", icon: Calendar, protected: true },
@@ -552,6 +556,7 @@ if (role === 'district_coordinator') return [
     { id: "curriculum", label: "Curriculum", icon: BookOpen },
     { id: "analytics", label: "Analytics", icon: BarChart2, protected: true },
     { id: "impact", label: "Success Stories", icon: Heart },
+    { id: "youth", label: "Ujamaa Youth", icon: Play },
   ]},
   { title: "More", items: [
     { id: "calendar", label: "Calendar", icon: Calendar, protected: true },
@@ -594,6 +599,7 @@ if (role === 'district_coordinator') return [
           ...(user?.role !== 'tot' ? [{ id: "analytics", label: "Analytics", icon: BarChart2 }] : []),
           ...(user?.role === 'admin' ? [{ id: "sasa", label: "SASA Workspace", icon: Shield, protected: true }] : []),
           { id: "impact", label: "Success Stories", icon: Heart },
+          { id: "youth", label: "Ujamaa Youth", icon: Play },
           { id: 'teacher_resources', label: 'Teacher Resources', icon: BookOpen },
           ...(user?.role === 'admin' ? [{ id: "users", label: "Staff", icon: Users, protected: true }] : []),
           { id: "settings", label: "Settings", icon: Settings }

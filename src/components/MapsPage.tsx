@@ -72,25 +72,43 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
   const [loadingSchool,   setLoadingSchool]   = useState(false);
   const mapRef = useRef<any>(null);
 
+  // Track which cluster IDs have had schools loaded
+  const loadedClusterIds = useRef<Set<number>>(new Set());
+  // Track Leaflet layer groups so we can add school markers on demand
+  const schoolLayerRef = useRef<any>(null);
+
   const fetchClusters = useCallback(async () => {
     setLoading(true); setError(null);
     try {
       const params:any = {};
       if (selectedRegion !== 'All') params.region = selectedRegion;
-      const [clusterData, plannedData, unassignedData] = await Promise.all([
-        mapClustersApi.getAll(params),
-        mapSchoolsApi.getAll({ status: 'planned' }),
-        mapSchoolsApi.getAll(selectedRegion !== 'All' ? { region: selectedRegion } : {}),
-      ]);
-      if (Array.isArray(clusterData)) setClusters(clusterData);
-      else setError('Unexpected response from server.');
-      if (Array.isArray(plannedData))
-        setPlannedSchools(plannedData.filter((s:MapSchool) => !s.cluster_id));
-      if (Array.isArray(unassignedData))
-        setUnassignedSchools(unassignedData.filter((s:MapSchool) => !s.cluster_id && s.status !== 'planned' && s.lat && s.lng));
+      // Only load clusters — NO bulk school fetch
+      const clusterData = await mapClustersApi.getAll(params);
+      if (Array.isArray(clusterData)) {
+        // Clusters come back with schools:[] from the API — that's fine
+        // We'll load schools per cluster on demand
+        setClusters(clusterData);
+        loadedClusterIds.current.clear(); // reset when region changes
+      } else {
+        setError('Unexpected response from server.');
+      }
     } catch { setError('Could not load map data.'); }
     finally { setLoading(false); }
   }, [selectedRegion]);
+
+  // Load schools for a specific cluster on demand
+  const loadClusterSchools = useCallback(async (cluster: MapCluster) => {
+    if (loadedClusterIds.current.has(cluster.id)) return; // already loaded
+    loadedClusterIds.current.add(cluster.id);
+    try {
+      const schools = await mapSchoolsApi.getAll({ cluster_id: cluster.id });
+      if (Array.isArray(schools) && schools.length > 0) {
+        setClusters(prev => prev.map(c =>
+          c.id === cluster.id ? { ...c, schools } : c
+        ));
+      }
+    } catch { /* silent — cluster still shows, just no school markers */ }
+  }, []);
 
   useEffect(() => { fetchClusters(); }, [fetchClusters]);
 
@@ -110,6 +128,8 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
     const L = (window as any).L;
     if (!mapRef.current || !L) return;
     setActiveClusterId(cluster.id);
+    // Load schools on demand when user clicks cluster
+    loadClusterSchools(cluster);
     const pts:[number,number][] = [[cluster.lat,cluster.lng],...cluster.schools.map(s=>[s.lat,s.lng] as [number,number])];
     if (pts.length > 1) mapRef.current.flyToBounds(pts,{padding:[60,60],maxZoom:13,duration:1.1});
     else mapRef.current.flyTo([cluster.lat,cluster.lng],12,{duration:1.1});
@@ -276,7 +296,11 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
           <div style="font-size:9px;color:#9ca3af;text-align:right;margin-top:2px">${cluster.progress}% progress</div>
           <div style="margin-top:8px;font-size:9px;color:#9ca3af;font-style:italic">Click to open cluster panel →</div>
         </div>`,{maxWidth:290});
-      marker.on('click',()=>{setActiveClusterId(cluster.id);setSelectedCluster(cluster);});
+      marker.on('click',()=>{
+        setActiveClusterId(cluster.id);
+        setSelectedCluster(cluster);
+        loadClusterSchools(cluster);
+      });
     });
 
     // Planned schools — hollow purple diamond markers (no cluster)
@@ -344,7 +368,7 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
     }
 
     return () => { map.remove(); mapRef.current = null; };
-  }, [filteredClusters, plannedSchools, unassignedSchools, darkMode, layers, loading, error]);
+  }, [filteredClusters, plannedSchools, darkMode, layers, loading, error, loadClusterSchools]);
 
   const allSchools      = clusters.flatMap(c=>c.schools);
   const totalLearners   = clusters.reduce((a,c)=>a+c.students,0);
