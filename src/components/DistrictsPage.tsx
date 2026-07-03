@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
-import { districtsApi, usersApi } from '../api';
+import { districtsApi, usersApi, mapClustersApi } from '../api';
 import {
   Card, PageHeader, Btn, ProgBar, Badge, FInput, FArea, FSelect, Modal, FilterBar
 } from './SubComponents';
@@ -83,7 +83,7 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
   const [loading, setLoading] = useState(true);
   const [region, setRegion] = useState('all');
   const [expanded, setExpanded] = useState<number | null>(null);
-  const [districtData, setDistrictData] = useState<Record<number, { reports: any[]; trainings: any[] }>>({});
+  const [districtData, setDistrictData] = useState<Record<number, { reports: any[]; trainings: any[]; clusters: any[] }>>({});
 
   // Modals
   const [reportModal, setReportModal] = useState<any | null>(null);
@@ -130,15 +130,18 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
 
   const loadDistrictData = async (districtId: number) => {
     if (districtData[districtId]) return;
-    const [reports, trainings] = await Promise.all([
+    const district = districts.find(d => d.id === districtId);
+    const [reports, trainings, clusters] = await Promise.all([
       districtsApi.getReports(districtId),
       districtsApi.getTrainings(districtId),
+      district?.name ? mapClustersApi.getAll({ district: district.name }).catch(() => []) : Promise.resolve([]),
     ]);
     setDistrictData(prev => ({
       ...prev,
       [districtId]: {
         reports,
         trainings,
+        clusters,
       }
     }));
   };
@@ -395,8 +398,13 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
                   const isExpanded = expanded === d.id;
                   const schoolCount = Number(d.schools_count) || Number(d.school_count) || 0;
                   const learners = Number(d.learners) || Number(d.students) || 0;
-                  const clusterCount = Number(d.clusters_count) || Number(d.cluster_count) || 0;
                   const trainings = districtData[d.id]?.trainings || [];
+                  const clusters = districtData[d.id]?.clusters || [];
+                  const clusterCount =
+                    clusters.length ||
+                    Number(d.clusters_count) ||
+                    Number(d.cluster_count) ||
+                    0;
                   const upcoming = trainings.filter(t => getTrainingStatus(t.start_date, t.end_date) === 'upcoming');
                   const active = trainings.filter(t => getTrainingStatus(t.start_date, t.end_date) === 'active');
                   const completed = trainings.filter(t => getTrainingStatus(t.start_date, t.end_date) === 'completed');
@@ -467,11 +475,11 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
                         <div className="mt-4 pt-4 border-t" style={{ borderColor: theme.panelBorder }} onClick={e => e.stopPropagation()}>
                           <div className="mb-4">
                             <div className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Clusters in district</div>
-                            {clusterCount > 0 ? (
+                            {clusters.length > 0 ? (
                               <div className="flex flex-wrap gap-2">
-                                {Array.from({ length: clusterCount }, (_, idx) => (
-                                  <span key={idx} className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">
-                                    Cluster {idx + 1}
+                                {clusters.map((cluster, idx) => (
+                                  <span key={cluster.id || cluster.cluster_id || idx} className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">
+                                    {cluster.name || cluster.cluster_name || `Cluster ${idx + 1}`}
                                   </span>
                                 ))}
                               </div>
