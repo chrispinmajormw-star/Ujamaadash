@@ -20,6 +20,40 @@ const REGION_COLORS: Record<string, { color: string; bg: string }> = {
   Southern: { color: '#065f46', bg: '#d1fae5' },
 };
 
+const REGION_THEME: Record<string, {
+  dot: string;
+  panelBg: string;
+  panelBorder: string;
+  cardBg: string;
+  chipBg: string;
+  chipText: string;
+}> = {
+  Northern: {
+    dot: '#f97316',
+    panelBg: '#fff9f2',
+    panelBorder: '#f9d3ad',
+    cardBg: '#fffaf5',
+    chipBg: '#fff1e6',
+    chipText: '#c44d00',
+  },
+  Central: {
+    dot: '#0f766e',
+    panelBg: '#f6fbfb',
+    panelBorder: '#b8e1dd',
+    cardBg: '#f9fefe',
+    chipBg: '#dff5f3',
+    chipText: '#0f766e',
+  },
+  Southern: {
+    dot: '#2563eb',
+    panelBg: '#f4f8ff',
+    panelBorder: '#c8d8fb',
+    cardBg: '#f8fbff',
+    chipBg: '#dbeafe',
+    chipText: '#1e40af',
+  },
+};
+
 const TODAY = new Date().toISOString().split('T')[0];
 
 const getTrainingStatus = (startDate: string, endDate?: string) => {
@@ -326,15 +360,29 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
         const dists = grouped[reg] || [];
         if (dists.length === 0) return null;
         const summary = regionSummary(reg);
+        const theme = REGION_THEME[reg];
         return (
-          <section key={reg} className="rounded-[24px] border border-orange-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-[0_10px_30px_rgba(15,23,42,0.08)] overflow-hidden">
-            <div className="px-4 sm:px-6 py-4 sm:py-5 flex flex-wrap items-center gap-4 border-b border-orange-100/80 dark:border-slate-800">
+          <section
+            key={reg}
+            className="rounded-[24px] border shadow-[0_10px_30px_rgba(15,23,42,0.08)] overflow-hidden"
+            style={{
+              background: theme.panelBg,
+              borderColor: theme.panelBorder,
+            }}
+          >
+            <div
+              className="px-4 sm:px-6 py-4 sm:py-5 flex flex-wrap items-center gap-4 border-b"
+              style={{ borderColor: theme.panelBorder }}
+            >
               <div className="flex items-center gap-3">
-                <span className="w-5 h-5 rounded-full bg-orange-500 shrink-0" />
+                <span className="w-5 h-5 rounded-full shrink-0" style={{ background: theme.dot }} />
                 <h3 className="text-2xl font-black text-slate-950 dark:text-white m-0">{reg} Region</h3>
               </div>
               <div className="ml-auto flex items-center gap-5 text-sm">
-                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-50 text-orange-700 border border-orange-100 font-medium">
+                <span
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border font-medium"
+                  style={{ background: theme.chipBg, color: theme.chipText, borderColor: theme.panelBorder }}
+                >
                   {summary.activePct}% Coverage
                 </span>
                 <span className="text-slate-500 font-medium">{summary.districts} districts</span>
@@ -345,22 +393,45 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
             <div className="p-4 sm:p-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                 {dists.map(d => {
+                  const isExpanded = expanded === d.id;
                   const schoolCount = Number(d.schools_count) || Number(d.school_count) || 0;
                   const learners = Number(d.learners) || Number(d.students) || 0;
                   const clusterCount = Number(d.clusters_count) || Number(d.cluster_count) || 0;
+                  const trainings = districtData[d.id]?.trainings || [];
+                  const upcoming = trainings.filter(t => getTrainingStatus(t.start_date, t.end_date) === 'upcoming');
+                  const active = trainings.filter(t => getTrainingStatus(t.start_date, t.end_date) === 'active');
+                  const completed = trainings.filter(t => getTrainingStatus(t.start_date, t.end_date) === 'completed');
                   return (
                     <Card
                       key={d.id}
-                      className="rounded-[18px] border border-orange-200/80 dark:border-orange-900/30 bg-[#fff9f1] dark:bg-slate-900 shadow-none p-4 sm:p-5"
+                      className={`rounded-[18px] border shadow-none p-4 sm:p-5 transition-all cursor-pointer ${
+                        isExpanded ? 'ring-2 ring-offset-2 ring-orange-300' : ''
+                      }`}
+                      style={{
+                        background: theme.cardBg,
+                        borderColor: isExpanded ? theme.dot : theme.panelBorder,
+                      }}
+                      onClick={() => toggleExpand(d.id)}
                     >
                       <div className="flex items-start justify-between gap-3 mb-4">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <CheckCircle size={20} className="text-emerald-500 shrink-0" />
+                            <CheckCircle size={20} style={{ color: d.is_active ? '#16a34a' : theme.chipText }} className="shrink-0" />
                             <h4 className="text-xl font-black text-slate-950 dark:text-white m-0 truncate">{d.name}</h4>
                           </div>
+                          <div className="mt-1 flex flex-wrap gap-2 text-[11px] text-slate-500">
+                            {d.coordinator_name ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                <CheckCircle size={11} /> DC: {d.coordinator_name}
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-100">
+                                <AlertCircle size={11} /> No DC Assigned
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <span className="inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold text-white bg-emerald-500">
+                        <span className="inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold text-white" style={{ background: d.is_active ? '#16a34a' : '#94a3b8' }}>
                           {d.is_active ? 'active' : 'planned'}
                         </span>
                       </div>
@@ -378,20 +449,8 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
                         ))}
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
-                        {d.coordinator_name ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
-                            <CheckCircle size={11} /> DC: {d.coordinator_name}
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-100">
-                            <AlertCircle size={11} /> No DC Assigned
-                          </span>
-                        )}
-                      </div>
-
                       {canManage(d) && (
-                        <div className="flex flex-wrap gap-2 mt-4">
+                        <div className="flex flex-wrap gap-2 mt-4" onClick={e => e.stopPropagation()}>
                           <Btn size="sm" variant="secondary" onClick={() => { setReportForm({ number_of_tots: d.number_of_tots || d.tots || '', teachers_trained: d.teachers_trained || '', school_coverage: d.school_coverage || d.coverage || '', notes: '' }); setReportModal(d); }}>
                             <FileText size={12} /> Update Stats
                           </Btn>
@@ -402,6 +461,58 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
                             <Btn size="sm" variant="ghost" onClick={() => { setAssignUserId(d.district_coordinator_user_id || ''); setAssignModal(d); }}>
                               <Users size={12} /> Assign DC
                             </Btn>
+                          )}
+                        </div>
+                      )}
+
+                      {isExpanded && (
+                        <div className="mt-4 pt-4 border-t" style={{ borderColor: theme.panelBorder }} onClick={e => e.stopPropagation()}>
+                          <div className="grid grid-cols-3 gap-3 mb-4">
+                            {[
+                              { label: 'Schools', value: schoolCount },
+                              { label: 'Learners', value: learners },
+                              { label: 'Clusters', value: clusterCount },
+                            ].map(item => (
+                              <div key={item.label} className="rounded-xl bg-white/70 border border-white/60 p-2.5">
+                                <div className="text-lg font-black text-slate-950 dark:text-white">{item.value}</div>
+                                <div className="text-[10px] text-slate-500 font-medium">{item.label}</div>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="mb-4">
+                            <div className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Clusters in district</div>
+                            {clusterCount > 0 ? (
+                              <div className="flex flex-wrap gap-2">
+                                {Array.from({ length: clusterCount }, (_, idx) => (
+                                  <span key={idx} className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white border border-slate-200 text-slate-600">
+                                    Cluster {idx + 1}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="text-xs text-slate-500">No clusters recorded yet.</div>
+                            )}
+                          </div>
+
+                          {districtData[d.id] ? (
+                            <div className="space-y-2">
+                              <div className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Training activity</div>
+                              <div className="grid grid-cols-3 gap-2">
+                                {[
+                                  { label: 'Upcoming', value: upcoming.length, color: '#1e40af' },
+                                  { label: 'Active', value: active.length, color: '#c44d00' },
+                                  { label: 'Completed', value: completed.length, color: '#065f46' },
+                                ].map(item => (
+                                  <div key={item.label} className="rounded-xl bg-white/70 border border-white/60 p-2">
+                                    <div className="text-base font-black" style={{ color: item.color }}>{item.value}</div>
+                                    <div className="text-[10px] text-slate-500">{item.label}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-xs text-slate-500">Click to load district details.</div>
                           )}
                         </div>
                       )}
