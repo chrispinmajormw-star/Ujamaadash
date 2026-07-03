@@ -183,19 +183,102 @@ const ClusterForm = ({
 // ─── SCHOOL FORM ──────────────────────────────────────────────────────────────
 
 const SchoolForm = ({
-  data, clusters, onChange
+  data, clusters, schoolCatalog, onChange
 }: {
   data: Partial<MapSchool>;
   clusters: MapCluster[];
+  schoolCatalog: MapSchool[];
   onChange: (updated: Partial<MapSchool>) => void;
 }) => {
+  const [schoolSearch, setSchoolSearch] = useState(data.name || '');
+  const [showSchoolMatches, setShowSchoolMatches] = useState(false);
+  useEffect(() => {
+    setSchoolSearch(data.name || '');
+  }, [data.name]);
+
   const set = (k: keyof MapSchool, v: any) => onChange({ ...data, [k]: v });
   const isPlanned = data.status === 'planned';
+  const schoolMatches = schoolCatalog.filter(s => {
+    const q = schoolSearch.trim().toLowerCase();
+    if (!q) return false;
+    return (
+      s.name.toLowerCase().includes(q) ||
+      s.district.toLowerCase().includes(q) ||
+      s.region.toLowerCase().includes(q)
+    );
+  }).slice(0, 8);
+
+  const applySchoolChoice = (school: MapSchool) => {
+    setSchoolSearch(school.name);
+    setShowSchoolMatches(false);
+    onChange({
+      ...data,
+      name: school.name,
+      district: school.district,
+      region: school.region,
+      cluster_id: school.cluster_id || 0,
+      zone_id: school.zone_id,
+      zone_name: school.zone_name,
+      lat: school.lat,
+      lng: school.lng,
+      headteacher: school.headteacher || '',
+      headteacher_phone: school.headteacher_phone || '',
+      him_running: !!school.him_running,
+      gesd_running: !!school.gesd_running,
+      boys_enrolled: school.boys_enrolled || 0,
+      girls_enrolled: school.girls_enrolled || 0,
+      trained_teachers: school.trained_teachers || 0,
+      tots: school.tots || 0,
+      stots: school.stots || 0,
+      teachbacks: school.teachbacks || 0,
+      sessions_completed: school.sessions_completed || 0,
+      sessions_planned: school.sessions_planned || 0,
+      last_session_date: school.last_session_date || '',
+      ett_trained: !!school.ett_trained,
+      verified: !!school.verified,
+      verification_notes: school.verification_notes || '',
+      status: school.status || 'active',
+      notes: school.notes || '',
+    });
+  };
   return (
     <div className="space-y-4">
       <SectionHead title="Identity" />
       <div className="grid grid-cols-2 gap-3">
-        <FInput label="School Name *" value={data.name || ''} onChange={e => set('name', e.target.value)} />
+        <div className="relative col-span-2">
+          <FInput
+            label="School Name *"
+            value={schoolSearch}
+            onChange={e => {
+              const value = e.target.value;
+              setSchoolSearch(value);
+              setShowSchoolMatches(true);
+              set('name', value);
+            }}
+            onFocus={() => setShowSchoolMatches(true)}
+            onBlur={() => setTimeout(() => setShowSchoolMatches(false), 120)}
+            placeholder="Search existing school or type a new one"
+          />
+          {showSchoolMatches && schoolMatches.length > 0 && (
+            <div className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-lg">
+              {schoolMatches.map(s => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onMouseDown={e => e.preventDefault()}
+                  onClick={() => applySchoolChoice(s)}
+                  className="w-full text-left px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 border-b border-slate-100 dark:border-slate-800 last:border-b-0"
+                >
+                  <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">{s.name}</div>
+                  <div className="text-[10px] text-slate-400">
+                    {s.district} · {s.region}
+                    {s.cluster_id ? ` · Cluster ${s.cluster_id}` : ' · Unassigned'}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         <FSelect label="Status" value={data.status || 'active'} onChange={e => {
           set('status', e.target.value);
           // Clear cluster when switching to planned
@@ -299,6 +382,7 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
   // ── Data state ────────────────────────────────────────────────────────────
   const [clusters, setClusters] = useState<MapCluster[]>([]);
   const [zones,    setZones]    = useState<Zone[]>([]);
+  const [schoolCatalog, setSchoolCatalog] = useState<MapSchool[]>([]);
   const [plannedSchools, setPlannedSchools] = useState<MapSchool[]>([]);
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState<string | null>(null);
@@ -322,7 +406,8 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
   const [pickerSearch, setPickerSearch] = useState('');
 
   // ── Derived lists ─────────────────────────────────────────────────────────
-  const allSchools = clusters.flatMap(c => c.schools);
+  const clusterSchools = clusters.flatMap(c => c.schools);
+  const allSchools = schoolCatalog.length > 0 ? schoolCatalog : clusterSchools;
 
   const filteredClusters = clusters.filter(c => {
     if (regionFilter !== 'All' && c.region !== regionFilter) return false;
@@ -340,15 +425,11 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
   const queueSchools  = allSchools.filter(s => !s.verified);
 
   // Schools the cartographer can pick from when building/editing a cluster:
-  // unassigned ("planned") schools, plus whatever already belongs to the
-  // cluster currently open in the modal (so they show as pre-checked).
+  // the full DB school catalog, with current cluster membership pre-checked.
   const currentClusterSchools = (!isNewCluster && editCluster?.id)
     ? (clusters.find(c => c.id === editCluster.id)?.schools || [])
     : [];
-  const pickableSchools = [
-    ...plannedSchools,
-    ...currentClusterSchools.filter(s => !plannedSchools.some(p => p.id === s.id)),
-  ];
+  const pickableSchools = schoolCatalog;
   const filteredPickableSchools = pickableSchools.filter(s =>
     !pickerSearch ||
     s.name.toLowerCase().includes(pickerSearch.toLowerCase()) ||
@@ -364,13 +445,15 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
   const fetch = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      const [clusterData, zoneData, plannedData] = await Promise.all([
+      const [clusterData, zoneData, schoolData, plannedData] = await Promise.all([
         mapClustersApi.getAll(),
         mapZonesApi.getAll(),
+        mapSchoolsApi.getAll(),
         mapSchoolsApi.getAll({ status: 'planned' }),
       ]);
       setClusters(clusterData.length > 0 ? clusterData : getStaticMapClusters());
       setZones(zoneData);
+      setSchoolCatalog(Array.isArray(schoolData) ? schoolData : []);
       setPlannedSchools(plannedData);
       if (clusterData.length === 0) {
         setError('Using offline map data — live server unavailable.');
@@ -396,12 +479,12 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
     try {
       let clusterId: number;
       if (isNewCluster) {
-        const created = await mapClustersApi.create(editCluster);
+        const created = await mapClustersApi.create(editCluster) as MapCluster;
         clusterId = created.id;
         setClusters(prev => [{ ...created, schools: [] }, ...prev]);
         showToast('✅ Cluster created');
       } else {
-        const updated = await mapClustersApi.update(editCluster.id!, editCluster);
+        const updated = await mapClustersApi.update(editCluster.id!, editCluster) as MapCluster;
         clusterId = updated.id;
         setClusters(prev => prev.map(c => c.id === updated.id ? { ...c, ...updated } : c));
         showToast('✅ Cluster updated');
@@ -449,7 +532,11 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
           : null,
       };
       if (isNewSchool) {
-        const created = await mapSchoolsApi.create(payload);
+        const created = await mapSchoolsApi.create(payload) as MapSchool;
+        setSchoolCatalog(prev => {
+          const next = prev.filter(s => s.id !== created.id);
+          return [created, ...next];
+        });
         if (isPlanned || !created.cluster_id) {
           setPlannedSchools(prev => [created, ...prev]);
         } else {
@@ -461,14 +548,24 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
         }
         showToast(isPlanned ? '✅ Planned school added' : '✅ School added to cluster');
       } else {
-        const updated = await mapSchoolsApi.update(editSchool.id!, payload);
-        // Update in planned list
-        setPlannedSchools(prev => prev.map(s => s.id === updated.id ? { ...s, ...updated } : s));
-        // Update in cluster list
-        setClusters(prev => prev.map(c => ({
-          ...c,
-          schools: c.schools.map(s => s.id === updated.id ? { ...s, ...updated } : s)
-        })));
+        const updated = await mapSchoolsApi.update(editSchool.id!, payload) as MapSchool;
+        setSchoolCatalog(prev => prev.map(s => s.id === updated.id ? updated : s));
+        setPlannedSchools(prev => {
+          const remaining = prev.filter(s => s.id !== updated.id);
+          return updated.status === 'planned' ? [updated, ...remaining] : remaining;
+        });
+        setClusters(prev => prev.map(c => {
+          const hadSchool = c.schools.some(s => s.id === updated.id);
+          const shouldContain = !!updated.cluster_id && c.id === updated.cluster_id;
+          const nextSchools = c.schools.filter(s => s.id !== updated.id);
+          return {
+            ...c,
+            school_count: shouldContain
+              ? (hadSchool ? c.school_count : c.school_count + 1)
+              : (hadSchool ? Math.max(0, c.school_count - 1) : c.school_count),
+            schools: shouldContain ? [...nextSchools, updated] : nextSchools,
+          };
+        }));
         showToast('✅ School updated');
       }
       setEditSchool(null);
@@ -1061,7 +1158,7 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
           width={600}
         >
           <div className="max-h-[70vh] overflow-y-auto pr-1">
-            <SchoolForm data={editSchool} clusters={clusters} onChange={setEditSchool} />
+            <SchoolForm data={editSchool} clusters={clusters} schoolCatalog={schoolCatalog} onChange={setEditSchool} />
           </div>
           <div className="flex gap-2 justify-end pt-4 border-t border-slate-100 dark:border-slate-800 mt-4">
             <Btn variant="secondary" size="sm" onClick={() => setEditSchool(null)}>Cancel</Btn>
