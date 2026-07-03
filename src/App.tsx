@@ -729,17 +729,16 @@ if (role === 'district_coordinator') return [
                       title="Search"
                       aria-label="Global search"
                     >
-                      <Search size={16} className="sm:hidden" />
-                      <Search size={14} className="hidden sm:block" />
+                      <Search size={16} />
                     </button>
                     {searchOpen && (
-                      <div className="absolute right-0 top-10 bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg shadow-lg p-2 w-72 z-50">
+                      <div className="fixed left-1/2 top-16 z-[60] w-[min(92vw,22rem)] -translate-x-1/2 rounded-xl border border-neutral-200 bg-white p-3 shadow-2xl dark:border-slate-800 dark:bg-[#0f1623] sm:absolute sm:right-0 sm:left-auto sm:top-10 sm:w-72 sm:translate-x-0">
                         <input
                           type="text"
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                           placeholder="Search reports, pages..."
-                          className="w-full px-3 py-2 text-xs border border-neutral-200 dark:border-slate-700 rounded bg-white dark:bg-[#0f1623] text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          className="w-full px-3 py-2 text-xs border border-neutral-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f1623] text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                           autoFocus
                         />
                         {searchResults.length > 0 && (
@@ -771,8 +770,7 @@ if (role === 'district_coordinator') return [
                         title={`${pendingCount} pending reviews`}
                         aria-label="Notifications"
                       >
-                        <Bell size={16} className="sm:hidden" />
-                        <Bell size={14} className="hidden sm:block" />
+                        <Bell size={16} />
                         {pendingCount > 0 && (
                           <span className="absolute -top-1 -right-1 bg-red-600 text-white font-bold text-[9px] min-w-[16px] h-4 rounded-full flex items-center justify-center px-0.5">
                             {pendingCount}
@@ -854,8 +852,7 @@ if (role === 'district_coordinator') return [
                     title="Toggle theme"
                     aria-label="Toggle dark mode"
                   >
-                    {darkMode ? <Sun size={16} className="sm:hidden" /> : <Moon size={16} className="sm:hidden" />}
-                    {darkMode ? <Sun size={14} className="hidden sm:block" /> : <Moon size={14} className="hidden sm:block" />}
+                    {darkMode ? <Sun size={16} /> : <Moon size={16} />}
                   </button>
 
                   <button
@@ -867,8 +864,7 @@ if (role === 'district_coordinator') return [
                     title="Settings"
                     aria-label="Settings"
                   >
-                    <Settings size={16} className="sm:hidden" />
-                    <Settings size={14} className="hidden sm:block" />
+                    <Settings size={16} />
                   </button>
 
                   {user ? (

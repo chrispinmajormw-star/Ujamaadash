@@ -467,19 +467,6 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
 
                       {isExpanded && (
                         <div className="mt-4 pt-4 border-t" style={{ borderColor: theme.panelBorder }} onClick={e => e.stopPropagation()}>
-                          <div className="grid grid-cols-3 gap-3 mb-4">
-                            {[
-                              { label: 'Schools', value: schoolCount },
-                              { label: 'Learners', value: learners },
-                              { label: 'Clusters', value: clusterCount },
-                            ].map(item => (
-                              <div key={item.label} className="rounded-xl bg-white/70 border border-white/60 p-2.5">
-                                <div className="text-lg font-black text-slate-950 dark:text-white">{item.value}</div>
-                                <div className="text-[10px] text-slate-500 font-medium">{item.label}</div>
-                              </div>
-                            ))}
-                          </div>
-
                           <div className="mb-4">
                             <div className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Clusters in district</div>
                             {clusterCount > 0 ? (
