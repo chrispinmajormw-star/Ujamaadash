@@ -256,11 +256,11 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
     <div className="w-full max-w-7xl mx-auto px-4 py-6">
       
       {/* PAGE HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-gray-100 mb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-neutral-200 dark:border-slate-800 mb-6">
         <div>
           <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#e85d04] select-none">PORTAL ACTIONS</span>
-          <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight font-sans">Operations Tasks</h1>
-          <p className="text-xs text-gray-500 mt-1 max-w-xl">
+          <h1 className="text-2xl font-extrabold text-black dark:text-white tracking-tight font-sans">Operations Tasks</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xl">
             Register checkpoints, cross-examine database entries, schedule school reviews, and delegate task sheets.
           </p>
         </div>
@@ -279,7 +279,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
       )}
 
       {/* FILTER CONTROLS BAR WITH INTUITIVE INPUTS */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-gray-50 p-3.5 rounded-2xl border border-gray-200 mb-6 font-sans">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-white dark:bg-[#0f1623] p-3.5 rounded-2xl border border-neutral-200 dark:border-slate-800 mb-6 font-sans">
         
         {/* Search bar */}
         <div className="md:col-span-2 relative flex items-center">
@@ -289,17 +289,17 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
             placeholder="Search tasks title, context summary..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-white text-gray-800 border border-gray-200 rounded-xl text-xs focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none transition-all placeholder-gray-400"
+            className="w-full pl-9 pr-4 py-2 bg-white dark:bg-[#0f1623] text-gray-800 dark:text-white border border-gray-200 dark:border-slate-700 rounded-xl text-xs focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none transition-all placeholder-gray-400 dark:placeholder-slate-500"
           />
         </div>
 
         {/* Assigned role filter */}
-        <div className="relative flex items-center bg-white p-1 px-3 border border-gray-200 rounded-xl">
+        <div className="relative flex items-center bg-white dark:bg-[#0f1623] p-1 px-3 border border-gray-200 dark:border-slate-700 rounded-xl">
           <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mr-1 whitespace-nowrap">Assigned to:</span>
           <select
             value={roleFilter}
             onChange={e => setRoleFilter(e.target.value)}
-            className="w-full bg-transparent text-xs font-bold text-gray-700 border-none outline-none cursor-pointer py-1"
+            className="w-full bg-transparent text-xs font-bold text-gray-700 dark:text-white border-none outline-none cursor-pointer py-1"
           >
             <option value="all">Everyone's Log</option>
             <option value="admin">Admin Staff Tasks</option>
@@ -309,12 +309,12 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
         </div>
 
         {/* Priority filter */}
-        <div className="relative flex items-center bg-white p-1 px-3 border border-gray-200 rounded-xl">
+        <div className="relative flex items-center bg-white dark:bg-[#0f1623] p-1 px-3 border border-gray-200 dark:border-slate-700 rounded-xl">
           <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mr-1 whitespace-nowrap">Priority:</span>
           <select
             value={priorityFilter}
             onChange={e => setPriorityFilter(e.target.value)}
-            className="w-full bg-transparent text-xs font-bold text-gray-700 border-none outline-none cursor-pointer py-1"
+            className="w-full bg-transparent text-xs font-bold text-gray-700 dark:text-white border-none outline-none cursor-pointer py-1"
           >
             <option value="all">All Priorities</option>
             <option value="high">High Priority</option>
@@ -329,13 +329,13 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
         
         {/* COLUMN 1: TO DO */}
-        <div className="flex flex-col h-full bg-gray-50 rounded-2xl p-4 border border-gray-100">
-          <div className="flex items-center justify-between pb-3 border-b border-gray-200 mb-4 font-sans">
+        <div className="flex flex-col h-full bg-white dark:bg-[#0f1623] rounded-2xl p-4 border border-neutral-200 dark:border-slate-800">
+          <div className="flex items-center justify-between pb-3 border-b border-neutral-200 dark:border-slate-800 mb-4 font-sans">
             <div className="flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full bg-slate-400" />
-              <h3 className="text-sm font-extrabold text-gray-800 tracking-tight">Planned Backlog</h3>
+              <h3 className="text-sm font-extrabold text-black dark:text-white tracking-tight">Planned Backlog</h3>
             </div>
-            <span className="font-mono text-xs font-bold bg-gray-200 text-gray-500 px-2 py-0.5 rounded-md">
+            <span className="font-mono text-xs font-bold bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-300 px-2 py-0.5 rounded-md">
               {todoTasks.length}
             </span>
           </div>
@@ -353,11 +353,11 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
         </div>
 
         {/* COLUMN 2: IN PROGRESS */}
-        <div className="flex flex-col h-full bg-gray-50 rounded-2xl p-4 border border-gray-100">
-          <div className="flex items-center justify-between pb-3 border-b border-gray-200 mb-4 font-sans">
+        <div className="flex flex-col h-full bg-white dark:bg-[#0f1623] rounded-2xl p-4 border border-neutral-200 dark:border-slate-800">
+          <div className="flex items-center justify-between pb-3 border-b border-neutral-200 dark:border-slate-800 mb-4 font-sans">
             <div className="flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
-              <h3 className="text-sm font-extrabold text-gray-800 tracking-tight">Active Operations</h3>
+              <h3 className="text-sm font-extrabold text-black dark:text-white tracking-tight">Active Operations</h3>
             </div>
             <span className="font-mono text-xs font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-450 px-2 py-0.5 rounded-md">
               {progressTasks.length}
@@ -377,11 +377,11 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
         </div>
 
         {/* COLUMN 3: COMPLETED */}
-        <div className="flex flex-col h-full bg-gray-50 rounded-2xl p-4 border border-gray-100">
-          <div className="flex items-center justify-between pb-3 border-b border-gray-200 mb-4 font-sans">
+        <div className="flex flex-col h-full bg-white dark:bg-[#0f1623] rounded-2xl p-4 border border-neutral-200 dark:border-slate-800">
+          <div className="flex items-center justify-between pb-3 border-b border-neutral-200 dark:border-slate-800 mb-4 font-sans">
             <div className="flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-              <h3 className="text-sm font-extrabold text-gray-800 tracking-tight">Certified Completed</h3>
+              <h3 className="text-sm font-extrabold text-black dark:text-white tracking-tight">Certified Completed</h3>
             </div>
             <span className="font-mono text-xs font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 px-2 py-0.5 rounded-md">
               {completedTasks.length}
@@ -474,7 +474,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
               onChange={e => setNewTask(p => ({ ...p, category: e.target.value }))}
             />
 
-            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-gray-100">
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-neutral-200 dark:border-slate-800">
               <Btn variant="secondary" size="sm" onClick={() => setShowAddModal(false)}>
                 Cancel
               </Btn>
@@ -495,12 +495,12 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
     return (
       <Card
         key={t.id}
-        className="p-4 bg-white border border-gray-100 hover:border-orange-200 transition duration-150 flex flex-col justify-between"
+        className="p-4 bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 hover:border-orange-200 transition duration-150 flex flex-col justify-between"
       >
         <div>
           {/* Header row: category and actions */}
           <div className="flex items-center justify-between gap-1.5 mb-2.5">
-            <span className="text-[9px] font-extrabold uppercase bg-gray-50 px-2 py-0.5 rounded border border-gray-200 text-gray-500 font-mono tracking-wider">
+            <span className="text-[9px] font-extrabold uppercase bg-orange-50 dark:bg-orange-950/30 px-2 py-0.5 rounded border border-orange-100 dark:border-orange-900/40 text-orange-600 dark:text-orange-300 font-mono tracking-wider">
               {t.category}
             </span>
             <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
@@ -515,17 +515,17 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
           </div>
 
           {/* Title with priority marker */}
-          <h4 className="text-xs font-bold text-gray-900 line-clamp-2 leading-tight mb-1.5">
+          <h4 className="text-xs font-bold text-black dark:text-white line-clamp-2 leading-tight mb-1.5">
             {t.title}
           </h4>
 
           {/* Description */}
-          <p className="text-[11px] text-gray-500 leading-snug mb-3">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug mb-3">
             {t.description}
           </p>
 
           {/* District badge & role assignment */}
-          <div className="flex flex-wrap items-center gap-1.5 pb-3 border-b border-gray-100 mb-3 text-[10px] font-semibold text-gray-500">
+          <div className="flex flex-wrap items-center gap-1.5 pb-3 border-b border-neutral-200 dark:border-slate-800 mb-3 text-[10px] font-semibold text-gray-500 dark:text-slate-400">
             <div className="flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: pc.color }} />
               <span className="text-[9px] font-mono" style={{ color: pc.color }}>{pc.label}</span>
@@ -552,7 +552,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
             {t.status !== 'todo' && (
               <button
                 onClick={() => handleMoveStatus(t.id, t.status === 'completed' ? 'progress' : 'todo')}
-                className="p-1 px-1.5 rounded border border-gray-200 hover:bg-gray-50 cursor-pointer text-gray-500 text-[10px] flex items-center bg-transparent transition"
+                className="p-1 px-1.5 rounded border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer text-gray-500 dark:text-slate-400 text-[10px] flex items-center bg-transparent transition"
                 title="Shift back"
               >
                 <ChevronLeft size={12} /> Back

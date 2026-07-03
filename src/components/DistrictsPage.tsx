@@ -332,9 +332,9 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
           { label: 'Total TOTs', value: visibleDistricts.reduce((a, d) => a + (parseInt(d.tots) || 0), 0), icon: <GraduationCap size={15} /> },
           { label: 'Teachers Trained', value: visibleDistricts.reduce((a, d) => a + (parseInt(d.teachers_trained) || 0), 0), icon: <Users size={15} /> },
         ].map((s, i) => (
-          <div key={i} className="p-3 rounded-2xl bg-white border border-orange-200 shadow-[0_8px_30px_rgba(232,93,4,0.08)] dark:bg-slate-950 dark:border-slate-800">
-            <div className="flex items-center gap-1.5 mb-1 text-slate-500 text-[10px] font-semibold uppercase tracking-wide">{s.icon}{s.label}</div>
-            <div className="text-2xl font-black text-slate-900 dark:text-white">{s.value.toLocaleString()}</div>
+          <div key={i} className="p-3 rounded-2xl bg-orange-50 border border-orange-200 shadow-[0_8px_30px_rgba(232,93,4,0.08)] dark:bg-orange-950/20 dark:border-orange-900/40">
+            <div className="flex items-center gap-1.5 mb-1 text-orange-700 dark:text-orange-300 text-[10px] font-semibold uppercase tracking-wide">{s.icon}{s.label}</div>
+            <div className="text-2xl font-black text-orange-700 dark:text-orange-300">{s.value.toLocaleString()}</div>
           </div>
         ))}
       </div>
@@ -364,9 +364,8 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
         return (
           <section
             key={reg}
-            className="rounded-[24px] border shadow-[0_10px_30px_rgba(15,23,42,0.08)] overflow-hidden"
+            className="rounded-[24px] border shadow-[0_10px_30px_rgba(15,23,42,0.08)] overflow-hidden bg-white dark:bg-[#0f1623]"
             style={{
-              background: theme.panelBg,
               borderColor: theme.panelBorder,
             }}
           >
@@ -404,11 +403,10 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
                   return (
                     <Card
                       key={d.id}
-                      className={`rounded-[18px] border shadow-none p-4 sm:p-5 transition-all cursor-pointer ${
+                      className={`rounded-[18px] border shadow-none p-4 sm:p-5 transition-all cursor-pointer bg-white dark:bg-[#0f1623] ${
                         isExpanded ? 'ring-2 ring-offset-2 ring-orange-300' : ''
                       }`}
                       style={{
-                        background: theme.cardBg,
                         borderColor: isExpanded ? theme.dot : theme.panelBorder,
                       }}
                       onClick={() => toggleExpand(d.id)}
@@ -472,7 +470,7 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
                             {clusterCount > 0 ? (
                               <div className="flex flex-wrap gap-2">
                                 {Array.from({ length: clusterCount }, (_, idx) => (
-                                  <span key={idx} className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white border border-slate-200 text-slate-600">
+                                  <span key={idx} className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">
                                     Cluster {idx + 1}
                                   </span>
                                 ))}
@@ -491,7 +489,7 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
                                   { label: 'Active', value: active.length, color: '#c44d00' },
                                   { label: 'Completed', value: completed.length, color: '#065f46' },
                                 ].map(item => (
-                                  <div key={item.label} className="rounded-xl bg-white/70 border border-white/60 p-2">
+                                  <div key={item.label} className="rounded-xl bg-white/70 dark:bg-slate-900/70 border border-white/60 dark:border-slate-700 p-2">
                                     <div className="text-base font-black" style={{ color: item.color }}>{item.value}</div>
                                     <div className="text-[10px] text-slate-500">{item.label}</div>
                                   </div>

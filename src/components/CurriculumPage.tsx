@@ -227,7 +227,7 @@ export const CurriculumPage: React.FC = () => {
 
   // ── LESSON SCREEN ────────────────────────────────────────────────────────
   if (courseMode === 'lesson') return (
-    <div className="space-y-5 max-w-5xl mx-auto animate-fade-in-up">
+    <div className="space-y-5 w-full animate-fade-in-up">
       <button onClick={() => setCourseMode('view')} className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white transition">
         <ChevronLeft size={14} /> Back to Curriculum
       </button>
@@ -245,7 +245,7 @@ export const CurriculumPage: React.FC = () => {
 
   // ── QUIZ SCREEN ──────────────────────────────────────────────────────────
   if (courseMode === 'quiz') return (
-    <div className="space-y-5 max-w-5xl mx-auto animate-fade-in-up">
+    <div className="space-y-5 w-full animate-fade-in-up">
       <button onClick={() => setCourseMode('view')} className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white transition">
         <ChevronLeft size={14} /> Exit Quiz
       </button>
@@ -274,7 +274,7 @@ export const CurriculumPage: React.FC = () => {
 
   // ── MAIN VIEW ────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-5 max-w-5xl mx-auto animate-fade-in-up">
+    <div className="space-y-5 w-full animate-fade-in-up">
 
       {/* Header */}
       <div>

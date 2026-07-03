@@ -892,11 +892,11 @@ if (role === 'district_coordinator') return [
                 </div>
               </header>
 
-              <main className="flex-1 overflow-y-auto p-4">
-                <div className="max-w-7xl mx-auto">
-                  {renderPageContent()}
-                </div>
-              </main>
+            <main className="flex-1 overflow-y-auto p-4">
+              <div className={page === "curriculum" ? "w-full" : "max-w-7xl mx-auto"}>
+                {renderPageContent()}
+              </div>
+            </main>
             </div>
       </div>
 
