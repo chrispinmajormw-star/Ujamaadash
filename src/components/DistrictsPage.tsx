@@ -265,6 +265,15 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
   });
   const grouped: Record<string, any[]> = { Northern: [], Central: [], Southern: [] };
   filtered.forEach(d => { if (grouped[d.region]) grouped[d.region].push(d); });
+  const regionNames = ['Northern', 'Central', 'Southern'];
+  const regionSummary = (reg: string) => {
+    const dists = grouped[reg] || [];
+    const activeCount = dists.filter(d => d.is_active).length;
+    return {
+      districts: dists.length,
+      activePct: dists.length ? Math.round((activeCount / dists.length) * 100) : 0,
+    };
+  };
 
   // Location context header for non-admin users
   const locationLabel = isManager
@@ -274,7 +283,7 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
     : null;
 
   return (
-    <div className="space-y-5 animate-fade-in-up">
+    <div className="space-y-6 animate-fade-in-up bg-[#fdf6ef] dark:bg-[#0f1623] -m-4 sm:-m-6 p-4 sm:p-6 min-h-[calc(100vh-56px)]">
       <PageHeader
         title={locationLabel ? `${locationLabel} — Districts` : "Implementing Districts"}
         subtitle={locationLabel
@@ -282,179 +291,128 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
           : "All 28 districts of Malawi — active and planned"}
       />
 
-      {/* Summary strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Districts',       value: visibleDistricts.length,                                                              icon: <MapPin size={15} /> },
-          { label: 'Active',          value: visibleDistricts.filter(d => d.is_active).length,                                     icon: <CheckCircle size={15} /> },
-          { label: 'Total TOTs',      value: visibleDistricts.reduce((a, d) => a + (parseInt(d.tots) || 0), 0),                   icon: <GraduationCap size={15} /> },
-          { label: 'Teachers Trained',value: visibleDistricts.reduce((a, d) => a + (parseInt(d.teachers_trained) || 0), 0),       icon: <Users size={15} /> },
+          { label: 'Districts', value: visibleDistricts.length, icon: <MapPin size={15} /> },
+          { label: 'Active', value: visibleDistricts.filter(d => d.is_active).length, icon: <CheckCircle size={15} /> },
+          { label: 'Total TOTs', value: visibleDistricts.reduce((a, d) => a + (parseInt(d.tots) || 0), 0), icon: <GraduationCap size={15} /> },
+          { label: 'Teachers Trained', value: visibleDistricts.reduce((a, d) => a + (parseInt(d.teachers_trained) || 0), 0), icon: <Users size={15} /> },
         ].map((s, i) => (
-          <div key={i} className="p-3 rounded-lg" style={{ background: 'linear-gradient(135deg,#e85d04,#c44d00)', boxShadow: '0 4px 14px rgba(232,93,4,0.22)' }}>
-            <div className="flex items-center gap-1.5 mb-1 text-white/80 text-[10px] font-semibold uppercase tracking-wide">{s.icon}{s.label}</div>
-            <div className="text-xl font-black text-white">{s.value.toLocaleString()}</div>
+          <div key={i} className="p-3 rounded-2xl bg-white border border-orange-200 shadow-[0_8px_30px_rgba(232,93,4,0.08)] dark:bg-slate-950 dark:border-slate-800">
+            <div className="flex items-center gap-1.5 mb-1 text-slate-500 text-[10px] font-semibold uppercase tracking-wide">{s.icon}{s.label}</div>
+            <div className="text-2xl font-black text-slate-900 dark:text-white">{s.value.toLocaleString()}</div>
           </div>
         ))}
       </div>
 
-      {/* Region filter — only show for Admin and Program Managers */}
       {(isAdmin || isManager) && (
-      <FilterBar
-        options={[
-          { v: 'all', l: isManager ? `${user?.region} Region` : 'All Regions' },
-          ...(isAdmin ? [
-            { v: 'Northern', l: 'Northern' },
-            { v: 'Central',  l: 'Central'  },
-            { v: 'Southern', l: 'Southern' },
-          ] : []),
-        ]}
-        active={region}
-        onChange={setRegion}
-      />
+        <FilterBar
+          options={[
+            { v: 'all', l: isManager ? `${user?.region} Region` : 'All Regions' },
+            ...(isAdmin ? [
+              { v: 'Northern', l: 'Northern' },
+              { v: 'Central',  l: 'Central'  },
+              { v: 'Southern', l: 'Southern' },
+            ] : []),
+          ]}
+          active={region}
+          onChange={setRegion}
+        />
       )}
-        
+
       {loading && <div className="text-center py-12 text-sm text-black/40 dark:text-white/40">Loading districts…</div>}
 
-      {/* Districts grouped by region */}
-      {Object.entries(grouped).map(([reg, dists]) => dists.length === 0 ? null : (
-        <div key={reg}>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded" style={{ color: REGION_COLORS[reg]?.color, background: REGION_COLORS[reg]?.bg }}>
-              {reg} Region
-            </span>
-            <span className="text-[10px] text-black/40 dark:text-white/40">{dists.length} districts</span>
-          </div>
+      {regionNames.map(reg => {
+        const dists = grouped[reg] || [];
+        if (dists.length === 0) return null;
+        const summary = regionSummary(reg);
+        return (
+          <section key={reg} className="rounded-[24px] border border-orange-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-[0_10px_30px_rgba(15,23,42,0.08)] overflow-hidden">
+            <div className="px-4 sm:px-6 py-4 sm:py-5 flex flex-wrap items-center gap-4 border-b border-orange-100/80 dark:border-slate-800">
+              <div className="flex items-center gap-3">
+                <span className="w-5 h-5 rounded-full bg-orange-500 shrink-0" />
+                <h3 className="text-2xl font-black text-slate-950 dark:text-white m-0">{reg} Region</h3>
+              </div>
+              <div className="ml-auto flex items-center gap-5 text-sm">
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-50 text-orange-700 border border-orange-100 font-medium">
+                  {summary.activePct}% Coverage
+                </span>
+                <span className="text-slate-500 font-medium">{summary.districts} districts</span>
+                <ChevronUp size={18} className="text-slate-400" />
+              </div>
+            </div>
 
-          <div className="space-y-2">
-            {dists.map(d => {
-              const isExpanded = expanded === d.id;
-              const data = districtData[d.id];
-              const trainings = data?.trainings || [];
-              const upcoming  = trainings.filter(t => getTrainingStatus(t.start_date, t.end_date) === 'upcoming');
-              const active    = trainings.filter(t => getTrainingStatus(t.start_date, t.end_date) === 'active');
-              const completed = trainings.filter(t => getTrainingStatus(t.start_date, t.end_date) === 'completed');
-
-              return (
-                <Card key={d.id} className={`overflow-hidden transition-all ${isExpanded ? 'border-orange-300 dark:border-orange-800' : ''}`}>
-                  {/* District header row */}
-                  <div
-                    className="flex flex-wrap items-center gap-3 cursor-pointer"
-                    onClick={() => toggleExpand(d.id)}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-bold text-sm text-black dark:text-white">{d.name}</span>
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ color: REGION_COLORS[d.region]?.color, background: REGION_COLORS[d.region]?.bg }}>
-                          {d.region}
+            <div className="p-4 sm:p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                {dists.map(d => {
+                  const schoolCount = Number(d.schools_count) || Number(d.school_count) || 0;
+                  const learners = Number(d.learners) || Number(d.students) || 0;
+                  const clusterCount = Number(d.clusters_count) || Number(d.cluster_count) || 0;
+                  return (
+                    <Card
+                      key={d.id}
+                      className="rounded-[18px] border border-orange-200/80 dark:border-orange-900/30 bg-[#fff9f1] dark:bg-slate-900 shadow-none p-4 sm:p-5"
+                    >
+                      <div className="flex items-start justify-between gap-3 mb-4">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle size={20} className="text-emerald-500 shrink-0" />
+                            <h4 className="text-xl font-black text-slate-950 dark:text-white m-0 truncate">{d.name}</h4>
+                          </div>
+                        </div>
+                        <span className="inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold text-white bg-emerald-500">
+                          {d.is_active ? 'active' : 'planned'}
                         </span>
-                        {d.is_active ? (
-                          <Badge text="Active" color="#065f46" bg="#dcfce7" />
-                        ) : (
-                          <Badge text="Planned" color="#64748b" bg="#f1f5f9" />
-                        )}
                       </div>
-                      <div className="text-[11px] text-black/50 dark:text-white/50 mt-0.5 flex flex-wrap items-center gap-1.5">
-                        {d.coordinator_name ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                            <CheckCircle size={10} /> DC: {d.coordinator_name}
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                            <AlertCircle size={10} /> No DC Assigned
-                          </span>
-                        )}
-                        <span className="text-[10px]">TOTs: {d.number_of_tots || d.tots || 0} · Teachers: {d.teachers_trained || 0}</span>
-                      </div>
-                    </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
-                      {canManage(d) && (
-                        <>
-                          <Btn size="sm" variant="secondary" onClick={e => { e.stopPropagation(); setReportForm({ number_of_tots: d.number_of_tots || d.tots || '', teachers_trained: d.teachers_trained || '', school_coverage: d.school_coverage || d.coverage || '', notes: '' }); setReportModal(d); }}>
-                            <FileText size={12} /> Update Stats
-                          </Btn>
-                          <Btn size="sm" variant="primary" onClick={e => { e.stopPropagation(); setTrainingForm({ training_name: '', cohort: '', start_date: '', participants: '', venue: '', training_lead_name: '' }); setTrainingModal({ district: d }); }}>
-                            <Plus size={12} /> Add Training
-                          </Btn>
-                          {isAdmin && (
-                            <Btn size="sm" variant="ghost" onClick={e => { e.stopPropagation(); setAssignUserId(d.district_coordinator_user_id || ''); setAssignModal(d); }}>
-                              <Users size={12} /> Assign DC
-                            </Btn>
-                          )}
-                        </>
-                      )}
-                      {isExpanded
-                        ? <ChevronUp size={16} className="text-black/40 dark:text-white/40" />
-                        : <ChevronDown size={16} className="text-black/40 dark:text-white/40" />
-                      }
-                    </div>
-                  </div>
-
-                  {/* Expanded content */}
-                  {isExpanded && (
-                    <div className="mt-4 pt-4 border-t border-neutral-200 dark:border-slate-800">
-                      {/* Stats row */}
-                      <div className="grid grid-cols-3 gap-3 mb-4">
+                      <div className="grid grid-cols-3 gap-4 mb-4">
                         {[
-                          { label: 'TOTs',             value: d.number_of_tots || d.tots || 0 },
-                          { label: 'Teachers Trained', value: d.teachers_trained || 0 },
-                          { label: 'School Coverage',  value: `${d.school_coverage || d.coverage || 0}%` },
-                        ].map(s => (
-                          <div key={s.label} className="bg-orange-50 dark:bg-orange-950/20 rounded-lg p-2 text-center">
-                            <div className="text-lg font-black text-orange-600 dark:text-orange-400">{s.value}</div>
-                            <div className="text-[10px] text-black/50 dark:text-white/50 font-semibold">{s.label}</div>
+                          { value: schoolCount, label: 'Schools' },
+                          { value: learners, label: 'Learners' },
+                          { value: clusterCount, label: 'Clusters' },
+                        ].map(item => (
+                          <div key={item.label}>
+                            <div className="text-lg font-extrabold text-slate-950 dark:text-white leading-none">{item.value}</div>
+                            <div className="text-xs text-slate-500 mt-1">{item.label}</div>
                           </div>
                         ))}
                       </div>
 
-                      {!data && <div className="text-center py-4 text-xs text-black/40 dark:text-white/40">Loading trainings…</div>}
+                      <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
+                        {d.coordinator_name ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
+                            <CheckCircle size={11} /> DC: {d.coordinator_name}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-100">
+                            <AlertCircle size={11} /> No DC Assigned
+                          </span>
+                        )}
+                      </div>
 
-                      {data && trainings.length === 0 && (
-                        <div className="text-center py-4 text-xs text-black/40 dark:text-white/40">No trainings yet.</div>
-                      )}
-
-                      {data && trainings.length > 0 && (
-                        <div className="space-y-3">
-                          {active.length > 0 && (
-                            <div>
-                              <div className="text-[10px] font-bold uppercase tracking-wide text-orange-600 mb-2">Active Trainings</div>
-                              {active.map(t => (
-                                <TrainingCard key={t.id} training={t} status="active" canManage={canManage(d)}
-                                  onEdit={() => { setTrainingForm({ training_name: t.name, cohort: t.cohort || '', start_date: t.start_date?.split('T')[0] || '', participants: t.participants || '', venue: t.venue || '', training_lead_name: t.training_lead_name || '' }); setTrainingModal({ district: d, training: t }); }}
-                                  onDelete={() => setDeleteModal({ trainingId: t.id, districtId: d.id })} />
-                              ))}
-                            </div>
-                          )}
-                          {upcoming.length > 0 && (
-                            <div>
-                              <div className="text-[10px] font-bold uppercase tracking-wide text-blue-600 mb-2">Upcoming Trainings</div>
-                              {upcoming.map(t => (
-                                <TrainingCard key={t.id} training={t} status="upcoming" canManage={canManage(d)}
-                                  onEdit={() => { setTrainingForm({ training_name: t.name, cohort: t.cohort || '', start_date: t.start_date?.split('T')[0] || '', participants: t.participants || '', venue: t.venue || '', training_lead_name: t.training_lead_name || '' }); setTrainingModal({ district: d, training: t }); }}
-                                  onDelete={() => setDeleteModal({ trainingId: t.id, districtId: d.id })} />
-                              ))}
-                            </div>
-                          )}
-                          {completed.length > 0 && (
-                            <div>
-                              <div className="text-[10px] font-bold uppercase tracking-wide text-emerald-600 mb-2">Completed Trainings</div>
-                              {completed.map(t => (
-                                <TrainingCard key={t.id} training={t} status="completed" canManage={canManage(d)}
-                                  onEdit={() => { setTrainingForm({ training_name: t.name, cohort: t.cohort || '', start_date: t.start_date?.split('T')[0] || '', participants: t.participants || '', venue: t.venue || '', training_lead_name: t.training_lead_name || '' }); setTrainingModal({ district: d, training: t }); }}
-                                  onDelete={() => setDeleteModal({ trainingId: t.id, districtId: d.id })} />
-                              ))}
-                            </div>
+                      {canManage(d) && (
+                        <div className="flex flex-wrap gap-2 mt-4">
+                          <Btn size="sm" variant="secondary" onClick={() => { setReportForm({ number_of_tots: d.number_of_tots || d.tots || '', teachers_trained: d.teachers_trained || '', school_coverage: d.school_coverage || d.coverage || '', notes: '' }); setReportModal(d); }}>
+                            <FileText size={12} /> Update Stats
+                          </Btn>
+                          <Btn size="sm" variant="primary" onClick={() => { setTrainingForm({ training_name: '', cohort: '', start_date: '', participants: '', venue: '', training_lead_name: '' }); setTrainingModal({ district: d }); }}>
+                            <Plus size={12} /> Add Training
+                          </Btn>
+                          {isAdmin && (
+                            <Btn size="sm" variant="ghost" onClick={() => { setAssignUserId(d.district_coordinator_user_id || ''); setAssignModal(d); }}>
+                              <Users size={12} /> Assign DC
+                            </Btn>
                           )}
                         </div>
                       )}
-                    </div>
-                  )}
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      ))}
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+        );
+      })}
 
       {/* ── MODALS — all outside the map loop ── */}
 
