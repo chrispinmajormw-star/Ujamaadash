@@ -696,12 +696,12 @@ if (role === 'district_coordinator') return [
             </aside>
 
             <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#0f1623]">
-              <header className="h-14 sm:h-12 shrink-0 flex items-center justify-between gap-3 px-3 sm:px-4 border-b border-neutral-200 dark:border-slate-800 bg-white dark:bg-[#0f1623]">
-                <div className="flex items-center gap-2 min-w-0">
+              <header className="h-14 sm:h-12 shrink-0 flex items-center justify-between gap-2 px-2 sm:px-4 border-b border-neutral-200 dark:border-slate-800 bg-white dark:bg-[#0f1623]">
+                <div className="flex items-center gap-1.5 min-w-0 flex-1">
                   <button
                     type="button"
                     onClick={() => setPage("dashboard")}
-                    className="p-2 sm:p-1.5 rounded-md text-black dark:text-white hover:bg-neutral-100 dark:hover:bg-slate-800 mr-1 min-h-[44px] sm:min-h-auto min-w-[44px] sm:min-w-auto focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="p-2 sm:p-1.5 rounded-md text-black dark:text-white hover:bg-neutral-100 dark:hover:bg-slate-800 min-h-[40px] min-w-[40px] sm:min-h-auto sm:min-w-auto focus:outline-none focus:ring-2 focus:ring-orange-500"
                     aria-label="Back to dashboard"
                   >
                     <ArrowLeft size={16} />
@@ -709,23 +709,23 @@ if (role === 'district_coordinator') return [
                   <button
                     type="button"
                     onClick={() => setSidebarOpen(true)}
-                    className="md:hidden p-2 rounded-md border border-neutral-200 dark:border-slate-700 text-black dark:text-white min-h-[44px] min-w-[44px] focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="md:hidden p-2 rounded-md border border-neutral-200 dark:border-slate-700 text-black dark:text-white min-h-[40px] min-w-[40px] focus:outline-none focus:ring-2 focus:ring-orange-500 shrink-0"
                     aria-label="Open menu"
                   >
                     <Sliders size={18} />
                   </button>
-                  <h2 className="text-sm font-semibold text-black dark:text-white truncate m-0">
+                  <h2 className="text-[12px] sm:text-sm font-semibold text-black dark:text-white truncate m-0 min-w-0">
                     {PAGE_LABELS[page] || "ETT ScaleUp Program"}
                   </h2>
                 </div>
 
-                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                <div className="flex items-center gap-1 sm:gap-2 shrink-0 flex-nowrap">
                   {/* Global Search Button */}
                   <div className="relative">
                     <button
                       type="button"
                       onClick={() => setSearchOpen(!searchOpen)}
-                      className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-slate-700 hover:border-orange-400 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-9 h-9 sm:w-8 sm:h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-slate-700 hover:border-orange-400 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 shrink-0"
                       title="Search"
                       aria-label="Global search"
                     >
@@ -766,7 +766,7 @@ if (role === 'district_coordinator') return [
                       <button
                         type="button"
                         onClick={() => setNotifOpen(!notifOpen)}
-                        className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-slate-700 hover:border-orange-400 text-black dark:text-white relative focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        className="w-9 h-9 sm:w-8 sm:h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-slate-700 hover:border-orange-400 text-black dark:text-white relative focus:outline-none focus:ring-2 focus:ring-orange-500 shrink-0"
                         title={`${pendingCount} pending reviews`}
                         aria-label="Notifications"
                       >

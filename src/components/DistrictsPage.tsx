@@ -396,14 +396,23 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                 {dists.map(d => {
                   const isExpanded = expanded === d.id;
-                  const schoolCount = Number(d.schools_count) || Number(d.school_count) || 0;
-                  const learners = Number(d.learners) || Number(d.students) || 0;
                   const trainings = districtData[d.id]?.trainings || [];
                   const clusters = districtData[d.id]?.clusters || [];
                   const clusterCount =
                     clusters.length ||
                     Number(d.clusters_count) ||
                     Number(d.cluster_count) ||
+                    0;
+                  const schoolCount =
+                    clusters.reduce((sum, cluster) => sum + (Number(cluster.schools) || Number(cluster.school_count) || 0), 0) ||
+                    Number(d.schools_count) ||
+                    Number(d.school_count) ||
+                    Number(d.schools) ||
+                    0;
+                  const learners =
+                    clusters.reduce((sum, cluster) => sum + (Number(cluster.students) || Number(cluster.learners) || 0), 0) ||
+                    Number(d.learners) ||
+                    Number(d.students) ||
                     0;
                   const upcoming = trainings.filter(t => getTrainingStatus(t.start_date, t.end_date) === 'upcoming');
                   const active = trainings.filter(t => getTrainingStatus(t.start_date, t.end_date) === 'active');
