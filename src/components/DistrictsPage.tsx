@@ -30,26 +30,26 @@ const REGION_THEME: Record<string, {
 }> = {
   Northern: {
     dot: '#f97316',
-    panelBg: '#fff9f2',
-    panelBorder: '#f9d3ad',
-    cardBg: '#fffaf5',
-    chipBg: '#fff1e6',
+    panelBg: '#fffaf6',
+    panelBorder: '#fed7aa',
+    cardBg: '#ffffff',
+    chipBg: '#fff7ed',
     chipText: '#c44d00',
   },
   Central: {
     dot: '#0f766e',
-    panelBg: '#f6fbfb',
-    panelBorder: '#b8e1dd',
-    cardBg: '#f9fefe',
-    chipBg: '#dff5f3',
+    panelBg: '#fafdfd',
+    panelBorder: '#c7ece7',
+    cardBg: '#ffffff',
+    chipBg: '#ecfdf5',
     chipText: '#0f766e',
   },
   Southern: {
     dot: '#2563eb',
-    panelBg: '#f4f8ff',
-    panelBorder: '#c8d8fb',
-    cardBg: '#f8fbff',
-    chipBg: '#dbeafe',
+    panelBg: '#f7faff',
+    panelBorder: '#c7d2fe',
+    cardBg: '#ffffff',
+    chipBg: '#eff6ff',
     chipText: '#1e40af',
   },
 };
@@ -335,9 +335,9 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
           { label: 'Total TOTs', value: visibleDistricts.reduce((a, d) => a + (parseInt(d.tots) || 0), 0), icon: <GraduationCap size={15} /> },
           { label: 'Teachers Trained', value: visibleDistricts.reduce((a, d) => a + (parseInt(d.teachers_trained) || 0), 0), icon: <Users size={15} /> },
         ].map((s, i) => (
-          <div key={i} className="p-3 rounded-2xl bg-orange-50 border border-orange-200 shadow-[0_8px_30px_rgba(232,93,4,0.08)] dark:bg-orange-950/20 dark:border-orange-900/40">
+          <div key={i} className="p-3 rounded-2xl bg-gradient-to-br from-orange-50 to-white border border-orange-200 shadow-[0_8px_30px_rgba(232,93,4,0.08)] dark:from-orange-950/30 dark:to-[#0f1623] dark:border-orange-900/40">
             <div className="flex items-center gap-1.5 mb-1 text-orange-700 dark:text-orange-300 text-[10px] font-semibold uppercase tracking-wide">{s.icon}{s.label}</div>
-            <div className="text-2xl font-black text-orange-700 dark:text-orange-300">{s.value.toLocaleString()}</div>
+            <div className="text-2xl font-black text-black dark:text-white">{s.value.toLocaleString()}</div>
           </div>
         ))}
       </div>
@@ -434,13 +434,13 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
                             <CheckCircle size={20} style={{ color: d.is_active ? '#16a34a' : theme.chipText }} className="shrink-0" />
                             <h4 className="text-xl font-black text-slate-950 dark:text-white m-0 truncate">{d.name}</h4>
                           </div>
-                          <div className="mt-1 flex flex-wrap gap-2 text-[11px] text-slate-500">
+                          <div className="mt-1 flex flex-wrap gap-2 text-[11px] text-slate-500 dark:text-slate-400">
                             {d.coordinator_name ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
+                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-900/40">
                                 <CheckCircle size={11} /> DC: {d.coordinator_name}
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-100">
+                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 border border-amber-100 dark:border-amber-900/40">
                                 <AlertCircle size={11} /> No DC Assigned
                               </span>
                             )}
@@ -483,7 +483,7 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
                       {isExpanded && (
                         <div className="mt-4 pt-4 border-t" style={{ borderColor: theme.panelBorder }} onClick={e => e.stopPropagation()}>
                           <div className="mb-4">
-                            <div className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Clusters in district</div>
+                            <div className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2">Clusters in district</div>
                             {clusters.length > 0 ? (
                               <div className="flex flex-wrap gap-2">
                                 {clusters.map((cluster, idx) => (
@@ -508,13 +508,13 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
                                 ].map(item => (
                                   <div key={item.label} className="rounded-xl bg-white/70 dark:bg-slate-900/70 border border-white/60 dark:border-slate-700 p-2">
                                     <div className="text-base font-black" style={{ color: item.color }}>{item.value}</div>
-                                    <div className="text-[10px] text-slate-500">{item.label}</div>
+                                    <div className="text-[10px] text-slate-500 dark:text-slate-400">{item.label}</div>
                                   </div>
                                 ))}
                               </div>
                             </div>
                           ) : (
-                            <div className="text-xs text-slate-500">Click to load district details.</div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400">Click to load district details.</div>
                           )}
                         </div>
                       )}

@@ -610,10 +610,12 @@ if (role === 'district_coordinator') return [
 
   const activeNavGroups = getNavGroups();
 
-  const renderNav = (onNavigate?: () => void) => (
+  const renderNav = (onNavigate?: () => void, compact = false) => (
     activeNavGroups.map(group => (
       <div key={group.title} className="space-y-0.5 mb-3">
-        <div className="text-[10px] text-black dark:text-white font-semibold uppercase tracking-wide px-2 mb-1 opacity-60">{group.title}</div>
+        {!compact && (
+          <div className="text-[10px] text-black dark:text-white font-semibold uppercase tracking-wide px-2 mb-1 opacity-60">{group.title}</div>
+        )}
         {group.items.map((item: any) => {
           const Icon = item.icon;
           const isActive = page === item.id;
@@ -632,12 +634,12 @@ if (role === 'district_coordinator') return [
                   : isLocked
                   ? 'text-slate-400 dark:text-slate-600 hover:bg-orange-50 hover:text-orange-400 dark:hover:bg-slate-800'
                   : 'text-black hover:bg-orange-50 hover:text-orange-600 dark:text-white dark:hover:bg-slate-800 dark:hover:text-orange-400'
-              }`}
+              } ${compact ? 'justify-center px-1.5' : ''} ${compact ? 'min-h-[40px]' : ''}`}
               title={isLocked ? "Sign in to access" : undefined}
             >
               <Icon size={14} />
-              <span>{item.label}</span>
-              {isLocked && <Lock size={10} className="ml-auto opacity-40" />}
+              {!compact && <span>{item.label}</span>}
+              {isLocked && !compact && <Lock size={10} className="ml-auto opacity-40" />}
             </button>
           );
         })}
@@ -675,7 +677,7 @@ if (role === 'district_coordinator') return [
                         <X size={16} />
                       </button>
                     </div>
-                    <div className="flex-1 overflow-y-auto">{renderNav(() => setSidebarOpen(false))}</div>
+                    <div className="flex-1 overflow-y-auto">{renderNav(() => setSidebarOpen(false), true)}</div>
                     <div className="pt-2 border-t border-neutral-200 dark:border-slate-800 text-[10px] text-black dark:text-white opacity-60">
                       Helpline <b className="text-orange-600 dark:text-orange-400">116</b> · VSU <b className="text-orange-600 dark:text-orange-400">997</b>
                     </div>
