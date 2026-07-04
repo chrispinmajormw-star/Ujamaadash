@@ -416,7 +416,7 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
                   return (
                     <Card
                       key={d.id}
-                      className={`rounded-[16px] border-0 shadow-none p-3.5 sm:p-4 transition-all cursor-pointer bg-white dark:bg-[#0f1623] ${
+                      className={`rounded-[16px] border border-neutral-200 dark:border-slate-800 shadow-none p-3.5 sm:p-4 transition-all cursor-pointer bg-white dark:bg-[#0f1623] ${
                         isExpanded ? 'ring-2 ring-offset-2 ring-orange-300' : ''
                       }`}
                       onClick={() => toggleExpand(d.id)}
