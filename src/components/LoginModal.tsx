@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, Eye, EyeOff } from 'lucide-react';
 import { User } from '../types';
 import { api } from '../api';
@@ -65,6 +65,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onRegi
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
   const [resetEmail, setResetEmail] = useState('');
+  const [googleReady, setGoogleReady] = useState(false);
 
   const [reg, setReg] = useState({
     name: '',
@@ -85,6 +86,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onRegi
     // Reset location fields when role changes
     setReg(p => ({ ...p, role, region: '', district: '' }));
   };
+
+  useEffect(() => {
+    const id = window.requestAnimationFrame(() => setGoogleReady(true));
+    return () => window.cancelAnimationFrame(id);
+  }, []);
 
   const locationType: LocationType = ROLE_LOCATION[reg.role] || 'hq';
   const availableDistricts = reg.region ? (DISTRICTS_BY_REGION[reg.region] || []) : [];
@@ -322,12 +328,16 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose, onRegi
               <div className="flex-1 h-px bg-slate-200 dark:bg-white/10"></div>
             </div>
 
-            <div className="flex justify-center">
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={handleGoogleError}
-                useOneTap={false}
-              />
+            <div className="flex justify-center min-h-[44px]">
+              {googleReady ? (
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  useOneTap={false}
+                />
+              ) : (
+                <div className="h-11 w-[240px] rounded-xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-white/5 animate-pulse" />
+              )}
             </div>
 
             <div className="mt-8 text-center text-[11px] text-slate-500 dark:text-slate-400">
