@@ -335,9 +335,9 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
           { label: 'Total TOTs', value: visibleDistricts.reduce((a, d) => a + (parseInt(d.tots) || 0), 0), icon: <GraduationCap size={15} /> },
           { label: 'Teachers Trained', value: visibleDistricts.reduce((a, d) => a + (parseInt(d.teachers_trained) || 0), 0), icon: <Users size={15} /> },
         ].map((s, i) => (
-          <div key={i} className="p-3 rounded-2xl bg-gradient-to-br from-orange-50 to-white border border-orange-200 shadow-[0_8px_30px_rgba(232,93,4,0.08)] dark:from-orange-950/30 dark:to-[#0f1623] dark:border-orange-900/40">
+          <div key={i} className="p-3 rounded-xl bg-gradient-to-br from-orange-50 to-white shadow-[0_8px_30px_rgba(232,93,4,0.08)] dark:from-orange-950/30 dark:to-[#0f1623]">
             <div className="flex items-center gap-1.5 mb-1 text-orange-700 dark:text-orange-300 text-[10px] font-semibold uppercase tracking-wide">{s.icon}{s.label}</div>
-            <div className="text-2xl font-black text-black dark:text-white">{s.value.toLocaleString()}</div>
+            <div className="text-2xl font-semibold text-black dark:text-white">{s.value.toLocaleString()}</div>
           </div>
         ))}
       </div>
@@ -367,18 +367,14 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
         return (
           <section
             key={reg}
-            className="rounded-[24px] border shadow-[0_10px_30px_rgba(15,23,42,0.08)] overflow-hidden bg-white dark:bg-[#0f1623]"
-            style={{
-              borderColor: theme.panelBorder,
-            }}
+            className="rounded-[18px] shadow-[0_10px_30px_rgba(15,23,42,0.08)] overflow-hidden bg-white dark:bg-[#0f1623]"
           >
             <div
-              className="px-4 sm:px-6 py-4 sm:py-5 flex flex-wrap items-center gap-4 border-b"
-              style={{ borderColor: theme.panelBorder }}
+              className="px-4 sm:px-6 py-4 sm:py-5 flex flex-wrap items-center gap-4"
             >
               <div className="flex items-center gap-3">
                 <span className="w-5 h-5 rounded-full shrink-0" style={{ background: theme.dot }} />
-                <h3 className="text-2xl font-black text-slate-950 dark:text-white m-0">{reg} Region</h3>
+                <h3 className="text-2xl font-semibold text-slate-950 dark:text-white m-0">{reg} Region</h3>
               </div>
               <div className="ml-auto flex items-center gap-5 text-sm">
                 <span
@@ -420,19 +416,16 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
                   return (
                     <Card
                       key={d.id}
-                      className={`rounded-[18px] border shadow-none p-4 sm:p-5 transition-all cursor-pointer bg-white dark:bg-[#0f1623] ${
+                      className={`rounded-[16px] border-0 shadow-none p-3.5 sm:p-4 transition-all cursor-pointer bg-white dark:bg-[#0f1623] ${
                         isExpanded ? 'ring-2 ring-offset-2 ring-orange-300' : ''
                       }`}
-                      style={{
-                        borderColor: isExpanded ? theme.dot : theme.panelBorder,
-                      }}
                       onClick={() => toggleExpand(d.id)}
                     >
-                      <div className="flex items-start justify-between gap-3 mb-4">
+                      <div className="flex items-start justify-between gap-3 mb-3.5">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
                             <CheckCircle size={20} style={{ color: d.is_active ? '#16a34a' : theme.chipText }} className="shrink-0" />
-                            <h4 className="text-xl font-black text-slate-950 dark:text-white m-0 truncate">{d.name}</h4>
+                            <h4 className="text-lg font-semibold text-slate-950 dark:text-white m-0 truncate">{d.name}</h4>
                           </div>
                           <div className="mt-1 flex flex-wrap gap-2 text-[11px] text-slate-500 dark:text-slate-400">
                             {d.coordinator_name ? (
@@ -451,7 +444,7 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-3 gap-4 mb-4">
+                      <div className="grid grid-cols-3 gap-3 mb-3.5">
                         {[
                           { value: schoolCount, label: 'Schools' },
                           { value: learners, label: 'Learners' },
@@ -481,16 +474,16 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
                       )}
 
                       {isExpanded && (
-                        <div className="mt-4 pt-4 border-t" style={{ borderColor: theme.panelBorder }} onClick={e => e.stopPropagation()}>
+                        <div className="mt-3.5 pt-3.5 border-t border-transparent" onClick={e => e.stopPropagation()}>
                           <div className="mb-4">
                             <div className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2">Clusters in district</div>
                             {clusters.length > 0 ? (
                               <div className="flex flex-wrap gap-2">
                                 {clusters.map((cluster, idx) => (
-                                  <span key={cluster.id || cluster.cluster_id || idx} className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">
-                                    {cluster.name || cluster.cluster_name || `Cluster ${idx + 1}`}
-                                  </span>
-                                ))}
+                                    <span key={cluster.id || cluster.cluster_id || idx} className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300">
+                                      {cluster.name || cluster.cluster_name || `Cluster ${idx + 1}`}
+                                    </span>
+                                  ))}
                               </div>
                             ) : (
                               <div className="text-xs text-slate-500">No clusters recorded yet.</div>
@@ -506,7 +499,7 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
                                   { label: 'Active', value: active.length, color: '#c44d00' },
                                   { label: 'Completed', value: completed.length, color: '#065f46' },
                                 ].map(item => (
-                                  <div key={item.label} className="rounded-xl bg-white/70 dark:bg-slate-900/70 border border-white/60 dark:border-slate-700 p-2">
+                                  <div key={item.label} className="rounded-lg bg-white/70 dark:bg-slate-900/70 p-2">
                                     <div className="text-base font-black" style={{ color: item.color }}>{item.value}</div>
                                     <div className="text-[10px] text-slate-500 dark:text-slate-400">{item.label}</div>
                                   </div>
