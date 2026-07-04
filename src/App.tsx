@@ -628,18 +628,18 @@ if (role === 'district_coordinator') return [
                 if (isLocked) { setIsLoginModalOpen(true); onNavigate?.(); return; }
                 setPage(item.id); onNavigate?.();
               }}
-              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium transition ${
+              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md font-medium transition ${
                 isActive
                   ? 'bg-orange-50 text-orange-600 dark:bg-orange-600/15 dark:text-orange-400'
                   : isLocked
                   ? 'text-slate-400 dark:text-slate-600 hover:bg-orange-50 hover:text-orange-400 dark:hover:bg-slate-800'
                   : 'text-black hover:bg-orange-50 hover:text-orange-600 dark:text-white dark:hover:bg-slate-800 dark:hover:text-orange-400'
-              } ${compact ? 'justify-center px-1.5' : ''} ${compact ? 'min-h-[40px]' : ''}`}
+              } ${compact ? 'justify-start px-2 min-h-[40px]' : 'text-xs'} ${compact ? 'text-[11px]' : ''}`}
               title={isLocked ? "Sign in to access" : undefined}
             >
               <Icon size={14} />
-              {!compact && <span>{item.label}</span>}
-              {isLocked && !compact && <Lock size={10} className="ml-auto opacity-40" />}
+              <span className={`whitespace-nowrap truncate ${compact ? 'text-[11px] leading-none' : ''}`}>{item.label}</span>
+              {isLocked && <Lock size={10} className="ml-auto opacity-40 shrink-0" />}
             </button>
           );
         })}
@@ -783,7 +783,7 @@ if (role === 'district_coordinator') return [
                       {notifOpen && (
                         <>
                           <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
-                          <div className="absolute right-0 top-10 bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg shadow-lg p-3 w-64 z-50 text-black dark:text-white">
+                          <div className="fixed left-1/2 top-16 z-[70] w-[min(92vw,18rem)] -translate-x-1/2 rounded-lg shadow-lg p-3 bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 text-black dark:text-white sm:absolute sm:right-0 sm:left-auto sm:top-10 sm:w-64 sm:translate-x-0">
                           <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 mb-2">
   <span className="font-semibold text-xs">Notifications</span>
   {notifUnread > 0 && (
