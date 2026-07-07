@@ -680,14 +680,14 @@ if (role === 'district_coordinator') return [
                     <div className="flex-1 overflow-y-auto">{renderNav(() => setSidebarOpen(false), true)}</div>
                     <div className="p-3 border-t border-neutral-200 dark:border-slate-800 flex flex-col gap-2 shrink-0">
                       {user ? (
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-sm font-medium text-black dark:text-white truncate">
+                        <div className="flex flex-col gap-2">
+                          <span className="text-sm font-medium text-black dark:text-white truncate text-center">
                             {user.name}
                           </span>
                           <button
                             type="button"
                             onClick={() => { setUser(null); setPage("dashboard"); showToast("Signed out."); setSidebarOpen(false); }}
-                            className="px-3 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-medium text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                            className="w-full px-3 py-2 rounded-md bg-red-600 hover:bg-red-700 text-white font-medium text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
                           >
                             Sign out
                           </button>
@@ -718,14 +718,14 @@ if (role === 'district_coordinator') return [
               <div className="flex-1 overflow-y-auto p-2">{renderNav()}</div>
               <div className="p-3 border-t border-neutral-200 dark:border-slate-800 flex flex-col gap-2 shrink-0">
                 {user ? (
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-medium text-black dark:text-white truncate" title={user.name}>
+                  <div className="flex flex-col gap-2">
+                    <span className="text-sm font-medium text-black dark:text-white truncate text-center" title={user.name}>
                       {user.name}
                     </span>
                     <button
                       type="button"
                       onClick={() => { setUser(null); setPage("dashboard"); showToast("Signed out."); }}
-                      className="px-2 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-medium text-xs focus:outline-none focus:ring-2 focus:ring-red-500"
+                      className="w-full px-3 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-medium text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
                     >
                       Sign out
                     </button>
