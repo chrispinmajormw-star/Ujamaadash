@@ -673,34 +673,6 @@ if (role === 'district_coordinator') return [
                         <AfricaLogo size={22} />
                         <span className="font-bold text-sm text-black dark:text-white">Ujamaa Dashboard</span>
                       </div>
-  );
-
-  return (
-    <MonitoringProvider key={user?.id ?? 'guest'}>
-      <>
-      <div className="h-screen flex overflow-hidden bg-white dark:bg-[#0f1623] text-black dark:text-white transition-colors">
-        <AnimatePresence>
-          {sidebarOpen && (
-                <>
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 0.5 }}
-                    exit={{ opacity: 0 }}
-                    onClick={() => setSidebarOpen(false)}
-                    className="fixed inset-0 bg-black z-30 md:hidden"
-                  />
-                  <motion.aside
-                    initial={{ x: -224 }}
-                    animate={{ x: 0 }}
-                    exit={{ x: -224 }}
-                    transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-                    className="fixed top-0 bottom-0 left-0 w-56 bg-white dark:bg-[#0f1623] border-r border-neutral-200 dark:border-slate-800 z-40 p-3 flex flex-col md:hidden shadow-lg"
-                  >
-                    <div className="flex justify-between items-center pb-3 mb-2 border-b border-neutral-200 dark:border-slate-800">
-                      <div className="flex items-center gap-2">
-                        <AfricaLogo size={22} />
-                        <span className="font-bold text-sm text-black dark:text-white">Ujamaa Dashboard</span>
-                      </div>
                       <button type="button" onClick={() => setSidebarOpen(false)} className="text-black dark:text-white opacity-60 hover:opacity-100">
                         <X size={16} />
                       </button>
@@ -792,7 +764,7 @@ if (role === 'district_coordinator') return [
                   >
                     <Sliders size={18} />
                   </button>
-                  <h2 className="text-sm sm:text-base font-semibold text-black dark:text-white truncate m-0 min-w-0">
+                  <h2 className="text-[12px] sm:text-sm font-semibold text-black dark:text-white truncate m-0 min-w-0">
                     {PAGE_LABELS[page] || "ETT ScaleUp Program"}
                   </h2>
                 </div>
@@ -944,6 +916,7 @@ if (role === 'district_coordinator') return [
                   >
                     <Settings size={16} />
                   </button>
+
                 </div>
               </header>
 
