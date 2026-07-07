@@ -614,7 +614,7 @@ if (role === 'district_coordinator') return [
     activeNavGroups.map(group => (
       <div key={group.title} className="space-y-0.5 mb-3">
         {!compact && (
-          <div className="text-[10px] text-black dark:text-white font-semibold uppercase tracking-wide px-2 mb-1 opacity-60">{group.title}</div>
+          <div className="text-xs text-black dark:text-white font-semibold uppercase tracking-wide px-2 mb-1 opacity-60">{group.title}</div>
         )}
         {group.items.map((item: any) => {
           const Icon = item.icon;
@@ -634,12 +634,12 @@ if (role === 'district_coordinator') return [
                   : isLocked
                   ? 'text-slate-400 dark:text-slate-600 hover:bg-orange-50 hover:text-orange-400 dark:hover:bg-slate-800'
                   : 'text-black hover:bg-orange-50 hover:text-orange-600 dark:text-white dark:hover:bg-slate-800 dark:hover:text-orange-400'
-              } ${compact ? 'justify-start px-2 min-h-[40px]' : 'text-xs'} ${compact ? 'text-[11px]' : ''}`}
+              } ${compact ? 'justify-start px-2 min-h-[40px] text-sm' : 'text-sm'}`}
               title={isLocked ? "Sign in to access" : undefined}
             >
-              <Icon size={14} />
-              <span className={`whitespace-nowrap truncate ${compact ? 'text-[11px] leading-none' : ''}`}>{item.label}</span>
-              {isLocked && <Lock size={10} className="ml-auto opacity-40 shrink-0" />}
+              <Icon size={16} />
+              <span className={`whitespace-nowrap truncate`}>{item.label}</span>
+              {isLocked && <Lock size={12} className="ml-auto opacity-40 shrink-0" />}
             </button>
           );
         })}
@@ -673,13 +673,65 @@ if (role === 'district_coordinator') return [
                         <AfricaLogo size={22} />
                         <span className="font-bold text-sm text-black dark:text-white">Ujamaa Dashboard</span>
                       </div>
+  );
+
+  return (
+    <MonitoringProvider key={user?.id ?? 'guest'}>
+      <>
+      <div className="h-screen flex overflow-hidden bg-white dark:bg-[#0f1623] text-black dark:text-white transition-colors">
+        <AnimatePresence>
+          {sidebarOpen && (
+                <>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 0.5 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => setSidebarOpen(false)}
+                    className="fixed inset-0 bg-black z-30 md:hidden"
+                  />
+                  <motion.aside
+                    initial={{ x: -224 }}
+                    animate={{ x: 0 }}
+                    exit={{ x: -224 }}
+                    transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+                    className="fixed top-0 bottom-0 left-0 w-56 bg-white dark:bg-[#0f1623] border-r border-neutral-200 dark:border-slate-800 z-40 p-3 flex flex-col md:hidden shadow-lg"
+                  >
+                    <div className="flex justify-between items-center pb-3 mb-2 border-b border-neutral-200 dark:border-slate-800">
+                      <div className="flex items-center gap-2">
+                        <AfricaLogo size={22} />
+                        <span className="font-bold text-sm text-black dark:text-white">Ujamaa Dashboard</span>
+                      </div>
                       <button type="button" onClick={() => setSidebarOpen(false)} className="text-black dark:text-white opacity-60 hover:opacity-100">
                         <X size={16} />
                       </button>
                     </div>
                     <div className="flex-1 overflow-y-auto">{renderNav(() => setSidebarOpen(false), true)}</div>
-                    <div className="pt-2 border-t border-neutral-200 dark:border-slate-800 text-[10px] text-black dark:text-white opacity-60">
-                      Helpline <b className="text-orange-600 dark:text-orange-400">116</b> · VSU <b className="text-orange-600 dark:text-orange-400">997</b>
+                    <div className="p-3 border-t border-neutral-200 dark:border-slate-800 flex flex-col gap-2 shrink-0">
+                      {user ? (
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-medium text-black dark:text-white truncate">
+                            {user.name}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => { setUser(null); setPage("dashboard"); showToast("Signed out."); setSidebarOpen(false); }}
+                            className="px-3 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-medium text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                          >
+                            Sign out
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => { setIsLoginModalOpen(true); setSidebarOpen(false); }}
+                          className="w-full px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white font-medium text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        >
+                          Sign in
+                        </button>
+                      )}
+                      <div className="text-xs text-black dark:text-white opacity-60 text-center mt-1">
+                        Helpline <b className="text-orange-600 dark:text-orange-400">116</b> · VSU <b className="text-orange-600 dark:text-orange-400">997</b>
+                      </div>
                     </div>
                   </motion.aside>
                 </>
@@ -692,8 +744,32 @@ if (role === 'district_coordinator') return [
                 <span className="font-bold text-sm text-black dark:text-white truncate">Ujamaa Dashboard</span>
               </div>
               <div className="flex-1 overflow-y-auto p-2">{renderNav()}</div>
-              <div className="p-3 border-t border-neutral-200 dark:border-slate-800 text-[10px] text-black dark:text-white opacity-60 shrink-0">
-                Helpline <b className="text-orange-600 dark:text-orange-400">116</b> · VSU <b className="text-orange-600 dark:text-orange-400">997</b>
+              <div className="p-3 border-t border-neutral-200 dark:border-slate-800 flex flex-col gap-2 shrink-0">
+                {user ? (
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium text-black dark:text-white truncate" title={user.name}>
+                      {user.name}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => { setUser(null); setPage("dashboard"); showToast("Signed out."); }}
+                      className="px-2 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-medium text-xs focus:outline-none focus:ring-2 focus:ring-red-500"
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setIsLoginModalOpen(true)}
+                    className="w-full px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white font-medium text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  >
+                    Sign in
+                  </button>
+                )}
+                <div className="text-xs text-black dark:text-white opacity-60 text-center mt-1">
+                  Helpline <b className="text-orange-600 dark:text-orange-400">116</b> · VSU <b className="text-orange-600 dark:text-orange-400">997</b>
+                </div>
               </div>
             </aside>
 
@@ -716,7 +792,7 @@ if (role === 'district_coordinator') return [
                   >
                     <Sliders size={18} />
                   </button>
-                  <h2 className="text-[12px] sm:text-sm font-semibold text-black dark:text-white truncate m-0 min-w-0">
+                  <h2 className="text-sm sm:text-base font-semibold text-black dark:text-white truncate m-0 min-w-0">
                     {PAGE_LABELS[page] || "ETT ScaleUp Program"}
                   </h2>
                 </div>
@@ -868,29 +944,6 @@ if (role === 'district_coordinator') return [
                   >
                     <Settings size={16} />
                   </button>
-
-                  {user ? (
-                    <>
-                      <span className="hidden sm:inline text-xs font-medium text-black dark:text-white max-w-[120px] truncate">
-                        {user.name}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => { setUser(null); setPage("dashboard"); showToast("Signed out."); }}
-                        className="px-3 py-2 sm:px-2.5 sm:py-1 rounded-md bg-red-600 hover:bg-red-700 text-white font-semibold text-sm sm:text-xs min-h-[44px] sm:min-h-auto focus:outline-none focus:ring-2 focus:ring-red-500"
-                      >
-                        Sign out
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setIsLoginModalOpen(true)}
-                      className="px-2.5 py-1 bg-orange-600 hover:bg-orange-700 text-white font-semibold text-xs rounded-md"
-                    >
-                      Sign in
-                    </button>
-                  )}
                 </div>
               </header>
 

@@ -25,6 +25,7 @@
 
 * {
   box-sizing: border-box;
+  font-family: var(--font-sans) !important;
 }
 
 body {
