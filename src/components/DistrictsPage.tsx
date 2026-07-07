@@ -320,7 +320,7 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
     : null;
 
   return (
-    <div className="space-y-6 animate-fade-in-up bg-[#fdf6ef] dark:bg-[#0f1623] -m-4 sm:-m-6 p-4 sm:p-6 min-h-[calc(100vh-56px)]">
+    <div className="space-y-4 animate-fade-in-up">
       <PageHeader
         title={locationLabel ? `${locationLabel} — Districts` : "Implementing Districts"}
         subtitle={locationLabel
@@ -335,7 +335,7 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
           { label: 'Total TOTs', value: visibleDistricts.reduce((a, d) => a + (parseInt(d.tots) || 0), 0), icon: <GraduationCap size={15} /> },
           { label: 'Teachers Trained', value: visibleDistricts.reduce((a, d) => a + (parseInt(d.teachers_trained) || 0), 0), icon: <Users size={15} /> },
         ].map((s, i) => (
-          <div key={i} className="p-3 rounded-xl bg-gradient-to-br from-orange-50 to-white shadow-[0_8px_30px_rgba(232,93,4,0.08)] dark:from-orange-950/30 dark:to-[#0f1623]">
+          <div key={i} className="p-3 rounded-lg border border-neutral-200 dark:border-slate-800 bg-white dark:bg-[#0f1623]">
             <div className="flex items-center gap-1.5 mb-1 text-orange-700 dark:text-orange-300 text-[10px] font-semibold uppercase tracking-wide">{s.icon}{s.label}</div>
             <div className="text-2xl font-semibold text-black dark:text-white">{s.value.toLocaleString()}</div>
           </div>
@@ -367,7 +367,7 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
         return (
           <section
             key={reg}
-            className="rounded-[18px] shadow-[0_10px_30px_rgba(15,23,42,0.08)] overflow-hidden bg-white dark:bg-[#0f1623]"
+            className="border border-neutral-200 dark:border-slate-800 rounded-lg overflow-hidden bg-white dark:bg-[#0f1623]"
           >
             <div
               className="px-4 sm:px-6 py-4 sm:py-5 flex flex-wrap items-center gap-4"
@@ -416,8 +416,8 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
                   return (
                     <Card
                       key={d.id}
-                      className={`rounded-[16px] border border-neutral-200 dark:border-slate-800 shadow-none p-3.5 sm:p-4 transition-all cursor-pointer bg-white dark:bg-[#0f1623] ${
-                        isExpanded ? 'ring-2 ring-offset-2 ring-orange-300' : ''
+                      className={`shadow-none p-3.5 sm:p-4 transition-all cursor-pointer hover:border-orange-400 dark:hover:border-orange-500 ${
+                        isExpanded ? 'ring-2 ring-offset-2 ring-orange-500 border-orange-500' : ''
                       }`}
                       onClick={() => toggleExpand(d.id)}
                     >
