@@ -511,7 +511,7 @@ const PendingUserActions: React.FC<{
           onChange={e => { setSelectedRegion(e.target.value); setSelectedDistrict(''); }}
         >
           <option value="">— Region —</option>
-          {liveRegions.map(r => <option key={r} value={r}>{r}</option>)}
+          {['Northern', 'Central', 'Southern'].map(r => <option key={r} value={r}>{r}</option>)}
           <option value="HQ">HQ</option>
         </select>
       )}
