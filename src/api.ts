@@ -152,6 +152,15 @@ export const gbvCasesApi = {
   delete: (id: number) => api.delete(`/api/gbv-cases/${id}`),
 };
 
+export const qaReportsApi = {
+  getAll: () => apiGetList('/api/qa-reports', ['reports', 'data', 'items']),
+  submit: (data: any) => api.post('/api/qa-reports', data),
+  review: (id: number, status: string, reviewNotes?: string) =>
+    api.put(`/api/qa-reports/${id}/review`, { status, reviewNotes }),
+  getStats: () => api.get('/api/qa-reports/stats/summary'),
+  getCompliance: () => api.get('/api/qa-reports/compliance'),
+};
+
 export const monthlyCaseReportsApi = {
   getStatus: () => api.get('/api/monthly-case-reports/status'),
   getAll: () => apiGetList('/api/monthly-case-reports', ['reports', 'data', 'items']),

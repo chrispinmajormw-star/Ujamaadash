@@ -5,6 +5,7 @@ export const ROLE_CFG = {
   tot: { label: "Trainer of Trainers", color: "#c44d00", bg: "#fff4ec", icon: "" },
   data_entry: { label: "M & E Officer", color: "#c44d00", bg: "#fff4ec", icon: "" },
   district_coordinator: { label: "District Coordinator", color: "#065f46", bg: "#d1fae5", icon: "️" },
+  qa_officer: { label: "Quality Assurance Officer", color: "#7c3aed", bg: "#ede9fe", icon: "" },
   viewer: { label: "Viewer", color: "#1e40af", bg: "#dbeafe", icon: "️" },
 };
 

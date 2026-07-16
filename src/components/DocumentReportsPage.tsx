@@ -21,7 +21,7 @@ const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> =
 const RECIPIENT_LABEL: Record<string, string> = {
   tot: 'District Coordinator',
   sasa_officer: 'System Admin',
-  data_entry: 'District Coordinator',
+  data_entry: 'System Admin',
   district_coordinator: 'Program Manager',
 };
 

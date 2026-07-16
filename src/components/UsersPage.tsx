@@ -38,6 +38,7 @@ const ROLE_LOCATION: Record<string, LocationType> = {
   data_entry:           'hq',
   cartographer:         'hq',
   sasa_officer:         'hq',
+  qa_officer:           'hq',
   viewer:               'hq',
   program_manager:      'region',
   program_staff:        'region',
@@ -254,7 +255,7 @@ export const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers,
           >
             {[
               'all', 'admin', 'tot', 'data_entry', 'district_coordinator',
-              'sasa_officer', 'cartographer', 'program_manager', 'field_officer'
+              'sasa_officer', 'qa_officer', 'cartographer', 'program_manager', 'field_officer'
             ].map(x => (
               <option key={x} value={x}>
                 {x === 'all' ? 'ALL STAFF' : (ROLE_CFG[x as keyof typeof ROLE_CFG]?.label.toUpperCase() || x.toUpperCase())}
@@ -373,6 +374,8 @@ export const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers,
               <option value="program_manager">Regional / Program Manager</option>
               <option value="field_officer">Field Officer</option>
               <option value="sasa_officer">SASA Officer</option>
+        <option value="qa_officer">Quality Assurance Officer</option>
+              <option value="qa_officer">Quality Assurance Officer</option>
               <option value="data_entry">M & E Officer</option>
               <option value="cartographer">Cartographer</option>
               <option value="admin">System Admin</option>

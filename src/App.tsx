@@ -20,6 +20,7 @@ import {
   TrendingUp,
   Info,
   Shield,
+  ClipboardCheck,
   Star,
   Settings,
   Bell,
@@ -100,6 +101,8 @@ import { CalendarPage } from './components/CalendarPage';
 import { AnalyticsPage } from './components/AnalyticsPage';
 import { TasksPage } from './components/TasksPage';
 import { SasaPage } from './components/SasaPage';
+import { QAOfficerPage } from './components/QAOfficerPage';
+import { SubmitQAReport } from './components/SubmitQAReport';
 import { DocumentReportsPage } from './components/DocumentReportsPage';
 import { StandardsPoliciesPage } from './components/StandardsPoliciesPage';
 import { ProgramManagerPage } from './components/ProgramManagerPage';
@@ -147,6 +150,8 @@ const PAGE_LABELS: Record<string, string> = {
   standards: "Standards & Policies",
   document_reports: "Document Reports",
   sasa: "SASA Officer Dashboard",
+  qa: "Quality Assurance Dashboard",
+  submit_qa: "Submit QA Report",
   session_records: "Session Records",
 };
 
@@ -303,6 +308,7 @@ useEffect(() => {
       case "program_staff": return "staff_home";
       case "cartographer": return "cartographer_home";
       case "sasa_officer": return "sasa";
+      case "qa_officer": return "qa";
       case "data_entry": return "data_officer";
       default: return "dashboard";
     }
@@ -480,6 +486,14 @@ const pendingCount = (user && can(user.role, "approveReport")
         return <ImpactPage reports={reports} showToast={showToast} user={user} />;
       case 'youth':
         return <YouthPage />;
+      case 'qa':
+        return (user?.role === 'qa_officer' || user?.role === 'admin' || user?.role === 'program_manager')
+          ? <QAOfficerPage user={user} showToast={showToast} />
+          : <div className="p-12 text-center text-slate-400 font-semibold italic">Restricted to Quality Assurance Officers.</div>;
+      case 'submit_qa':
+        return (user?.role === 'field_officer' || user?.role === 'tot')
+          ? <SubmitQAReport user={user} showToast={showToast} />
+          : <div className="p-12 text-center text-slate-400 font-semibold italic">Restricted to Field Officers.</div>;
       case 'sasa':
         return (user?.role === 'sasa_officer' || user?.role === 'program_manager')
           ? <SasaPage user={user} reports={reports} showToast={showToast} />
@@ -540,6 +554,7 @@ const pendingCount = (user && can(user.role, "approveReport")
       { title: "My Workspace", items: [
         { id: "officer_home", label: "Field Dashboard", icon: LayoutDashboard, protected: true },
         { id: "submit", label: "Log Session", icon: FilePlus, protected: true },
+        { id: "submit_qa", label: "Submit QA Report", icon: ClipboardCheck, protected: true },
         { id: "document_reports", label: "Submit a Report", icon: Upload, protected: true },
       ]},
       { title: "Reference", items: [
@@ -586,6 +601,15 @@ const pendingCount = (user && can(user.role, "approveReport")
       ]},
     ];
 
+    // Quality Assurance Officer nav
+    if (role === 'qa_officer') return [
+      { title: "QA Workspace", items: [
+        { id: "qa", label: "QA Dashboard", icon: ClipboardCheck, protected: true },
+      ]},
+      { title: "More", items: [
+        { id: "settings", label: "Settings", icon: Settings },
+      ]},
+    ];
     // SASA Officer nav
     if (role === 'sasa_officer') return [
   { title: "SASA Workspace", items: [
