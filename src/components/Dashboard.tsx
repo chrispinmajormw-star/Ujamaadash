@@ -82,7 +82,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
 useEffect(() => {
   programmeStatsApi.getAll(activeCountry).then(data => {
     if (Array.isArray(data) && data.length > 0) {
-      setYEARLY_DATA(data.map((d: any) => ({
+      const currentYear = new Date().getFullYear();
+      const filtered = data.filter((d: any) =>
+        !d.is_planned && parseInt(d.year) <= currentYear
+      );
+      setYEARLY_DATA(filtered.map((d: any) => ({
         year: d.year,
         schools: d.schools,
         teachers: d.teachers,
