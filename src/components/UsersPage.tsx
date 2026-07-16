@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { Plus } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useCountry } from '../context/CountryContext';
+import { districtsApi } from '../api';
+import { Plus, Landmark, AlertTriangle, Globe} from 'lucide-react';
 import { User } from '../types';
 import { api } from '../api';
 import { ROLE_CFG } from '../data';
@@ -28,7 +30,6 @@ const DISTRICTS_BY_REGION: Record<string, string[]> = {
   ],
 };
 
-const REGIONS = ['Northern', 'Central', 'Southern'];
 
 // Which location fields each role needs
 type LocationType = 'hq' | 'region' | 'district';
@@ -56,6 +57,7 @@ const REGION_COLORS: Record<string, { bg: string; text: string }> = {
 const BLANK_FORM = {
   first: '', last: '', email: '', password: '',
   role: 'tot' as string,
+  country: '',
   region: '',
   district: '',
 };
@@ -66,6 +68,36 @@ export const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers,
   const [regionFilt, setRegionFilt] = useState('all');
   const [search, setSearch]   = useState('');
   const [nf, setNf]           = useState(BLANK_FORM);
+  const { activeCountry } = useCountry();
+  const [liveRegions, setLiveRegions] = useState<string[]>([]);
+
+  // Regions shown in the filter adapt to whichever country is currently selected
+  useEffect(() => {
+    if (!activeCountry || activeCountry === 'all') {
+      setLiveRegions([]);
+      return;
+    }
+    districtsApi.getAll(activeCountry).then((res: any) => {
+      const list = Array.isArray(res) ? res : [];
+      setLiveRegions(Array.from(new Set(list.map((d: any) => d.region).filter(Boolean))).sort());
+    }).catch(() => setLiveRegions([]));
+  }, [activeCountry]);
+
+  // Reset region filter whenever the country changes, since regions don't carry over
+  useEffect(() => { setRegionFilt('all'); }, [activeCountry]);
+  // Regions for the Add User form adapt to whichever country is selected *in that form*,
+  // which may differ from the globally active country.
+  const [formRegions, setFormRegions] = useState<string[]>([]);
+  useEffect(() => {
+    if (!nf.country) {
+      setFormRegions([]);
+      return;
+    }
+    districtsApi.getAll(nf.country).then((res: any) => {
+      const list = Array.isArray(res) ? res : [];
+      setFormRegions(Array.from(new Set(list.map((d: any) => d.region).filter(Boolean))).sort());
+    }).catch(() => setFormRegions([]));
+  }, [nf.country]);
 
   if (cu.role !== 'admin') {
     return (
@@ -94,13 +126,16 @@ export const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers,
   // ─── ADD USER (Admin creates directly — status active) ─────────────────────
   const addUser = async () => {
     if (!nf.first || !nf.last || !nf.email || !nf.password) {
-      showToast('⚠️ Please fill in all required fields'); return;
+      showToast('Please fill in all required fields', 'warning'); return;
+    }
+    if (!nf.country) {
+      showToast('Please select a country', 'warning'); return;
     }
     if (locationType === 'region' && !nf.region) {
-      showToast('⚠️ Please select a region for this role'); return;
+      showToast('Please select a region for this role', 'warning'); return;
     }
     if (locationType === 'district' && (!nf.region || !nf.district)) {
-      showToast('⚠️ Please select both a region and district for this role'); return;
+      showToast('Please select both a region and district for this role', 'warning'); return;
     }
 
     try {
@@ -109,6 +144,7 @@ export const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers,
         email: nf.email,
         password: nf.password,
         role: nf.role,
+        country: nf.country,
         avatar: (nf.first[0] + nf.last[0]).toUpperCase(),
         region: locationType !== 'hq' ? nf.region : null,
         district: locationType === 'district' ? nf.district : null,
@@ -116,124 +152,144 @@ export const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers,
 
       const created = await api.post('/api/users/admin/create', payload);
 
-      if (created.error) { showToast(`⚠️ ${created.error}`); return; }
+ if (created.error) { showToast(`️ ${created.error}`, 'warning'); return; }
 
-      setUsers(p => [created, ...p]);
-      setShowAdd(false);
-      setNf(BLANK_FORM);
-      showToast(`✅ ${created.name} added and activated`);
-      refreshUsers?.();
-    } catch {
-      showToast('⚠️ Failed to create user. Check the server.');
+ setUsers(p => [created, ...p]);
+ setShowAdd(false);
+ setNf(BLANK_FORM);
+ showToast(`${created.name} added and activated`, 'success');
+ refreshUsers?.();
+ } catch {
+ showToast('Failed to create user. Check the server.', 'warning');
     }
   };
 
   // ─── FILTER USERS ──────────────────────────────────────────────────────────
   const visible = users.filter(u => {
+    if (activeCountry && activeCountry !== 'all' && (u as any).country !== activeCountry) return false;
     if (filt !== 'all' && u.role !== filt) return false;
     if (regionFilt !== 'all') {
       if (regionFilt === 'hq' && u.region) return false;
-      if (regionFilt !== 'hq' && u.region !== regionFilt) return false;
-    }
-    const q = search.toLowerCase();
-    if (q && !u.name.toLowerCase().includes(q) && !u.email.toLowerCase().includes(q)) return false;
-    return true;
-  });
+      if (regionFilt !== 'hq'&& u.region !== regionFilt) return false;
+ }
+ const q = search.toLowerCase();
+ if (q && !u.name.toLowerCase().includes(q) && !u.email.toLowerCase().includes(q)) return false;
+ return true;
+ });
 
-  // ─── LOCATION DISPLAY HELPER ───────────────────────────────────────────────
-  const locationDisplay = (u: User) => {
-    const rc = u.region ? REGION_COLORS[u.region] : null;
-    if (!u.region && !u.district) {
-      return <span className="text-slate-400 text-[10px] font-medium italic">HQ / National</span>;
-    }
-    return (
-      <div className="flex flex-col gap-1">
-        {u.region && (
-          <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${rc?.bg} ${rc?.text}`}>
-            🗺 {u.region}
-          </span>
-        )}
-        {u.district && (
-          <span className="text-[10.5px] text-slate-500 dark:text-slate-400 font-semibold pl-0.5">
-            📍 {u.district}
-          </span>
-        )}
-      </div>
-    );
-  };
+ // ─── LOCATION DISPLAY HELPER ───────────────────────────────────────────────
+ const locationDisplay = (u: User) => {
+ const rc = u.region ? REGION_COLORS[u.region] : null;
+ if (!u.region && !u.district) {
+ return <span className="text-slate-400 text-[10px] font-medium italic">HQ / National</span>;
+ }
+ return (
+ <div className="flex flex-col gap-1">
+ {u.region && (
+ <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${rc?.bg} ${rc?.text}`}>
+ {u.region}
+ </span>
+ )}
+ {u.district && (
+ <span className="text-[10.5px] text-slate-500 dark:text-slate-400 font-semibold pl-0.5">
+ {u.district}
+ </span>
+ )}
+ </div>
+ );
+ };
 
-  return (
-    <div className="space-y-5 animate-fade-in-up">
-      {/* ── Page Header ──────────────────────────────────────────────────────── */}
-      <div className="flex justify-between items-end">
-        <div>
-          <Kicker text="Staff Alignment" />
-          <h1 className="text-base font-bold text-black dark:text-white m-0">Personnel Directory</h1>
-          <p className="text-xs text-black dark:text-white opacity-80 mt-1 m-0">
-            Manage district coordinators, certified TOTs, and programme staff by location.
-          </p>
-        </div>
-        <Btn onClick={() => setShowAdd(true)}><Plus size={14} className="inline mr-1" /> Add User</Btn>
-      </div>
+ return (
+ <div className="space-y-5 animate-fade-in-up">
+ {/* ── Page Header ──────────────────────────────────────────────────────── */}
+ <div className="flex justify-between items-end">
+ <div>
+ <Kicker text="Staff Alignment"/>
+ <h1 className="text-base font-bold text-black dark:text-white m-0">Personnel Directory</h1>
+ <p className="text-xs text-black dark:text-white opacity-80 mt-1 m-0">
+ Manage district coordinators, certified TOTs, and programme staff by location.
+ </p>
+ </div>
+ <Btn onClick={() => setShowAdd(true)}><Plus size={14} className="inline mr-1"/> Add User</Btn>
+ </div>
 
-      {/* ── Stats Summary ─────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-4 gap-3">
-        {['Northern', 'Central', 'Southern'].map(r => {
-          const rc = REGION_COLORS[r];
-          const count = users.filter(u => u.region === r).length;
+ {/* ── Stats Summary ─────────────────────────────────────────────────── */}
+ <div className="grid grid-cols-4 gap-3">
+ {(() => {
+ const countryUsers = activeCountry && activeCountry !== 'all'
+            ? users.filter(u => (u as any).country === activeCountry)
+            : users;
+          const fallbackColor = { bg: 'bg-slate-100 dark:bg-slate-800/50', text: 'text-slate-700 dark:text-slate-200' };
+          const regionsToShow = liveRegions.length > 0 ? liveRegions : ['Northern', 'Central', 'Southern'];
           return (
-            <div key={r} className={`rounded-xl p-3 border ${rc.bg} border-transparent`}>
-              <div className={`text-lg font-black ${rc.text}`}>{count}</div>
-              <div className={`text-[10px] font-bold ${rc.text} opacity-80`}>{r} Region</div>
-            </div>
+            <>
+              {regionsToShow.map(r => {
+                const rc = REGION_COLORS[r] || fallbackColor;
+                const count = countryUsers.filter(u => u.region === r).length;
+                return (
+                  <div key={r} className={`rounded-xl p-3 border ${rc.bg} border-transparent`}>
+                    <div className={`text-lg font-black ${rc.text}`}>{count}</div>
+                    <div className={`text-[10px] font-bold ${rc.text} opacity-80`}>{r} Region</div>
+                  </div>
+                );
+              })}
+              <div className="rounded-xl p-3 border bg-slate-100 dark:bg-slate-800/50 border-transparent">
+                <div className="text-lg font-black text-slate-700 dark:text-slate-200">
+                  {countryUsers.filter(u => !u.region).length}
+                </div>
+                <div className="text-[10px] font-bold text-slate-500">HQ / National</div>
+              </div>
+            </>
           );
-        })}
-        <div className="rounded-xl p-3 border bg-slate-100 dark:bg-slate-800/50 border-transparent">
-          <div className="text-lg font-black text-slate-700 dark:text-slate-200">
-            {users.filter(u => !u.region).length}
-          </div>
-          <div className="text-[10px] font-bold text-slate-500">HQ / National</div>
-        </div>
+        })()}
       </div>
 
       <Card>
         {/* ── Role Filter ────────────────────────────────────────────────────── */}
-        <FilterBar
-          options={[
-            'all', 'admin', 'tot', 'data_entry', 'district_coordinator',
-            'sasa_officer', 'cartographer', 'program_manager', 'field_officer'
-          ].map(x => ({
-            v: x,
-            l: x === 'all' ? 'ALL STAFF' : (ROLE_CFG[x as keyof typeof ROLE_CFG]?.label.toUpperCase() || x.toUpperCase())
-          }))}
-          active={filt}
-          onChange={setFilt}
-          search={search}
-          onSearch={setSearch}
-          searchPlaceholder="Search staff name or email..."
-        />
+        <div className="flex flex-wrap items-center gap-2 px-1 pb-3">
+          <select
+            value={filt}
+            onChange={e => setFilt(e.target.value)}
+            className="px-3 py-2 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200"
+          >
+            {[
+              'all', 'admin', 'tot', 'data_entry', 'district_coordinator',
+              'sasa_officer', 'cartographer', 'program_manager', 'field_officer'
+            ].map(x => (
+              <option key={x} value={x}>
+                {x === 'all' ? 'ALL STAFF' : (ROLE_CFG[x as keyof typeof ROLE_CFG]?.label.toUpperCase() || x.toUpperCase())}
+              </option>
+            ))}
+          </select>
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search staff name or email..."
+            className="flex-1 min-w-[180px] px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200"
+          />
+        </div>
 
         {/* ── Region Filter ───────────────────────────────────────────────────── */}
         <div className="flex gap-2 px-1 pb-3 flex-wrap">
-          {['all', 'Northern', 'Central', 'Southern', 'hq'].map(r => (
+          {['all', ...liveRegions, 'hq'].map(r => (
             <button
               key={r}
               onClick={() => setRegionFilt(r)}
               className={`px-3 py-1 rounded-full text-[10px] font-bold border transition-all ${
                 regionFilt === r
-                  ? 'bg-orange-600 text-white border-orange-600'
-                  : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-orange-400'
+                  ? 'bg-[var(--brand-600)] text-white border-[var(--brand-600)]'
+                  : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-[var(--brand-400)]'
               }`}
             >
-              {r === 'all' ? '🌍 ALL REGIONS' : r === 'hq' ? '🏛 HQ ONLY' : `🗺 ${r.toUpperCase()}`}
+              {r === 'all' ? 'ALL REGIONS' : r === 'hq' ? 'HQ ONLY': `${r.toUpperCase()}`}
             </button>
           ))}
         </div>
 
-        {/* ── Users Table ─────────────────────────────────────────────────────── */}
-        <div className="overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800/60 w-full">
-          <table className="w-full border-collapse text-left text-xs min-w-[800px]">
-            <TH cols={['Consultant Details', 'Designation', 'Location', 'Status', 'Actions']} />
+ {/* ── Users Table ─────────────────────────────────────────────────────── */}
+ <div className="overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800/60 w-full">
+ <table className="w-full border-collapse text-left text-xs min-w-[800px]">
+ <TH cols={['Consultant Details', 'Designation', 'Location', 'Status', 'Actions']} />
             <tbody>
               {visible.length === 0 && (
                 <tr>
@@ -250,7 +306,7 @@ export const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers,
                     {/* Name + Email */}
                     <td className="p-3">
                       <div className="flex items-center gap-3">
-                        <span className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-bold text-xs text-orange-600 shrink-0">
+                        <span className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-bold text-xs text-[var(--brand-600)] shrink-0">
                           {u.avatar}
                         </span>
                         <div>
@@ -317,24 +373,32 @@ export const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers,
               <option value="program_manager">Regional / Program Manager</option>
               <option value="field_officer">Field Officer</option>
               <option value="sasa_officer">SASA Officer</option>
-              <option value="data_entry">Data Officer</option>
+              <option value="data_entry">M & E Officer</option>
               <option value="cartographer">Cartographer</option>
               <option value="admin">System Admin</option>
               <option value="viewer">Basic Viewer</option>
             </FSelect>
+            {/* Country */}
+            <FSelect label="Country *" value={nf.country} onChange={sn('country')}>
+              <option value="">— Select Country —</option>
+              <option value="Malawi">Malawi</option>
+              <option value="Kenya">Kenya</option>
+              <option value="Somaliland">Somaliland</option>
+            </FSelect>
 
             {/* HQ notice */}
-            {locationType === 'hq' && (
-              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/40 text-[11px] text-blue-700 dark:text-blue-300 font-semibold">
-                🏛️ This role is based at National HQ — no region or district needed.
-              </div>
-            )}
+            {locationType === 'hq'&& (
+ <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/40 text-[11px] text-blue-700 dark:text-blue-300 font-semibold">
+ ️ This role is based at National HQ — no region or district needed.
+ </div>
+ )}
 
-            {/* Region picker */}
-            {(locationType === 'region' || locationType === 'district') && (
+ {/* Region picker */}
+ {(locationType === 'region' || locationType === 'district') && (
               <FSelect label={`Region *`} value={nf.region} onChange={changeRegion}>
                 <option value="">— Select Region —</option>
-                {REGIONS.map(r => <option key={r} value={r}>{r} Region</option>)}
+                {formRegions.map(r => <option key={r} value={r}>{r} Region</option>)}
+                <option value="HQ">HQ</option>
               </FSelect>
             )}
 
@@ -348,10 +412,10 @@ export const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers,
 
             {/* Location summary */}
             {(nf.region || locationType === 'hq') && (
-              <div className="flex items-start gap-2 px-3 py-2 rounded-xl bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/30 text-[11px] text-orange-700 dark:text-orange-300">
-                <span>📍</span>
-                <span>
-                  {locationType === 'hq' && 'User will be placed at National HQ.'}
+ <div className="flex items-start gap-2 px-3 py-2 rounded-xl bg-[var(--brand-50)] dark:bg-[var(--brand-950)]/20 border border-[var(--brand-200)] dark:border-[var(--brand-900)]/30 text-[11px] text-[var(--brand-700)] dark:text-[var(--brand-300)]">
+ <span></span>
+ <span>
+ {locationType === 'hq' && 'User will be placed at National HQ.'}
                   {locationType === 'region' && nf.region && `User will be placed in ${nf.region} Region.`}
                   {locationType === 'district' && nf.region && !nf.district && `Select a district in ${nf.region} Region.`}
                   {locationType === 'district' && nf.district && `User will be placed in ${nf.district} District, ${nf.region} Region.`}
@@ -389,10 +453,10 @@ const PendingUserActions: React.FC<{
 
   const activate = async () => {
     if (locationType === 'region' && !selectedRegion) {
-      showToast('⚠️ Please assign a region before activating'); return;
+      showToast('Please assign a region before activating', 'warning'); return;
     }
     if (locationType === 'district' && (!selectedRegion || !selectedDistrict)) {
-      showToast('⚠️ Please assign both a region and district before activating'); return;
+      showToast('Please assign both a region and district before activating', 'warning'); return;
     }
     try {
       await api.put(`/api/users/${u.id}`, {
@@ -405,13 +469,13 @@ const PendingUserActions: React.FC<{
         role: selectedRole,
       });
       setUsers(prev => prev.map(x => x.id === u.id
-        ? { ...x, status: 'active' as const, role: selectedRole as any, region: selectedRegion || null, district: locationType === 'district' ? selectedDistrict : null }
-        : x
-      ));
-      showToast(`✅ ${u.name} activated as ${selectedRole} in ${selectedDistrict || selectedRegion || 'HQ'}`);
+        ? { ...x, status: 'active' as const, role: selectedRole as any, region: selectedRegion || null, district: locationType === 'district'? selectedDistrict : null }
+ : x
+ ));
+ showToast(`${u.name} activated as ${selectedRole} in ${selectedDistrict || selectedRegion || 'HQ'}`, 'success');
       refreshUsers?.();
     } catch {
-      showToast('⚠️ Failed to activate user');
+      showToast('Failed to activate user', 'warning');
     }
   };
 
@@ -433,7 +497,7 @@ const PendingUserActions: React.FC<{
         <option value="program_manager">Program Manager</option>
         <option value="field_officer">Field Officer</option>
         <option value="sasa_officer">SASA Officer</option>
-        <option value="data_entry">Data Officer</option>
+        <option value="data_entry">M & E Officer</option>
         <option value="cartographer">Cartographer</option>
         <option value="viewer">Viewer</option>
         <option value="admin">Admin</option>
@@ -447,7 +511,8 @@ const PendingUserActions: React.FC<{
           onChange={e => { setSelectedRegion(e.target.value); setSelectedDistrict(''); }}
         >
           <option value="">— Region —</option>
-          {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+          {liveRegions.map(r => <option key={r} value={r}>{r}</option>)}
+          <option value="HQ">HQ</option>
         </select>
       )}
 
@@ -488,20 +553,18 @@ const ActiveUserActions: React.FC<{
             setUsers(prev => prev.map(x => x.id === u.id ? { ...x, status: 'pending' as const } : x));
             showToast(`Suspended ${u.name}`);
             refreshUsers?.();
-          } catch { showToast('⚠️ Failed to suspend user'); }
-        }}>
-        Suspend
-      </Btn>
-      <Btn size="sm" variant="secondary"
-        className="text-red-600 bg-red-50 dark:bg-red-950/20"
-        onClick={async () => {
-          if (!confirm(`Delete ${u.name}? This cannot be undone.`)) return;
-          try {
-            await api.delete(`/api/users/${u.id}`);
-            setUsers(prev => prev.filter(x => x.id !== u.id));
-            showToast(`🗑️ ${u.name} deleted`);
-            refreshUsers?.();
-          } catch { showToast('⚠️ Failed to delete user'); }
+          } catch { showToast('Failed to suspend user', 'warning'); }
+ }}>
+ Suspend
+ </Btn>
+ <Btn size="sm"variant="secondary"className="text-red-600 bg-red-50 dark:bg-red-950/20"onClick={async () => {
+ if (!confirm(`Delete ${u.name}? This cannot be undone.`)) return;
+ try {
+ await api.delete(`/api/users/${u.id}`);
+ setUsers(prev => prev.filter(x => x.id !== u.id));
+ showToast(`️ ${u.name} deleted`, 'success');
+ refreshUsers?.();
+ } catch { showToast('Failed to delete user', 'warning'); }
         }}>
         Delete
       </Btn>

@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 import { Report } from '../types';
 import { Card, Kicker, StatCard, ProgBar } from './SubComponents';
-import { useCountry } from '../context/CountryContext';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -21,7 +20,7 @@ import autoTable from 'jspdf-autotable';
 // them into exactly the structures the charts below expect — replacing what
 // used to be hardcoded REGIONAL_DATA / TOP15_DISTRICTS / CLUSTER_DATA arrays.
 
-const REGION_COLOR: Record<string, string> = { Northern: '#185fa5', Central: 'var(--brand)', Southern: '#059669' };
+const REGION_COLOR: Record<string, string> = { Northern: '#185fa5', Central: '#e85d04', Southern: '#059669' };
 
 function buildRegionalData(districts: any[]) {
   const byRegion: Record<string, { region: string; districts: number; tots: number; schools: number; clusters: number; color: string }> = {};
@@ -60,8 +59,8 @@ function buildClusterData(clusters: any[]) {
   }));
 }
 
-const OR = 'var(--brand)';
-const COLORS = { Northern: '#185fa5', Central: 'var(--brand)', Southern: '#059669' };
+const OR = '#e85d04';
+const COLORS = { Northern: '#185fa5', Central: '#e85d04', Southern: '#059669' };
 const PIE_COLORS = ['#059669', '#f59e0b', '#dc2626', '#3b82f6'];
 
 // ─── CUSTOM TOOLTIP ──────────────────────────
@@ -89,60 +88,47 @@ function drawBarChart(
   height: number,
   color: [number, number, number]
 ) {
-  const max = Math.max(...data.map(d => d.value || 0), 1);
+  const max = Math.max(...data.map(d => d.value), 1);
   const barGap = 4;
   const barWidth = (width - barGap * (data.length - 1)) / data.length;
   doc.setFontSize(7);
   data.forEach((d, i) => {
-    const val = d.value || 0;
-    const barHeight = (val / max) * (height - 14);
+    const barHeight = (d.value / max) * (height - 14);
     const bx = x + i * (barWidth + barGap);
     const by = y + height - barHeight - 10;
     doc.setFillColor(...color);
     doc.rect(bx, by, barWidth, barHeight, 'F');
     doc.setTextColor(0);
-    doc.text(String(val), bx + barWidth / 2, by - 2, { align: 'center' });
-    doc.text(String(d.label || '').slice(0, 10), bx + barWidth / 2, y + height - 3, { align: 'center' });
+    doc.text(String(d.value), bx + barWidth / 2, by - 2, { align: 'center' });
+    doc.text(d.label.slice(0, 10), bx + barWidth / 2, y + height - 3, { align: 'center' });
   });
 }
 
 const downloadReport = (
-  regionalData: any[] = [],
-  top15Districts: any[] = [],
-  clusterData: any[] = [],
-  totalTots: number = 0,
-  totalSchools: number = 0,
-  totalStudents: number = 0,
-  activeDistricts: number = 0,
-  totalDistricts: number = 0,
-  byStatus: Record<string, number> = {},
-  byCurr: Record<string, number> = {},
-  byDist: Record<string, number> = {},
-  boys: number = 0,
-  girls: number = 0,
-  monActivities: any[] = [],
-  monIssues: any[] = [],
-  reportCountry: string = 'all'
+  regionalData: any[],
+  top15Districts: any[],
+  clusterData: any[],
+  totalTots: number,
+  totalSchools: number,
+  totalStudents: number,
+  activeDistricts: number,
+  totalDistricts: number,
+  byStatus: Record<string, number>,
+  byCurr: Record<string, number>,
+  byDist: Record<string, number>,
+  boys: number,
+  girls: number,
+  monActivities: any[],
+  monIssues: any[]
 ) => {
-  console.log('downloadReport inputs:', { regionalData, top15Districts, clusterData, totalTots, totalSchools, totalStudents, activeDistricts, totalDistricts, byStatus, byCurr, byDist, boys, girls, monActivities, monIssues });
-
-  const safeTots = totalTots || 0;
-  const safeSchools = totalSchools || 0;
-  const safeStudents = totalStudents || 0;
-  const safeBoys = boys || 0;
-  const safeGirls = girls || 0;
-  const safeActive = activeDistricts || 0;
-  const safeTotalDistricts = totalDistricts || 0;
-  const safeClusters = (clusterData || []).length;
-
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
+  // ── Title ──
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
-  const countryLabel = reportCountry && reportCountry !== 'all' ? reportCountry : 'All Countries (Combined)';
-  doc.text(`Program Analysis Report — ${countryLabel}`, 14, 18);
+  doc.text('ETT Malawi — Impact Report', 14, 18);
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(100);
@@ -150,16 +136,19 @@ const downloadReport = (
   doc.text(`Generated: ${today}`, pageWidth - 14, 24, { align: 'right' });
   doc.setTextColor(0);
 
-  const completedDistricts = safeTotalDistricts - safeActive;
+  // ── Executive Summary ──
+  const totalClusters = clusterData.length;
+  const completedDistricts = totalDistricts - activeDistricts;
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
   doc.text('Executive Summary', 14, 34);
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
-  const summary = `The ETT program is currently operating across ${safeActive} of Malawi's districts. A total of ${safeTots.toLocaleString()} TOTs have been trained, covering ${safeSchools.toLocaleString()} schools through ${safeClusters.toLocaleString()} school clusters, reaching ${safeStudents.toLocaleString()} students (${safeBoys.toLocaleString()} boys, ${safeGirls.toLocaleString()} girls) based on submitted reports.`;
+  const summary = `The ETT program is currently operating across ${activeDistricts} of Malawi's districts. A total of ${totalTots.toLocaleString()} TOTs have been trained, covering ${totalSchools.toLocaleString()} schools through ${totalClusters.toLocaleString()} school clusters, reaching ${totalStudents.toLocaleString()} students (${boys.toLocaleString()} boys, ${girls.toLocaleString()} girls) based on submitted reports.`;
   const summaryLines = doc.splitTextToSize(summary, pageWidth - 28);
   doc.text(summaryLines, 14, 40);
 
+  // ── Key Program Metrics ──
   let y = 40 + summaryLines.length * 5 + 6;
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
@@ -168,13 +157,13 @@ const downloadReport = (
     startY: y + 4,
     head: [['Metric', 'Value']],
     body: [
-      ['TOTs Trained', safeTots.toLocaleString()],
-      ['Schools Covered', safeSchools.toLocaleString()],
-      ['School Clusters', safeClusters.toLocaleString()],
-      ['Students Reached', safeStudents.toLocaleString()],
-      ['Boys Reached', safeBoys.toLocaleString()],
-      ['Girls Reached', safeGirls.toLocaleString()],
-      ['Active Districts', String(safeActive)],
+      ['TOTs Trained', totalTots.toLocaleString()],
+      ['Schools Covered', totalSchools.toLocaleString()],
+      ['School Clusters', totalClusters.toLocaleString()],
+      ['Students Reached', totalStudents.toLocaleString()],
+      ['Boys Reached', boys.toLocaleString()],
+      ['Girls Reached', girls.toLocaleString()],
+      ['Active Districts', String(activeDistricts)],
       ['Completed Districts', String(completedDistricts)],
     ],
     theme: 'grid',
@@ -182,6 +171,7 @@ const downloadReport = (
     styles: { fontSize: 9 },
   });
 
+  // ── Regional Breakdown ──
   y = (doc as any).lastAutoTable.finalY + 10;
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
@@ -189,12 +179,13 @@ const downloadReport = (
   autoTable(doc, {
     startY: y + 4,
     head: [['Region', 'Districts', 'TOTs', 'Schools', 'Clusters']],
-    body: (regionalData || []).map(r => [r.region ?? '—', String(r.districts ?? 0), String(r.tots ?? 0), String(r.schools ?? 0), String(r.clusters ?? 0)]),
+    body: regionalData.map(r => [r.region, String(r.districts), String(r.tots), String(r.schools), String(r.clusters)]),
     theme: 'grid',
     headStyles: { fillColor: [232, 93, 4] },
     styles: { fontSize: 9 },
   });
 
+  // ── Chart: TOTs by Region ──
   y = (doc as any).lastAutoTable.finalY + 10;
   if (y > 220) { doc.addPage(); y = 20; }
   doc.setFontSize(11);
@@ -202,11 +193,12 @@ const downloadReport = (
   doc.text('TOTs by Region (chart)', 14, y);
   drawBarChart(
     doc,
-    (regionalData || []).map(r => ({ label: r.region ?? '—', value: r.tots ?? 0 })),
+    regionalData.map(r => ({ label: r.region, value: r.tots })),
     14, y + 4, pageWidth - 28, 45,
     [232, 93, 4]
   );
 
+  // ── District Performance (Top 15) ──
   y = y + 4 + 45 + 12;
   if (y > 240) { doc.addPage(); y = 20; }
   doc.setFontSize(12);
@@ -215,14 +207,15 @@ const downloadReport = (
   autoTable(doc, {
     startY: y + 4,
     head: [['#', 'District', 'Region', 'TOTs', 'Schools', 'Coverage']],
-    body: (top15Districts || []).map((d, i) => [
-      String(i + 1), d.district ?? '—', d.region ?? '—', String(d.tots ?? 0), String(d.schools ?? 0), `${d.coverage ?? 0}%`,
+    body: top15Districts.map((d, i) => [
+      String(i + 1), d.district, d.region, String(d.tots), String(d.schools), `${d.coverage}%`,
     ]),
     theme: 'grid',
     headStyles: { fillColor: [232, 93, 4] },
     styles: { fontSize: 8 },
   });
 
+  // ── School Clusters ──
   y = (doc as any).lastAutoTable.finalY + 10;
   if (y > 240) { doc.addPage(); y = 20; }
   doc.setFontSize(12);
@@ -231,12 +224,13 @@ const downloadReport = (
   autoTable(doc, {
     startY: y + 4,
     head: [['Cluster', 'District', 'Students', 'Progress']],
-    body: (clusterData || []).map(c => [c.cluster ?? '—', c.district ?? '—', (c.students ?? 0).toLocaleString(), `${c.progress ?? 0}%`]),
+    body: clusterData.map(c => [c.cluster, c.district, c.students.toLocaleString(), `${c.progress}%`]),
     theme: 'grid',
     headStyles: { fillColor: [232, 93, 4] },
     styles: { fontSize: 8 },
   });
 
+  // ── NEW: Reports Overview ──
   doc.addPage();
   y = 20;
   doc.setFontSize(14);
@@ -249,7 +243,7 @@ const downloadReport = (
   autoTable(doc, {
     startY: y + 4,
     head: [['Status', 'Count']],
-    body: Object.entries(byStatus || {}).map(([k, v]) => [k, String(v ?? 0)]),
+    body: Object.entries(byStatus).map(([k, v]) => [k, String(v)]),
     theme: 'grid',
     headStyles: { fillColor: [24, 95, 165] },
     styles: { fontSize: 9 },
@@ -261,7 +255,7 @@ const downloadReport = (
   autoTable(doc, {
     startY: y + 4,
     head: [['Curriculum', 'Count']],
-    body: Object.entries(byCurr || {}).map(([k, v]) => [k, String(v ?? 0)]),
+    body: Object.entries(byCurr).map(([k, v]) => [k, String(v)]),
     theme: 'grid',
     headStyles: { fillColor: [24, 95, 165] },
     styles: { fontSize: 9 },
@@ -271,16 +265,17 @@ const downloadReport = (
   if (y > 220) { doc.addPage(); y = 20; }
   doc.setFontSize(11);
   doc.text('Reports by District', 14, y);
-  const distEntries = Object.entries(byDist || {}).sort((a, b) => (Number(b[1]) || 0) - (Number(a[1]) || 0));
+  const distEntries = Object.entries(byDist).sort((a, b) => (b[1] as number) - (a[1] as number));
   autoTable(doc, {
     startY: y + 4,
     head: [['District', 'Reports Submitted']],
-    body: distEntries.map(([k, v]) => [k, String(v ?? 0)]),
+    body: distEntries.map(([k, v]) => [k, String(v)]),
     theme: 'grid',
     headStyles: { fillColor: [24, 95, 165] },
     styles: { fontSize: 8 },
   });
 
+  // ── Chart: Reports by Status ──
   y = (doc as any).lastAutoTable.finalY + 10;
   if (y > 220) { doc.addPage(); y = 20; }
   doc.setFontSize(11);
@@ -288,11 +283,12 @@ const downloadReport = (
   doc.text('Reports by Status (chart)', 14, y);
   drawBarChart(
     doc,
-    Object.entries(byStatus || {}).map(([k, v]) => ({ label: k, value: Number(v) || 0 })),
+    Object.entries(byStatus).map(([k, v]) => ({ label: k, value: v as number })),
     14, y + 4, pageWidth - 28, 45,
     [24, 95, 165]
   );
 
+  // ── NEW: Monitoring Overview ──
   doc.addPage();
   y = 20;
   doc.setFontSize(14);
@@ -300,68 +296,56 @@ const downloadReport = (
   doc.text('Monitoring Overview', 14, y);
   y += 6;
 
-  const safeActivities = monActivities || [];
-  const safeIssues = monIssues || [];
-
   doc.setFontSize(11);
-  doc.text(`District Monitoring Activity (${safeActivities.length} entries)`, 14, y);
+  doc.text(`Recent Activities (${monActivities.length} total)`, 14, y);
   autoTable(doc, {
     startY: y + 4,
-    head: [['District', 'Month', 'Teachbacks', 'PEA Monitoring', 'Cluster Meetings', 'Issue-Based', 'Routine', 'Submitted By']],
-    body: safeActivities.slice(0, 20).map((a: any) => [
-      a?.district ?? '—',
-      a?.month ?? '—',
-      String(a?.teachbacks ?? 0),
-      String(a?.pea_monitoring ?? 0),
-      String(a?.cluster_meetings ?? 0),
-      String(a?.issue_based ?? 0),
-      String(a?.routine ?? 0),
-      a?.submitted_by_name ?? '—',
+    head: [['Activity', 'District', 'Date']],
+    body: monActivities.slice(0, 20).map((a: any) => [
+      a.title || a.description || a.name || '—',
+      a.district || '—',
+      a.date ? new Date(a.date).toLocaleDateString('en-GB') : '—',
     ]),
     theme: 'grid',
     headStyles: { fillColor: [5, 150, 105] },
-    styles: { fontSize: 7 },
+    styles: { fontSize: 8 },
   });
 
   y = (doc as any).lastAutoTable.finalY + 10;
   if (y > 220) { doc.addPage(); y = 20; }
   doc.setFontSize(11);
-  doc.text(`District Issues Reported (${safeIssues.length} entries)`, 14, y);
+  doc.text(`Open Issues (${monIssues.length} total)`, 14, y);
   autoTable(doc, {
     startY: y + 4,
-    head: [['District', 'Month', 'Teacher Transfers', 'Lack of Interest', 'Other Issues', 'Lack of Admin Support', 'Learner Behaviour', 'Submitted By']],
-    body: safeIssues.slice(0, 20).map((i: any) => [
-      i?.district ?? '—',
-      i?.month ?? '—',
-      String(i?.teacher_transfers ?? 0),
-      String(i?.lack_of_interest ?? 0),
-      String(i?.other_issues ?? 0),
-      String(i?.lack_of_admin_support ?? 0),
-      String(i?.learner_behaviour ?? 0),
-      i?.submitted_by_name ?? '—',
+    head: [['Issue', 'District', 'Severity', 'Status']],
+    body: monIssues.slice(0, 20).map((i: any) => [
+      i.title || i.description || '—',
+      i.district || '—',
+      i.severity || '—',
+      i.status || '—',
     ]),
     theme: 'grid',
     headStyles: { fillColor: [220, 38, 38] },
-    styles: { fontSize: 7 },
+    styles: { fontSize: 8 },
   });
 
+  // ── Footer on every page ──
   const pageCount = doc.internal.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
     doc.setFontSize(8);
     doc.setTextColor(150);
-    doc.text(`Ujamaa Pamodzi Africa | ETT Malawi Program`, 14, doc.internal.pageSize.getHeight() - 10);
+    doc.text(`Ujamaa Africa | ETT Program`, 14, doc.internal.pageSize.getHeight() - 10);
     doc.text(`Page ${i} of ${pageCount}`, pageWidth - 14, doc.internal.pageSize.getHeight() - 10, { align: 'right' });
   }
 
-  doc.save(`Program_Analysis_Report_${countryLabel.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`);
+  doc.save(`Analytics Report_${new Date().toISOString().slice(0, 10)}.pdf`);
 };
 
 // ─── ANALYTICS PAGE ──────────────────────────
 interface AnalyticsPageProps { reports: Report[]; }
 
   export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ reports }) => {
-  console.log('AnalyticsPage received reports:', reports);
   const [activeRegion, setActiveRegion] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<'overview' | 'districts' | 'clusters' | 'reports' | 'monitoring'>('overview');
   const [analytics, setAnalytics] = useState<any>({
@@ -374,14 +358,14 @@ interface AnalyticsPageProps { reports: Report[]; }
   });
   const [districts, setDistricts] = useState<any[]>([]);
   const [clusters, setClusters] = useState<any[]>([]);
-  const { activeCountry } = useCountry();
+
   useEffect(() => {
     analyticsApi.get().then(data => {
       if (!data.error) setAnalytics(data);
     });
-    districtsApi.getAll(activeCountry).then(setDistricts);
-    mapClustersApi.getAll({ country: activeCountry }).then(setClusters);
-  }, [activeCountry]);
+    districtsApi.getAll().then(setDistricts);
+    mapClustersApi.getAll().then(setClusters);
+  }, []);
 
   const REGIONAL_DATA = buildRegionalData(districts);
   const TOP15_DISTRICTS = buildTop15Districts(districts);
@@ -436,22 +420,17 @@ interface AnalyticsPageProps { reports: Report[]; }
           <p className="text-xs text-slate-400 mt-0.5">ETT Malawi impact data — {districts.length} districts · {totalTots.toLocaleString()} TOTs · {totalStudents.toLocaleString()} students</p>
         </div>
         <button
-          onClick={() => downloadReport(
-  REGIONAL_DATA || [], TOP15_DISTRICTS || [], CLUSTER_DATA || [],
-  totalTots || 0, totalSchools || 0, totalStudents || 0, activeDistricts || 0, (districts || []).length,
-  byStatus || {}, byCurr || {}, byDist || {}, boys || 0, girls || 0,
-  monActivities || [], monIssues || [], activeCountry
-)}
-          className="flex items-center gap-2 px-3 py-2 text-xs font-bold rounded-lg border border-neutral-200 dark:border-slate-700 text-black dark:text-white hover:border-[var(--brand)] hover:text-[var(--brand)] transition shrink-0"
+          onClick={() => downloadReport(REGIONAL_DATA, TOP15_DISTRICTS, CLUSTER_DATA, totalTots, totalSchools, totalStudents, activeDistricts, districts.length)}
+          className="flex items-center gap-2 px-3 py-2 text-xs font-bold rounded-lg border border-neutral-200 dark:border-slate-700 text-black dark:text-white hover:border-[#e85d04] hover:text-[#e85d04] transition shrink-0"
         >
-          <Download size={13} /> Download Report {activeCountry && activeCountry !== 'all' ? `(${activeCountry})` : '(All Countries)'}
+          <Download size={13} /> Download Impact Report
         </button>
       </div>
 
       {/* KPI row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { icon: <GraduationCap size={18} className="text-[var(--brand-500)]" />, label: 'TOTs Trained', value: totalTots.toLocaleString(), sub: `${districts.length} districts tracked` },
+          { icon: <GraduationCap size={18} className="text-orange-500" />, label: 'TOTs Trained', value: totalTots.toLocaleString(), sub: `${districts.length} districts tracked` },
           { icon: <School size={18} className="text-blue-500" />, label: 'Schools Covered', value: totalSchools.toLocaleString(), sub: `${clusters.length} clusters` },
           { icon: <Users size={18} className="text-emerald-500" />, label: 'Students Reached', value: totalStudents.toLocaleString(), sub: `${boys + girls} from reports` },
           { icon: <MapPin size={18} className="text-purple-500" />, label: 'Active Districts', value: String(activeDistricts), sub: `${plannedDistricts} planned` },
@@ -567,14 +546,14 @@ interface AnalyticsPageProps { reports: Report[]; }
       {activeTab === 'districts' && (
         <div className="space-y-4">
           <div className="flex gap-1 flex-wrap">
-            {['all', ...Array.from(new Set(districts.map((d: any) => d.region).filter(Boolean))).sort()].map(r => (
+            {['all', 'Northern', 'Central', 'Southern'].map(r => (
               <button
                 key={r}
                 onClick={() => setActiveRegion(r)}
                 className={`px-3 py-1 text-[11px] font-bold rounded-full border transition ${
                   activeRegion === r
-                    ? 'border-[var(--brand)] text-[var(--brand)] bg-[var(--brand-50)] dark:bg-[var(--brand-950)]/20'
-                    : 'border-neutral-200 dark:border-slate-700 text-slate-500 hover:border-[var(--brand)]'
+                    ? 'border-[#e85d04] text-[#e85d04] bg-orange-50 dark:bg-orange-950/20'
+                    : 'border-neutral-200 dark:border-slate-700 text-slate-500 hover:border-[#e85d04]'
                 }`}
               >
                 {r === 'all' ? 'All Regions' : r}
@@ -656,7 +635,7 @@ interface AnalyticsPageProps { reports: Report[]; }
                     paddingAngle={2}
                   >
                     {CLUSTER_DATA.map((_, i) => (
-                      <Cell key={i} fill={['var(--brand)','#185fa5','#059669','#7c3aed','#f59e0b','#0891b2','#dc2626','#64748b'][i]} />
+                      <Cell key={i} fill={['#e85d04','#185fa5','#059669','#7c3aed','#f59e0b','#0891b2','#dc2626','#64748b'][i]} />
                     ))}
                   </Pie>
                   <Tooltip content={<CustomTooltip />} />
@@ -734,7 +713,7 @@ interface AnalyticsPageProps { reports: Report[]; }
                     label={({ name, percent }) => percent > 0 ? `${name} ${(percent*100).toFixed(0)}%` : ''}
                     labelLine={false}
                   >
-                    {currPieData.map((_, i) => <Cell key={i} fill={['#185fa5','#a82563','var(--brand)'][i]} />)}
+                    {currPieData.map((_, i) => <Cell key={i} fill={['#185fa5','#a82563','#e85d04'][i]} />)}
                   </Pie>
                   <Tooltip content={<CustomTooltip />} />
                 </PieChart>
@@ -742,7 +721,7 @@ interface AnalyticsPageProps { reports: Report[]; }
               <div className="flex flex-wrap justify-center gap-3 mt-2">
                 {currPieData.map((d, i) => (
                   <div key={d.name} className="flex items-center gap-1.5 text-[11px]">
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ['#185fa5','#a82563','var(--brand)'][i] }} />
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ['#185fa5','#a82563','#e85d04'][i] }} />
                     <span className="text-black dark:text-white opacity-70">{d.name} ({d.value})</span>
                   </div>
                 ))}
@@ -809,7 +788,7 @@ interface AnalyticsPageProps { reports: Report[]; }
                 <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar dataKey="teachbacks"       name="Teachbacks"        stackId="a" fill="var(--brand)" radius={[0,0,0,0]} />
+                <Bar dataKey="teachbacks"       name="Teachbacks"        stackId="a" fill="#e85d04" radius={[0,0,0,0]} />
                 <Bar dataKey="pea_monitoring"   name="PEA Monitoring"    stackId="a" fill="#185fa5" />
                 <Bar dataKey="cluster_meetings" name="Cluster Meetings"  stackId="a" fill="#059669" />
                 <Bar dataKey="issue_based"      name="Issue Based"       stackId="a" fill="#7c3aed" />
@@ -826,7 +805,7 @@ interface AnalyticsPageProps { reports: Report[]; }
                 <PieChart>
                   <Pie
                     data={[
-                      { name: 'Teachbacks',      value: monActivities.reduce((a,r) => a + (r.teachbacks||0), 0),       fill: 'var(--brand)' },
+                      { name: 'Teachbacks',      value: monActivities.reduce((a,r) => a + (r.teachbacks||0), 0),       fill: '#e85d04' },
                       { name: 'PEA Monitoring',  value: monActivities.reduce((a,r) => a + (r.pea_monitoring||0), 0),   fill: '#185fa5' },
                       { name: 'Cluster Meetings',value: monActivities.reduce((a,r) => a + (r.cluster_meetings||0), 0), fill: '#059669' },
                       { name: 'Issue Based',     value: monActivities.reduce((a,r) => a + (r.issue_based||0), 0),      fill: '#7c3aed' },
@@ -837,7 +816,7 @@ interface AnalyticsPageProps { reports: Report[]; }
                     label={({ name, percent }) => `${(percent*100).toFixed(0)}%`} labelLine={false}
                   >
                     {[0,1,2,3,4].map(i => (
-                      <Cell key={i} fill={['var(--brand)','#185fa5','#059669','#7c3aed','#d97706'][i]} />
+                      <Cell key={i} fill={['#e85d04','#185fa5','#059669','#7c3aed','#d97706'][i]} />
                     ))}
                   </Pie>
                   <Tooltip content={<CustomTooltip />} />
@@ -921,7 +900,7 @@ interface AnalyticsPageProps { reports: Report[]; }
                 <XAxis type="number" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
                 <YAxis dataKey="district" type="category" tick={{ fontSize: 10 }} width={80} axisLine={false} tickLine={false} />
                 <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="total" name="Total Activities" fill="var(--brand)" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="total" name="Total Activities" fill="#e85d04" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </Card>

@@ -134,7 +134,7 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
         </Card>
         <Card className="p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400">
+            <div className="p-2 rounded-lg bg-[var(--brand-100)] dark:bg-[var(--brand-900)]/30 text-[var(--brand-600)] dark:text-[var(--brand-400)]">
               <Inbox size={20} />
             </div>
             <div>
@@ -153,7 +153,7 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
             onClick={() => setActiveTab('inbox')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeTab === 'inbox'
-                ? 'bg-orange-500 text-white'
+                ? 'bg-[var(--brand-500)] text-white'
                 : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
@@ -167,7 +167,7 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
             onClick={() => setActiveTab('sent')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeTab === 'sent'
-                ? 'bg-orange-500 text-white'
+                ? 'bg-[var(--brand-500)] text-white'
                 : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
@@ -185,13 +185,13 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
               placeholder="Search reports..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f1623] text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full pl-10 pr-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f1623] text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)]"
             />
           </div>
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as any)}
-            className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f1623] text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f1623] text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)]"
           >
             <option value="all">All Status</option>
             <option value="pending">Pending</option>
@@ -214,12 +214,12 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
             {filteredReports.map((report) => (
               <div
                 key={report.id}
-                className="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f1623] hover:border-orange-200 dark:hover:border-orange-900/30 transition-colors"
+                className="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f1623] hover:border-[var(--brand-200)] dark:hover:border-[var(--brand-900)]/30 transition-colors"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <FileText size={16} className="text-orange-500" />
+                      <FileText size={16} className="text-[var(--brand-500)]" />
                       <h4 className="font-bold text-black dark:text-white">{report.school}</h4>
                       {getStatusBadge(report.status)}
                     </div>

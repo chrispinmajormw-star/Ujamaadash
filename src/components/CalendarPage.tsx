@@ -21,7 +21,7 @@ interface CalendarPageProps {
 }
 
 const CATEGORY_STYLES = {
-  training: { label: 'Training Session', color: '#e85d04', bg: 'rgba(232, 93, 4, 0.1)', border: 'rgba(232, 93, 4, 0.2)' },
+  training: { label: 'Training Session', color: 'var(--brand)', bg: 'rgba(232, 93, 4, 0.1)', border: 'rgba(232, 93, 4, 0.2)' },
   deadline: { label: 'File Deadline', color: '#065f46', bg: 'rgba(6, 95, 70, 0.1)', border: 'rgba(6, 95, 70, 0.2)' },
   visit: { label: 'School Visit', color: '#1e40af', bg: 'rgba(30, 64, 175, 0.1)', border: 'rgba(30, 64, 175, 0.2)' },
   audit: { label: 'District Audit', color: '#7c3aed', bg: 'rgba(124, 58, 237, 0.1)', border: 'rgba(124, 58, 237, 0.2)' }
@@ -209,7 +209,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
       {/* HEADER BAR */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-100 dark:border-slate-800/60 mb-6">
         <div>
-          <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#e85d04] select-none">PLANNING REGISTER</span>
+          <span className="text-[10px] font-extrabold uppercase tracking-widest text-[var(--brand)] select-none">PLANNING REGISTER</span>
           <h1 className="text-2xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight font-sans">
             Operations Calendar
           </h1>
@@ -287,7 +287,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
           {/* Calendar Month Selector Header */}
           <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100 dark:border-slate-800/80">
             <div className="flex items-center gap-2">
-              <CalendarIcon size={18} className="text-[#e85d04]" />
+              <CalendarIcon size={18} className="text-[var(--brand)]" />
               <h2 className="text-base font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
                 {monthNames[month]} <span className="font-light text-slate-500">{year}</span>
               </h2>
@@ -353,18 +353,18 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                   onClick={() => setSelectedDateStr(dateStr)}
                   className={`aspect-square p-1.5 rounded-xl border cursor-pointer relative transition flex flex-col justify-between group overflow-hidden ${
                     isSelected
-                      ? 'border-[#e85d04] bg-[#fff1e6]/30 dark:bg-orange-950/25 ring-1 ring-[#e85d04]/20'
+                      ? 'border-[var(--brand)] bg-[#fff1e6]/30 dark:bg-[var(--brand-950)]/25 ring-1 ring-[var(--brand)]/20'
                       : isToday
-                      ? 'border-[#e85d04]/60 bg-[#fff1e6]/10 dark:bg-orange-950/12'
+                      ? 'border-[var(--brand)]/60 bg-[#fff1e6]/10 dark:bg-[var(--brand-950)]/12'
                       : 'border-slate-200/80 dark:border-slate-800/70 hover:border-slate-300 dark:hover:border-slate-700 bg-white/50 dark:bg-slate-900/60'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <span className={`text-[12px] font-mono leading-none ${
                       isSelected
-                        ? 'font-extrabold text-[#e85d04]'
+                        ? 'font-extrabold text-[var(--brand)]'
                         : isToday
-                        ? 'font-extrabold text-orange-600'
+                        ? 'font-extrabold text-[var(--brand-600)]'
                         : 'text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300'
                     }`}>
                       {day}
@@ -372,7 +372,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
 
                     {/* Today indicator Dot */}
                     {isToday && (
-                      <span className="w-1.5 h-1.5 bg-[#e85d04] rounded-full" title="Today" />
+                      <span className="w-1.5 h-1.5 bg-[var(--brand)] rounded-full" title="Today" />
                     )}
                   </div>
 
@@ -431,7 +431,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
               </div>
 
               {selectedDateStr === todayStr && (
-                <Badge text="Today" color="#e85d04" bg="#fff1e6" className="text-[10px] tracking-wide" />
+                <Badge text="Today" color="var(--brand)" bg="#fff1e6" className="text-[10px] tracking-wide" />
               )}
             </div>
 
@@ -518,7 +518,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                     setNewEvent(p => ({ ...p, date: selectedDateStr }));
                     setShowAddModal(true);
                   }}
-                  className="w-full py-2 border border-dashed border-slate-200 dark:border-slate-800 hover:border-orange-400 dark:hover:border-orange-800 rounded-xl flex items-center justify-center gap-1 text-[11px] font-bold text-slate-600 dark:text-slate-400 hover:text-orange-600 cursor-pointer bg-transparent transition"
+                  className="w-full py-2 border border-dashed border-slate-200 dark:border-slate-800 hover:border-[var(--brand-400)] dark:hover:border-[var(--brand-800)] rounded-xl flex items-center justify-center gap-1 text-[11px] font-bold text-slate-600 dark:text-slate-400 hover:text-[var(--brand-600)] cursor-pointer bg-transparent transition"
                 >
                   <Plus size={12} /> Schedule additional event
                 </button>

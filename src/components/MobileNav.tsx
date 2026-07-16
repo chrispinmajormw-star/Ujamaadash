@@ -22,7 +22,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
       {/* Mobile menu button - visible only on small screens */}
       <button
         onClick={onToggle}
-        className="md:hidden p-2.5 hover:bg-orange-50 dark:hover:bg-slate-800 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
+        className="md:hidden p-2.5 hover:bg-[var(--brand-50)] dark:hover:bg-slate-800 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)]"
         aria-label="Toggle navigation menu"
         aria-expanded={isOpen}
       >
@@ -65,7 +65,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
               {logo}
               <button
                 onClick={onClose}
-                className="p-1 hover:bg-orange-50 dark:hover:bg-slate-800 rounded transition-colors"
+                className="p-1 hover:bg-[var(--brand-50)] dark:hover:bg-slate-800 rounded transition-colors"
                 aria-label="Close navigation"
               >
                 <X size={20} />

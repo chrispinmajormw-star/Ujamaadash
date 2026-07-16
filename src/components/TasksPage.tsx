@@ -258,14 +258,14 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
       {/* PAGE HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-neutral-200 dark:border-slate-800 mb-6">
         <div>
-          <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#e85d04] select-none">PORTAL ACTIONS</span>
+          <span className="text-[10px] font-extrabold uppercase tracking-widest text-[var(--brand)] select-none">PORTAL ACTIONS</span>
           <h1 className="text-2xl font-extrabold text-black dark:text-white tracking-tight font-sans">Operations Tasks</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xl">
             Register checkpoints, cross-examine database entries, schedule school reviews, and delegate task sheets.
           </p>
         </div>
         <div className="flex gap-2 self-start md:self-auto">
-          <button onClick={loadTasks} className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-orange-600 transition-colors px-2 py-1.5 rounded border border-slate-200">
+          <button onClick={loadTasks} className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-[var(--brand-600)] transition-colors px-2 py-1.5 rounded border border-slate-200">
             <RefreshCw size={12} className={loading ? 'animate-spin' : ''} /> Refresh
           </button>
           <Btn variant="primary" size="sm" onClick={() => setShowAddModal(true)}>
@@ -289,7 +289,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
             placeholder="Search tasks title, context summary..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-white dark:bg-[#0f1623] text-gray-800 dark:text-white border border-gray-200 dark:border-slate-700 rounded-xl text-xs focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none transition-all placeholder-gray-400 dark:placeholder-slate-500"
+            className="w-full pl-9 pr-4 py-2 bg-white dark:bg-[#0f1623] text-gray-800 dark:text-white border border-gray-200 dark:border-slate-700 rounded-xl text-xs focus:border-[var(--brand-500)] focus:ring-1 focus:ring-[var(--brand-500)]/30 outline-none transition-all placeholder-gray-400 dark:placeholder-slate-500"
           />
         </div>
 
@@ -335,7 +335,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
               <div className="w-2.5 h-2.5 rounded-full bg-slate-400" />
               <h3 className="text-sm font-extrabold text-black dark:text-white tracking-tight">Planned Backlog</h3>
             </div>
-            <span className="font-mono text-xs font-bold bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-300 px-2 py-0.5 rounded-md">
+            <span className="font-mono text-xs font-bold bg-[var(--brand-50)] dark:bg-[var(--brand-950)]/30 text-[var(--brand-600)] dark:text-[var(--brand-300)] px-2 py-0.5 rounded-md">
               {todoTasks.length}
             </span>
           </div>
@@ -495,12 +495,12 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
     return (
       <Card
         key={t.id}
-        className="p-4 bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 hover:border-orange-200 transition duration-150 flex flex-col justify-between"
+        className="p-4 bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 hover:border-[var(--brand-200)] transition duration-150 flex flex-col justify-between"
       >
         <div>
           {/* Header row: category and actions */}
           <div className="flex items-center justify-between gap-1.5 mb-2.5">
-            <span className="text-[9px] font-extrabold uppercase bg-orange-50 dark:bg-orange-950/30 px-2 py-0.5 rounded border border-orange-100 dark:border-orange-900/40 text-orange-600 dark:text-orange-300 font-mono tracking-wider">
+            <span className="text-[9px] font-extrabold uppercase bg-[var(--brand-50)] dark:bg-[var(--brand-950)]/30 px-2 py-0.5 rounded border border-[var(--brand-100)] dark:border-[var(--brand-900)]/40 text-[var(--brand-600)] dark:text-[var(--brand-300)] font-mono tracking-wider">
               {t.category}
             </span>
             <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
@@ -531,7 +531,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
               <span className="text-[9px] font-mono" style={{ color: pc.color }}>{pc.label}</span>
             </div>
             <span>•</span>
-            <span className="bg-[#fff1e6] dark:bg-amber-950/15 text-[#e85d04] px-1.5 rounded text-[9px] font-mono leading-tight">{getRoleLabel(t.assignedRole)}</span>
+            <span className="bg-[#fff1e6] dark:bg-amber-950/15 text-[var(--brand)] px-1.5 rounded text-[9px] font-mono leading-tight">{getRoleLabel(t.assignedRole)}</span>
             {t.district !== 'National' && (
               <>
                 <span>•</span>
@@ -562,7 +562,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
             {t.status !== 'completed' && (
               <button
                 onClick={() => handleMoveStatus(t.id, t.status === 'todo' ? 'progress' : 'completed')}
-                className="p-1 px-1.5 rounded border border-[#e85d04]/20 hover:border-[#e85d04]/40 hover:bg-[#fff1e6]/10 text-[#e85d04] cursor-pointer text-[10px] flex items-center bg-transparent transition font-extrabold"
+                className="p-1 px-1.5 rounded border border-[var(--brand)]/20 hover:border-[var(--brand)]/40 hover:bg-[#fff1e6]/10 text-[var(--brand)] cursor-pointer text-[10px] flex items-center bg-transparent transition font-extrabold"
                 title="Shift status forward"
               >
                 Next <ChevronRight size={12} />

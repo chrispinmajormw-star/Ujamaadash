@@ -11,9 +11,11 @@ import { exportReportsToCSV } from '../utils/export';
 // REPORT ROUTING WORKFLOW WORKER
 export const REPORT_WORKFLOW = {
   tot: { sendTo: "district_coordinator", label: "District Coordinator" },
+  field_officer: { sendTo: "district_coordinator", label: "District Coordinator" },
   viewer: { sendTo: "district_coordinator", label: "District Coordinator" },
   data_entry: { sendTo: "district_coordinator", label: "District Coordinator" },
-  district_coordinator: { sendTo: "admin", label: "National Admin" },
+  district_coordinator: { sendTo: "program_manager", label: "Regional Manager" },
+  program_manager: { sendTo: "admin", label: "National Admin" },
   admin: { sendTo: null as any, label: "Final Recipient" },
 };
 
@@ -29,6 +31,7 @@ interface ReportsPageProps {
   onEditReport: (report: Report) => void;
   onForwardReport: (report: Report) => void;
   onBulkSubmit?: () => void;
+  onDeleteReport?: (report: Report) => void;
 }
 
 export const ReportsPage: React.FC<ReportsPageProps> = ({
@@ -38,7 +41,8 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
   showToast,
   onEditReport,
   onForwardReport,
-  onBulkSubmit
+  onBulkSubmit,
+  onDeleteReport
 }) => {
   const [filt, setFilt] = useState<string>("all");
   const [search, setSearch] = useState<string>("");
@@ -93,8 +97,8 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
         key="view"
         onClick={() => { setSel(r); setOpenMenuId(null); }}
         className={layout === 'menu'
-          ? "w-full text-left px-3 py-2 text-xs font-semibold text-black dark:text-white hover:bg-orange-50 dark:hover:bg-slate-800 rounded-lg"
-          : "px-2.5 py-1 text-xs font-semibold rounded-lg border border-neutral-200 dark:border-slate-700 hover:border-orange-400 dark:hover:border-orange-600 text-black dark:text-white"}
+          ? "w-full text-left px-3 py-2 text-xs font-semibold text-black dark:text-white hover:bg-[var(--brand-50)] dark:hover:bg-slate-800 rounded-lg"
+          : "px-2.5 py-1 text-xs font-semibold rounded-lg border border-neutral-200 dark:border-slate-700 hover:border-[var(--brand-400)] dark:hover:border-[var(--brand-600)] text-black dark:text-white"}
       >
         View details
       </button>
@@ -118,7 +122,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
       items.push(
         <button
           key="approve"
-          onClick={() => { onUpdateStatus(r.id, "approved"); showToast("✅ Report approved"); setOpenMenuId(null); }}
+          onClick={() => { onUpdateStatus(r.id, "approved"); showToast("Report approved", 'success'); setOpenMenuId(null); }}
           className={layout === 'menu'
             ? "w-full text-left px-3 py-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-slate-800 rounded-lg"
             : "px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white"}
@@ -139,16 +143,36 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
       );
     }
 
-    if (user.role === "district_coordinator" && r.status === "approved" && r.sentTo !== "admin") {
+    if ((user.role === "district_coordinator" || user.role === "program_manager") && r.status === "approved" && r.sentTo !== "admin") {
       items.push(
         <button
           key="forward"
           onClick={() => { onForwardReport(r); setOpenMenuId(null); }}
           className={layout === 'menu'
-            ? "w-full text-left px-3 py-2 text-xs font-semibold text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-slate-800 rounded-lg"
-            : "px-2.5 py-1 text-xs font-semibold rounded-lg border border-orange-200 dark:border-orange-900/40 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/20"}
+            ? "w-full text-left px-3 py-2 text-xs font-semibold text-[var(--brand-600)] dark:text-[var(--brand-400)] hover:bg-[var(--brand-50)] dark:hover:bg-slate-800 rounded-lg"
+            : "px-2.5 py-1 text-xs font-semibold rounded-lg border border-[var(--brand-200)] dark:border-[var(--brand-900)]/40 text-[var(--brand-600)] dark:text-[var(--brand-400)] hover:bg-[var(--brand-50)] dark:hover:bg-[var(--brand-950)]/20"}
         >
           Send to {workflow.label}
+        </button>
+      );
+    }
+
+    const isSender = r.submitted_by === user.id || (r as any).submittedBy === user.id;
+    let isReceiver = false;
+    if (user.role === 'admin') isReceiver = true;
+    else if (user.role === 'program_manager') isReceiver = (r as any).submitter_role === 'district_coordinator' && (r as any).submitter_region === user.region;
+    else if (user.role === 'district_coordinator') isReceiver = ['tot','field_officer'].includes((r as any).submitter_role) && (r as any).submitter_district === user.district;
+
+    if (onDeleteReport && (isSender || isReceiver)) {
+      items.push(
+        <button
+          key="delete"
+          onClick={() => { onDeleteReport(r); setOpenMenuId(null); }}
+          className={layout === 'menu'
+            ? "w-full text-left px-3 py-2 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-slate-800 rounded-lg"
+            : "px-2.5 py-1 text-xs font-semibold rounded-lg border border-red-200 dark:border-red-900/40 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20"}
+        >
+          Delete
         </button>
       );
     }
@@ -191,7 +215,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
       </div>
 
       {/* Routing channel — condensed single line */}
-      <div className="flex items-center gap-2 flex-wrap text-[11px] font-semibold text-black dark:text-white bg-orange-50 dark:bg-orange-950/15 border border-orange-100 dark:border-orange-900/30 rounded-xl px-3 py-2">
+      <div className="flex items-center gap-2 flex-wrap text-[11px] font-semibold text-black dark:text-white bg-[var(--brand-50)] dark:bg-[var(--brand-950)]/15 border border-[var(--brand-100)] dark:border-[var(--brand-900)]/30 rounded-xl px-3 py-2">
         <span className="opacity-60 shrink-0">Routes to:</span>
         {user.role === "admin" ? (
           <Badge text="You're the final recipient" color="#065f46" bg="#d1fae5" />
@@ -238,13 +262,13 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
                     type="date"
                     value={dateRange.start}
                     onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-                    className="flex-1 min-w-0 px-2 py-1.5 text-[11px] border border-neutral-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-[#0f1623] text-black dark:text-white"
+                    className="flex-1 min-w-0 px-2 py-1.5 text-[11px] border border-neutral-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)] bg-white dark:bg-[#0f1623] text-black dark:text-white"
                   />
                   <input
                     type="date"
                     value={dateRange.end}
                     onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-                    className="flex-1 min-w-0 px-2 py-1.5 text-[11px] border border-neutral-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-[#0f1623] text-black dark:text-white"
+                    className="flex-1 min-w-0 px-2 py-1.5 text-[11px] border border-neutral-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)] bg-white dark:bg-[#0f1623] text-black dark:text-white"
                   />
                 </div>
               </div>
@@ -254,7 +278,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
                   multiple
                   value={selectedDistricts}
                   onChange={(e) => setSelectedDistricts(Array.from(e.target.selectedOptions, opt => opt.value))}
-                  className="w-full px-2 py-1.5 text-[11px] border border-neutral-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-[#0f1623] text-black dark:text-white h-20"
+                  className="w-full px-2 py-1.5 text-[11px] border border-neutral-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)] bg-white dark:bg-[#0f1623] text-black dark:text-white h-20"
                 >
                   {Array.from(new Set(reports.map(r => r.district))).map(district => (
                     <option key={district} value={district}>{district}</option>
@@ -267,7 +291,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
                   multiple
                   value={selectedCurriculums}
                   onChange={(e) => setSelectedCurriculums(Array.from(e.target.selectedOptions, opt => opt.value))}
-                  className="w-full px-2 py-1.5 text-[11px] border border-neutral-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-[#0f1623] text-black dark:text-white h-20"
+                  className="w-full px-2 py-1.5 text-[11px] border border-neutral-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)] bg-white dark:bg-[#0f1623] text-black dark:text-white h-20"
                 >
                   {Array.from(new Set(reports.map(r => r.curriculum))).map(curriculum => (
                     <option key={curriculum} value={curriculum}>{curriculum}</option>
@@ -276,7 +300,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
               </div>
             </div>
             {activeFilterCount > 0 && (
-              <button onClick={clearFilters} className="text-[11px] text-orange-600 dark:text-orange-400 font-semibold hover:underline">
+              <button onClick={clearFilters} className="text-[11px] text-[var(--brand-600)] dark:text-[var(--brand-400)] font-semibold hover:underline">
                 Clear all filters
               </button>
             )}
@@ -334,7 +358,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
             <TH cols={["School", "District", "Curriculum", "Session", "Learners", "Status", "Routing", "Actions"]} />
             <tbody>
               {visible.map(r => (
-                <tr key={r.id} className="border-b border-neutral-100 dark:border-slate-800 hover:bg-orange-50/30 dark:hover:bg-slate-800/30 transition-colors">
+                <tr key={r.id} className="border-b border-neutral-100 dark:border-slate-800 hover:bg-[var(--brand-50)]/30 dark:hover:bg-slate-800/30 transition-colors">
                   <td className="p-3 font-bold text-black dark:text-white whitespace-nowrap">{r.school}</td>
                   <td className="p-3 text-slate-500 dark:text-slate-400">{r.district}</td>
                   <td className="p-3"><Badge text={r.curriculum} bg="rgba(232,93,4,0.12)" color={OR} /></td>
@@ -364,7 +388,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
 
       {sel && (
         <Modal title={sel.school} onClose={() => setSel(null)}>
-          <div className="grid grid-cols-2 gap-4 mb-4 text-xs sm:text-sm bg-orange-50/30 dark:bg-orange-950/10 p-4 rounded-2xl border border-orange-100 dark:border-orange-900/30">
+          <div className="grid grid-cols-2 gap-4 mb-4 text-xs sm:text-sm bg-[var(--brand-50)]/30 dark:bg-[var(--brand-950)]/10 p-4 rounded-2xl border border-[var(--brand-100)] dark:border-[var(--brand-900)]/30">
             {[
               ["District", sel.district],
               ["Zone", sel.zone],
@@ -413,7 +437,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
             <div className="flex flex-wrap gap-2">
               {can(user.role, "approveReport") && sel.status === "pending" && (
                 <>
-                  <Btn variant="success" size="sm" onClick={() => { onUpdateStatus(sel.id, "approved"); setSel(null); showToast("✅ Approved"); }}>
+                  <Btn variant="success" size="sm" onClick={() => { onUpdateStatus(sel.id, "approved"); setSel(null); showToast("Approved", 'success'); }}>
                     Approve
                   </Btn>
                   <Btn variant="danger" size="sm" onClick={() => setConfirmDialog({ isOpen: true, report: sel, action: 'reject' })}>

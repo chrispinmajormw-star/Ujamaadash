@@ -22,7 +22,7 @@ const KPICard: React.FC<{
   trendVal?: string;
   color?: string;
   icon: React.ReactNode;
-}> = ({ label, value, sub, trend, trendVal, color = '#e85d04', icon }) => (
+}> = ({ label, value, sub, trend, trendVal, color = 'var(--brand)', icon }) => (
   <div className="bg-white dark:bg-[#0f1623] rounded-xl border border-neutral-200 dark:border-slate-800 p-4 flex flex-col gap-2">
     <div className="flex items-center justify-between">
       <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: color + '18' }}>
@@ -70,7 +70,7 @@ export const ProgramManagerPage: React.FC<Props> = ({ reports, user, setPage }) 
           <Kicker text="Program Management Office" />
           <h1 className="text-lg font-bold text-black dark:text-white m-0">Strategic Overview</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 m-0">
-            Welcome back, <span className="font-semibold text-orange-600">{user?.name}</span> — here's your national program pulse.
+            Welcome back, <span className="font-semibold text-[var(--brand-600)]">{user?.name}</span> — here's your national program pulse.
           </p>
         </div>
         <div className="flex gap-2">
@@ -85,7 +85,7 @@ export const ProgramManagerPage: React.FC<Props> = ({ reports, user, setPage }) 
 
       {/* KPI Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <KPICard label="Active Districts" value={activeDistricts} sub="of 28 total" trend="up" trendVal="+2 this Q" icon={<MapPin size={18} />} color="#e85d04" />
+        <KPICard label="Active Districts" value={activeDistricts} sub="of 28 total" trend="up" trendVal="+2 this Q" icon={<MapPin size={18} />} color="var(--brand)" />
         <KPICard label="Students Reached" value={totalStudents.toLocaleString()} sub="across all clusters" trend="up" trendVal="+12%" icon={<Users size={18} />} color="#0e7490" />
         <KPICard label="Certified TOTs" value={totalTOTs} sub="national trainers" trend="up" trendVal="+45" icon={<Award size={18} />} color="#6d28d9" />
         <KPICard label="School Coverage" value={`${coveragePct}%`} sub={`${coveredSchools} of ${totalSchools} schools`} trend="up" trendVal="+4%" icon={<Target size={18} />} color="#065f46" />
@@ -190,7 +190,7 @@ export const ProgramManagerPage: React.FC<Props> = ({ reports, user, setPage }) 
                 <button
                   key={a.label}
                   onClick={a.action}
-                  className="w-full flex items-center gap-3 p-2.5 rounded-lg border border-neutral-200 dark:border-slate-800 hover:border-orange-400 bg-white dark:bg-[#0f1623] transition-colors text-left"
+                  className="w-full flex items-center gap-3 p-2.5 rounded-lg border border-neutral-200 dark:border-slate-800 hover:border-[var(--brand-400)] bg-white dark:bg-[#0f1623] transition-colors text-left"
                 >
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: a.color + '18', color: a.color }}>
                     {a.icon}
@@ -221,7 +221,7 @@ export const ProgramManagerPage: React.FC<Props> = ({ reports, user, setPage }) 
               </thead>
               <tbody>
                 {districtPerf.map((d, i) => (
-                  <tr key={d.name} className="border-b border-slate-50 dark:border-slate-800/40 hover:bg-orange-50/30 dark:hover:bg-slate-800/30">
+                  <tr key={d.name} className="border-b border-slate-50 dark:border-slate-800/40 hover:bg-[var(--brand-50)]/30 dark:hover:bg-slate-800/30">
                     <td className="p-2.5">
                       <div className="flex items-center gap-2">
                         <span className="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-800 text-[9px] font-bold text-slate-500 flex items-center justify-center">{i + 1}</span>

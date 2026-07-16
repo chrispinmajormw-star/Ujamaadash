@@ -173,7 +173,7 @@ export const CertificateComponent: React.FC<CertificateComponentProps> = ({
   };
 
   const handleShare = () => {
-    const text = `🎉 I just completed the ${curriculumFull} programme by Ujamaa Africa and scored ${score}%! #UjamaaEducation #HeroInMe`;
+    const text = `I just completed the ${curriculumFull} programme by Ujamaa Africa and scored ${score}%! #UjamaaEducation #HeroInMe`;
     if (navigator.share) {
       navigator.share({ title: 'My Ujamaa Certificate', text });
     } else {

@@ -208,7 +208,7 @@ const POLICIES: Policy[] = [
     subtitle: 'Standard Operating Procedures — ETT ScaleUp Program',
     revised: 'Current',
     icon: <Layers size={20} />,
-    color: '#e85d04',
+    color: 'var(--brand)',
     bg: '#fff4ec',
     badge: 'Program',
     summary: 'Governance parameters mapping safety, code of conduct, and reporting timelines for the ETT ScaleUp Program.',
@@ -240,7 +240,7 @@ const PolicyCard: React.FC<{
 }> = ({ policy, onOpen }) => (
   <div
     onClick={() => onOpen(policy)}
-    className="bg-white dark:bg-[#0f1623] rounded-xl border border-neutral-200 dark:border-slate-800 p-4 cursor-pointer hover:border-orange-400 dark:hover:border-orange-600 transition-all group"
+    className="bg-white dark:bg-[#0f1623] rounded-xl border border-neutral-200 dark:border-slate-800 p-4 cursor-pointer hover:border-[var(--brand-400)] dark:hover:border-[var(--brand-600)] transition-all group"
   >
     <div className="flex items-start gap-3">
       <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105" style={{ background: policy.bg, color: policy.color }}>
@@ -349,40 +349,40 @@ export const StandardsPoliciesPage: React.FC = () => {
         <h1 className="text-base font-bold text-black dark:text-white m-0">Standards & Policies</h1>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 m-0">
           Ujamaa Pamodzi Africa's official policies, procedures and ETT programme standards. All staff must read and comply.
-        </p>
-      </div>
+ </p>
+ </div>
 
-      {/* Staff-only notice */}
-      <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 rounded-xl p-3">
-        <Lock size={15} className="text-amber-600 shrink-0 mt-0.5" />
-        <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed m-0">
-          <span className="font-bold">Staff Restricted.</span> This page is only accessible to authenticated staff members. All policies are confidential to Ujamaa Pamodzi Africa personnel.
-        </p>
-      </div>
+ {/* Staff-only notice */}
+ <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 rounded-xl p-3">
+ <Lock size={15} className="text-amber-600 shrink-0 mt-0.5"/>
+ <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed m-0">
+ <span className="font-bold">Staff Restricted.</span> This page is only accessible to authenticated staff members. All policies are confidential to Ujamaa Pamodzi Africa personnel.
+ </p>
+ </div>
 
-      {/* Contact card */}
-      <Card className="bg-slate-50/50 dark:bg-slate-800/30">
-        <h3 className="text-xs font-bold text-black dark:text-white mb-2">🔒 Safeguarding Contacts</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-[11px]">
-          <div>
-            <div className="text-slate-500 mb-0.5">Safeguarding Email</div>
-            <div className="font-semibold text-black dark:text-white">safeguarding@ujamaa-pamodzi.org</div>
-          </div>
-          <div>
-            <div className="text-slate-500 mb-0.5">Whistleblowing Hotline</div>
-            <div className="font-semibold text-black dark:text-white">+265 984 110 288</div>
-          </div>
-          <div>
-            <div className="text-slate-500 mb-0.5">Executive Director</div>
-            <div className="font-semibold text-black dark:text-white">mkangadzula@ujamaa-africa.org</div>
-          </div>
-        </div>
-      </Card>
+ {/* Contact card */}
+ <Card className="bg-slate-50/50 dark:bg-slate-800/30">
+ <h3 className="text-xs font-bold text-black dark:text-white mb-2"> Safeguarding Contacts</h3>
+ <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-[11px]">
+ <div>
+ <div className="text-slate-500 mb-0.5">Safeguarding Email</div>
+ <div className="font-semibold text-black dark:text-white">safeguarding@ujamaa-pamodzi.org</div>
+ </div>
+ <div>
+ <div className="text-slate-500 mb-0.5">Whistleblowing Hotline</div>
+ <div className="font-semibold text-black dark:text-white">+265 984 110 288</div>
+ </div>
+ <div>
+ <div className="text-slate-500 mb-0.5">Executive Director</div>
+ <div className="font-semibold text-black dark:text-white">mkangadzula@ujamaa-africa.org</div>
+ </div>
+ </div>
+ </Card>
 
-      {/* Filter tabs */}
-      <div className="flex flex-wrap gap-2">
-        {[
-          { v: 'all', l: 'All Policies' },
+ {/* Filter tabs */}
+ <div className="flex flex-wrap gap-2">
+ {[
+ { v: 'all', l: 'All Policies' },
           { v: 'safeguarding', l: 'Safeguarding' },
           { v: 'governance', l: 'Governance' },
           { v: 'program', l: 'Programme' },
@@ -392,8 +392,8 @@ export const StandardsPoliciesPage: React.FC = () => {
             onClick={() => setFilter(tab.v as any)}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
               filter === tab.v
-                ? 'bg-orange-600 text-white'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-orange-50 dark:hover:bg-slate-700'
+                ? 'bg-[var(--brand-600)] text-white'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-[var(--brand-50)] dark:hover:bg-slate-700'
             }`}
           >
             {tab.l}
@@ -409,10 +409,10 @@ export const StandardsPoliciesPage: React.FC = () => {
       </div>
 
       {/* Summary compliance note */}
-      <Card className="border-orange-200 dark:border-orange-900/40 bg-orange-50/30 dark:bg-orange-950/10">
+      <Card className="border-[var(--brand-200)] dark:border-[var(--brand-900)]/40 bg-[var(--brand-50)]/30 dark:bg-[var(--brand-950)]/10">
         <div className="flex items-start gap-3">
-          <Info size={15} className="text-orange-600 shrink-0 mt-0.5" />
-          <div className="text-[11.5px] text-orange-800 dark:text-orange-300 leading-relaxed">
+          <Info size={15} className="text-[var(--brand-600)] shrink-0 mt-0.5" />
+          <div className="text-[11.5px] text-[var(--brand-800)] dark:text-[var(--brand-300)] leading-relaxed">
             <span className="font-bold">Compliance Declaration.</span> By being associated with Ujamaa Pamodzi Africa in any capacity — full time, contract, part time, volunteer, or internship — you acknowledge that you have read and agree to uphold all policies on this page. Non-compliance may result in disciplinary action up to and including termination and referral to law enforcement.
           </div>
         </div>

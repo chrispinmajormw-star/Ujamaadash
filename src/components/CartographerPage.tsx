@@ -3,12 +3,13 @@ import {
   Map, MapPin, Edit2, CheckCircle, AlertTriangle, Save,
   Plus, Search, Check, RefreshCw, Trash2, AlertCircle,
   Navigation, Award, Users, BookOpen, Phone, Mail,
-  ChevronDown, ChevronUp, Eye, X
-} from 'lucide-react';
+  ChevronDown, ChevronUp, Eye, X, XCircle, CheckCircle2, Clipboard} from 'lucide-react';
 import { Card, Kicker, Btn, FInput, FSelect, FArea, Modal, StatCard, ProgBar } from './SubComponents';
 import { DISTRICT_LIST } from '../data';
 import { mapClustersApi, mapSchoolsApi, mapZonesApi } from '../api';
 import { getStaticMapClusters } from '../utils/mapFallback';
+import { useCountry } from '../context/CountryContext';
+import { districtsApi } from '../api';
 import { User } from '../types';
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
@@ -102,7 +103,7 @@ const FieldRow = ({ label, value }: { label: string; value: string | number | bo
   <div>
     <div className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 mb-0.5">{label}</div>
     <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-      {typeof value === 'boolean' ? (value ? '✓ Yes' : '✗ No') : (value || '—')}
+      {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : (value || '—')}
     </div>
   </div>
 );
@@ -122,6 +123,16 @@ const ClusterForm = ({
   onChange: (updated: Partial<MapCluster>) => void;
 }) => {
   const set = (k: keyof MapCluster, v: any) => onChange({ ...data, [k]: v });
+  const [districtOptions, setDistrictOptions] = useState<string[]>([]);
+  const [regionOptions, setRegionOptions] = useState<string[]>([]);
+  const formCountry = (data as any).country || 'Malawi';
+  useEffect(() => {
+    districtsApi.getAll(formCountry).then((res: any) => {
+      const list = Array.isArray(res) ? res : [];
+      setDistrictOptions(list.map((d: any) => d.name).sort());
+      setRegionOptions(Array.from(new Set(list.map((d: any) => d.region).filter(Boolean))).sort());
+    });
+  }, [formCountry]);
   return (
     <div className="space-y-4">
       <SectionHead title="Identity" />
@@ -132,11 +143,18 @@ const ClusterForm = ({
         <FInput label="Lead Email"       value={data.lead_email || ''} onChange={e => set('lead_email', e.target.value)} />
       </div>
       <div className="grid grid-cols-2 gap-3">
+        <FSelect label="Country *" value={(data as any).country || 'Malawi'} onChange={e => set('country' as any, e.target.value)}>
+          <option value="Malawi">Malawi</option>
+          <option value="Kenya">Kenya</option>
+          <option value="Somaliland">Somaliland</option>
+        </FSelect>
         <FSelect label="District *" value={data.district || ''} onChange={e => set('district', e.target.value)}>
-          {DISTRICT_LIST.map(d => <option key={d}>{d}</option>)}
+          <option value="">Select district...</option>
+          {districtOptions.map(d => <option key={d}>{d}</option>)}
         </FSelect>
         <FSelect label="Region *" value={data.region || ''} onChange={e => set('region', e.target.value)}>
-          {REGIONS.map(r => <option key={r}>{r}</option>)}
+          <option value="">Select region...</option>
+          {regionOptions.map(r => <option key={r}>{r}</option>)}
         </FSelect>
       </div>
 
@@ -198,6 +216,7 @@ const SchoolForm = ({
 
   const set = (k: keyof MapSchool, v: any) => onChange({ ...data, [k]: v });
   const isPlanned = data.status === 'planned';
+  const regionOptions = Array.from(new Set(clusters.map(c => c.region).filter(Boolean))).sort();
   const schoolMatches = schoolCatalog.filter(s => {
     const q = schoolSearch.trim().toLowerCase();
     if (!q) return false;
@@ -297,15 +316,17 @@ const SchoolForm = ({
         )}
         {isPlanned && (
           <div className="col-span-1 bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-lg p-2.5 text-xs text-purple-700 dark:text-purple-300">
-            📋 This school will be saved as <strong>Planned</strong> — no cluster required. You can assign it to a cluster later by editing.
+            This school will be saved as <strong>Planned</strong> — no cluster required. You can assign it to a cluster later by editing.
           </div>
         )}
 
         <FSelect label="District *" value={data.district || ''} onChange={e => set('district', e.target.value)}>
-          {DISTRICT_LIST.map(d => <option key={d}>{d}</option>)}
+          <option value="">Select district...</option>
+          {Array.from(new Set(clusters.map(c => c.district).filter(Boolean))).sort().map(d => <option key={d}>{d}</option>)}
         </FSelect>
         <FSelect label="Region *" value={data.region || ''} onChange={e => set('region', e.target.value)}>
-          {REGIONS.map(r => <option key={r}>{r}</option>)}
+          <option value="">Select region...</option>
+          {regionOptions.map(r => <option key={r}>{r}</option>)}
         </FSelect>
       </div>
 
@@ -324,11 +345,11 @@ const SchoolForm = ({
       <SectionHead title="Curriculum" />
       <div className="flex gap-6">
         <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 font-semibold cursor-pointer">
-          <input type="checkbox" checked={!!data.him_running}  onChange={e => set('him_running',  e.target.checked)} className="w-4 h-4 rounded accent-orange-500" />
+          <input type="checkbox" checked={!!data.him_running}  onChange={e => set('him_running',  e.target.checked)} className="w-4 h-4 rounded accent-[var(--brand-500)]" />
           HIM (Boys) Running
         </label>
         <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 font-semibold cursor-pointer">
-          <input type="checkbox" checked={!!data.gesd_running} onChange={e => set('gesd_running', e.target.checked)} className="w-4 h-4 rounded accent-orange-500" />
+          <input type="checkbox" checked={!!data.gesd_running} onChange={e => set('gesd_running', e.target.checked)} className="w-4 h-4 rounded accent-[var(--brand-500)]" />
           GESD (Girls) Running
         </label>
       </div>
@@ -349,7 +370,7 @@ const SchoolForm = ({
       <SectionHead title="Verification" />
       <div className="grid grid-cols-2 gap-3 mb-2">
         <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 font-semibold cursor-pointer">
-          <input type="checkbox" checked={!!data.ett_trained} onChange={e => set('ett_trained', e.target.checked)} className="w-4 h-4 rounded accent-orange-500" />
+          <input type="checkbox" checked={!!data.ett_trained} onChange={e => set('ett_trained', e.target.checked)} className="w-4 h-4 rounded accent-[var(--brand-500)]" />
           ETT Trained
         </label>
         <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 font-semibold cursor-pointer">
@@ -379,6 +400,19 @@ const SchoolForm = ({
 interface Props { user: User; showToast: (msg: string) => void; }
 
 export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
+  const { activeCountry } = useCountry();
+  const [liveRegions, setLiveRegions] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!activeCountry || activeCountry === 'all') {
+      setLiveRegions([]);
+      return;
+    }
+    districtsApi.getAll(activeCountry).then((res: any) => {
+      const list = Array.isArray(res) ? res : [];
+      setLiveRegions(Array.from(new Set(list.map((d: any) => d.region).filter(Boolean))).sort());
+    }).catch(() => setLiveRegions([]));
+  }, [activeCountry]);
   // ── Data state ────────────────────────────────────────────────────────────
   const [clusters, setClusters] = useState<MapCluster[]>([]);
   const [zones,    setZones]    = useState<Zone[]>([]);
@@ -405,9 +439,24 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
   const [selectedSchoolIds, setSelectedSchoolIds] = useState<Set<number>>(new Set());
   const [pickerSearch, setPickerSearch] = useState('');
 
+  // ── Country-scoped district names, so schools from other countries don't leak in ──
+  const [countryDistrictNames, setCountryDistrictNames] = useState<Set<string> | null>(null);
+  useEffect(() => {
+    if (!activeCountry || activeCountry === 'all') {
+      setCountryDistrictNames(null); // null = no filtering, show everything
+      return;
+    }
+    districtsApi.getAll(activeCountry).then((res: any) => {
+      setCountryDistrictNames(new Set(Array.isArray(res) ? res.map((d: any) => d.name) : []));
+    });
+  }, [activeCountry]);
+
   // ── Derived lists ─────────────────────────────────────────────────────────
   const clusterSchools = clusters.flatMap(c => c.schools);
-  const allSchools = schoolCatalog.length > 0 ? schoolCatalog : clusterSchools;
+  const rawAllSchools = schoolCatalog.length > 0 ? schoolCatalog : clusterSchools;
+  const allSchools = countryDistrictNames
+    ? rawAllSchools.filter((s: any) => countryDistrictNames.has(s.district))
+    : rawAllSchools;
 
   const filteredClusters = clusters.filter(c => {
     if (regionFilter !== 'All' && c.region !== regionFilter) return false;
@@ -446,18 +495,17 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
     setLoading(true); setError(null);
     try {
       const [clusterData, zoneData, schoolData, plannedData] = await Promise.all([
-        mapClustersApi.getAll(),
+        mapClustersApi.getAll(activeCountry && activeCountry !== 'all' ? { country: activeCountry } : undefined),
         mapZonesApi.getAll(),
         mapSchoolsApi.getAll(),
         mapSchoolsApi.getAll({ status: 'planned' }),
       ]);
-      setClusters(clusterData.length > 0 ? clusterData : getStaticMapClusters());
+      // Empty result is a legitimate state for a country with no clusters yet —
+      // only fall back to offline demo data when the request itself fails (see catch block).
+      setClusters(Array.isArray(clusterData) ? clusterData : []);
       setZones(zoneData);
       setSchoolCatalog(Array.isArray(schoolData) ? schoolData : []);
       setPlannedSchools(plannedData);
-      if (clusterData.length === 0) {
-        setError('Using offline map data — live server unavailable.');
-      }
     } catch {
       setClusters(getStaticMapClusters());
       setZones([]);
@@ -466,14 +514,14 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [activeCountry]);
 
   useEffect(() => { fetch(); }, [fetch]);
 
   // ── Save cluster ──────────────────────────────────────────────────────────
   const saveCluster = async () => {
     if (!editCluster?.name || !editCluster.lat || !editCluster.lng) {
-      showToast('❌ Name and coordinates are required'); return;
+      showToast('Name and coordinates are required', 'error'); return;
     }
     setSaving(true);
     try {
@@ -482,12 +530,12 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
         const created = await mapClustersApi.create(editCluster) as MapCluster;
         clusterId = created.id;
         setClusters(prev => [{ ...created, schools: [] }, ...prev]);
-        showToast('✅ Cluster created');
+        showToast('Cluster created', 'success');
       } else {
         const updated = await mapClustersApi.update(editCluster.id!, editCluster) as MapCluster;
         clusterId = updated.id;
         setClusters(prev => prev.map(c => c.id === updated.id ? { ...c, ...updated } : c));
-        showToast('✅ Cluster updated');
+        showToast('Cluster updated', 'success');
       }
 
       // Apply school picker changes: anything newly checked gets assigned
@@ -508,7 +556,7 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
 
       setEditCluster(null);
     } catch {
-      showToast('❌ Save failed — check console');
+      showToast('Save failed — check console', 'error');
     } finally {
       setSaving(false);
     }
@@ -518,10 +566,10 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
   const saveSchool = async () => {
     const isPlanned = editSchool?.status === 'planned';
     if (!editSchool?.name || !editSchool.lat || !editSchool.lng) {
-      showToast('❌ Name and coordinates are required'); return;
+      showToast('Name and coordinates are required', 'error'); return;
     }
     if (!isPlanned && !editSchool.cluster_id) {
-      showToast('❌ Please select a cluster, or set status to Planned'); return;
+      showToast('Please select a cluster, or set status to Planned', 'error'); return;
     }
     setSaving(true);
     try {
@@ -546,7 +594,7 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
               : c
           ));
         }
-        showToast(isPlanned ? '✅ Planned school added' : '✅ School added to cluster');
+        showToast(isPlanned ? 'Planned school added' : 'School added to cluster');
       } else {
         const updated = await mapSchoolsApi.update(editSchool.id!, payload) as MapSchool;
         setSchoolCatalog(prev => prev.map(s => s.id === updated.id ? updated : s));
@@ -566,11 +614,11 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
             schools: shouldContain ? [...nextSchools, updated] : nextSchools,
           };
         }));
-        showToast('✅ School updated');
+        showToast('School updated', 'success');
       }
       setEditSchool(null);
     } catch {
-      showToast('❌ Save failed — check console');
+      showToast('Save failed — check console', 'error');
     } finally {
       setSaving(false);
     }
@@ -586,8 +634,8 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
       };
       await mapClustersApi.update(cluster.id, payload);
       setClusters(prev => prev.map(c => c.id === cluster.id ? { ...c, ...payload } : c));
-      showToast('✅ Cluster marked verified');
-    } catch { showToast('❌ Update failed'); }
+      showToast('Cluster marked verified', 'success');
+    } catch { showToast('Update failed', 'error'); }
   };
 
   const verifySchool = async (school: MapSchool) => {
@@ -597,8 +645,8 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
       setClusters(prev => prev.map(c => ({
         ...c, schools: c.schools.map(s => s.id === school.id ? { ...s, ...payload } : s)
       })));
-      showToast('✅ School location verified');
-    } catch { showToast('❌ Update failed'); }
+      showToast('School location verified', 'success');
+    } catch { showToast('Update failed', 'error'); }
   };
 
   // ── Delete ────────────────────────────────────────────────────────────────
@@ -608,10 +656,10 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
       if (confirmDelete.type === 'cluster') {
         await mapClustersApi.delete(confirmDelete.id);
         setClusters(prev => prev.filter(c => c.id !== confirmDelete.id));
-        showToast('🗑️ Cluster deleted');
+        showToast('Cluster deleted', 'success');
       }
       // school delete not in API yet — just refresh
-    } catch { showToast('❌ Delete failed'); }
+    } catch { showToast('Delete failed', 'error'); }
     setConfirmDelete(null);
   };
 
@@ -646,7 +694,7 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
         <div className="flex flex-wrap gap-2 shrink-0">
           <button
             onClick={fetch}
-            className="flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-orange-500 transition"
+            className="flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-[var(--brand-500)] transition"
           >
             <RefreshCw size={12} /> Refresh
           </button>
@@ -680,7 +728,7 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard icon={<Map size={18} className="text-emerald-500" />}       label="Total Clusters"      value={clusters.length}    color="#059669" />
         <StatCard icon={<CheckCircle size={18} className="text-blue-500" />}   label="Verified Clusters"   value={verifiedClusters}   color="#3b82f6" />
-        <StatCard icon={<MapPin size={18} className="text-orange-500" />}      label="Total Schools"       value={allSchools.length}  color="#e85d04" />
+        <StatCard icon={<MapPin size={18} className="text-[var(--brand-500)]" />}      label="Total Schools"       value={allSchools.length}  color="var(--brand)" />
         <StatCard icon={<Award size={18} className="text-emerald-500" />}      label="ETT Trained Schools" value={trainedSchools}      color="#059669" />
       </div>
 
@@ -743,7 +791,7 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
             onChange={e => setRegionFilter(e.target.value)}
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs text-slate-800 dark:text-slate-200 focus:outline-none min-h-[36px]"
           >
-            {['All', ...REGIONS].map(r => <option key={r}>{r}</option>)}
+            {['All', ...liveRegions].map(r => <option key={r}>{r}</option>)}
           </select>
         </div>
       )}
@@ -771,19 +819,18 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
                 <div className={`flex flex-col gap-2 md:flex-row md:items-center md:justify-between p-4 cursor-pointer select-none ${
                   cluster.verified
                     ? 'bg-emerald-50/40 dark:bg-emerald-950/10'
-                    : 'bg-amber-50/40 dark:bg-amber-950/10'
-                }`}
-                  onClick={() => setExpandedId(isExpanded ? null : cluster.id)}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    {cluster.verified
-                      ? <CheckCircle size={14} className="text-emerald-500 shrink-0" />
-                      : <AlertTriangle size={14} className="text-amber-500 shrink-0" />
-                    }
-                    <div className="min-w-0">
-                      <div className="text-sm font-bold text-slate-900 dark:text-white truncate">{cluster.name}</div>
-                      <div className="text-[10.5px] text-slate-500 text-pretty">
-                        📍 {cluster.district} · {cluster.region} · {cluster.school_count} schools · Lead: {cluster.lead || '—'}
+                    : 'bg-amber-50/40 dark:bg-amber-950/10'}`}
+ onClick={() => setExpandedId(isExpanded ? null : cluster.id)}
+ >
+ <div className="flex items-center gap-2.5 min-w-0">
+ {cluster.verified
+ ? <CheckCircle size={14} className="text-emerald-500 shrink-0"/>
+ : <AlertTriangle size={14} className="text-amber-500 shrink-0"/>
+ }
+ <div className="min-w-0">
+ <div className="text-sm font-bold text-slate-900 dark:text-white truncate">{cluster.name}</div>
+ <div className="text-[10.5px] text-slate-500 text-pretty">
+ {cluster.district} · {cluster.region} · {cluster.school_count} schools · Lead: {cluster.lead || '—'}
                       </div>
                     </div>
                   </div>
@@ -847,12 +894,12 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
                             s.verified
                               ? 'border-emerald-100 dark:border-emerald-900/30 bg-emerald-50/20'
                               : s.ett_trained
-                              ? 'border-orange-100 dark:border-orange-900/30 bg-orange-50/20'
+                              ? 'border-[var(--brand-100)] dark:border-[var(--brand-900)]/30 bg-[var(--brand-50)]/20'
                               : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900'
                           }`}>
                             <div className="flex flex-col gap-0.5 shrink-0">
                               {s.ett_trained
-                                ? <Award size={12} className="text-orange-500" />
+                                ? <Award size={12} className="text-[var(--brand-500)]" />
                                 : <MapPin size={12} className="text-slate-400" />
                               }
                             </div>
@@ -862,41 +909,41 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
                                 {Number(s.lat).toFixed(4)}, {Number(s.lng).toFixed(4)}
                                 {' · '}
                                 {[s.him_running && 'HIM', s.gesd_running && 'GESD'].filter(Boolean).join('+') || 'No curriculum'}
-                                {' · '}👥 {(s.boys_enrolled + s.girls_enrolled).toLocaleString()} learners
-                              </div>
-                            </div>
-                            <div className="flex gap-1 shrink-0">
-                              {s.ett_trained && (
-                                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-100 text-orange-700 dark:bg-orange-950/30 dark:text-orange-400">ETT</span>
-                              )}
-                              {s.verified && (
-                                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400">✓ Verified</span>
-                              )}
-                              <Btn size="sm" variant="secondary" onClick={() => { setEditSchool({ ...s }); setIsNewSchool(false); }}>
-                                <Edit2 size={10} />
-                              </Btn>
-                              {!s.verified && (
-                                <Btn size="sm" variant="success" onClick={() => verifySchool(s)}>
-                                  <Check size={10} />
-                                </Btn>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+                                {' · '} {(s.boys_enrolled + s.girls_enrolled).toLocaleString()} learners
+ </div>
+ </div>
+ <div className="flex gap-1 shrink-0">
+ {s.ett_trained && (
+ <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[var(--brand-100)] text-[var(--brand-700)] dark:bg-[var(--brand-950)]/30 dark:text-[var(--brand-400)]">ETT</span>
+ )}
+ {s.verified && (
+ <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400"> Verified</span>
+ )}
+ <Btn size="sm"variant="secondary"onClick={() => { setEditSchool({ ...s }); setIsNewSchool(false); }}>
+ <Edit2 size={10} />
+ </Btn>
+ {!s.verified && (
+ <Btn size="sm"variant="success"onClick={() => verifySchool(s)}>
+ <Check size={10} />
+ </Btn>
+ )}
+ </div>
+ </div>
+ ))}
+ </div>
+ </div>
+ </div>
+ )}
+ </div>
+ );
+ })}
+ </div>
+ )}
 
-      {/* ══════════════════════════════════════════════════════════════════
-          SCHOOLS VIEW
-      ══════════════════════════════════════════════════════════════════ */}
-      {view === 'schools' && (
+ {/* ══════════════════════════════════════════════════════════════════
+ SCHOOLS VIEW
+ ══════════════════════════════════════════════════════════════════ */}
+ {view === 'schools' && (
         <div className="space-y-2">
           {filteredSchools.length === 0 && (
             <div className="text-center py-10 text-xs text-slate-400">No schools found.</div>
@@ -904,44 +951,43 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
           {filteredSchools.map(school => (
             <div key={school.id} className={`rounded-xl border p-3 flex items-center gap-3 ${
               school.verified  ? 'border-emerald-100 dark:border-emerald-900/30 bg-white dark:bg-slate-950'
-              : school.ett_trained ? 'border-orange-100 dark:border-orange-900/30 bg-orange-50/20 dark:bg-orange-950/10'
-              : 'border-amber-100 dark:border-amber-900/20 bg-amber-50/20 dark:bg-amber-950/10'
-            }`}>
-              {school.verified
-                ? <CheckCircle size={14} className="text-emerald-500 shrink-0" />
-                : school.ett_trained
-                ? <Award size={14} className="text-orange-500 shrink-0" />
-                : <AlertTriangle size={14} className="text-amber-500 shrink-0" />
-              }
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-bold text-slate-900 dark:text-white truncate">{school.name}</div>
-                <div className="text-[10px] text-slate-500 mt-0.5 flex flex-wrap gap-x-2">
-                  <span>📍 {school.district}</span>
-                  <span>{Number(school.lat).toFixed(4)}, {Number(school.lng).toFixed(4)}</span>
-                  <span>👥 {(school.boys_enrolled + school.girls_enrolled).toLocaleString()}</span>
-                  {school.ett_trained && <span className="text-orange-500 font-bold">ETT ✓</span>}
-                  {school.verified    && <span className="text-emerald-500 font-bold">GIS ✓</span>}
-                </div>
-              </div>
-              <div className="flex gap-1 shrink-0">
-                <Btn size="sm" variant="secondary" onClick={() => { setEditSchool({ ...school }); setIsNewSchool(false); }}>
-                  <Edit2 size={10} />
-                </Btn>
-                {!school.verified && (
-                  <Btn size="sm" variant="success" onClick={() => verifySchool(school)}>
-                    <Check size={10} /> Verify
-                  </Btn>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+              : school.ett_trained ? 'border-[var(--brand-100)] dark:border-[var(--brand-900)]/30 bg-[var(--brand-50)]/20 dark:bg-[var(--brand-950)]/10'
+              : 'border-amber-100 dark:border-amber-900/20 bg-amber-50/20 dark:bg-amber-950/10'}`}>
+ {school.verified
+ ? <CheckCircle size={14} className="text-emerald-500 shrink-0"/>
+ : school.ett_trained
+ ? <Award size={14} className="text-[var(--brand-500)] shrink-0"/>
+ : <AlertTriangle size={14} className="text-amber-500 shrink-0"/>
+ }
+ <div className="flex-1 min-w-0">
+ <div className="text-xs font-bold text-slate-900 dark:text-white truncate">{school.name}</div>
+ <div className="text-[10px] text-slate-500 mt-0.5 flex flex-wrap gap-x-2">
+ <span> {school.district}</span>
+ <span>{Number(school.lat).toFixed(4)}, {Number(school.lng).toFixed(4)}</span>
+ <span> {(school.boys_enrolled + school.girls_enrolled).toLocaleString()}</span>
+ {school.ett_trained && <span className="text-[var(--brand-500)] font-bold">ETT </span>}
+ {school.verified && <span className="text-emerald-500 font-bold">GIS </span>}
+ </div>
+ </div>
+ <div className="flex gap-1 shrink-0">
+ <Btn size="sm"variant="secondary"onClick={() => { setEditSchool({ ...school }); setIsNewSchool(false); }}>
+ <Edit2 size={10} />
+ </Btn>
+ {!school.verified && (
+ <Btn size="sm"variant="success"onClick={() => verifySchool(school)}>
+ <Check size={10} /> Verify
+ </Btn>
+ )}
+ </div>
+ </div>
+ ))}
+ </div>
+ )}
 
-      {/* ══════════════════════════════════════════════════════════════════
-          VERIFICATION QUEUE
-      ══════════════════════════════════════════════════════════════════ */}
-      {view === 'queue' && (
+ {/* ══════════════════════════════════════════════════════════════════
+ VERIFICATION QUEUE
+ ══════════════════════════════════════════════════════════════════ */}
+ {view === 'queue' && (
         <div className="space-y-4">
           {queueClusters.length === 0 && queueSchools.length === 0 ? (
             <div className="text-center py-16">
@@ -1035,41 +1081,41 @@ export const CartographerPage: React.FC<Props> = ({ user, showToast }) => {
       {/* ══════════════════════════════════════════════════════════════════
           PLANNED SCHOOLS VIEW
       ══════════════════════════════════════════════════════════════════ */}
-      {view === 'planned' && (
-        <div className="space-y-3">
-          <div className="bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-900/40 rounded-xl p-3 text-xs text-purple-800 dark:text-purple-300">
-            <strong>Planned Schools</strong> are schools identified for future ETT implementation but not yet assigned to a cluster. They appear on the map as grey markers.
-          </div>
-          {plannedSchools.length === 0 && (
-            <div className="text-center py-12">
-              <MapPin size={32} className="text-purple-300 mx-auto mb-3" />
-              <p className="text-sm font-bold text-slate-700 dark:text-slate-300">No planned schools yet</p>
-              <p className="text-xs text-slate-500 mt-1">Click "Add Planned School" to register a school for future implementation.</p>
-            </div>
-          )}
-          {plannedSchools.map(school => (
-            <div key={school.id} className="rounded-xl border border-purple-200 dark:border-purple-900/40 bg-purple-50/30 dark:bg-purple-950/10 p-3 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center shrink-0">
-                <MapPin size={14} className="text-purple-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-bold text-slate-900 dark:text-white truncate">{school.name}</div>
-                <div className="text-[10px] text-slate-500 mt-0.5 flex flex-wrap gap-x-2">
-                  <span>📍 {school.district} · {school.region}</span>
-                  <span>{Number(school.lat).toFixed(4)}, {Number(school.lng).toFixed(4)}</span>
-                  <span className="text-purple-600 font-bold">Planned</span>
-                </div>
-                {school.notes && (
-                  <div className="text-[10px] text-slate-400 mt-0.5 italic">{school.notes}</div>
-                )}
-              </div>
-              <div className="flex gap-1.5 shrink-0">
-                <Btn size="sm" variant="secondary" onClick={() => { setEditSchool({ ...school }); setIsNewSchool(false); }}>
-                  <Edit2 size={10} />
-                </Btn>
-                <Btn size="sm" onClick={() => {
-                  // Promote to active — open edit with cluster selection
-                  setEditSchool({ ...school, status: 'active' });
+      {view === 'planned'&& (
+ <div className="space-y-3">
+ <div className="bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-900/40 rounded-xl p-3 text-xs text-purple-800 dark:text-purple-300">
+ <strong>Planned Schools</strong> are schools identified for future ETT implementation but not yet assigned to a cluster. They appear on the map as grey markers.
+ </div>
+ {plannedSchools.length === 0 && (
+ <div className="text-center py-12">
+ <MapPin size={32} className="text-purple-300 mx-auto mb-3"/>
+ <p className="text-sm font-bold text-slate-700 dark:text-slate-300">No planned schools yet</p>
+ <p className="text-xs text-slate-500 mt-1">Click "Add Planned School"to register a school for future implementation.</p>
+ </div>
+ )}
+ {plannedSchools.map(school => (
+ <div key={school.id} className="rounded-xl border border-purple-200 dark:border-purple-900/40 bg-purple-50/30 dark:bg-purple-950/10 p-3 flex items-center gap-3">
+ <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center shrink-0">
+ <MapPin size={14} className="text-purple-600"/>
+ </div>
+ <div className="flex-1 min-w-0">
+ <div className="text-xs font-bold text-slate-900 dark:text-white truncate">{school.name}</div>
+ <div className="text-[10px] text-slate-500 mt-0.5 flex flex-wrap gap-x-2">
+ <span> {school.district} · {school.region}</span>
+ <span>{Number(school.lat).toFixed(4)}, {Number(school.lng).toFixed(4)}</span>
+ <span className="text-purple-600 font-bold">Planned</span>
+ </div>
+ {school.notes && (
+ <div className="text-[10px] text-slate-400 mt-0.5 italic">{school.notes}</div>
+ )}
+ </div>
+ <div className="flex gap-1.5 shrink-0">
+ <Btn size="sm"variant="secondary"onClick={() => { setEditSchool({ ...school }); setIsNewSchool(false); }}>
+ <Edit2 size={10} />
+ </Btn>
+ <Btn size="sm"onClick={() => {
+ // Promote to active — open edit with cluster selection
+ setEditSchool({ ...school, status: 'active' });
                   setIsNewSchool(false);
                   showToast('Assign a cluster to activate this school');
                 }}>

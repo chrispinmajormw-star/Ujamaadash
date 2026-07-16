@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   FilePlus, MapPin, CheckCircle, Clock, AlertTriangle,
-  Upload, Camera, Clipboard, TrendingUp, BookOpen, Users
-} from 'lucide-react';
+  Upload, Camera, Clipboard, TrendingUp, BookOpen, Users, CheckCircle2, User as UserIcon} from 'lucide-react';
 import { Card, Kicker, Btn, ProgBar, Badge, FInput, FSelect, FArea, Modal, StatCard } from './SubComponents';
-import { DISTRICTS, CLUSTERS, SESSION_LISTS, DISTRICT_LIST } from '../data';
+import { DISTRICTS, CLUSTERS, SESSION_LISTS } from '../data';
+import { useCountry } from '../context/CountryContext';
+import { districtsApi } from '../api';
 import { Report, User } from '../types';
 
 interface Props {
@@ -16,12 +17,28 @@ interface Props {
 }
 
 export const FieldOfficerPage: React.FC<Props> = ({ user, reports, onSubmit, showToast, setPage }) => {
+  const { activeCountry } = useCountry();
   const [view, setView] = useState<'home' | 'submit' | 'history'>('home');
   const [f, setF] = useState({
     school: '', district: user.district || '', zone: '', boys: '', girls: '',
-    curriculum: 'HIM', session: '', challenges: '', success: ''
+    curriculum: 'HIM', session: '', challenges: '', success: '',
+    country: (user as any).country || 'Malawi'
   });
   const [submitted, setSubmitted] = useState(false);
+  const [districtOptions, setDistrictOptions] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (activeCountry && activeCountry !== 'all') {
+      setF(p => ({ ...p, country: activeCountry, district: '' }));
+    }
+  }, [activeCountry]);
+
+  useEffect(() => {
+    if (!f.country) return;
+    districtsApi.getAll(f.country).then((data: any) => {
+      setDistrictOptions(Array.isArray(data) ? data.map((d: any) => d.name).sort() : []);
+    });
+  }, [f.country]);
   const s = (k: string) => (e: any) => setF(p => ({ ...p, [k]: e.target.value }));
 
   const myReports = reports.filter(r =>
@@ -34,25 +51,25 @@ export const FieldOfficerPage: React.FC<Props> = ({ user, reports, onSubmit, sho
 
   const handleSubmit = () => {
     if (!f.school || !f.district || !f.zone || !f.session) {
-      showToast('⚠️ Please fill all required fields'); return;
+      showToast('️ Please fill all required fields', 'warning'); return;
     }
     onSubmit({
       ...f, boys: parseInt(f.boys) || 0, girls: parseInt(f.girls) || 0,
       status: 'pending', submitted_by: user.name,
       submitted_at: new Date().toISOString().split('T')[0]
-    });
+    }); // country included via ...f spread
     setSubmitted(true);
-    showToast('✅ Field report submitted for review');
+    showToast('Field report submitted for review', 'success');
   };
 
   if (submitted) {
     return (
       <div className="max-w-md mx-auto text-center py-12 space-y-4 animate-fade-in-up">
-        <div className="text-5xl">✅</div>
+        <div className="text-5xl flex justify-center"><CheckCircle2 size={48} className="text-emerald-500" /></div>
         <h2 className="text-xl font-bold text-black dark:text-white">Report Submitted!</h2>
         <p className="text-sm text-slate-500">Your field report has been sent to the District Coordinator for review.</p>
         <div className="flex gap-2 justify-center">
-          <Btn onClick={() => { setF({ school: '', district: user.district || '', zone: '', boys: '', girls: '', curriculum: 'HIM', session: '', challenges: '', success: '' }); setSubmitted(false); }}>
+          <Btn onClick={() => { setF({ school: '', district: user.district || '', zone: '', boys: '', girls: '', curriculum: 'HIM', session: '', challenges: '', success: '', country: (user as any).country || 'Malawi' }); setSubmitted(false); }}>
             New Report
           </Btn>
           <Btn variant="secondary" onClick={() => setView('history')}>View History</Btn>
@@ -90,8 +107,8 @@ export const FieldOfficerPage: React.FC<Props> = ({ user, reports, onSubmit, sho
             onClick={() => setView(tab.v as any)}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
               view === tab.v
-                ? 'bg-orange-600 text-white'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-orange-50 dark:hover:bg-slate-700'
+                ? 'bg-[var(--brand-600)] text-white'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-[var(--brand-50)] dark:hover:bg-slate-700'
             }`}
           >
             {tab.l}
@@ -106,7 +123,7 @@ export const FieldOfficerPage: React.FC<Props> = ({ user, reports, onSubmit, sho
             <StatCard icon={<CheckCircle size={18} className="text-emerald-500" />} label="Approved" value={approved} color="#059669" />
             <StatCard icon={<Clock size={18} className="text-amber-500" />} label="Pending" value={pending} color="#d97706" />
             <StatCard icon={<Users size={18} className="text-blue-500" />} label="Clusters" value={districtClusters.length} />
-            <StatCard icon={<BookOpen size={18} className="text-orange-500" />} label="Total Reports" value={myReports.length} />
+            <StatCard icon={<BookOpen size={18} className="text-[var(--brand-500)]" />} label="Total Reports" value={myReports.length} />
           </div>
 
           {/* District info */}
@@ -122,8 +139,8 @@ export const FieldOfficerPage: React.FC<Props> = ({ user, reports, onSubmit, sho
                   { l: 'Schools', v: districtData.schools },
                   { l: 'Covered', v: districtData.cov },
                 ].map(item => (
-                  <div key={item.l} className="bg-orange-50/50 dark:bg-slate-800/50 rounded-lg p-3 text-center">
-                    <div className="text-xl font-extrabold text-orange-600">{item.v}</div>
+                  <div key={item.l} className="bg-[var(--brand-50)]/50 dark:bg-slate-800/50 rounded-lg p-3 text-center">
+                    <div className="text-xl font-extrabold text-[var(--brand-600)]">{item.v}</div>
                     <div className="text-[10px] text-slate-500 mt-0.5">{item.l}</div>
                   </div>
                 ))}
@@ -150,7 +167,7 @@ export const FieldOfficerPage: React.FC<Props> = ({ user, reports, onSubmit, sho
                         <div className="text-sm font-bold text-black dark:text-white">{c.name}</div>
                         <div className="text-[10px] text-slate-500 mt-0.5">Lead: {c.lead}</div>
                       </div>
-                      <Badge text={`${c.progress}%`} color="#e85d04" bg="#fff4ec" />
+                      <Badge text={`${c.progress}%`} color="var(--brand)" bg="#fff4ec" />
                     </div>
                     <div className="text-[11px] text-slate-500 mb-2">
                       {c.schools} schools · {c.students.toLocaleString()} students · {c.trained} trained
@@ -164,7 +181,7 @@ export const FieldOfficerPage: React.FC<Props> = ({ user, reports, onSubmit, sho
 
           {/* Quick tips */}
           <Card className="bg-blue-50/50 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900/30">
-            <h3 className="text-xs font-bold text-blue-800 dark:text-blue-300 mb-2">📋 Field Officer Checklist</h3>
+            <h3 className="text-xs font-bold text-blue-800 dark:text-blue-300 mb-2">Field Officer Checklist</h3>
             <ul className="space-y-1.5">
               {[
                 'Submit session reports within 24 hours of delivery',
@@ -192,9 +209,14 @@ export const FieldOfficerPage: React.FC<Props> = ({ user, reports, onSubmit, sho
           <div className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <FInput label="School Name *" placeholder="e.g. Kawale Primary" value={f.school} onChange={s('school')} />
+              <FSelect label="Country *" value={f.country} onChange={s('country')}>
+                <option value="Malawi">Malawi</option>
+                <option value="Kenya">Kenya</option>
+                <option value="Somaliland">Somaliland</option>
+              </FSelect>
               <FSelect label="District *" value={f.district} onChange={s('district')}>
                 <option value="">Select District...</option>
-                {DISTRICT_LIST.map(d => <option key={d}>{d}</option>)}
+                {districtOptions.map(d => <option key={d}>{d}</option>)}
               </FSelect>
             </div>
             <FInput label="Education Zone *" placeholder="e.g. Kawale Zone" value={f.zone} onChange={s('zone')} />
@@ -236,7 +258,7 @@ export const FieldOfficerPage: React.FC<Props> = ({ user, reports, onSubmit, sho
                       {r.district} · {r.zone} · {r.curriculum} · {r.submitted_at}
                     </div>
                     <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-1">
-                      👦 {r.boys} boys · 👧 {r.girls} girls · {r.session}
+                      {r.boys} boys · {r.girls} girls · {r.session}
                     </div>
                   </div>
                   <Badge

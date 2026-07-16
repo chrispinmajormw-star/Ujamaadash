@@ -13,6 +13,18 @@
   --surface-border: #e5e5e5;
   --text-primary: #000000;
   --accent: #c2410c; /* Darker orange for better WCAG contrast (4.5:1 ratio) */
+  --brand: #e85d04; /* User-selectable theme color — set via Settings, no login required */
+  --brand-50: color-mix(in srgb, var(--brand) 5%, white);
+  --brand-100: color-mix(in srgb, var(--brand) 12%, white);
+  --brand-200: color-mix(in srgb, var(--brand) 25%, white);
+  --brand-300: color-mix(in srgb, var(--brand) 40%, white);
+  --brand-400: color-mix(in srgb, var(--brand) 65%, white);
+  --brand-500: var(--brand);
+  --brand-600: color-mix(in srgb, var(--brand) 85%, black);
+  --brand-700: color-mix(in srgb, var(--brand) 70%, black);
+  --brand-800: color-mix(in srgb, var(--brand) 55%, black);
+  --brand-900: color-mix(in srgb, var(--brand) 40%, black);
+  --brand-950: color-mix(in srgb, var(--brand) 25%, black);
 }
 
 .dark {
@@ -91,6 +103,46 @@ h1, h2, h3, h4, h5, h6 {
 
 .animate-slide-up {
   animation: slide-up 0.3s ease-out;
+}
+
+/* Modern easing curve used throughout for smoother, more natural motion */
+:root {
+  --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.animate-scale-in {
+  animation: scale-in 0.22s var(--ease-smooth);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fade-in 0.25s var(--ease-smooth);
+}
+
+.page-transition {
+  animation: fade-in-up 0.35s var(--ease-smooth);
+}
+
+.hover-lift {
+  transition: transform 0.2s var(--ease-smooth), box-shadow 0.2s var(--ease-smooth);
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.12);
+}
+
+button, .btn-press {
+  transition: transform 0.15s var(--ease-smooth), background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+button:active, .btn-press:active {
+  transform: scale(0.96);
 }
 
 /* Focus visible for keyboard accessibility */

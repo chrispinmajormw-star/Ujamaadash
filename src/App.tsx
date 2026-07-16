@@ -48,8 +48,7 @@ import {
   Play,
   Eye,
   EyeOff,
-  Upload,
-} from 'lucide-react';
+  Upload, Globe, Save} from 'lucide-react';
 
 import { User, Report, Cluster, District, Training, Session } from './types';
 import {
@@ -92,6 +91,7 @@ import { TeacherChampionPage } from './components/TeacherChampionPage';
 import { DistrictsPage } from './components/DistrictsPage';
 import { Dashboard } from './components/Dashboard';
 import { ReportsPage, getReportRecipient } from './components/ReportsPage';
+import { MonthlyCaseReportBanner } from './components/MonthlyCaseReportBanner';
 import { MapsPage } from './components/MapsPage';
 import { CurriculumPage } from './components/CurriculumPage';
 import { ImpactPage } from './components/ImpactPage';
@@ -112,8 +112,15 @@ import { SubmitReport } from './components/SubmitReport';
 import { TrainingsPage } from './components/TrainingsPage';
 import { ETTPage } from './components/ETTPage';
 import { UsersPage } from './components/UsersPage';
+import { AdminDistrictsPage } from './components/AdminDistrictsPage';
+import { DataCompletenessPage } from './components/DataCompletenessPage';
 import { DataOfficerPage } from './components/DataOfficerPage';
 import { MonitoringProvider } from './context/MonitoringContext';
+import { CountryProvider } from './context/CountryContext';
+import { CountrySelector } from './components/CountrySelector';
+import { LanguageSelector } from './components/LanguageSelector';
+import { useTranslation } from 'react-i18next';
+import { useCountry } from './context/CountryContext';
 import { SessionRecordsPage } from './components/SessionRecordsPage';
 import { YouthPage } from './components/YouthPage';
 
@@ -150,16 +157,36 @@ export default function App() {
     return saved !== "light";
   });
 
+  const { t, i18n } = useTranslation();
   const [user, setUser] = useState<User | null>(() => {
     const saved = safeStorage.getItem("ett_curr_user");
     return saved ? JSON.parse(saved) : null;
   });
 
   const [reports, setReports] = useState<Report[]>([]);
+  const { activeCountry, setActiveCountry, setDefaultCountry } = useCountry();
+
+  // Default a logged-in user's country selector to their own assigned country,
+  // unless they've explicitly picked a different one for this browser already.
+  useEffect(() => {
+    if (!user) return;
+    const explicitlyChosen = localStorage.getItem('active_country_user_set');
+    if (explicitlyChosen) return;
+    const defaultedAlready = sessionStorage.getItem('country_defaulted_for_user');
+    if (defaultedAlready === user.id) return;
+    if ((user as any).country) {
+      setDefaultCountry((user as any).country);
+      sessionStorage.setItem('country_defaulted_for_user', user.id);
+    }
+  }, [user]);
+
+  // Language defaults to English for every country and is only changed when the
+  // user explicitly picks one in Settings — it never auto-switches based on country.
 
 useEffect(() => {
   if (user) {
-    reportsApi.getAll().then(data => {
+    reportsApi.getAll(activeCountry).then(data => {
+      console.log('reportsApi.getAll() raw response:', data);
       setReports(data.map((r: any) => ({
           id: r.id,
           school: r.school,
@@ -179,7 +206,7 @@ useEffect(() => {
       })));
     });
   }
-}, [user]);
+}, [user, activeCountry]);
 
   const [users, setUsers] = useState<User[]>([]);
 
@@ -193,6 +220,7 @@ useEffect(() => {
         name: u.name,
         region: u.region ?? null,
         district: u.district ?? null,
+        country: u.country ?? null,
         avatar: u.avatar || u.name?.split(' ').map((x: string) => x[0]).join('').toUpperCase(),
         status: u.status,
         clusterId: u.cluster_id,
@@ -212,6 +240,7 @@ useEffect(() => {
           name: u.name,
           region: u.region ?? null,
           district: u.district ?? null,
+          country: u.country ?? null,
           avatar: u.avatar || u.name?.split(' ').map((x: string) => x[0]).join('').toUpperCase(),
           status: u.status,
           clusterId: u.cluster_id,
@@ -221,19 +250,25 @@ useEffect(() => {
   }, [user]);
 
   const [page, setPage] = useState<string>("dashboard");
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ msg: string; type?: 'success'|'warning'|'error'|'info' } | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mapFocus, setMapFocus] = useState<any>(null);
   const [notifOpen, setNotifOpen] = useState(false);
   const [editingReport, setEditingReport] = useState<Report | null>(null);
   const [forwardModal, setForwardModal] = useState<Report | null>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  // Auto-open the login modal if the user arrived via a password-reset email link.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('resetToken')) {
+      setIsLoginModalOpen(true);
+    }
+  }, []);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<{ id: string; label: string; page: string }[]>([]);
 
-  const showToast = useCallback((msg: string) => {
-    setToast(msg);
+  const showToast = useCallback((msg: string, type?: 'success'|'warning'|'error'|'info') => {
+    setToast({ msg, type });
     setTimeout(() => setToast(null), 3800);
   }, []);
 
@@ -290,9 +325,9 @@ useEffect(() => {
       submitted_role: user?.role || "public",
     };
     setReports((p: Report[]) => [newReport, ...p]);
-    showToast(`✅ Report submitted successfully`);
+    showToast(`Report submitted successfully`, 'success');
   } catch (err) {
-    showToast(`⚠️ Failed to save report`);
+    showToast(`️ Failed to save report`, 'warning');
   }
 };
 
@@ -300,33 +335,44 @@ useEffect(() => {
   try {
     await reportsApi.update(id, { status });
     setReports((p: Report[]) => p.map(r => r.id === id ? { ...r, status } : r));
-    showToast(`✅ Report ${status}`);
+    showToast(`Report ${status}`, 'success');
   } catch {
-    showToast('⚠️ Failed to update report status');
+    showToast('️ Failed to update report status', 'warning');
   }
 };
 
   // DC Forward file operation
   const forwardReport = async (id: number) => {
   try {
-    await reportsApi.update(id, { status: 'forwarded' });
+    const recipient = getReportRecipient(user?.role || 'viewer');
+    await reportsApi.update(id, { status: 'forwarded', sentTo: recipient.sendTo, workflowStatus: 'forwarded' });
     setReports((p: Report[]) => p.map(r => r.id === id ? {
       ...r,
       status: "forwarded" as const,
-      sentTo: "admin",
-      sentToLabel: "National Admin"
+      sentTo: recipient.sendTo,
+      sentToLabel: recipient.label
     } : r));
-    showToast("📨 File forwarded successfully to the National Admin");
+    showToast(`File forwarded successfully to the ${recipient.label}`, 'success');
     setForwardModal(null);
   } catch {
-    showToast('⚠️ Failed to forward report');
+    showToast('Failed to forward report', 'error');
   }
 };
 
-  // Data Officer inline edit persistence
+  // M & E Officer inline edit persistence
   const saveEditedReport = (updated: Report) => {
     setReports((p: Report[]) => p.map(r => r.id === updated.id ? { ...r, ...updated } : r));
-    showToast("💾 File record updated successfully");
+    showToast("File record updated successfully", 'success');
+  };
+
+  const deleteReport = async (report: Report) => {
+    try {
+      await reportsApi.delete(report.id);
+      setReports(prev => prev.filter(r => r.id !== report.id));
+      showToast('Report deleted', 'success');
+    } catch {
+      showToast('Failed to delete report', 'error');
+    }
   };
 
   const openMapTarget = (target: any) => {
@@ -383,7 +429,12 @@ const pendingCount = (user && can(user.role, "approveReport")
   const renderPageContent = () => {
     switch (page) {
       case "dashboard":
-        return <Dashboard user={user} reports={reports} setPage={setPage} darkMode={darkMode} />;
+        return (
+          <>
+            <MonthlyCaseReportBanner user={user} showToast={showToast} />
+            <Dashboard user={user} reports={reports} setPage={setPage} darkMode={darkMode} />
+          </>
+        );
       case "submit":
         return <SubmitReport user={user} onSubmit={addReport} showToast={showToast} />;
       case "reports":
@@ -396,6 +447,7 @@ const pendingCount = (user && can(user.role, "approveReport")
             showToast={showToast}
             onEditReport={setEditingReport}
             onForwardReport={setForwardModal}
+            onDeleteReport={deleteReport}
           />
         ) : null;
       case "maps":
@@ -403,7 +455,7 @@ const pendingCount = (user && can(user.role, "approveReport")
       case "districts":
         return <DistrictsPage user={user} showToast={showToast} />;
       case 'teacher_resources':
-        return <TeacherChampionPage />;
+        return <TeacherChampionPage user={user} />;
         case 'data_officer':
         return user?.role === 'data_entry' || user?.role === 'admin'
         ? <DataOfficerPage user={user!} showToast={showToast} />
@@ -420,12 +472,18 @@ const pendingCount = (user && can(user.role, "approveReport")
           : <div className="p-12 text-center text-slate-400 font-semibold italic">This page is restricted for your role.</div>;
       case "users":
         return user?.role === 'admin' ? <UsersPage user={user} users={users} setUsers={setUsers} showToast={showToast} refreshUsers={refreshUsers} /> : <div className="p-12 text-center text-slate-400 font-semibold italic">Restricted to National Admin only.</div>;
+      case "admin_districts":
+        return user?.role === 'admin' ? <AdminDistrictsPage /> : <div className="p-12 text-center text-slate-400 font-semibold italic">Restricted to National Admin only.</div>;
+      case "data_completeness":
+        return user?.role === 'admin' ? <DataCompletenessPage /> : <div className="p-12 text-center text-slate-400 font-semibold italic">Restricted to National Admin only.</div>;
       case "impact":
         return <ImpactPage reports={reports} showToast={showToast} user={user} />;
       case 'youth':
         return <YouthPage />;
       case 'sasa':
-        return <SasaPage user={user} reports={reports} showToast={showToast} />;
+        return (user?.role === 'sasa_officer' || user?.role === 'program_manager')
+          ? <SasaPage user={user} reports={reports} showToast={showToast} />
+          : <div className="p-12 text-center text-slate-400 font-semibold italic">Restricted to SASA Officers and Regional Managers.</div>;
       case 'document_reports':
         return <DocumentReportsPage user={user} showToast={showToast} />;
       case "calendar":
@@ -597,11 +655,12 @@ if (role === 'district_coordinator') return [
         title: "More",
         items: [
           ...(user?.role !== 'tot' ? [{ id: "analytics", label: "Analytics", icon: BarChart2 }] : []),
-          ...(user?.role === 'admin' ? [{ id: "sasa", label: "SASA Workspace", icon: Shield, protected: true }] : []),
           { id: "impact", label: "Success Stories", icon: Heart },
           { id: "youth", label: "Ujamaa Youth", icon: Play },
           { id: 'teacher_resources', label: 'Teacher Resources', icon: BookOpen },
           ...(user?.role === 'admin' ? [{ id: "users", label: "Staff", icon: Users, protected: true }] : []),
+          ...(user?.role === 'admin' ? [{ id: "admin_districts", label: "Districts & Countries", icon: Globe, protected: true }] : []),
+          ...(user?.role === 'admin' ? [{ id: "data_completeness", label: "Data Completeness", icon: AlertTriangle, protected: true }] : []),
           { id: "settings", label: "Settings", icon: Settings }
         ]
       }
@@ -630,15 +689,15 @@ if (role === 'district_coordinator') return [
               }}
               className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md font-medium transition ${
                 isActive
-                  ? 'bg-orange-50 text-orange-600 dark:bg-orange-600/15 dark:text-orange-400'
+                  ? 'bg-[var(--brand-50)] text-[var(--brand-600)] dark:bg-[var(--brand-600)]/15 dark:text-[var(--brand-400)]'
                   : isLocked
-                  ? 'text-slate-400 dark:text-slate-600 hover:bg-orange-50 hover:text-orange-400 dark:hover:bg-slate-800'
-                  : 'text-black hover:bg-orange-50 hover:text-orange-600 dark:text-white dark:hover:bg-slate-800 dark:hover:text-orange-400'
+                  ? 'text-slate-400 dark:text-slate-600 hover:bg-[var(--brand-50)] hover:text-[var(--brand-400)] dark:hover:bg-slate-800'
+                  : 'text-black hover:bg-[var(--brand-50)] hover:text-[var(--brand-600)] dark:text-white dark:hover:bg-slate-800 dark:hover:text-[var(--brand-400)]'
               } ${compact ? 'justify-start px-2 min-h-[40px] text-sm' : 'text-sm'}`}
               title={isLocked ? "Sign in to access" : undefined}
             >
               <Icon size={16} />
-              <span className={`whitespace-nowrap truncate`}>{item.label}</span>
+              <span className={`whitespace-nowrap truncate`}>{t(item.label)}</span>
               {isLocked && <Lock size={12} className="ml-auto opacity-40 shrink-0" />}
             </button>
           );
@@ -666,7 +725,7 @@ if (role === 'district_coordinator') return [
                     animate={{ x: 0 }}
                     exit={{ x: -224 }}
                     transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-                    className="fixed top-0 bottom-0 left-0 w-56 bg-white dark:bg-[#0f1623] border-r border-neutral-200 dark:border-slate-800 z-40 p-3 flex flex-col md:hidden shadow-lg"
+                    className="fixed top-0 bottom-0 left-0 w-80 bg-white dark:bg-[#0f1623] border-r border-neutral-200 dark:border-slate-800 z-40 p-3 flex flex-col md:hidden shadow-lg"
                   >
                     <div className="flex justify-between items-center pb-3 mb-2 border-b border-neutral-200 dark:border-slate-800">
                       <div className="flex items-center gap-2">
@@ -696,13 +755,13 @@ if (role === 'district_coordinator') return [
                         <button
                           type="button"
                           onClick={() => { setIsLoginModalOpen(true); setSidebarOpen(false); }}
-                          className="w-full px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white font-medium text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          className="w-full px-3 py-2 bg-[var(--brand-600)] hover:bg-[var(--brand-700)] text-white font-medium text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)]"
                         >
                           Sign in
                         </button>
                       )}
                       <div className="text-xs text-black dark:text-white opacity-60 text-center mt-1">
-                        Helpline <b className="text-orange-600 dark:text-orange-400">116</b> · VSU <b className="text-orange-600 dark:text-orange-400">997</b>
+                        Helpline <b className="text-[var(--brand-600)] dark:text-[var(--brand-400)]">116</b> · VSU <b className="text-[var(--brand-600)] dark:text-[var(--brand-400)]">997</b>
                       </div>
                     </div>
                   </motion.aside>
@@ -710,7 +769,7 @@ if (role === 'district_coordinator') return [
               )}
             </AnimatePresence>
 
-            <aside className="hidden md:flex w-56 shrink-0 flex-col bg-white dark:bg-[#0f1623] border-r border-neutral-200 dark:border-slate-800">
+            <aside className="hidden md:flex w-80 shrink-0 flex-col bg-white dark:bg-[#0f1623] border-r border-neutral-200 dark:border-slate-800">
               <div className="h-12 flex items-center gap-2 px-3 border-b border-neutral-200 dark:border-slate-800 shrink-0">
                 <AfricaLogo size={22} />
                 <span className="font-bold text-sm text-black dark:text-white truncate">Ujamaa Dashboard</span>
@@ -734,13 +793,13 @@ if (role === 'district_coordinator') return [
                   <button
                     type="button"
                     onClick={() => setIsLoginModalOpen(true)}
-                    className="w-full px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white font-medium text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full px-3 py-2 bg-[var(--brand-600)] hover:bg-[var(--brand-700)] text-white font-medium text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)]"
                   >
                     Sign in
                   </button>
                 )}
                 <div className="text-xs text-black dark:text-white opacity-60 text-center mt-1">
-                  Helpline <b className="text-orange-600 dark:text-orange-400">116</b> · VSU <b className="text-orange-600 dark:text-orange-400">997</b>
+                  Helpline <b className="text-[var(--brand-600)] dark:text-[var(--brand-400)]">116</b> · VSU <b className="text-[var(--brand-600)] dark:text-[var(--brand-400)]">997</b>
                 </div>
               </div>
             </aside>
@@ -751,7 +810,7 @@ if (role === 'district_coordinator') return [
                   <button
                     type="button"
                     onClick={() => setPage("dashboard")}
-                    className="p-2 sm:p-1.5 rounded-md text-black dark:text-white hover:bg-neutral-100 dark:hover:bg-slate-800 min-h-[40px] min-w-[40px] sm:min-h-auto sm:min-w-auto focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="p-2 sm:p-1.5 rounded-md text-black dark:text-white hover:bg-neutral-100 dark:hover:bg-slate-800 min-h-[40px] min-w-[40px] sm:min-h-auto sm:min-w-auto focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)]"
                     aria-label="Back to dashboard"
                   >
                     <ArrowLeft size={16} />
@@ -759,13 +818,13 @@ if (role === 'district_coordinator') return [
                   <button
                     type="button"
                     onClick={() => setSidebarOpen(true)}
-                    className="md:hidden p-2 rounded-md border border-neutral-200 dark:border-slate-700 text-black dark:text-white min-h-[40px] min-w-[40px] focus:outline-none focus:ring-2 focus:ring-orange-500 shrink-0"
+                    className="md:hidden p-2 rounded-md border border-neutral-200 dark:border-slate-700 text-black dark:text-white min-h-[40px] min-w-[40px] focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)] shrink-0"
                     aria-label="Open menu"
                   >
                     <Sliders size={18} />
                   </button>
                   <h2 className="text-[12px] sm:text-sm font-semibold text-black dark:text-white truncate m-0 min-w-0">
-                    {PAGE_LABELS[page] || "ETT ScaleUp Program"}
+                    {t(PAGE_LABELS[page] || "ETT ScaleUp Program")}
                   </h2>
                 </div>
 
@@ -775,7 +834,7 @@ if (role === 'district_coordinator') return [
                     <button
                       type="button"
                       onClick={() => setSearchOpen(!searchOpen)}
-                      className="w-9 h-9 sm:w-8 sm:h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-slate-700 hover:border-orange-400 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 shrink-0"
+                      className="w-9 h-9 sm:w-8 sm:h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-slate-700 hover:border-[var(--brand-400)] text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)] shrink-0"
                       title="Search"
                       aria-label="Global search"
                     >
@@ -788,7 +847,7 @@ if (role === 'district_coordinator') return [
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                           placeholder="Search reports, pages..."
-                          className="w-full px-3 py-2 text-xs border border-neutral-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f1623] text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          className="w-full px-3 py-2 text-xs border border-neutral-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f1623] text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)]"
                           autoFocus
                         />
                         {searchResults.length > 0 && (
@@ -797,7 +856,7 @@ if (role === 'district_coordinator') return [
                               <button
                                 key={result.id}
                                 onClick={() => { setPage(result.page); setSearchOpen(false); setSearchQuery(''); }}
-                                className="w-full text-left px-2 py-1.5 text-xs text-black dark:text-white hover:bg-orange-50 dark:hover:bg-slate-800 rounded transition-colors"
+                                className="w-full text-left px-2 py-1.5 text-xs text-black dark:text-white hover:bg-[var(--brand-50)] dark:hover:bg-slate-800 rounded transition-colors"
                               >
                                 {result.label}
                               </button>
@@ -816,7 +875,7 @@ if (role === 'district_coordinator') return [
                       <button
                         type="button"
                         onClick={() => setNotifOpen(!notifOpen)}
-                        className="w-9 h-9 sm:w-8 sm:h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-slate-700 hover:border-orange-400 text-black dark:text-white relative focus:outline-none focus:ring-2 focus:ring-orange-500 shrink-0"
+                        className="w-9 h-9 sm:w-8 sm:h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-slate-700 hover:border-[var(--brand-400)] text-black dark:text-white relative focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)] shrink-0"
                         title={`${pendingCount} pending reviews`}
                         aria-label="Notifications"
                       >
@@ -841,7 +900,7 @@ if (role === 'district_coordinator') return [
         setNotifUnread(0);
         setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
       }}
-      className="text-[10px] text-orange-600 font-semibold hover:underline"
+      className="text-[10px] text-[var(--brand-600)] font-semibold hover:underline"
     >
       Mark all read
     </button>
@@ -852,7 +911,7 @@ if (role === 'district_coordinator') return [
     <button
       type="button"
       onClick={() => { setPage("document_reports"); setNotifOpen(false); }}
-      className="w-full text-left p-2 bg-orange-50 dark:bg-orange-950/20 rounded border border-orange-200 dark:border-orange-900/40 text-[11px] text-black dark:text-white"
+      className="w-full text-left p-2 bg-[var(--brand-50)] dark:bg-[var(--brand-950)]/20 rounded border border-[var(--brand-200)] dark:border-[var(--brand-900)]/40 text-[11px] text-black dark:text-white"
     >
       <div className="font-semibold">{docUnread} new document report{docUnread > 1 ? 's' : ''}</div>
       <div className="text-[10px] opacity-60">Click to view inbox</div>
@@ -877,11 +936,11 @@ if (role === 'district_coordinator') return [
       className={`w-full text-left p-2 rounded border text-[11px] text-black dark:text-white transition-colors ${
         n.is_read
           ? 'border-neutral-200 dark:border-slate-800 bg-white dark:bg-[#0f1623]'
-          : 'border-orange-200 dark:border-orange-900/40 bg-orange-50 dark:bg-orange-950/20'
+          : 'border-[var(--brand-200)] dark:border-[var(--brand-900)]/40 bg-[var(--brand-50)] dark:bg-[var(--brand-950)]/20'
       }`}
     >
       <div className="font-semibold flex items-center gap-1">
-        {!n.is_read && <span className="w-1.5 h-1.5 rounded-full bg-orange-500 shrink-0" />}
+        {!n.is_read && <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand-500)] shrink-0" />}
         {n.title}
       </div>
       <div className="text-[10px] opacity-60 mt-0.5">{n.message}</div>
@@ -898,7 +957,7 @@ if (role === 'district_coordinator') return [
                   <button
                     type="button"
                     onClick={() => setDarkMode(!darkMode)}
-                    className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-slate-700 hover:border-orange-400 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-slate-700 hover:border-[var(--brand-400)] text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)]"
                     title="Toggle theme"
                     aria-label="Toggle dark mode"
                   >
@@ -908,14 +967,15 @@ if (role === 'district_coordinator') return [
                   <button
                     type="button"
                     onClick={() => setPage("settings")}
-                    className={`w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-md border hover:border-orange-400 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 ${
-                      page === 'settings' ? 'border-orange-500 text-orange-600' : 'border-neutral-200 dark:border-slate-700'
+                    className={`w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-md border hover:border-[var(--brand-400)] text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)] ${
+                      page === 'settings' ? 'border-[var(--brand-500)] text-[var(--brand-600)]' : 'border-neutral-200 dark:border-slate-700'
                     }`}
                     title="Settings"
                     aria-label="Settings"
                   >
                     <Settings size={16} />
                   </button>
+                  <CountrySelector />
 
                 </div>
               </header>
@@ -928,7 +988,7 @@ if (role === 'district_coordinator') return [
             </div>
       </div>
 
-      {toast && <Toast msg={toast} onClose={() => setToast(null)} />}
+      {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
 
       {/* Persistence and forwarding models */}
       {editingReport && (
@@ -952,20 +1012,20 @@ if (role === 'district_coordinator') return [
             <FArea label="Stories of Change" value={editingReport.success} onChange={e => setEditingReport({ ...editingReport, success: e.target.value })} />
             <div className="flex gap-2 justify-end pt-2">
               <Btn variant="secondary" onClick={() => setEditingReport(null)}>Cancel</Btn>
-              <Btn onClick={() => { saveEditedReport(editingReport); setEditingReport(null); }}>💾 Save File Changes</Btn>
+              <Btn onClick={() => { saveEditedReport(editingReport); setEditingReport(null); }}>Save File Changes</Btn>
             </div>
           </div>
         </Modal>
       )}
 
       {forwardModal && (
-        <Modal title="Forward File to National Office" onClose={() => setForwardModal(null)} width={400}>
+        <Modal title={`Forward File to ${getReportRecipient(user?.role || 'viewer').label}`} onClose={() => setForwardModal(null)} width={400}>
           <div className="space-y-4 text-xs sm:text-sm">
             <p className="text-slate-500 m-0 leading-relaxed text-xs">
-              This action transmits the approved school record of <b>{forwardModal.school}</b> ({forwardModal.district}) to the <b>National Administrator</b> database log folder.
+              This action transmits the approved school record of <b>{forwardModal.school}</b> ({forwardModal.district}) to the <b>{getReportRecipient(user?.role || 'viewer').label}</b>.
             </p>
-            <div className="bg-orange-50 dark:bg-orange-950/20 text-orange-700 dark:text-orange-400 p-2.5 rounded-lg text-xs border border-orange-100 dark:border-orange-900/30">
-              📨 Route state: Central DC Verified → National Administrator aligned
+            <div className="bg-[var(--brand-50)] dark:bg-[var(--brand-950)]/20 text-[var(--brand-700)] dark:text-[var(--brand-400)] p-2.5 rounded-lg text-xs border border-[var(--brand-100)] dark:border-[var(--brand-900)]/30">
+              Route state: Verified → {getReportRecipient(user?.role || 'viewer').label} aligned
             </div>
             <div className="flex gap-2 justify-end pt-2">
               <Btn variant="secondary" onClick={() => setForwardModal(null)}>Cancel</Btn>
@@ -977,8 +1037,8 @@ if (role === 'district_coordinator') return [
 
       {isLoginModalOpen && (
         <LoginModal
-          onLogin={u => { setUser(u); setIsLoginModalOpen(false); setPage(getRoleLandingPage(u.role)); showToast(`👋 Welcome back, ${u.name}`); }}
-          onRegister={u => { setUsers(prev => [u, ...prev]); setUser(u); setIsLoginModalOpen(false); setPage("dashboard"); showToast(`🎉 Account certified! Welcome, ${u.name}`); }}
+          onLogin={u => { setUser(u); setIsLoginModalOpen(false); setPage(getRoleLandingPage(u.role)); showToast(`Welcome back, ${u.name}`, 'success'); }}
+          onRegister={u => { setUsers(prev => [u, ...prev]); setUser(u); setIsLoginModalOpen(false); setPage("dashboard"); showToast(`Account certified! Welcome, ${u.name}`, 'success'); }}
           onClose={() => setIsLoginModalOpen(false)}
           users={users}
         />

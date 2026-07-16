@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Calendar, Check, RefreshCw } from 'lucide-react';
+import { Play, Calendar, Check, RefreshCw, MapPin, School, User} from 'lucide-react';
 import { trainingsApi } from '../api';
+import { useCountry } from '../context/CountryContext';
 import { Kicker, StatCard, FilterBar, Card, Badge, ProgBar } from './SubComponents';
 
 interface Training {
@@ -58,22 +59,19 @@ export const TrainingsPage: React.FC = () => {
   const [filt, setFilt]           = useState<string>('all');
   const [yearFilt, setYearFilt]   = useState<string>(String(CURRENT_YEAR));
 
+  const { activeCountry } = useCountry();
   const load = async () => {
     setLoading(true);
     setError('');
     try {
-      const data = await trainingsApi.getAll();
-      setTrainings(data);
-      if (data.length === 0) {
-        setError('No trainings found for the current year.');
-      }
+      const data = await trainingsApi.getAll(activeCountry);
+      setTrainings(Array.isArray(data) ? data : []);
     } catch {
       setError('Could not connect to server. Please check your internet connection and try again.');
     }
     setLoading(false);
   };
-
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [activeCountry]);
 
   // "All Years" strictly means current year. Filter by year then by status.
   const trainingsInYear = trainings.filter(t => {
@@ -105,7 +103,7 @@ export const TrainingsPage: React.FC = () => {
         </div>
         <button
           onClick={load}
-          className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-orange-600 transition-colors"
+          className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-[var(--brand-600)] transition-colors"
           title="Refresh trainings"
         >
           <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
@@ -160,17 +158,17 @@ export const TrainingsPage: React.FC = () => {
                     <Badge text={status} className="uppercase shrink-0 text-[10px]" />
                   </div>
                   <p className="text-xs text-slate-400 m-0">
-                    📅 {formatDate(t.start_date)} → {formatDate(t.end_date)}
-                    {t.participants ? ` · 👥 ${t.participants} teachers` : ''}
+                    {formatDate(t.start_date)} → {formatDate(t.end_date)}
+                    {t.participants ? `· ${t.participants} teachers` : ''}
                   </p>
                   {t.venue && (
-                    <p className="text-xs text-slate-500 m-0">🏫 {t.venue}</p>
+                    <p className="text-xs text-slate-500 m-0">{t.venue}</p>
                   )}
                   {t.training_lead_name && (
-                    <p className="text-xs text-slate-500 m-0">👤 Lead: {t.training_lead_name}</p>
+                    <p className="text-xs text-slate-500 m-0">Lead: {t.training_lead_name}</p>
                   )}
                   {t.district && (
-                    <p className="text-xs text-slate-500 m-0">📍 {t.district}</p>
+                    <p className="text-xs text-slate-500 m-0">{t.district}</p>
                   )}
                 </div>
 
@@ -195,7 +193,7 @@ export const TrainingsPage: React.FC = () => {
                             key={n}
                             className={`w-6 h-6 text-[10px] rounded-full flex items-center justify-center font-bold ${
                               done
-                                ? 'bg-orange-500 text-white'
+                                ? 'bg-[var(--brand-500)] text-white'
                                 : isToday
                                 ? 'bg-blue-600 text-white'
                                 : 'bg-slate-100 dark:bg-slate-800 text-slate-400'

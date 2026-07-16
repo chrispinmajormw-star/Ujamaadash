@@ -1,15 +1,90 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Shield, Users, BookOpen, Heart, AlertTriangle, CheckCircle,
-  ChevronDown, ChevronUp, ExternalLink, Phone, FileText
+  ChevronDown, ChevronUp, ExternalLink, Phone, FileText,
+  Download, Upload, Trash2, Plus, X
 } from 'lucide-react';
 import { Card, Kicker, PageHeader } from './SubComponents';
+import { teacherResourcesApi } from '../api';
 
-type TabId = 'role' | 'safe_space' | 'discipline' | 'mentorship' | 'guidance' | 'safeguarding' | 'assessment';
+type TabId = 'role' | 'safe_space' | 'discipline' | 'mentorship' | 'guidance' | 'safeguarding' | 'assessment' | 'resources';
 
-export const TeacherChampionPage: React.FC = () => {
+interface TeacherChampionPageProps {
+  user?: { role?: string } | null;
+}
+
+export const TeacherChampionPage: React.FC<TeacherChampionPageProps> = ({ user }) => {
   const [activeTab, setActiveTab] = useState<TabId>('role');
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
+  const canManage = user?.role === 'admin' || user?.role === 'program_manager';
+
+  // ── Teacher Resources (downloadable files) ──
+  const [resources, setResources] = useState<any[]>([]);
+  const [resourcesLoading, setResourcesLoading] = useState(false);
+  const [showUploadForm, setShowUploadForm] = useState(false);
+  const [uploadTitle, setUploadTitle] = useState('');
+  const [uploadSubtitle, setUploadSubtitle] = useState('');
+  const [uploadDescription, setUploadDescription] = useState('');
+  const [uploadCurriculum, setUploadCurriculum] = useState('general');
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+
+  const loadResources = () => {
+    setResourcesLoading(true);
+    teacherResourcesApi.getAll()
+      .then((data: any) => setResources(Array.isArray(data) ? data : []))
+      .catch((err: any) => console.error('Failed to load teacher resources:', err))
+      .finally(() => setResourcesLoading(false));
+  };
+
+  useEffect(() => {
+    if (activeTab === 'resources') loadResources();
+  }, [activeTab]);
+
+  const resetUploadForm = () => {
+    setUploadTitle(''); setUploadSubtitle(''); setUploadDescription('');
+    setUploadCurriculum('general'); setUploadFile(null); setUploadError('');
+  };
+
+  const handleUpload = async () => {
+    if (!uploadTitle.trim()) { setUploadError('Title is required.'); return; }
+    if (!uploadFile) { setUploadError('Please choose a file.'); return; }
+    setUploading(true);
+    setUploadError('');
+    try {
+      const formData = new FormData();
+      formData.append('title', uploadTitle);
+      formData.append('subtitle', uploadSubtitle);
+      formData.append('description', uploadDescription);
+      formData.append('curriculum', uploadCurriculum);
+      formData.append('file', uploadFile);
+      await teacherResourcesApi.upload(formData);
+      resetUploadForm();
+      setShowUploadForm(false);
+      loadResources();
+    } catch (err: any) {
+      setUploadError(err.message || 'Upload failed.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('Delete this resource? This cannot be undone.')) return;
+    try {
+      await teacherResourcesApi.delete(id);
+      loadResources();
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete resource.');
+    }
+  };
+
+  const formatSize = (bytes?: number) => {
+    if (!bytes) return '';
+    const mb = bytes / (1024 * 1024);
+    return mb >= 1 ? `${mb.toFixed(1)} MB` : `${Math.round(bytes / 1024)} KB`;
+  };
 
   const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
     { id: 'role',         label: "Champion's Role",    icon: <Users size={13} />       },
@@ -19,6 +94,7 @@ export const TeacherChampionPage: React.FC = () => {
     { id: 'guidance',     label: 'Guidance vs Counselling', icon: <CheckCircle size={13} /> },
     { id: 'safeguarding', label: 'Safeguarding',       icon: <AlertTriangle size={13} />},
     { id: 'assessment',   label: 'Assessment',         icon: <FileText size={13} />    },
+    { id: 'resources',    label: 'Resources',          icon: <Download size={13} />    },
   ];
 
   const toggle = (key: string) => setExpandedItem(p => p === key ? null : key);
@@ -49,7 +125,7 @@ export const TeacherChampionPage: React.FC = () => {
           <button key={t.id} onClick={() => setActiveTab(t.id)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
               activeTab === t.id
-                ? 'bg-white dark:bg-[#0f1623] text-orange-600 shadow-sm'
+                ? 'bg-white dark:bg-[#0f1623] text-[var(--brand-600)] shadow-sm'
                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
             }`}>
             {t.icon}{t.label}
@@ -71,7 +147,7 @@ export const TeacherChampionPage: React.FC = () => {
                 ["Coordinate closely with Ujamaa and other partners", "Attend coordination meetings and share updates on referrals made."],
               ].map(([title, desc], i) => (
                 <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-neutral-50 dark:bg-slate-800/50">
-                  <div className="w-6 h-6 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center shrink-0 text-[10px] font-bold text-orange-600">{i+1}</div>
+                  <div className="w-6 h-6 rounded-full bg-[var(--brand-100)] dark:bg-[var(--brand-900)]/30 flex items-center justify-center shrink-0 text-[10px] font-bold text-[var(--brand-600)]">{i+1}</div>
                   <div>
                     <div className="text-xs font-bold text-black dark:text-white">{title}</div>
                     <div className="text-[11px] text-slate-500 mt-0.5">{desc}</div>
@@ -143,7 +219,7 @@ export const TeacherChampionPage: React.FC = () => {
                 <div key={i} className="border border-neutral-100 dark:border-slate-800 rounded-xl overflow-hidden">
                   <button onClick={() => toggle(`ss-${i}`)} className="w-full flex items-center justify-between p-3 text-left hover:bg-neutral-50 dark:hover:bg-slate-800/30 transition">
                     <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-[10px] font-bold text-orange-600">{i+1}</div>
+                      <div className="w-5 h-5 rounded-full bg-[var(--brand-100)] dark:bg-[var(--brand-900)]/30 flex items-center justify-center text-[10px] font-bold text-[var(--brand-600)]">{i+1}</div>
                       <span className="text-xs font-bold text-black dark:text-white">{item.rule}</span>
                     </div>
                     {expandedItem === `ss-${i}` ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
@@ -166,7 +242,7 @@ export const TeacherChampionPage: React.FC = () => {
               <p>"We include this material because learning skills in empowerment and self-defense is important for building your safety, confidence, and resilience. At the same time, we understand that everyone's healing journey is different, and some of you may feel overwhelmed while engaging with these topics."</p>
               <p>"Please remember: you are in control of your own participation. If at any point you feel uncomfortable, you can choose to step outside, take a break, or simply not take part in that activity. There is no pressure."</p>
               <p>"This is a safe space. We respect one another, and what is shared here stays here. If at any time you would like extra support, I am here to talk, and we can also connect you to people and places that can help. Most importantly, you are not alone, and your well-being comes first."</p>
-              <p className="font-bold not-italic text-orange-600">"Let's go through this together with care, respect, and courage."</p>
+              <p className="font-bold not-italic text-[var(--brand-600)]">"Let's go through this together with care, respect, and courage."</p>
             </div>
           </Card>
         </div>
@@ -183,7 +259,7 @@ export const TeacherChampionPage: React.FC = () => {
                 <thead>
                   <tr>
                     {['Type', 'Description', 'Examples'].map(h => (
-                      <th key={h} className="px-3 py-2 text-left font-bold text-white text-[10px] uppercase tracking-wide bg-[#e85d04] first:rounded-tl-lg last:rounded-tr-lg">{h}</th>
+                      <th key={h} className="px-3 py-2 text-left font-bold text-white text-[10px] uppercase tracking-wide bg-[var(--brand)] first:rounded-tl-lg last:rounded-tr-lg">{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -195,7 +271,7 @@ export const TeacherChampionPage: React.FC = () => {
                     ['Last Resort',   'Only when all other approaches have failed',            'Parent meetings, referral to counsellor, suspension'],
                   ].map(([type, desc, examples], i) => (
                     <tr key={i} className={i % 2 === 0 ? 'bg-neutral-50 dark:bg-slate-800/20' : ''}>
-                      <td className="px-3 py-2.5 font-bold text-orange-600 dark:text-orange-400 align-top">{type}</td>
+                      <td className="px-3 py-2.5 font-bold text-[var(--brand-600)] dark:text-[var(--brand-400)] align-top">{type}</td>
                       <td className="px-3 py-2.5 text-slate-700 dark:text-slate-300 align-top">{desc}</td>
                       <td className="px-3 py-2.5 text-slate-600 dark:text-slate-400 align-top">{examples}</td>
                     </tr>
@@ -227,7 +303,7 @@ export const TeacherChampionPage: React.FC = () => {
               <div className="mt-3 space-y-1.5">
                 {['One-to-one or small group relationship', 'Long-term, ongoing support', 'Based on trust, respect, and confidentiality', 'Mentee sets the agenda and goals'].map((item, i) => (
                   <div key={i} className="flex items-center gap-2 text-[11px] text-slate-600 dark:text-slate-400">
-                    <div className="w-1.5 h-1.5 rounded-full bg-orange-500 shrink-0" />{item}
+                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--brand-500)] shrink-0" />{item}
                   </div>
                 ))}
               </div>
@@ -277,7 +353,7 @@ export const TeacherChampionPage: React.FC = () => {
             <table className="w-full text-xs border-collapse rounded-xl overflow-hidden min-w-[600px]">
               <thead>
                 <tr>
-                  <th className="px-4 py-3 text-left font-bold text-white bg-[#e85d04] text-[10px] uppercase tracking-wide">Dimension</th>
+                  <th className="px-4 py-3 text-left font-bold text-white bg-[var(--brand)] text-[10px] uppercase tracking-wide">Dimension</th>
                   <th className="px-4 py-3 text-left font-bold text-white bg-blue-700 text-[10px] uppercase tracking-wide">Guidance</th>
                   <th className="px-4 py-3 text-left font-bold text-white bg-purple-700 text-[10px] uppercase tracking-wide">Counselling</th>
                 </tr>
@@ -293,7 +369,7 @@ export const TeacherChampionPage: React.FC = () => {
                   ['Examples',   'Career advice, study skills, life skills sessions',     'Grief support, trauma counselling, crisis intervention'],
                 ].map(([dim, guide, couns], i) => (
                   <tr key={i} className={i % 2 === 0 ? 'bg-neutral-50 dark:bg-slate-800/20' : ''}>
-                    <td className="px-4 py-2.5 font-bold text-orange-600 dark:text-orange-400 align-top">{dim}</td>
+                    <td className="px-4 py-2.5 font-bold text-[var(--brand-600)] dark:text-[var(--brand-400)] align-top">{dim}</td>
                     <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300 align-top">{guide}</td>
                     <td className="px-4 py-2.5 text-slate-600 dark:text-slate-400 align-top">{couns}</td>
                   </tr>
@@ -375,7 +451,7 @@ export const TeacherChampionPage: React.FC = () => {
                 <thead>
                   <tr>
                     {['Assessment Type', 'Description', 'When'].map(h => (
-                      <th key={h} className="px-3 py-2 text-left font-bold text-white text-[10px] uppercase tracking-wide bg-[#e85d04]">{h}</th>
+                      <th key={h} className="px-3 py-2 text-left font-bold text-white text-[10px] uppercase tracking-wide bg-[var(--brand)]">{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -389,7 +465,7 @@ export const TeacherChampionPage: React.FC = () => {
                     ['Certificate', 'A personalised PDF certificate of completion issued to students who pass the quiz.', 'Upon passing the quiz'],
                   ].map(([type, desc, when], i) => (
                     <tr key={i} className={i % 2 === 0 ? 'bg-neutral-50 dark:bg-slate-800/20' : ''}>
-                      <td className="px-3 py-2.5 font-bold text-orange-600 dark:text-orange-400 align-top">{type}</td>
+                      <td className="px-3 py-2.5 font-bold text-[var(--brand-600)] dark:text-[var(--brand-400)] align-top">{type}</td>
                       <td className="px-3 py-2.5 text-slate-700 dark:text-slate-300 align-top">{desc}</td>
                       <td className="px-3 py-2.5 text-slate-500 align-top font-medium">{when}</td>
                     </tr>
@@ -413,7 +489,7 @@ export const TeacherChampionPage: React.FC = () => {
                 <div key={i} className="border border-neutral-100 dark:border-slate-800 rounded-xl overflow-hidden">
                   <button onClick={() => toggle(`beg-${i}`)} className="w-full flex items-center justify-between p-3 text-left hover:bg-neutral-50 dark:hover:bg-slate-800/30">
                     <div>
-                      <div className="text-[10px] font-bold text-orange-500 uppercase tracking-wide">{session}</div>
+                      <div className="text-[10px] font-bold text-[var(--brand-500)] uppercase tracking-wide">{session}</div>
                       <div className="text-xs font-bold text-black dark:text-white">{title}</div>
                     </div>
                     {expandedItem === `beg-${i}` ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
@@ -427,6 +503,146 @@ export const TeacherChampionPage: React.FC = () => {
               ))}
             </div>
           </Card>
+        </div>
+      )}
+
+      {/* ── RESOURCES (downloadable files) ──────────────────────────────── */}
+      {activeTab === 'resources' && (
+        <div className="space-y-4">
+          {canManage && (
+            <div className="flex justify-end">
+              {!showUploadForm ? (
+                <button
+                  onClick={() => setShowUploadForm(true)}
+                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg bg-[var(--brand)] text-white hover:opacity-90 transition"
+                >
+                  <Plus size={13} /> Upload Resource
+                </button>
+              ) : null}
+            </div>
+          )}
+
+          {showUploadForm && (
+            <Card className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-sm text-black dark:text-white">Upload New Resource</h3>
+                <button onClick={() => { setShowUploadForm(false); resetUploadForm(); }} className="text-slate-400 hover:text-black dark:hover:text-white">
+                  <X size={16} />
+                </button>
+              </div>
+
+              {uploadError && (
+                <div className="text-xs text-red-600 bg-red-50 dark:bg-red-950/20 rounded-lg px-3 py-2">{uploadError}</div>
+              )}
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Title *</label>
+                <input
+                  value={uploadTitle}
+                  onChange={e => setUploadTitle(e.target.value)}
+                  placeholder="e.g. Classroom Management Toolkit"
+                  className="w-full mt-1 px-3 py-2 text-xs rounded-lg border border-neutral-200 dark:border-slate-700 bg-white dark:bg-[#0f1623] text-black dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Subtitle</label>
+                <input
+                  value={uploadSubtitle}
+                  onChange={e => setUploadSubtitle(e.target.value)}
+                  placeholder="e.g. Practical strategies for teachers"
+                  className="w-full mt-1 px-3 py-2 text-xs rounded-lg border border-neutral-200 dark:border-slate-700 bg-white dark:bg-[#0f1623] text-black dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Description</label>
+                <textarea
+                  value={uploadDescription}
+                  onChange={e => setUploadDescription(e.target.value)}
+                  rows={2}
+                  placeholder="Brief description of what this resource covers"
+                  className="w-full mt-1 px-3 py-2 text-xs rounded-lg border border-neutral-200 dark:border-slate-700 bg-white dark:bg-[#0f1623] text-black dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Curriculum</label>
+                <select
+                  value={uploadCurriculum}
+                  onChange={e => setUploadCurriculum(e.target.value)}
+                  className="w-full mt-1 px-3 py-2 text-xs rounded-lg border border-neutral-200 dark:border-slate-700 bg-white dark:bg-[#0f1623] text-black dark:text-white"
+                >
+                  <option value="general">General</option>
+                  <option value="him">HIM</option>
+                  <option value="gesd">GESD</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">File (PDF or Word) *</label>
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  onChange={e => setUploadFile(e.target.files?.[0] || null)}
+                  className="w-full mt-1 text-xs text-slate-600 dark:text-slate-300"
+                />
+              </div>
+
+              <button
+                onClick={handleUpload}
+                disabled={uploading}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg bg-[var(--brand)] text-white hover:opacity-90 transition disabled:opacity-50"
+              >
+                <Upload size={13} /> {uploading ? 'Uploading…' : 'Upload'}
+              </button>
+            </Card>
+          )}
+
+          {resourcesLoading ? (
+            <div className="text-xs text-slate-400 text-center py-8">Loading resources…</div>
+          ) : resources.length === 0 ? (
+            <div className="text-xs text-slate-400 text-center py-8">No resources uploaded yet.</div>
+          ) : (
+            <div className="space-y-2">
+              {resources.map((r: any) => (
+                <Card key={r.id} className="flex items-center justify-between gap-3">
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-lg bg-[var(--brand-100)] dark:bg-[var(--brand-900)]/30 flex items-center justify-center shrink-0">
+                      <FileText size={16} className="text-[var(--brand-600)]" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs font-bold text-black dark:text-white truncate">{r.title}</div>
+                      {r.subtitle && <div className="text-[11px] text-slate-500 truncate">{r.subtitle}</div>}
+                      <div className="text-[10px] text-slate-400 mt-0.5">
+                        {r.curriculum ? r.curriculum.toUpperCase() : 'GENERAL'} · {formatSize(r.file_size)}
+                        {r.uploaded_by_name ? ` · Uploaded by ${r.uploaded_by_name}` : ''}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <a
+                      href={r.file_path}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download
+                      className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold rounded-lg border border-neutral-200 dark:border-slate-700 text-black dark:text-white hover:border-[var(--brand)] hover:text-[var(--brand)] transition"
+                    >
+                      <Download size={12} /> Download
+                    </a>
+                    {canManage && (
+                      <button
+                        onClick={() => handleDelete(r.id)}
+                        className="w-7 h-7 flex items-center justify-center rounded-lg border border-neutral-200 dark:border-slate-700 text-slate-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950/20 transition"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    )}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -4,12 +4,15 @@ import {
   HelpCircle, Bell, Calendar, ListTodo, Clock,
   Trash2, Lock, Save, Eye, EyeOff, RefreshCw,
   CheckCircle, AlertCircle, Wifi, Database, Server,
-  Shield,
+  Shield, Languages,
 } from 'lucide-react';
 import { User } from '../types';
 import { Card, Kicker } from './SubComponents';
 import { ROLE_CFG } from '../data';
 import { safeStorage } from '../utils/storage';
+import { useTranslation } from 'react-i18next';
+import { SUPPORTED_LANGUAGES } from '../i18n';
+import { useTheme, THEME_PRESETS } from '../context/ThemeContext';
 import { usersApi, statsApi, api } from '../api';
 
 interface SettingsPageProps {
@@ -28,14 +31,14 @@ const ToggleRow = ({ icon, label, sub, value, onChange, border=true }: {
 }) => (
   <div className={`flex items-center justify-between py-3 ${border?'border-b border-neutral-200 dark:border-slate-800':''}`}>
     <div className="flex items-start gap-3">
-      <span className="p-2 rounded-lg bg-orange-50 dark:bg-orange-950/20 text-orange-500 shrink-0">{icon}</span>
+      <span className="p-2 rounded-lg bg-[var(--brand-50)] dark:bg-[var(--brand-950)]/20 text-[var(--brand-500)] shrink-0">{icon}</span>
       <div>
         <div className="text-xs font-bold text-black dark:text-white">{label}</div>
         <div className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">{sub}</div>
       </div>
     </div>
     <button onClick={onChange}
-      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ml-4 ${value?'bg-orange-500':'bg-gray-200 dark:bg-slate-700'}`}>
+      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ml-4 ${value?'bg-[var(--brand-500)]':'bg-gray-200 dark:bg-slate-700'}`}>
       <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${value?'translate-x-5':'translate-x-0'}`}/>
     </button>
   </div>
@@ -52,7 +55,7 @@ const PwField = ({ label, value, onChange }: { label: string; value: string; onC
           type={show?'text':'password'}
           value={value}
           onChange={e=>onChange(e.target.value)}
-          className="w-full px-3 py-2 pr-9 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 dark:text-white"
+          className="w-full px-3 py-2 pr-9 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)] dark:text-white"
         />
         <button type="button" onClick={()=>setShow(s=>!s)}
           className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
@@ -68,7 +71,20 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   user, darkMode, setDarkMode, showToast, reportsCount, setUser
 }) => {
   const rc = user ? ROLE_CFG[user.role] : null;
-  const [activeTab, setActiveTab] = useState<'appearance'|'notifications'|'account'|'security'|'system'>('appearance');
+  const { t, i18n } = useTranslation();
+  const { brandColor, setBrandColor, resetBrandColor } = useTheme();
+  const setLanguage = (code: string) => {
+    i18n.changeLanguage(code);
+    localStorage.setItem('app_language', code);
+    localStorage.setItem('app_language_user_set', 'true');
+    showToast(`Language changed`, 'success');
+  };
+  const [activeTab, setActiveTab] = useState<'appearance'|'language'|'notifications'|'account'|'security'|'system'>('appearance');
+  useEffect(() => {
+    if (!user && (activeTab === 'account' || activeTab === 'security' || activeTab === 'system')) {
+      setActiveTab('appearance');
+    }
+  }, [user, activeTab]);
 
   // ── Notification prefs (localStorage) ────────────────────────────────────
   const [notifyTraining, setNotifyTraining] = useState(()=>safeStorage.getItem('scaleup_notif_training')!=='false');
@@ -91,18 +107,18 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   },[user]);
 
   const saveProfile = async () => {
-    if (!profileName.trim()) { showToast('❌ Name cannot be empty'); return; }
+    if (!profileName.trim()) { showToast('Name cannot be empty', 'warning'); return; }
     setSavingProfile(true);
     try {
       const updated = await usersApi.updateProfile({ name: profileName.trim(), email: profileEmail.trim() });
       if (updated?.id) {
         setUser?.({ ...user!, name: updated.name, email: updated.email });
-        showToast('✅ Profile updated successfully');
+        showToast('Profile updated successfully', 'success');
       } else {
-        showToast('❌ Update failed — try again');
+        showToast('Update failed — try again', 'error');
       }
     } catch {
-      showToast('❌ Could not reach server');
+      showToast('Could not reach server');
     } finally {
       setSavingProfile(false);
     }
@@ -129,20 +145,20 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const pwStrengthColor = ['','bg-red-500','bg-amber-500','bg-blue-500','bg-emerald-500'][pwStrength];
 
   const changePassword = async () => {
-    if (!currentPw || !newPw || !confirmPw) { showToast('❌ All password fields are required'); return; }
-    if (newPw !== confirmPw) { showToast('❌ New passwords do not match'); return; }
-    if (newPw.length < 8)    { showToast('❌ Password must be at least 8 characters'); return; }
+    if (!currentPw || !newPw || !confirmPw) { showToast('All password fields are required', 'warning'); return; }
+    if (newPw !== confirmPw) { showToast('New passwords do not match', 'warning'); return; }
+    if (newPw.length < 8)    { showToast('Password must be at least 8 characters', 'warning'); return; }
     setSavingPw(true);
     try {
       const res = await usersApi.changePassword({ currentPassword: currentPw, newPassword: newPw });
       if (res?.success) {
-        showToast('✅ Password changed successfully');
+        showToast('Password changed successfully', 'success');
         setCurrentPw(''); setNewPw(''); setConfirmPw('');
       } else {
-        showToast(`❌ ${res?.error || 'Password change failed'}`);
+        showToast(`${res?.error || 'Password change failed'}`, 'error');
       }
     } catch {
-      showToast('❌ Could not reach server');
+      showToast('Could not reach server', 'error');
     } finally {
       setSavingPw(false);
     }
@@ -165,11 +181,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 
   const tabs = [
     {id:'appearance',    label:'Appearance',    icon:Sparkles},
+    {id:'language',      label:'Language',      icon:Languages},
     {id:'notifications', label:'Notifications', icon:Bell},
-    {id:'account',       label:'Account',       icon:UserIcon},
-    {id:'security',      label:'Security',      icon:Lock},
-    {id:'system',        label:'System',        icon:Monitor},
-  ] as const;
+    ...(user ? [
+      {id:'account' as const,  label:'Account',  icon:UserIcon},
+      {id:'security' as const, label:'Security', icon:Lock},
+      {id:'system' as const,   label:'System',   icon:Monitor},
+    ] : []),
+  ];
 
   return (
     <div className="max-w-3xl mx-auto space-y-5 animate-fade-in-up pb-10">
@@ -199,43 +218,137 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       {activeTab==='appearance'&&(
         <Card className="p-5 space-y-5">
           <div className="flex items-center gap-3">
-            <span className="p-2.5 rounded-lg bg-orange-500 text-white"><Sparkles size={16}/></span>
+            <span className="p-2.5 rounded-lg bg-[var(--brand-500)] text-white"><Sparkles size={16}/></span>
             <div>
               <h3 className="text-sm font-bold text-black dark:text-white m-0">Appearance Theme</h3>
               <p className="text-[11px] text-slate-400 m-0">Set the background contrast mode.</p>
             </div>
           </div>
           <div className="h-px bg-neutral-200 dark:bg-slate-800"/>
-          <div className="flex items-center justify-between p-3.5 rounded-xl bg-orange-50 dark:bg-slate-800 border border-orange-200 dark:border-slate-700">
+          <div className="flex items-center justify-between p-3.5 rounded-xl bg-[var(--brand-50)] dark:bg-slate-800 border border-[var(--brand-200)] dark:border-slate-700">
             <div className="flex items-center gap-3">
-              {darkMode?<Moon className="text-violet-400" size={18}/>:<Sun className="text-orange-500" size={18}/>}
+              {darkMode?<Moon className="text-violet-400" size={18}/>:<Sun className="text-[var(--brand-500)]" size={18}/>}
               <div>
                 <div className="text-xs font-bold text-black dark:text-white">{darkMode?'Dark Mode Active':'Light Mode Active'}</div>
                 <div className="text-[11px] text-slate-400">{darkMode?'Dark slate — easy on the eyes at night.':'Clean white & orange — sharp and professional.'}</div>
               </div>
             </div>
-            <button onClick={()=>{setDarkMode(!darkMode);showToast(`🌙 Dark mode ${!darkMode?'ON':'OFF'}`);}}
-              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${darkMode?'bg-orange-500':'bg-gray-200'}`}>
+            <button onClick={()=>{setDarkMode(!darkMode);showToast(`Dark mode ${!darkMode?'ON':'OFF'}`, 'success');}}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${darkMode?'bg-[var(--brand-500)]':'bg-gray-200'}`}>
               <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${darkMode?'translate-x-5':'translate-x-0'}`}/>
             </button>
           </div>
           <div className="grid grid-cols-2 gap-3">
             {[{mode:false,label:'Light Mode',Icon:Sun},{mode:true,label:'Dark Mode',Icon:Moon}].map(({mode,label,Icon})=>(
-              <div key={label} onClick={()=>{setDarkMode(mode);showToast(`🎨 Switched to ${label}`);}}
-                className={`flex flex-col items-center justify-center p-5 rounded-xl border-2 cursor-pointer transition-all ${darkMode===mode?'border-orange-500 bg-orange-50 dark:bg-orange-950/20':'border-neutral-200 dark:border-slate-700 hover:border-orange-200 dark:hover:border-orange-800'}`}>
-                <Icon size={24} className={darkMode===mode?'text-orange-500':'text-slate-300 dark:text-slate-600'}/>
-                <span className={`text-xs font-bold mt-2 ${darkMode===mode?'text-orange-600 dark:text-orange-400':'text-slate-400'}`}>{label}</span>
+              <div key={label} onClick={()=>{setDarkMode(mode);showToast(`Switched to ${label}`, 'success');}}
+                className={`flex flex-col items-center justify-center p-5 rounded-xl border-2 cursor-pointer transition-all ${darkMode===mode?'border-[var(--brand-500)] bg-[var(--brand-50)] dark:bg-[var(--brand-950)]/20':'border-neutral-200 dark:border-slate-700 hover:border-[var(--brand-200)] dark:hover:border-[var(--brand-800)]'}`}>
+                <Icon size={24} className={darkMode===mode?'text-[var(--brand-500)]':'text-slate-300 dark:text-slate-600'}/>
+                <span className={`text-xs font-bold mt-2 ${darkMode===mode?'text-[var(--brand-600)] dark:text-[var(--brand-400)]':'text-slate-400'}`}>{label}</span>
               </div>
             ))}
           </div>
         </Card>
       )}
 
+      {/* ── LANGUAGE ── */}
+      {activeTab==='language'&&(
+        <Card className="p-5 space-y-4">
+          <div className="flex items-center gap-3">
+            <span className="p-2.5 rounded-lg bg-[var(--brand-500)] text-white"><Languages size={16}/></span>
+            <div>
+              <h3 className="text-sm font-bold text-black dark:text-white m-0">Language</h3>
+              <p className="text-[11px] text-slate-400 m-0">Choose the language used throughout the dashboard.</p>
+            </div>
+          </div>
+          <div className="h-px bg-neutral-200 dark:bg-slate-800"/>
+          <div className="grid grid-cols-2 gap-3">
+            {SUPPORTED_LANGUAGES.map(l => (
+              <div key={l.code} onClick={() => setLanguage(l.code)}
+                className={`flex items-center justify-center p-4 rounded-xl border-2 cursor-pointer transition-all ${i18n.language===l.code?'border-[var(--brand-500)] bg-[var(--brand-50)] dark:bg-[var(--brand-950)]/20':'border-neutral-200 dark:border-slate-700 hover:border-[var(--brand-200)] dark:hover:border-[var(--brand-800)]'}`}>
+                <span className={`text-xs font-bold ${i18n.language===l.code?'text-[var(--brand-600)] dark:text-[var(--brand-400)]':'text-slate-500 dark:text-slate-300'}`}>{l.label}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+      {/* ── THEME COLOR ── */}
+      {activeTab==='appearance'&&(
+        <Card className="p-0 overflow-hidden">
+          <div
+            className="px-5 pt-5 pb-6 relative"
+            style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}cc)` }}
+          >
+            <div className="flex items-center justify-between relative z-10">
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-white/70">Accent Color</div>
+                <div className="text-xl font-black text-white mt-0.5">Theme</div>
+              </div>
+              <button
+                onClick={resetBrandColor}
+                className="text-[11px] font-bold text-white/80 hover:text-white bg-white/10 hover:bg-white/20 px-2.5 py-1.5 rounded-lg transition backdrop-blur-sm"
+              >
+                Reset
+              </button>
+            </div>
+            <p className="text-[11px] text-white/70 mt-3 relative z-10 max-w-xs">
+              Pick an accent color used throughout the dashboard. Saved on this device only — no account needed.
+            </p>
+          </div>
+
+          <div className="p-5 space-y-5">
+            <div>
+              <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-3">Presets</div>
+              <div className="grid grid-cols-4 gap-3">
+                {THEME_PRESETS.map(preset => {
+                  const isActive = brandColor === preset.value;
+                  return (
+                    <button
+                      key={preset.value}
+                      onClick={() => setBrandColor(preset.value)}
+                      className={`group relative flex flex-col items-center gap-2 p-3 rounded-2xl transition-all ${
+                        isActive ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-[#0f1623]' : 'hover:-translate-y-0.5'
+                      }`}
+                      style={isActive ? { '--tw-ring-color': preset.value } as React.CSSProperties : undefined}
+                    >
+                      <span
+                        className="w-10 h-10 rounded-full shrink-0 shadow-sm flex items-center justify-center transition-transform group-hover:scale-105"
+                        style={{ background: preset.value }}
+                      >
+                        {isActive && <CheckCircle size={16} className="text-white drop-shadow" />}
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 text-center leading-tight">
+                        {preset.name.replace(' (Default)', '')}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="h-px bg-neutral-100 dark:bg-slate-800" />
+
+            <div className="flex items-center gap-3">
+              <div className="relative shrink-0">
+                <input
+                  type="color"
+                  value={brandColor}
+                  onChange={e => setBrandColor(e.target.value)}
+                  className="w-11 h-11 rounded-xl border-2 border-neutral-200 dark:border-slate-700 cursor-pointer bg-transparent"
+                />
+              </div>
+              <div>
+                <div className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Custom color</div>
+                <div className="text-[11px] font-mono text-slate-400 uppercase">{brandColor}</div>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
       {/* ── NOTIFICATIONS ── */}
       {activeTab==='notifications'&&(
         <Card className="p-5">
           <div className="flex items-center gap-3 mb-4">
-            <span className="p-2.5 rounded-lg bg-orange-500 text-white"><Bell size={16}/></span>
+            <span className="p-2.5 rounded-lg bg-[var(--brand-500)] text-white"><Bell size={16}/></span>
             <div>
               <h3 className="text-sm font-bold text-black dark:text-white m-0">Operations & Calendar Alerts</h3>
               <p className="text-[11px] text-slate-400 m-0">Control what triggers alerts in your dashboard.</p>
@@ -243,11 +356,11 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           </div>
           <div className="h-px bg-neutral-200 dark:bg-slate-800 mb-1"/>
           <ToggleRow icon={<Calendar size={14}/>} label="Training Event Alerts" sub="Get notifications for scheduled TOT and curriculum sessions."
-            value={notifyTraining} onChange={()=>toggle(notifyTraining,setNotifyTraining,'scaleup_notif_training',v=>`🔔 Training alerts ${v?'ON':'OFF'}`)}/>
+            value={notifyTraining} onChange={()=>toggle(notifyTraining,setNotifyTraining,'scaleup_notif_training',v=>`Training alerts ${v?'ON':'OFF'}`)}/>
           <ToggleRow icon={<Clock size={14}/>} label="Meeting Alerts" sub="Receive reminders for regional officer coordinate syncs."
-            value={notifyMeetings} onChange={()=>toggle(notifyMeetings,setNotifyMeetings,'scaleup_notif_meetings',v=>`🔔 Meeting alerts ${v?'ON':'OFF'}`)}/>
+            value={notifyMeetings} onChange={()=>toggle(notifyMeetings,setNotifyMeetings,'scaleup_notif_meetings',v=>`Meeting alerts ${v?'ON':'OFF'}`)}/>
           <ToggleRow icon={<Calendar size={14}/>} label="Week starts on Monday" sub="Arrange the Operations Calendar with Monday as first day."
-            value={weekStartMonday} onChange={()=>toggle(weekStartMonday,setWeekStartMonday,'scaleup_week_monday',v=>`📅 Week start set to ${v?'Monday':'Sunday'}`)}/>
+            value={weekStartMonday} onChange={()=>toggle(weekStartMonday,setWeekStartMonday,'scaleup_week_monday',v=>`Week start set to ${v?'Monday':'Sunday'}`)}/>
           <ToggleRow icon={<ListTodo size={14}/>} label="Task Reminders" sub="Sync dashboard badges for pending operations list actions."
             value={taskReminders} onChange={()=>toggle(taskReminders,setTaskReminders,'scaleup_task_reminders',v=>`⏰ Task reminders ${v?'ON':'OFF'}`)} border={false}/>
         </Card>
@@ -258,7 +371,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         <div className="space-y-4">
           <Card className="p-5">
             <div className="flex items-center gap-3 mb-4">
-              <span className="p-2.5 rounded-lg bg-orange-500 text-white"><UserIcon size={16}/></span>
+              <span className="p-2.5 rounded-lg bg-[var(--brand-500)] text-white"><UserIcon size={16}/></span>
               <div>
                 <h3 className="text-sm font-bold text-black dark:text-white m-0">Profile Information</h3>
                 <p className="text-[11px] text-slate-400 m-0">Update your name and email address.</p>
@@ -268,8 +381,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             {user?(
               <div className="space-y-4">
                 {/* Avatar */}
-                <div className="flex items-center gap-4 p-4 rounded-xl bg-orange-50 dark:bg-slate-800/50 border border-orange-100 dark:border-slate-700">
-                  <div className="w-14 h-14 rounded-full bg-orange-500 text-white font-black text-xl flex items-center justify-center shadow-md shrink-0">
+                <div className="flex items-center gap-4 p-4 rounded-xl bg-[var(--brand-50)] dark:bg-slate-800/50 border border-[var(--brand-100)] dark:border-slate-700">
+                  <div className="w-14 h-14 rounded-full bg-[var(--brand-500)] text-white font-black text-xl flex items-center justify-center shadow-md shrink-0">
                     {user.avatar}
                   </div>
                   <div>
@@ -284,12 +397,12 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                   <div>
                     <label className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-1.5 block">Full Name</label>
                     <input value={profileName} onChange={e=>setProfileName(e.target.value)}
-                      className="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 dark:text-white"/>
+                      className="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)] dark:text-white"/>
                   </div>
                   <div>
                     <label className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-1.5 block">Email Address</label>
                     <input value={profileEmail} onChange={e=>setProfileEmail(e.target.value)} type="email"
-                      className="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 dark:text-white"/>
+                      className="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)] dark:text-white"/>
                   </div>
                   <div className="divide-y divide-neutral-100 dark:divide-slate-800 rounded-lg border border-neutral-200 dark:border-slate-800 overflow-hidden">
                     {[['Role',rc?.label||'—'],['District',user.district||'National'],['Status',user.status?.toUpperCase()||'ACTIVE']].map(([k,v],i)=>(
@@ -302,18 +415,18 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 </div>
 
                 <button onClick={saveProfile} disabled={savingProfile}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white font-bold text-xs transition">
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-[var(--brand-500)] hover:bg-[var(--brand-600)] disabled:opacity-60 text-white font-bold text-xs transition">
                   {savingProfile?<RefreshCw size={13} className="animate-spin"/>:<Save size={13}/>}
                   {savingProfile?'Saving…':'Save Profile Changes'}
                 </button>
 
-                <div className="bg-orange-500 rounded-xl p-4 relative overflow-hidden">
+                <div className="bg-[var(--brand-500)] rounded-xl p-4 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-20 h-20 rounded-full bg-white/10 -translate-y-6 translate-x-6"/>
                   <div className="relative flex items-start gap-2">
-                    <HelpCircle size={14} className="text-orange-100 shrink-0 mt-0.5"/>
+                    <HelpCircle size={14} className="text-[var(--brand-100)] shrink-0 mt-0.5"/>
                     <div>
                       <div className="text-xs font-bold text-white mb-1">Safeguarding Support</div>
-                      <div className="text-[11px] text-orange-100 leading-relaxed">
+                      <div className="text-[11px] text-[var(--brand-100)] leading-relaxed">
                         Contact: <span className="font-bold text-white">support.pamodzi@ujamaa-africa.org</span>
                       </div>
                     </div>
@@ -322,8 +435,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               </div>
             ):(
               <div className="flex flex-col items-center py-8 text-center">
-                <div className="w-14 h-14 rounded-full bg-orange-50 dark:bg-slate-800 flex items-center justify-center mb-3">
-                  <UserIcon size={22} className="text-orange-400"/>
+                <div className="w-14 h-14 rounded-full bg-[var(--brand-50)] dark:bg-slate-800 flex items-center justify-center mb-3">
+                  <UserIcon size={22} className="text-[var(--brand-400)]"/>
                 </div>
                 <div className="font-bold text-slate-700 dark:text-slate-300 text-sm">Not logged in</div>
               </div>
@@ -337,7 +450,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         <div className="space-y-4">
           <Card className="p-5 space-y-4">
             <div className="flex items-center gap-3">
-              <span className="p-2.5 rounded-lg bg-orange-500 text-white"><Lock size={16}/></span>
+              <span className="p-2.5 rounded-lg bg-[var(--brand-500)] text-white"><Lock size={16}/></span>
               <div>
                 <h3 className="text-sm font-bold text-black dark:text-white m-0">Change Password</h3>
                 <p className="text-[11px] text-slate-400 m-0">Update your login password. Min 8 characters.</p>
@@ -381,7 +494,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             )}
 
             <button onClick={changePassword} disabled={savingPw||newPw!==confirmPw||!currentPw}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-bold text-xs transition">
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-[var(--brand-500)] hover:bg-[var(--brand-600)] disabled:opacity-50 text-white font-bold text-xs transition">
               {savingPw?<RefreshCw size={13} className="animate-spin"/>:<Shield size={13}/>}
               {savingPw?'Changing Password…':'Change Password'}
             </button>
@@ -390,7 +503,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           {/* Session info */}
           <Card className="p-5">
             <div className="flex items-center gap-3 mb-3">
-              <span className="p-2.5 rounded-lg bg-orange-500 text-white"><Shield size={16}/></span>
+              <span className="p-2.5 rounded-lg bg-[var(--brand-500)] text-white"><Shield size={16}/></span>
               <div>
                 <h3 className="text-sm font-bold text-black dark:text-white m-0">Active Session</h3>
                 <p className="text-[11px] text-slate-400 m-0">Your current login session details.</p>
@@ -417,7 +530,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       {activeTab==='system'&&(
         <Card className="p-5 space-y-4">
           <div className="flex items-center gap-3">
-            <span className="p-2.5 rounded-lg bg-orange-500 text-white"><Monitor size={16}/></span>
+            <span className="p-2.5 rounded-lg bg-[var(--brand-500)] text-white"><Monitor size={16}/></span>
             <div>
               <h3 className="text-sm font-bold text-black dark:text-white m-0">Platform Diagnostics</h3>
               <p className="text-[11px] text-slate-400 m-0">Live system health and workspace info.</p>
@@ -463,7 +576,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             ))}
           </div>
 
-          <button onClick={()=>{safeStorage.clear();showToast('♻️ Cache cleared. Please refresh.');}}
+          <button onClick={()=>{safeStorage.clear();showToast('Cache cleared. Please refresh.', 'success');}}
             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border-2 border-red-200 dark:border-red-900/40 text-red-500 font-bold text-xs hover:bg-red-50 dark:hover:bg-red-950/20 transition">
             <Trash2 size={13}/> Clear Local Application Cache
           </button>

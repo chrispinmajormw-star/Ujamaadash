@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { districtsApi, usersApi, mapClustersApi } from '../api';
+import { useCountry } from '../context/CountryContext';
 import {
   Card, PageHeader, Btn, ProgBar, Badge, FInput, FArea, FSelect, Modal, FilterBar
 } from './SubComponents';
 import {
   MapPin, GraduationCap, School, Users, Plus, Edit2, Trash2,
-  ChevronDown, ChevronUp, FileText, Calendar, CheckCircle, Clock, AlertCircle
-} from 'lucide-react';
+  ChevronDown, ChevronUp, FileText, Calendar, CheckCircle, Clock, AlertCircle, CheckCircle2, AlertTriangle} from 'lucide-react';
 
 interface DistrictsPageProps {
   user: User | null;
@@ -121,12 +121,14 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
     }
   }, [user]);
 
+  const { activeCountry } = useCountry();
   useEffect(() => {
-    districtsApi.getAll().then(data => {
+    setLoading(true);
+    districtsApi.getAll(activeCountry).then(data => {
       setDistricts(data);
       setLoading(false);
     });
-  }, []);
+  }, [activeCountry]);
 
   const loadDistrictData = async (districtId: number) => {
     if (districtData[districtId]) return;
@@ -165,17 +167,17 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
     if (!assignModal || !assignUserId) return;
     // Prevent duplicate assignment: warn if district already has a DC and user is assigning a different one
     if (assignModal.district_coordinator_user_id && String(assignModal.district_coordinator_user_id) === String(assignUserId)) {
-      showToast('⚠️ This DC is already assigned to this district');
-      return;
-    }
-    const data = await districtsApi.assignDC(assignModal.name, assignUserId);
-    if (data.error) { showToast(`⚠️ ${data.error}`); return; }
-    setDistricts(prev => prev.map(d => d.id === assignModal.id ? {
-      ...d,
-      district_coordinator_user_id: assignUserId,
-      coordinator_name: dcUsers.find(u => u.id === assignUserId)?.name || ''
+      showToast('This DC is already assigned to this district', 'warning');
+ return;
+ }
+ const data = await districtsApi.assignDC(assignModal.name, assignUserId);
+ if (data.error) { showToast(`️ ${data.error}`, 'warning'); return; }
+ setDistricts(prev => prev.map(d => d.id === assignModal.id ? {
+ ...d,
+ district_coordinator_user_id: assignUserId,
+ coordinator_name: dcUsers.find(u => u.id === assignUserId)?.name || ''
     } : d));
-    showToast('✅ District Coordinator assigned');
+    showToast('District Coordinator assigned', 'success');
     setAssignModal(null);
     setAssignUserId('');
   };
@@ -198,19 +200,19 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
   const submitReport = async () => {
     if (!reportModal) return;
     if (!validateReportForm()) {
-      showToast('⚠️ Please fix the form errors');
-      return;
-    }
-    setIsSubmitting(true);
-    try {
-      const data = await districtsApi.submitReport(reportModal.id, {
-        number_of_tots: parseInt(reportForm.number_of_tots),
-        teachers_trained: parseInt(reportForm.teachers_trained),
-        school_coverage: parseFloat(reportForm.school_coverage),
-        notes: reportForm.notes,
-      });
-      if (data.error) { showToast(`⚠️ ${data.error}`); return; }
-      showToast('✅ District report submitted');
+      showToast('Please fix the form errors', 'warning');
+ return;
+ }
+ setIsSubmitting(true);
+ try {
+ const data = await districtsApi.submitReport(reportModal.id, {
+ number_of_tots: parseInt(reportForm.number_of_tots),
+ teachers_trained: parseInt(reportForm.teachers_trained),
+ school_coverage: parseFloat(reportForm.school_coverage),
+ notes: reportForm.notes,
+ });
+ if (data.error) { showToast(`️ ${data.error}`, 'warning'); return; }
+ showToast('District report submitted', 'success');
       setReportModal(null);
       setReportForm({ number_of_tots: '', teachers_trained: '', school_coverage: '', notes: '' });
       setFormErrors({});
@@ -223,7 +225,7 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
         school_coverage: data.school_coverage,
       } : d));
     } catch (error) {
-      showToast('⚠️ Network error. Please check your connection and try again.');
+      showToast('Network error. Please check your connection and try again.', 'warning');
     } finally {
       setIsSubmitting(false);
     }
@@ -257,41 +259,41 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
     const { district, training } = trainingModal;
     const isEdit = !!training;
     if (!validateTrainingForm(isEdit)) {
-      showToast('⚠️ Please fix the form errors');
-      return;
-    }
-    setIsSubmitting(true);
-    try {
-      const fn = isEdit
-        ? () => districtsApi.updateTraining(training.id, trainingForm)
-        : () => districtsApi.createTraining(district.id, trainingForm);
-      const data = await fn();
-      if (data.error) { showToast(`⚠️ ${data.error}`); return; }
-      showToast(isEdit ? '✅ Training updated' : '✅ Training added');
+      showToast('Please fix the form errors', 'warning');
+ return;
+ }
+ setIsSubmitting(true);
+ try {
+ const fn = isEdit
+ ? () => districtsApi.updateTraining(training.id, trainingForm)
+ : () => districtsApi.createTraining(district.id, trainingForm);
+ const data = await fn();
+ if (data.error) { showToast(`️ ${data.error}`, 'warning'); return; }
+ showToast(isEdit ? 'Training updated' : 'Training added');
       setTrainingModal(null);
       setTrainingForm({ training_name: '', cohort: '', start_date: '', participants: '', venue: '', training_lead_name: '' });
       setFormErrors({});
       setDistrictData(prev => ({ ...prev, [district.id]: undefined as any }));
       loadDistrictData(district.id);
     } catch (error) {
-      showToast('⚠️ Network error. Please check your connection and try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+      showToast('Network error. Please check your connection and try again.', 'warning');
+ } finally {
+ setIsSubmitting(false);
+ }
+ };
 
-  const deleteTraining = async () => {
-    if (!deleteModal) return;
-    setIsSubmitting(true);
-    try {
-      const data = await districtsApi.deleteTraining(deleteModal.trainingId);
-      if (data.error) { showToast(`⚠️ ${data.error}`); return; }
-      showToast('✅ Training deleted successfully');
+ const deleteTraining = async () => {
+ if (!deleteModal) return;
+ setIsSubmitting(true);
+ try {
+ const data = await districtsApi.deleteTraining(deleteModal.trainingId);
+ if (data.error) { showToast(`️ ${data.error}`, 'warning'); return; }
+ showToast('Training deleted successfully', 'success');
       setDeleteModal(null);
       setDistrictData(prev => ({ ...prev, [deleteModal.districtId]: undefined as any }));
       loadDistrictData(deleteModal.districtId);
     } catch (error) {
-      showToast('⚠️ Network error. Please try again.');
+      showToast('Network error. Please try again.', 'warning');
     } finally {
       setIsSubmitting(false);
     }
@@ -300,9 +302,10 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
   const filtered = visibleDistricts.filter(d => {
     return region === 'all' || d.region === region;
   });
-  const grouped: Record<string, any[]> = { Northern: [], Central: [], Southern: [] };
+  const regionNames = Array.from(new Set(filtered.map(d => d.region).filter(Boolean))).sort();
+  const grouped: Record<string, any[]> = {};
+  regionNames.forEach(r => { grouped[r] = []; });
   filtered.forEach(d => { if (grouped[d.region]) grouped[d.region].push(d); });
-  const regionNames = ['Northern', 'Central', 'Southern'];
   const regionSummary = (reg: string) => {
     const dists = grouped[reg] || [];
     const activeCount = dists.filter(d => d.is_active).length;
@@ -336,7 +339,7 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
           { label: 'Teachers Trained', value: visibleDistricts.reduce((a, d) => a + (parseInt(d.teachers_trained) || 0), 0), icon: <Users size={15} /> },
         ].map((s, i) => (
           <div key={i} className="p-3 rounded-lg border border-neutral-200 dark:border-slate-800 bg-white dark:bg-[#0f1623]">
-            <div className="flex items-center gap-1.5 mb-1 text-orange-700 dark:text-orange-300 text-[10px] font-semibold uppercase tracking-wide">{s.icon}{s.label}</div>
+            <div className="flex items-center gap-1.5 mb-1 text-[var(--brand-700)] dark:text-[var(--brand-300)] text-[10px] font-semibold uppercase tracking-wide">{s.icon}{s.label}</div>
             <div className="text-2xl font-semibold text-black dark:text-white">{s.value.toLocaleString()}</div>
           </div>
         ))}
@@ -346,11 +349,7 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
         <FilterBar
           options={[
             { v: 'all', l: isManager ? `${user?.region} Region` : 'All Regions' },
-            ...(isAdmin ? [
-              { v: 'Northern', l: 'Northern' },
-              { v: 'Central',  l: 'Central'  },
-              { v: 'Southern', l: 'Southern' },
-            ] : []),
+            ...(isAdmin ? Array.from(new Set(visibleDistricts.map(d => d.region).filter(Boolean))).sort().map(r => ({ v: r, l: r })) : []),
           ]}
           active={region}
           onChange={setRegion}
@@ -363,7 +362,10 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
         const dists = grouped[reg] || [];
         if (dists.length === 0) return null;
         const summary = regionSummary(reg);
-        const theme = REGION_THEME[reg];
+        const theme = REGION_THEME[reg] || {
+          dot: '#64748b', panelBg: '#f8fafc', panelBorder: '#e2e8f0',
+          cardBg: '#ffffff', chipBg: '#f1f5f9', chipText: '#475569',
+        };
         return (
           <section
             key={reg}
@@ -416,8 +418,8 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
                   return (
                     <Card
                       key={d.id}
-                      className={`shadow-none p-3.5 sm:p-4 transition-all cursor-pointer hover:border-orange-400 dark:hover:border-orange-500 ${
-                        isExpanded ? 'ring-2 ring-offset-2 ring-orange-500 border-orange-500' : ''
+                      className={`shadow-none p-3.5 sm:p-4 transition-all cursor-pointer hover:border-[var(--brand-400)] dark:hover:border-[var(--brand-500)] ${
+                        isExpanded ? 'ring-2 ring-offset-2 ring-[var(--brand-500)] border-[var(--brand-500)]' : ''
                       }`}
                       onClick={() => toggleExpand(d.id)}
                     >
@@ -542,45 +544,45 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
             <option value="">Choose a DC…</option>
             {dcUsers.map(u => (
               <option key={u.id} value={u.id}>{u.name} — {u.district || 'No district'}</option>
-            ))}
-          </FSelect>
-          {assignUserId && assignModal.district_coordinator_user_id &&
-            String(assignUserId) !== String(assignModal.district_coordinator_user_id) && (
-            <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-2">
-              ⚠️ This will replace <strong>{assignModal.coordinator_name}</strong> as DC for {assignModal.name}.
-            </p>
-          )}
-          <div className="flex gap-2 justify-end mt-3">
-            <Btn size="sm" variant="ghost" onClick={() => setAssignModal(null)}>Cancel</Btn>
-            <Btn size="sm" variant="primary" onClick={assignDC} disabled={!assignUserId}>Assign</Btn>
-          </div>
-        </Modal>
-      )}
+ ))}
+ </FSelect>
+ {assignUserId && assignModal.district_coordinator_user_id &&
+ String(assignUserId) !== String(assignModal.district_coordinator_user_id) && (
+ <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-2">
+ ️ This will replace <strong>{assignModal.coordinator_name}</strong> as DC for {assignModal.name}.
+ </p>
+ )}
+ <div className="flex gap-2 justify-end mt-3">
+ <Btn size="sm"variant="ghost"onClick={() => setAssignModal(null)}>Cancel</Btn>
+ <Btn size="sm"variant="primary"onClick={assignDC} disabled={!assignUserId}>Assign</Btn>
+ </div>
+ </Modal>
+ )}
 
-      {/* Report Modal */}
-      {reportModal && (
-        <Modal title={`Update Stats — ${reportModal.name}`} onClose={() => setReportModal(null)} width={480}>
-          <p className="text-xs text-black/50 dark:text-white/50 mb-4">Submit latest district statistics.</p>
-          <FInput label="Number of TOTs *" type="number" value={reportForm.number_of_tots} onChange={e => setReportForm(p => ({ ...p, number_of_tots: e.target.value }))} />
-          <FInput label="Teachers Trained *" type="number" value={reportForm.teachers_trained} onChange={e => setReportForm(p => ({ ...p, teachers_trained: e.target.value }))} />
-          <FInput label="School Coverage (%) *" type="number" value={reportForm.school_coverage} onChange={e => setReportForm(p => ({ ...p, school_coverage: e.target.value }))} />
-          <FArea label="Notes" value={reportForm.notes} onChange={e => setReportForm(p => ({ ...p, notes: e.target.value }))} rows={2} placeholder="Any additional context…" />
-          <div className="flex gap-2 justify-end mt-3">
-            <Btn size="sm" variant="ghost" onClick={() => setReportModal(null)}>Cancel</Btn>
-            <Btn size="sm" variant="primary" onClick={submitReport}>Submit</Btn>
-          </div>
-        </Modal>
-      )}
+ {/* Report Modal */}
+ {reportModal && (
+ <Modal title={`Update Stats — ${reportModal.name}`} onClose={() => setReportModal(null)} width={480}>
+ <p className="text-xs text-black/50 dark:text-white/50 mb-4">Submit latest district statistics.</p>
+ <FInput label="Number of TOTs *"type="number"value={reportForm.number_of_tots} onChange={e => setReportForm(p => ({ ...p, number_of_tots: e.target.value }))} />
+ <FInput label="Teachers Trained *"type="number"value={reportForm.teachers_trained} onChange={e => setReportForm(p => ({ ...p, teachers_trained: e.target.value }))} />
+ <FInput label="School Coverage (%) *"type="number"value={reportForm.school_coverage} onChange={e => setReportForm(p => ({ ...p, school_coverage: e.target.value }))} />
+ <FArea label="Notes"value={reportForm.notes} onChange={e => setReportForm(p => ({ ...p, notes: e.target.value }))} rows={2} placeholder="Any additional context…"/>
+ <div className="flex gap-2 justify-end mt-3">
+ <Btn size="sm"variant="ghost"onClick={() => setReportModal(null)}>Cancel</Btn>
+ <Btn size="sm"variant="primary"onClick={submitReport}>Submit</Btn>
+ </div>
+ </Modal>
+ )}
 
-      {/* Training Modal */}
-      {trainingModal && (
-        <Modal title={`${trainingModal.training ? 'Edit' : 'Add'} Training — ${trainingModal.district.name}`} onClose={() => setTrainingModal(null)} width={520}>
+ {/* Training Modal */}
+ {trainingModal && (
+ <Modal title={`${trainingModal.training ? 'Edit' : 'Add'} Training — ${trainingModal.district.name}`} onClose={() => setTrainingModal(null)} width={520}>
           <p className="text-xs text-black/50 dark:text-white/50 mb-4">End date is automatically set to 6 days after start date.</p>
           <FInput label="Training Name *" value={trainingForm.training_name} onChange={e => setTrainingForm(p => ({ ...p, training_name: e.target.value }))} placeholder="e.g. ETT Cohort 16 — Lilongwe Urban" />
           <FInput label="Cohort" value={trainingForm.cohort} onChange={e => setTrainingForm(p => ({ ...p, cohort: e.target.value }))} placeholder="e.g. Cohort 16" />
           <FInput label="Start Date *" type="date" value={trainingForm.start_date} onChange={e => setTrainingForm(p => ({ ...p, start_date: e.target.value }))} />
           {trainingForm.start_date && (
-            <p className="text-[11px] text-orange-600 -mt-2 mb-2">
+            <p className="text-[11px] text-[var(--brand-600)] -mt-2 mb-2">
               End date: {new Date(new Date(trainingForm.start_date).setDate(new Date(trainingForm.start_date).getDate() + 6)).toDateString()}
             </p>
           )}
@@ -626,28 +628,28 @@ const TrainingCard: React.FC<{
   const startDate = training.start_date ? new Date(training.start_date).toLocaleDateString() : '—';
   const endDate   = training.end_date   ? new Date(training.end_date).toLocaleDateString()   : '—';
 
-  return (
-    <div className="p-3 rounded-lg border border-neutral-200 dark:border-slate-800 mb-2 bg-white dark:bg-[#0f1623]">
-      <div className="flex items-start gap-2 flex-wrap">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap mb-1">
-            <span className="font-semibold text-xs text-black dark:text-white">{training.name}</span>
-            {training.cohort && <span className="text-[10px] text-black/50 dark:text-white/50">· {training.cohort}</span>}
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold" style={{ color: cfg.color, background: cfg.bg }}>
-              {cfg.icon}{cfg.label}
-            </span>
-          </div>
-          <div className="text-[11px] text-black/50 dark:text-white/50 space-y-0.5">
-            <div>📅 {startDate} → {endDate} · 👥 {training.participants || 0} participants</div>
-            {training.venue && <div>📍 {training.venue}</div>}
-            {training.training_lead_name && <div>👤 Lead: {training.training_lead_name}</div>}
-          </div>
-          {status === 'active' && (
+ return (
+ <div className="p-3 rounded-lg border border-neutral-200 dark:border-slate-800 mb-2 bg-white dark:bg-[#0f1623]">
+ <div className="flex items-start gap-2 flex-wrap">
+ <div className="flex-1 min-w-0">
+ <div className="flex items-center gap-2 flex-wrap mb-1">
+ <span className="font-semibold text-xs text-black dark:text-white">{training.name}</span>
+ {training.cohort && <span className="text-[10px] text-black/50 dark:text-white/50">· {training.cohort}</span>}
+ <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold"style={{ color: cfg.color, background: cfg.bg }}>
+ {cfg.icon}{cfg.label}
+ </span>
+ </div>
+ <div className="text-[11px] text-black/50 dark:text-white/50 space-y-0.5">
+ <div> {startDate} → {endDate} · {training.participants || 0} participants</div>
+ {training.venue && <div> {training.venue}</div>}
+ {training.training_lead_name && <div> Lead: {training.training_lead_name}</div>}
+ </div>
+ {status === 'active' && (
             <div className="mt-2 space-y-1">
               <div className="flex justify-between text-[10px] text-black/50 dark:text-white/50">
-                <span>Progress</span><span className="font-bold text-orange-600">{pct}%</span>
+                <span>Progress</span><span className="font-bold text-[var(--brand-600)]">{pct}%</span>
               </div>
-              <ProgBar pct={pct} color="#e85d04" />
+              <ProgBar pct={pct} color="var(--brand)" />
             </div>
           )}
         </div>

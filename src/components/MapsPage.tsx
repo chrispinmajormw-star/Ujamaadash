@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   MapPin, Sliders, Info, RefreshCw,
   ChevronRight, Clock,
-  AlertCircle, CheckCircle, Eye, EyeOff, Layers, Edit2,
-} from 'lucide-react';
+  AlertCircle, CheckCircle, Eye, EyeOff, Layers, Edit2, User, Mail, Check, Phone} from 'lucide-react';
 import { Btn, Modal } from './SubComponents';
-import { mapClustersApi, mapSchoolsApi } from '../api';
+import { mapClustersApi, mapSchoolsApi, districtsApi } from '../api';
+import { useCountry } from '../context/CountryContext';
 
 interface MapSchool {
   id: number; cluster_id: number; name: string; district: string; region: string;
@@ -30,7 +30,7 @@ const LAYERS: {key:LayerKey;label:string;activeClass:string}[] = [
   {key:'trainedSchools',   label:'Trained Schools',   activeClass:'bg-emerald-600 text-white'},
   {key:'untrainedSchools', label:'Untrained Schools', activeClass:'bg-amber-500 text-white'},
   {key:'unassigned',       label:'Unassigned Schools',activeClass:'bg-blue-600 text-white'},
-  {key:'connectors',       label:'Connectors',         activeClass:'bg-orange-500 text-white'},
+  {key:'connectors',       label:'Connectors',         activeClass:'bg-[var(--brand-500)] text-white'},
   {key:'heatmap',          label:'Heat Map',        activeClass:'bg-red-600 text-white'},
 ];
 
@@ -43,12 +43,12 @@ const StatTile = ({label,value,sub}:{label:string;value:string|number;sub?:strin
 );
 const MiniBar = ({value}:{value:number}) => (
   <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
-    <div className="h-full rounded-full" style={{width:`${Math.min(value,100)}%`,background:'#e85d04'}}/>
+    <div className="h-full rounded-full" style={{width:`${Math.min(value,100)}%`,background:'var(--brand)'}}/>
   </div>
 );
 const CurrPill = ({label,active}:{label:string;active:boolean}) => (
-  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${active?'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/30 dark:text-orange-400 dark:border-orange-800':'bg-slate-100 text-slate-400 border-slate-200 dark:bg-slate-800 dark:text-slate-600 line-through opacity-60'}`}>
-    {active?'✓':'✗'} {label}
+  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${active?'bg-[var(--brand-50)] text-[var(--brand-700)] border-[var(--brand-200)] dark:bg-[var(--brand-950)]/30 dark:text-[var(--brand-400)] dark:border-[var(--brand-800)]':'bg-slate-100 text-slate-400 border-slate-200 dark:bg-slate-800 dark:text-slate-600 line-through opacity-60'}`}>
+    {active?'':''} {label}
   </span>
 );
 
@@ -63,6 +63,8 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
   const [error, setError]                     = useState<string|null>(null);
   const [selectedRegion, setSelectedRegion]   = useState('All');
   const [activeClusterId, setActiveClusterId] = useState<number|null>(null);
+  const [sidebarTab, setSidebarTab] = useState<'clusters'|'schools'>('clusters');
+
   const [searchQuery, setSearchQuery]         = useState('');
   const [layers, setLayers] = useState<Record<LayerKey,boolean>>({clusters:true,trainedSchools:true,untrainedSchools:true,connectors:true,heatmap:false,unassigned:true});
   const toggleLayer = (key:LayerKey) => setLayers(prev=>({...prev,[key]:!prev[key]}));
@@ -71,17 +73,34 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
   const [schoolDetail,    setSchoolDetail]    = useState<MapSchool|null>(null);
   const [loadingSchool,   setLoadingSchool]   = useState(false);
   const mapRef = useRef<any>(null);
+  const pendingFlyRef = useRef<{lat:number; lng:number; zoom:number} | null>(null);
 
   // Track which cluster IDs have had schools loaded
   const loadedClusterIds = useRef<Set<number>>(new Set());
   // Track Leaflet layer groups so we can add school markers on demand
   const schoolLayerRef = useRef<any>(null);
 
+  const { activeCountry } = useCountry();
+  const [liveRegions, setLiveRegions] = useState<string[]>([]);
+
+  // Regions shown in the filter adapt to whichever country is currently selected
+  useEffect(() => {
+    if (!activeCountry || activeCountry === 'all') {
+      setLiveRegions([]);
+      return;
+    }
+    districtsApi.getAll(activeCountry).then((res: any) => {
+      const list = Array.isArray(res) ? res : [];
+      setLiveRegions(Array.from(new Set(list.map((d: any) => d.region).filter(Boolean))).sort());
+    }).catch(() => setLiveRegions([]));
+    setSelectedRegion('All');
+  }, [activeCountry]);
   const fetchClusters = useCallback(async () => {
     setLoading(true); setError(null);
     try {
       const params:any = {};
       if (selectedRegion !== 'All') params.region = selectedRegion;
+      if (activeCountry && activeCountry !== 'all') params.country = activeCountry;
       // Only load clusters — NO bulk school fetch
       const clusterData = await mapClustersApi.getAll(params);
       if (Array.isArray(clusterData)) {
@@ -94,7 +113,7 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
       }
     } catch { setError('Could not load map data.'); }
     finally { setLoading(false); }
-  }, [selectedRegion]);
+  }, [selectedRegion, activeCountry]);
 
   // Load schools for a specific cluster on demand
   const loadClusterSchools = useCallback(async (cluster: MapCluster) => {
@@ -114,6 +133,11 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
 
   const openSchool = async (school:MapSchool) => {
     setSelectedSchool(school); setLoadingSchool(true);
+    const L = (window as any).L;
+    if (mapRef.current && L) {
+      pendingFlyRef.current = { lat: school.lat, lng: school.lng, zoom: 16 };
+      mapRef.current.flyTo([school.lat, school.lng], 16, { duration: 1.1 });
+    }
     try { const d = await mapSchoolsApi.getById(school.id); setSchoolDetail(d); }
     catch { setSchoolDetail(school); }
     finally { setLoadingSchool(false); }
@@ -124,15 +148,24 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
     return !q || c.name.toLowerCase().includes(q) || c.district.toLowerCase().includes(q);
   });
 
+  // Combined list of every school currently visible on the map, for the Schools sidebar tab
+  const sidebarSchools = useMemo(() => {
+    const fromClusters = filteredClusters.flatMap(c => c.schools.map(s => ({ ...s, __source: 'cluster' as const })));
+    const planned = plannedSchools.map(s => ({ ...s, __source: 'planned' as const }));
+    const unassigned = unassignedSchools.map(s => ({ ...s, __source: 'unassigned' as const }));
+    return [...fromClusters, ...planned, ...unassigned];
+  }, [filteredClusters, plannedSchools, unassignedSchools]);
+
   const flyToCluster = useCallback((cluster:MapCluster) => {
     const L = (window as any).L;
     if (!mapRef.current || !L) return;
     setActiveClusterId(cluster.id);
     // Load schools on demand when user clicks cluster
     loadClusterSchools(cluster);
-    const pts:[number,number][] = [[cluster.lat,cluster.lng],...cluster.schools.map(s=>[s.lat,s.lng] as [number,number])];
-    if (pts.length > 1) mapRef.current.flyToBounds(pts,{padding:[60,60],maxZoom:13,duration:1.1});
-    else mapRef.current.flyTo([cluster.lat,cluster.lng],12,{duration:1.1});
+    // Zoom tight to the cluster's own point (~1km scale) so it's clearly visible,
+    // rather than fitting the whole cluster+schools bounding box which can zoom out too far.
+    pendingFlyRef.current = { lat: cluster.lat, lng: cluster.lng, zoom: 16 };
+    mapRef.current.flyTo([cluster.lat,cluster.lng],16,{duration:1.1});
   }, []);
 
   // ── Build Leaflet map ────────────────────────────────────────────────────
@@ -143,10 +176,15 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
 
     // Full-screen map, no auto-zoom-on-resize
     const map = L.map('ett-map', {
-      zoomControl: true,
+      zoomControl: false,
       scrollWheelZoom: true,
       zoomSnap: 0.5,
-    }).setView([-13.2, 34.0], 7);
+    }).setView(
+      activeCountry === 'Kenya' ? [-0.5, 37.5] :
+      activeCountry === 'Somaliland' ? [9.5, 46.0] :
+      [-13.2, 34.0],
+      activeCountry === 'Kenya' ? 6 : 7
+    );
     L.control.zoom({ position: 'bottomleft'}).addTo(map);
     mapRef.current = map;
 
@@ -167,7 +205,7 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
         L.circle([c.lat,c.lng],{
           radius: 18000 * Math.max(c.school_count/8, 0.5),
           fillColor: `rgba(232,93,4,${Math.min(c.students/500,0.7)})`,
-          color:'#e85d04', weight:1, fillOpacity:0.4,
+          color:'var(--brand)', weight:1, fillOpacity:0.4,
         }).addTo(map);
       });
     }
@@ -179,7 +217,7 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
           const vis = s.ett_trained ? layers.trainedSchools : layers.untrainedSchools;
           if (!vis) return;
           L.polyline([[cluster.lat,cluster.lng],[s.lat,s.lng]],{
-            color:'#e85d04', weight:1.5, opacity:0.4, dashArray:'5 5',
+            color:'var(--brand)', weight:1.5, opacity:0.4, dashArray:'5 5',
           }).addTo(map);
         });
       }
@@ -225,24 +263,6 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
 
         L.marker([school.lat,school.lng],{icon,zIndexOffset:200})
           .addTo(map)
-          .bindPopup(`
-            <div style="font-family:'Plus Jakarta Sans',sans-serif;min-width:210px;color:${darkMode?'#f3f4f6':'#111827'}">
-              <div style="font-weight:900;font-size:13px;margin-bottom:2px">${school.name}</div>
-              <div style="font-size:10px;font-weight:700;margin-bottom:6px;color:${trained?'#d53d01':'#d97706'}">
-                ${trained?'✓ ETT Trained':'○ Not Yet Trained'}
-              </div>
-              <div style="font-size:10px;color:#e85d04;font-weight:700;margin-bottom:6px">${school.district}</div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px;font-size:10.5px">
-                <div><span style="color:#9ca3af">Learners</span><br><b>${totalL.toLocaleString()}</b></div>
-                <div><span style="color:#9ca3af">Trained</span><br><b>${school.trained_teachers}</b></div>
-                <div><span style="color:#9ca3af">TOTs</span><br><b>${school.tots}</b></div>
-                <div><span style="color:#9ca3af">STOTs</span><br><b>${school.stots}</b></div>
-                <div><span style="color:#9ca3af">Teachbacks</span><br><b>${school.teachbacks}</b></div>
-                <div><span style="color:#9ca3af">Curriculum</span><br><b style="font-size:9.5px">${curricula}</b></div>
-              </div>
-              ${school.headteacher?`<div style="font-size:10px;color:#6b7280">HT: <b>${school.headteacher}</b></div>`:''}
-              <div style="margin-top:8px;font-size:9px;color:#9ca3af;font-style:italic">Click marker to open full details →</div>
-            </div>`,{maxWidth:270})
           .on('click',()=>openSchool(school));
       });
 
@@ -254,18 +274,18 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
           <div style="
             width:18px;height:18px;border-radius:50%;
             background:${darkMode?'#1e293b':'#0f1623'};
-            border:2px solid #e85d04;
+            border:2px solid var(--brand);
             box-shadow:0 2px 6px rgba(0,0,0,.4);
             display:flex;align-items:center;justify-content:center;
           ">
-            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#e85d04" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="3"/>
               <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
             </svg>
           </div>
           <div style="
             margin-top:2px;
-            background:#e85d04;color:white;
+            background:var(--brand);color:white;
             font-size:7px;font-weight:800;
             padding:1px 4px;border-radius:3px;
             white-space:nowrap;max-width:70px;overflow:hidden;text-overflow:ellipsis;
@@ -276,30 +296,9 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
 
       const centerIcon = L.divIcon({className:'',html:clusterHtml,iconAnchor:[9,9]});
       const marker = L.marker([cluster.lat,cluster.lng],{icon:centerIcon,zIndexOffset:500}).addTo(map);
-
-      marker.bindPopup(`
-        <div style="font-family:'Plus Jakarta Sans',sans-serif;min-width:240px;color:${darkMode?'#f8fafc':'#0f1623'}">
-          <div style="font-weight:900;font-size:14px;margin-bottom:2px">${cluster.name}</div>
-          <div style="font-size:10px;color:#e85d04;font-weight:700;margin-bottom:8px">${cluster.district} · ${cluster.region}</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:8px;font-size:10.5px">
-            <div><span style="color:#9ca3af">Learners</span><br><b>${cluster.students.toLocaleString()}</b></div>
-            <div><span style="color:#9ca3af">Schools</span><br><b>${cluster.school_count}</b></div>
-            <div><span style="color:#9ca3af">TOTs</span><br><b>${cluster.tots}</b></div>
-            <div><span style="color:#9ca3af">STOTs</span><br><b>${cluster.stots}</b></div>
-            <div><span style="color:#9ca3af">Teachbacks</span><br><b>${cluster.teachbacks}</b></div>
-            <div><span style="color:#9ca3af">Trained</span><br><b>${cluster.trained}</b></div>
-          </div>
-          ${cluster.lead?`<div style="font-size:10px;color:#6b7280;margin-bottom:6px">Lead: <b>${cluster.lead}</b></div>`:''}
-          <div style="background:#f1f5f9;border-radius:4px;height:6px;overflow:hidden">
-            <div style="width:${cluster.progress}%;height:100%;background:#e85d04;border-radius:4px"></div>
-          </div>
-          <div style="font-size:9px;color:#9ca3af;text-align:right;margin-top:2px">${cluster.progress}% progress</div>
-          <div style="margin-top:8px;font-size:9px;color:#9ca3af;font-style:italic">Click to open cluster panel →</div>
-        </div>`,{maxWidth:290});
       marker.on('click',()=>{
-        setActiveClusterId(cluster.id);
+        flyToCluster(cluster);
         setSelectedCluster(cluster);
-        loadClusterSchools(cluster);
       });
     });
 
@@ -326,14 +325,6 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
       const icon = L.divIcon({className:'',html,iconAnchor:[6,6]});
       L.marker([school.lat,school.lng],{icon,zIndexOffset:150})
         .addTo(map)
-        .bindPopup(`
-          <div style="font-family:'Plus Jakarta Sans',sans-serif;min-width:180px;color:${darkMode?'#f3f4f6':'#111827'}">
-            <div style="font-weight:900;font-size:12px;margin-bottom:2px">${school.name}</div>
-            <div style="font-size:10px;font-weight:700;color:#7c3aed;margin-bottom:4px">📋 Planned School</div>
-            <div style="font-size:10px;color:#e85d04;font-weight:700">${school.district}</div>
-            ${school.headteacher?`<div style="font-size:10px;color:#6b7280;margin-top:3px">HT: <b>${school.headteacher}</b></div>`:''}
-            <div style="font-size:9px;color:#9ca3af;margin-top:4px;font-style:italic">Not yet assigned to a cluster</div>
-          </div>`,{maxWidth:220})
         .on('click',()=>openSchool(school));
     });
 
@@ -354,21 +345,26 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
         const icon = L.divIcon({className:'',html,iconAnchor:[5,5]});
         L.marker([school.lat, school.lng],{icon,zIndexOffset:100})
           .addTo(map)
-          .bindPopup(`
-            <div style="font-family:'Plus Jakarta Sans',sans-serif;min-width:180px;color:${darkMode?'#f3f4f6':'#111827'}">
-              <div style="font-weight:900;font-size:12px;margin-bottom:2px">${school.name}</div>
-              <div style="font-size:10px;font-weight:700;color:#2563eb;margin-bottom:4px">📍 Unassigned School</div>
-              <div style="font-size:10px;color:#e85d04;font-weight:700">${school.district}${school.region ? ' · ' + school.region : ''}</div>
-              ${school.boys_enrolled||school.girls_enrolled ? `<div style="font-size:10px;color:#6b7280;margin-top:3px">👦 ${school.boys_enrolled||0} boys · 👧 ${school.girls_enrolled||0} girls</div>` : ''}
-              ${school.ett_trained ? '<div style="font-size:10px;color:#16a34a;margin-top:3px;font-weight:700">✅ ETT Trained</div>' : '<div style="font-size:10px;color:#d97706;margin-top:3px;">⏳ Not yet trained</div>'}
-              <div style="font-size:9px;color:#9ca3af;margin-top:4px;font-style:italic">Awaiting cluster assignment</div>
-            </div>`,{maxWidth:220})
           .on('click',()=>openSchool(school));
       });
     }
 
+    // Re-apply any pending fly-to target now that the map has (re)built — this survives
+    // the map rebuilding mid-animation due to cluster/school data loading.
+    if (pendingFlyRef.current) {
+      const { lat, lng, zoom } = pendingFlyRef.current;
+      map.setView([lat, lng], zoom, { animate: false });
+    }
+
+    // Re-apply any pending fly-to target now that the map has (re)built — this survives
+    // the map rebuilding mid-animation due to cluster/school data loading.
+    if (pendingFlyRef.current) {
+      const { lat, lng, zoom } = pendingFlyRef.current;
+      map.setView([lat, lng], zoom, { animate: false });
+    }
+
     return () => { map.remove(); mapRef.current = null; };
-  }, [filteredClusters, plannedSchools, darkMode, layers, loading, error, loadClusterSchools]);
+  }, [filteredClusters, plannedSchools, darkMode, layers, loading, error, loadClusterSchools, activeCountry]);
 
   const allSchools      = clusters.flatMap(c=>c.schools);
   const totalLearners   = clusters.reduce((a,c)=>a+c.students,0);
@@ -410,7 +406,7 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
       <div className="absolute top-3 left-3 right-3 z-20 flex items-center gap-2">
         {/* Title pill */}
         <div className="flex items-center gap-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 shadow-lg shrink-0">
-          <MapPin size={13} className="text-orange-500 shrink-0"/>
+          <MapPin size={13} className="text-[var(--brand-500)] shrink-0"/>
           <div>
             <div className="text-xs font-black text-slate-900 dark:text-white leading-none">Cluster Map</div>
             <div className={`text-[9px] leading-none mt-0.5 font-semibold flex items-center gap-1 ${isOnline ? 'text-emerald-500' : 'text-amber-500'}`}>
@@ -424,13 +420,13 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
 
         {/* Stats toggle */}
         <button onClick={() => setPanelOpen(o => !o)}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold shadow-lg border backdrop-blur-sm transition-all min-h-[36px] ${panelOpen ? 'bg-orange-500 text-white border-orange-500' : 'bg-white/95 dark:bg-slate-900/95 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'}`}>
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold shadow-lg border backdrop-blur-sm transition-all min-h-[36px] ${panelOpen ? 'bg-[var(--brand-500)] text-white border-[var(--brand-500)]' : 'bg-white/95 dark:bg-slate-900/95 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'}`}>
           <Sliders size={13}/><span className="hidden sm:inline">Stats</span>
         </button>
 
         {/* Clusters/sidebar toggle */}
         <button onClick={() => setSidebarOpen(o => !o)}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold shadow-lg border backdrop-blur-sm transition-all min-h-[36px] ${sidebarOpen ? 'bg-orange-500 text-white border-orange-500' : 'bg-white/95 dark:bg-slate-900/95 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'}`}>
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold shadow-lg border backdrop-blur-sm transition-all min-h-[36px] ${sidebarOpen ? 'bg-[var(--brand-500)] text-white border-[var(--brand-500)]' : 'bg-white/95 dark:bg-slate-900/95 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'}`}>
           <Layers size={13}/><span className="hidden sm:inline">Clusters</span>
         </button>
 
@@ -460,7 +456,7 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
             <div className="flex flex-wrap items-center gap-3 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-emerald-600 shrink-0"/> Trained</span>
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-amber-500 shrink-0"/> Untrained</span>
-              <span className="flex items-center gap-1.5"><span className="w-4 h-4 rounded-full border-2 border-orange-500 bg-slate-900 shrink-0"/> Cluster</span>
+              <span className="flex items-center gap-1.5"><span className="w-4 h-4 rounded-full border-2 border-[var(--brand-500)] bg-slate-900 shrink-0"/> Cluster</span>
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 border-2 border-dashed border-violet-500 shrink-0" style={{transform:'rotate(45deg)'}}/> Planned ({plannedSchools.length})</span>
             </div>
             <div className="flex flex-wrap gap-1.5">
@@ -487,9 +483,9 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
                 <Sliders size={11}/> Region
               </div>
               <div className="flex flex-wrap gap-1">
-                {['All','Northern','Central','Southern'].map(r => (
+                {['All', ...liveRegions].map(r => (
                   <button key={r} onClick={() => setSelectedRegion(r)}
-                    className={`px-2 py-1 rounded-full text-[10px] font-bold cursor-pointer transition-all ${selectedRegion===r?'bg-slate-900 text-white dark:bg-orange-600':'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'}`}>
+                    className={`px-2 py-1 rounded-full text-[10px] font-bold cursor-pointer transition-all ${selectedRegion===r?'bg-slate-900 text-white dark:bg-[var(--brand-600)]':'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'}`}>
                     {r}
                   </button>
                 ))}
@@ -501,59 +497,22 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
               </div>
               <input type="text" placeholder="Cluster or district…" value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full px-2 py-1.5 text-[11px] bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 dark:text-slate-200"/>
+                className="w-full px-2 py-1.5 text-[11px] bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)] dark:text-slate-200"/>
             </div>
           </div>
           <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
-            {loading ? (
-              <div className="flex items-center justify-center h-16 text-xs text-slate-400 gap-2">
-                <RefreshCw size={12} className="animate-spin"/> Loading…
-              </div>
-            ) : filteredClusters.length === 0 ? (
-              <div className="p-3 text-xs text-slate-400 text-center">No clusters found.</div>
-            ) : (
-              <>
-                <div className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider px-1 py-1">
-                  Clusters ({filteredClusters.length})
-                </div>
-                {filteredClusters.map(c => {
-                  const cTrained   = c.schools.filter(s => s.ett_trained).length;
-                  const cUntrained = c.schools.length - cTrained;
-                  const livePct    = c.schools.length > 0 ? Math.round((cTrained / c.schools.length) * 100) : 0;
-                  return (
-                    <button key={c.id} onClick={() => { flyToCluster(c); setSelectedCluster(c); }}
-                      className={`w-full text-left p-2.5 rounded-xl border transition-all ${activeClusterId===c.id?'border-orange-500 bg-orange-50/30 dark:bg-orange-950/20':'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-orange-200'}`}>
-                      <div className="font-bold text-[11px] text-slate-900 dark:text-slate-100 truncate">{c.name}</div>
-                      <div className="text-[9.5px] text-slate-400 mt-0.5">📍 {c.district}</div>
-                      <div className="flex gap-2 mt-1 text-[9px] font-bold">
-                        <span className="text-emerald-600">{cTrained} trained</span>
-                        {cUntrained > 0 && <span className="text-amber-500">{cUntrained} untrained</span>}
-                        <span className="text-slate-400 ml-auto">{livePct}%</span>
-                      </div>
-                      <div className="mt-1.5"><MiniBar value={livePct}/></div>
-                    </button>
-                  );
-                })}
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ── BOTTOM HINT ─────────────────────────────────────────────── */}
-      <div className="absolute bottom-3 right-3 z-10 flex items-center gap-1.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-[10px] text-slate-500 font-mono pointer-events-none">
-        <Info size={10}/> Click any marker for details
-      </div>
-
-      {/* CLUSTER MODAL */}
-      {selectedCluster&&(
-        <Modal title={selectedCluster.name} onClose={()=>setSelectedCluster(null)} width={520}>
+            {selectedCluster ? (
+              <div className="p-1 space-y-3">
+                <button onClick={()=>setSelectedCluster(null)} className="flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-[var(--brand-600)] transition mb-1">
+                  <ChevronRight size={12} className="rotate-180"/> Back to list
+                </button>
+                <div className="font-bold text-sm text-slate-900 dark:text-slate-100">{selectedCluster.name}</div>
           <div className="space-y-4">
             <div className="flex flex-wrap gap-2 text-[10px] font-bold">
-              <span className="px-2 py-1 rounded-full bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-950/30 dark:text-orange-400 dark:border-orange-900">📍 {selectedCluster.district}</span>
+              <span className="px-2 py-1 rounded-full bg-[var(--brand-50)] text-[var(--brand-700)] border border-[var(--brand-200)] dark:bg-[var(--brand-950)]/30 dark:text-[var(--brand-400)] dark:border-[var(--brand-900)]">{selectedCluster.district}</span>
               <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700">{selectedCluster.region}</span>
               {selectedCluster.zone_name&&<span className="px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/30 dark:text-blue-400">{selectedCluster.zone_name}</span>}
-              {selectedCluster.verified&&<span className="px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400">✓ GIS Verified</span>}
+              {selectedCluster.verified&&<span className="px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400">GIS Verified</span>}
             </div>
             <div className="grid grid-cols-3 gap-2">
               <StatTile label="Learners"   value={selectedCluster.students.toLocaleString()}/>
@@ -566,7 +525,7 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
             <div>
               <div className="flex justify-between text-[10px] font-bold text-slate-500 mb-1">
                 <span>Programme Progress</span>
-                <span className="text-orange-600">{selectedCluster.progress}%</span>
+                <span className="text-[var(--brand-600)]">{selectedCluster.progress}%</span>
               </div>
               <MiniBar value={selectedCluster.progress}/>
             </div>
@@ -574,8 +533,8 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
               <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-100 dark:border-slate-800">
                 <div className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 mb-1">Cluster Coordinator</div>
                 <div className="font-bold text-sm text-slate-800 dark:text-slate-200">{selectedCluster.lead}</div>
-                {selectedCluster.lead_phone&&<div className="text-xs text-slate-500 mt-0.5">📞 {selectedCluster.lead_phone}</div>}
-                {selectedCluster.lead_email&&<div className="text-xs text-slate-500 mt-0.5">✉️ {selectedCluster.lead_email}</div>}
+                {selectedCluster.lead_phone&&<div className="text-xs text-slate-500 mt-0.5">{selectedCluster.lead_phone}</div>}
+                {selectedCluster.lead_email&&<div className="text-xs text-slate-500 mt-0.5">{selectedCluster.lead_email}</div>}
               </div>
             )}
             {selectedCluster.schools.length>0&&(
@@ -596,7 +555,7 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
                           <div className="text-[9.5px] text-slate-400">{((s.boys_enrolled||0)+(s.girls_enrolled||0)).toLocaleString()} learners · {s.ett_trained?'ETT trained':'Untrained'}</div>
                         </div>
                       </div>
-                      <ChevronRight size={12} className="text-slate-300 group-hover:text-orange-500 transition"/>
+                      <ChevronRight size={12} className="text-slate-300 group-hover:text-[var(--brand-500)] transition"/>
                     </button>
                   ))}
                 </div>
@@ -610,12 +569,13 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
               </div>
             )}
           </div>
-        </Modal>
-      )}
-
-      {/* SCHOOL MODAL */}
-      {selectedSchool&&(
-        <Modal title={loadingSchool?'Loading…':(schoolDetail?.name??selectedSchool.name)} onClose={()=>{setSelectedSchool(null);setSchoolDetail(null);}} width={500}>
+              </div>
+            ) : (selectedSchool || schoolDetail) ? (
+              <div className="p-1 space-y-3">
+                <button onClick={()=>{setSelectedSchool(null);setSchoolDetail(null);}} className="flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-[var(--brand-600)] transition mb-1">
+                  <ChevronRight size={12} className="rotate-180"/> Back to list
+                </button>
+                <div className="font-bold text-sm text-slate-900 dark:text-slate-100">{loadingSchool?'Loading…':(schoolDetail?.name??selectedSchool?.name)}</div>
           {loadingSchool?(
             <div className="flex items-center justify-center h-28 text-sm text-slate-400 gap-2">
               <RefreshCw size={16} className="animate-spin"/> Fetching school record…
@@ -637,9 +597,9 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 text-[10px] font-bold">
-                  <span className="px-2 py-1 rounded-full bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-950/30 dark:text-orange-400 dark:border-orange-900">📍 {s.district}</span>
+                  <span className="px-2 py-1 rounded-full bg-[var(--brand-50)] text-[var(--brand-700)] border border-[var(--brand-200)] dark:bg-[var(--brand-950)]/30 dark:text-[var(--brand-400)] dark:border-[var(--brand-900)]">{s.district}</span>
                   {s.zone_name&&<span className="px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/30 dark:text-blue-400">{s.zone_name}</span>}
-                  {s.verified&&<span className="px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/30 dark:text-blue-400">✓ GIS Verified</span>}
+                  {s.verified&&<span className="px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/30 dark:text-blue-400">GIS Verified</span>}
                 </div>
                 <div className="flex gap-2 flex-wrap">
                   <CurrPill label="HIM (Boys)"   active={s.him_running}/>
@@ -660,7 +620,7 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
                   <div>
                     <div className="flex justify-between text-[10px] font-bold text-slate-500 mb-1">
                       <span>Session Completion</span>
-                      <span className="text-orange-600">{Math.round((s.sessions_completed/s.sessions_planned)*100)}%</span>
+                      <span className="text-[var(--brand-600)]">{Math.round((s.sessions_completed/s.sessions_planned)*100)}%</span>
                     </div>
                     <MiniBar value={(s.sessions_completed/s.sessions_planned)*100}/>
                   </div>
@@ -674,7 +634,7 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
                   <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-100 dark:border-slate-800">
                     <div className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 mb-1">Headteacher</div>
                     <div className="font-bold text-sm text-slate-800 dark:text-slate-200">{s.headteacher}</div>
-                    {s.headteacher_phone&&<div className="text-xs text-slate-500 mt-0.5">📞 {s.headteacher_phone}</div>}
+                    {s.headteacher_phone&&<div className="text-xs text-slate-500 mt-0.5">{s.headteacher_phone}</div>}
                   </div>
                 )}
                 <div className="text-[10px] font-mono text-slate-400 flex items-center gap-1.5">
@@ -708,8 +668,88 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
               </div>
             );
           })())}
-        </Modal>
+              </div>
+            ) : (
+              <>
+
+            <div className="flex gap-1 p-1 mb-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
+              <button
+                onClick={() => setSidebarTab('clusters')}
+                className={`flex-1 text-[10px] font-bold py-1.5 rounded-md transition-all ${sidebarTab==='clusters'?'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm':'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+              >
+                Clusters
+              </button>
+              <button
+                onClick={() => setSidebarTab('schools')}
+                className={`flex-1 text-[10px] font-bold py-1.5 rounded-md transition-all ${sidebarTab==='schools'?'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm':'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+              >
+                Schools
+              </button>
+            </div>
+
+            {loading ? (
+              <div className="flex items-center justify-center h-16 text-xs text-slate-400 gap-2">
+                <RefreshCw size={12} className="animate-spin"/> Loading…
+              </div>
+            ) : sidebarTab === 'clusters' ? (
+              filteredClusters.length === 0 ? (
+                <div className="p-3 text-xs text-slate-400 text-center">No clusters found.</div>
+              ) : (
+                <>
+                  <div className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider px-1 py-1">
+                    Clusters ({filteredClusters.length})
+                  </div>
+                  {filteredClusters.map(c => {
+                    const cTrained   = c.schools.filter(s => s.ett_trained).length;
+                    const cUntrained = c.schools.length - cTrained;
+                    const livePct    = c.schools.length > 0 ? Math.round((cTrained / c.schools.length) * 100) : 0;
+                    return (
+                      <button key={c.id} onClick={() => { flyToCluster(c); setSelectedCluster(c); }}
+                        className={`w-full text-left p-2.5 rounded-xl border transition-all ${activeClusterId===c.id?'border-[var(--brand-500)] bg-[var(--brand-50)]/30 dark:bg-[var(--brand-950)]/20':'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-[var(--brand-200)]'}`}>
+                        <div className="font-bold text-[11px] text-slate-900 dark:text-slate-100 truncate">{c.name}</div>
+                        <div className="text-[9.5px] text-slate-400 mt-0.5">{c.district}</div>
+                        <div className="flex gap-2 mt-1 text-[9px] font-bold">
+                          <span className="text-emerald-600">{cTrained} trained</span>
+                          {cUntrained > 0 && <span className="text-amber-500">{cUntrained} untrained</span>}
+                          <span className="text-slate-400 ml-auto">{livePct}%</span>
+                        </div>
+                        <div className="mt-1.5"><MiniBar value={livePct}/></div>
+                      </button>
+                    );
+                  })}
+                </>
+              )
+            ) : (
+              sidebarSchools.length === 0 ? (
+                <div className="p-3 text-xs text-slate-400 text-center">No schools found.</div>
+              ) : (
+                <>
+                  <div className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider px-1 py-1">
+                    Schools ({sidebarSchools.length})
+                  </div>
+                  {sidebarSchools.map((s: any, i: number) => (
+                    <button key={`${s.__source}-${s.id}-${i}`} onClick={() => openSchool(s)}
+                      className="w-full text-left p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-[var(--brand-200)] transition-all">
+                      <div className="font-bold text-[11px] text-slate-900 dark:text-slate-100 truncate">{s.name}</div>
+                      <div className="text-[9.5px] text-slate-400 mt-0.5">{s.district}</div>
+                      <div className="flex gap-2 mt-1 text-[9px] font-bold">
+                        {s.ett_trained
+                          ? <span className="text-emerald-600">Trained</span>
+                          : <span className="text-amber-500">Not trained</span>}
+                        {s.__source === 'planned' && <span className="text-purple-500 ml-auto">Planned</span>}
+                        {s.__source === 'unassigned' && <span className="text-blue-500 ml-auto">Unassigned</span>}
+                      </div>
+                    </button>
+                  ))}
+                </>
+              )
+            )}
+              </>
+            )}
+          </div>
+        </div>
       )}
+
     </div>
   );
 };

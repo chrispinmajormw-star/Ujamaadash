@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { User } from '../types';
 import { documentReportsApi } from '../api';
 import { Card, PageHeader, Btn, FInput, FArea, Modal } from './SubComponents';
-import { Inbox, Send, Upload, Download, CheckCircle, XCircle, FileText, Eye, ExternalLink, Trash2 } from 'lucide-react';
+import { Inbox, Send, Upload, Download, CheckCircle, XCircle, FileText, Eye, ExternalLink, Trash2, BarChart2, AlertTriangle, Mail, Map, Shield} from 'lucide-react';
 
 const BASE_URL = 'https://13.61.100.62.nip.io';
 
@@ -20,7 +20,7 @@ const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> =
 
 const RECIPIENT_LABEL: Record<string, string> = {
   tot: 'District Coordinator',
-  sasa_officer: 'District Coordinator',
+  sasa_officer: 'System Admin',
   data_entry: 'District Coordinator',
   district_coordinator: 'Program Manager',
 };
@@ -47,7 +47,7 @@ const DocViewer: React.FC<{ report: any; onClose: () => void }> = ({ report, onC
         {/* File info bar */}
         <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2 text-xs text-slate-500">
-            <FileText size={13} className="text-orange-500" />
+            <FileText size={13} className="text-[var(--brand-500)]" />
             <span className="font-semibold text-slate-700 dark:text-slate-300">{report.file_name}</span>
             <span>·</span>
             <span>From <strong>{report.sender_name}</strong></span>
@@ -57,7 +57,7 @@ const DocViewer: React.FC<{ report: any; onClose: () => void }> = ({ report, onC
           <a
             href={fileUrl}
             download={report.file_name}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 hover:border-orange-400 text-slate-700 dark:text-slate-300 transition"
+            className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 hover:border-[var(--brand-400)] text-slate-700 dark:text-slate-300 transition"
           >
             <Download size={12} /> Download
           </a>
@@ -85,7 +85,7 @@ const DocViewer: React.FC<{ report: any; onClose: () => void }> = ({ report, onC
 
         <p className="text-[10px] text-slate-400 text-center">
           Google Docs Viewer · If the document doesn't load,{' '}
-          <a href={fileUrl} download className="text-orange-500 underline">download it directly</a>
+          <a href={fileUrl} download className="text-[var(--brand-500)] underline">download it directly</a>
         </p>
       </div>
     </Modal>
@@ -127,47 +127,47 @@ export const DocumentReportsPage: React.FC<DocumentReportsPageProps> = ({ user, 
   }, [user]);
 
   const handleSubmit = async () => {
-    if (!title || !file) { showToast('⚠️ Title and file are required'); return; }
+    if (!title || !file) { showToast('Title and file are required', 'warning'); return; }
     setSubmitting(true);
     const formData = new FormData();
     formData.append('title', title);
     formData.append('description', description);
     formData.append('file', file);
-    try {
-      const data = await documentReportsApi.submit(formData);
-      if (data.error) { showToast(`⚠️ ${data.error}`); setSubmitting(false); return; }
-      showToast(`✅ Report submitted to ${RECIPIENT_LABEL[role]}`);
-      setSent(prev => [data, ...prev]);
-      setTitle(''); setDescription(''); setFile(null);
+ try {
+ const data = await documentReportsApi.submit(formData);
+ if (data.error) { showToast(`️ ${data.error}`, 'warning'); setSubmitting(false); return; }
+ showToast(`Report submitted to ${RECIPIENT_LABEL[role]}`, 'success');
+ setSent(prev => [data, ...prev]);
+ setTitle(''); setDescription(''); setFile(null);
       if (fileRef.current) fileRef.current.value = '';
       setTab('sent');
     } catch {
-      showToast('⚠️ Failed to submit report');
-    }
-    setSubmitting(false);
-  };
+      showToast('Failed to submit report', 'warning');
+ }
+ setSubmitting(false);
+ };
 
-  const handleUpdateStatus = async (id: number, status: string) => {
-    const data = await documentReportsApi.updateStatus(id, status, feedback);
-    if (data.error) { showToast(`⚠️ ${data.error}`); return; }
-    setInbox(prev => prev.map(r => r.id === id ? { ...r, status, feedback } : r));
-    showToast(`Report marked as ${status}`);
-    setReviewing(null);
-    setFeedback('');
-  };
+ const handleUpdateStatus = async (id: number, status: string) => {
+ const data = await documentReportsApi.updateStatus(id, status, feedback);
+ if (data.error) { showToast(`️ ${data.error}`, 'warning'); return; }
+ setInbox(prev => prev.map(r => r.id === id ? { ...r, status, feedback } : r));
+ showToast(`Report marked as ${status}`);
+ setReviewing(null);
+ setFeedback('');
+ };
 
-  const handleDelete = async () => {
-    if (!deleteId) return;
-    setDeleting(true);
-    try {
-      const data = await documentReportsApi.delete(deleteId);
-      if (data?.error) { showToast(`⚠️ ${data.error}`); setDeleting(false); return; }
-      setInbox(prev => prev.filter(r => r.id !== deleteId));
-      setSent(prev => prev.filter(r => r.id !== deleteId));
-      showToast('🗑️ Report deleted');
+ const handleDelete = async () => {
+ if (!deleteId) return;
+ setDeleting(true);
+ try {
+ const data = await documentReportsApi.delete(deleteId);
+ if (data?.error) { showToast(`️ ${data.error}`, 'warning'); setDeleting(false); return; }
+ setInbox(prev => prev.filter(r => r.id !== deleteId));
+ setSent(prev => prev.filter(r => r.id !== deleteId));
+ showToast('Report deleted', 'success');
       setDeleteId(null);
     } catch {
-      showToast('⚠️ Failed to delete report');
+      showToast('Failed to delete report', 'warning');
     }
     setDeleting(false);
   };
@@ -193,7 +193,7 @@ export const DocumentReportsPage: React.FC<DocumentReportsPageProps> = ({ user, 
       <div className="flex flex-wrap items-start gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
-            <FileText size={14} className="text-orange-500 shrink-0" />
+            <FileText size={14} className="text-[var(--brand-500)] shrink-0" />
             <span className="font-bold text-sm text-black dark:text-white">{r.title}</span>
             <span
               className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
@@ -209,30 +209,30 @@ export const DocumentReportsPage: React.FC<DocumentReportsPageProps> = ({ user, 
             }
           </div>
           {r.sender_role && (
-            <div className="text-[10px] text-orange-600 font-semibold mb-1">
-              {r.sender_role === 'sasa_officer'          ? '🛡️ From SASA Officer' :
-               r.sender_role === 'district_coordinator'  ? '🗺️ From District Coordinator' :
-               r.sender_role === 'program_manager'       ? '📊 Forwarded by Manager' : ''}
-            </div>
-          )}
-          {r.description && <p className="text-xs text-black/70 dark:text-white/70 mb-1">{r.description}</p>}
-          {r.feedback && (
-            <div className="mt-1 text-xs text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/20 rounded p-2">
-              💬 Feedback: {r.feedback}
-            </div>
-          )}
-        </div>
+            <div className="text-[10px] text-[var(--brand-600)] font-semibold mb-1">
+              {r.sender_role === 'sasa_officer'          ? 'From SASA Officer' :
+               r.sender_role === 'district_coordinator'  ? 'From District Coordinator' :
+               r.sender_role === 'program_manager'       ? 'Forwarded by Manager' : ''}
+ </div>
+ )}
+ {r.description && <p className="text-xs text-black/70 dark:text-white/70 mb-1">{r.description}</p>}
+ {r.feedback && (
+ <div className="mt-1 text-xs text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/20 rounded p-2">
+ Feedback: {r.feedback}
+ </div>
+ )}
+ </div>
 
-        {/* Action buttons */}
-        <div className="flex flex-col gap-1.5 shrink-0">
-          {/* View button — opens in-app viewer */}
-          {r.file_name && (
-            <button
-              onClick={() => {
-              console.log('REPORT', r);
+ {/* Action buttons */}
+ <div className="flex flex-col gap-1.5 shrink-0">
+ {/* View button — opens in-app viewer */}
+ {r.file_name && (
+ <button
+ onClick={() => {
+ console.log('REPORT', r);
               setViewing(r);
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-400 hover:bg-orange-100 transition"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[var(--brand-50)] dark:bg-[var(--brand-950)]/20 border border-[var(--brand-200)] dark:border-[var(--brand-800)] text-[var(--brand-700)] dark:text-[var(--brand-400)] hover:bg-[var(--brand-100)] transition"
             >
               <Eye size={12}/> View Document
             </button>
@@ -242,7 +242,7 @@ export const DocumentReportsPage: React.FC<DocumentReportsPageProps> = ({ user, 
             <a
               href={`${BASE_URL}${r.file_path}`}
               download={r.file_name}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 hover:border-orange-400 text-slate-600 dark:text-slate-300 transition"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 hover:border-[var(--brand-400)] text-slate-600 dark:text-slate-300 transition"
             >
               <Download size={12}/> Download
             </a>
@@ -282,7 +282,7 @@ export const DocumentReportsPage: React.FC<DocumentReportsPageProps> = ({ user, 
             onClick={() => setTab(t.id)}
             className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold rounded-t-lg border-b-2 transition-all -mb-px ${
               tab === t.id
-                ? 'border-orange-500 text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/20'
+                ? 'border-[var(--brand-500)] text-[var(--brand-600)] dark:text-[var(--brand-400)] bg-[var(--brand-50)] dark:bg-[var(--brand-950)]/20'
                 : 'border-transparent text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white'
             }`}
           >
@@ -321,7 +321,7 @@ export const DocumentReportsPage: React.FC<DocumentReportsPageProps> = ({ user, 
         <Card className="max-w-xl">
           <div className="mb-4">
             <p className="text-xs text-black/60 dark:text-white/60">
-              Your report will be sent to: <strong className="text-orange-600">{RECIPIENT_LABEL[role]}</strong>
+              Your report will be sent to: <strong className="text-[var(--brand-600)]">{RECIPIENT_LABEL[role]}</strong>
             </p>
           </div>
           <FInput
@@ -346,7 +346,7 @@ export const DocumentReportsPage: React.FC<DocumentReportsPageProps> = ({ user, 
               type="file"
               accept=".pdf,.doc,.docx"
               onChange={e => setFile(e.target.files?.[0] || null)}
-              className="w-full text-sm text-black dark:text-white file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
+              className="w-full text-sm text-black dark:text-white file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-[var(--brand-50)] file:text-[var(--brand-700)] hover:file:bg-[var(--brand-100)]"
             />
             {file && (
               <p className="text-[11px] text-black/60 dark:text-white/60 mt-1">
@@ -379,7 +379,7 @@ export const DocumentReportsPage: React.FC<DocumentReportsPageProps> = ({ user, 
             {/* View inline before deciding */}
             <button
               onClick={() => setViewing(reviewing)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-orange-50 dark:bg-orange-950/20 border-2 border-dashed border-orange-300 dark:border-orange-700 text-orange-700 dark:text-orange-400 font-semibold text-sm hover:bg-orange-100 transition"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[var(--brand-50)] dark:bg-[var(--brand-950)]/20 border-2 border-dashed border-[var(--brand-300)] dark:border-[var(--brand-700)] text-[var(--brand-700)] dark:text-[var(--brand-400)] font-semibold text-sm hover:bg-[var(--brand-100)] transition"
             >
               <Eye size={16}/> View Document Before Deciding
             </button>
@@ -400,13 +400,13 @@ export const DocumentReportsPage: React.FC<DocumentReportsPageProps> = ({ user, 
               <Btn size="sm" variant="success" onClick={() => handleUpdateStatus(reviewing.id, 'approved')}>
                 <CheckCircle size={13}/> Approve
               </Btn>
-              {role === 'program_manager' && (
-                <Btn size="sm" variant="primary" onClick={async () => {
-                  const data = await documentReportsApi.forward(reviewing.id);
-                  if (data.error) { showToast(`⚠️ ${data.error}`); return; }
-                  setInbox(prev => prev.filter(r => r.id !== reviewing.id));
-                  setReviewing(null);
-                  showToast('📨 Report forwarded to Admin');
+              {role === 'program_manager'&& (
+ <Btn size="sm"variant="primary"onClick={async () => {
+ const data = await documentReportsApi.forward(reviewing.id);
+ if (data.error) { showToast(`️ ${data.error}`, 'warning'); return; }
+ setInbox(prev => prev.filter(r => r.id !== reviewing.id));
+ setReviewing(null);
+ showToast('Report forwarded to Admin', 'success');
                 }}>
                   Forward to Admin
                 </Btn>

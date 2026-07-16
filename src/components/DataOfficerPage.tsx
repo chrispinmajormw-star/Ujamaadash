@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import {
   ClipboardList, MapPin, AlertTriangle, Plus, Save, CheckCircle,
-  ChevronDown, ChevronUp, Calendar, BarChart2, Trash2
-} from 'lucide-react';
+  ChevronDown, ChevronUp, Calendar, BarChart2, Trash2, CheckCircle2} from 'lucide-react';
 import { User } from '../types';
 import { useMonitoring } from '../context/MonitoringContext';
+import { useCountry } from '../context/CountryContext';
+import { districtsApi } from '../api';
 import { Card, Kicker, PageHeader, Btn, FInput, FSelect, StatCard, Badge } from './SubComponents';
 
 interface DataOfficerPageProps {
@@ -22,14 +23,40 @@ const DISTRICTS = [
 ];
 const MONTHS = ['Jan 2026','Feb 2026','Mar 2026','Apr 2026','May 2026','Jun 2026','Jul 2026','Aug 2026','Sep 2026','Oct 2026','Nov 2026','Dec 2026'];
 
-const BLANK_ACTIVITY = { district: '', month: '', teachbacks: '', pea_monitoring: '', cluster_meetings: '', issue_based: '', routine: '' };
-const BLANK_ISSUE = { district: '', month: '', teacher_transfers: '', lack_of_interest: '', other_issues: '', lack_of_admin_support: '', learner_behaviour: '' };
+const BLANK_ACTIVITY = { district: '', month: '', teachbacks: '', pea_monitoring: '', cluster_meetings: '', issue_based: '', routine: '', country: 'Malawi' };
+const BLANK_ISSUE = { district: '', month: '', teacher_transfers: '', lack_of_interest: '', other_issues: '', lack_of_admin_support: '', learner_behaviour: '', country: 'Malawi' };
 
 export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToast }) => {
   const { activities, issues, addActivity, addIssue, updateActivity, deleteActivity, updateIssue, deleteIssue, loading } = useMonitoring();
+  const { activeCountry } = useCountry();
   const [tab, setTab] = useState<TabId>('activities');
-  const [actForm, setActForm] = useState({ ...BLANK_ACTIVITY });
-  const [issueForm, setIssueForm] = useState({ ...BLANK_ISSUE });
+  const [actForm, setActForm] = useState({ ...BLANK_ACTIVITY, country: activeCountry !== 'all' ? activeCountry : 'Malawi' });
+  const [issueForm, setIssueForm] = useState({ ...BLANK_ISSUE, country: activeCountry !== 'all' ? activeCountry : 'Malawi' });
+  const [actDistrictOptions, setActDistrictOptions] = useState<string[]>([]);
+  const [issueDistrictOptions, setIssueDistrictOptions] = useState<string[]>([]);
+
+  // Keep the form's country in sync with the globally selected country
+  useEffect(() => {
+    if (activeCountry && activeCountry !== 'all') {
+      setActForm(p => ({ ...p, country: activeCountry, district: '' }));
+      setIssueForm(p => ({ ...p, country: activeCountry, district: '' }));
+    }
+  }, [activeCountry]);
+
+  // Fetch real districts for whichever country is selected in each form
+  useEffect(() => {
+    if (!actForm.country) return;
+    districtsApi.getAll(actForm.country).then((data: any) => {
+      setActDistrictOptions(Array.isArray(data) ? data.map((d: any) => d.name).sort() : []);
+    });
+  }, [actForm.country]);
+
+  useEffect(() => {
+    if (!issueForm.country) return;
+    districtsApi.getAll(issueForm.country).then((data: any) => {
+      setIssueDistrictOptions(Array.isArray(data) ? data.map((d: any) => d.name).sort() : []);
+    });
+  }, [issueForm.country]);
   const [saving, setSaving] = useState(false);
   const [expandedHistory, setExpandedHistory] = useState<number | null>(null);
   const [editingActivityId, setEditingActivityId] = useState<number | null>(null);
@@ -61,10 +88,10 @@ export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToas
   const cancelEditIssue = () => { setEditingIssueId(null); setIssueForm({ ...BLANK_ISSUE }); };
 
   const submitActivity = async () => {
-    if (!actForm.district || !actForm.month) { showToast('⚠️ District and month are required'); return; }
+    if (!actForm.district || !actForm.month) { showToast('District and month are required', 'warning'); return; }
     setSaving(true);
     const payload = {
-      district: actForm.district, month: actForm.month,
+      district: actForm.district, month: actForm.month, country: actForm.country,
       teachbacks: parseInt(actForm.teachbacks) || 0,
       pea_monitoring: parseInt(actForm.pea_monitoring) || 0,
       cluster_meetings: parseInt(actForm.cluster_meetings) || 0,
@@ -74,24 +101,24 @@ export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToas
     try {
       if (editingActivityId) {
         await updateActivity(editingActivityId, payload);
-        showToast('✅ Monitoring activity updated');
+        showToast('Monitoring activity updated', 'success');
         setEditingActivityId(null);
       } else {
         await addActivity({ ...payload, submitted_by: user.name } as any);
-        showToast('✅ Monitoring activities saved to database');
-      }
-      setActForm({ ...BLANK_ACTIVITY });
-    } catch (err: any) {
-      showToast(`❌ Failed to save: ${err.message || 'server error'}`);
+        showToast('Monitoring activities saved to database', 'success');
+ }
+ setActForm({ ...BLANK_ACTIVITY });
+ } catch (err: any) {
+ showToast(`Failed to save: ${err.message || 'server error'}`, 'error');
     }
     setSaving(false);
   };
 
   const submitIssue = async () => {
-    if (!issueForm.district || !issueForm.month) { showToast('⚠️ District and month are required'); return; }
+    if (!issueForm.district || !issueForm.month) { showToast('District and month are required', 'warning'); return; }
     setSaving(true);
     const payload = {
-      district: issueForm.district, month: issueForm.month,
+      district: issueForm.district, month: issueForm.month, country: issueForm.country,
       teacher_transfers: parseInt(issueForm.teacher_transfers) || 0,
       lack_of_interest: parseInt(issueForm.lack_of_interest) || 0,
       other_issues: parseInt(issueForm.other_issues) || 0,
@@ -101,15 +128,15 @@ export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToas
     try {
       if (editingIssueId) {
         await updateIssue(editingIssueId, payload);
-        showToast('✅ Prevailing issue updated');
+        showToast('Prevailing issue updated', 'success');
         setEditingIssueId(null);
       } else {
         await addIssue({ ...payload, submitted_by: user.name } as any);
-        showToast('✅ Prevailing issues saved to database');
-      }
-      setIssueForm({ ...BLANK_ISSUE });
-    } catch (err: any) {
-      showToast(`❌ Failed to save: ${err.message || 'server error'}`);
+        showToast('Prevailing issues saved to database', 'success');
+ }
+ setIssueForm({ ...BLANK_ISSUE });
+ } catch (err: any) {
+ showToast(`Failed to save: ${err.message || 'server error'}`, 'error');
     }
     setSaving(false);
   };
@@ -118,10 +145,10 @@ export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToas
     if (!window.confirm('Delete this monitoring activity record? This cannot be undone.')) return;
     try {
       await deleteActivity(id);
-      showToast('🗑️ Activity record deleted');
-      if (editingActivityId === id) cancelEditActivity();
-    } catch (err: any) {
-      showToast(`❌ Failed to delete: ${err.message || 'server error'}`);
+      showToast('Activity record deleted', 'success');
+ if (editingActivityId === id) cancelEditActivity();
+ } catch (err: any) {
+ showToast(`Failed to delete: ${err.message || 'server error'}`, 'error');
     }
   };
 
@@ -129,10 +156,10 @@ export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToas
     if (!window.confirm('Delete this prevailing issue record? This cannot be undone.')) return;
     try {
       await deleteIssue(id);
-      showToast('🗑️ Issue record deleted');
-      if (editingIssueId === id) cancelEditIssue();
-    } catch (err: any) {
-      showToast(`❌ Failed to delete: ${err.message || 'server error'}`);
+      showToast('Issue record deleted', 'success');
+ if (editingIssueId === id) cancelEditIssue();
+ } catch (err: any) {
+ showToast(`Failed to delete: ${err.message || 'server error'}`, 'error');
     }
   };
 
@@ -152,30 +179,30 @@ export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToas
   return (
     <div className="space-y-5 animate-fade-in-up">
       <PageHeader
-        title="Data Officer Workspace"
+        title="M & E Officer Workspace"
         subtitle={`Monitoring data entry · ${user.district || 'National'}`}
         actions={
-          <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">
-            {loading ? '⏳ Loading…' : `📝 ${user.name}`}
-          </span>
-        }
-      />
+          <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[var(--brand-100)] text-[var(--brand-700)] dark:bg-[var(--brand-900)]/30 dark:text-[var(--brand-300)]">
+            {loading ? '⏳ Loading…': `${user.name}`}
+ </span>
+ }
+ />
 
-      {/* Summary stat cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <StatCard icon={<ClipboardList size={16} className="text-orange-500" />} label="Teachbacks"      value={totalTeachbacks}  color="#e85d04" />
-        <StatCard icon={<BarChart2   size={16} className="text-blue-500"   />} label="Cluster Meetings" value={totalClusterMtgs} color="#185fa5" />
-        <StatCard icon={<CheckCircle size={16} className="text-green-500"  />} label="Routine Checks"   value={totalRoutine}     color="#059669" />
-        <StatCard icon={<AlertTriangle size={16} className="text-amber-500"/>} label="Transfers Logged" value={totalTransfers}   color="#d97706" />
-        <StatCard icon={<AlertTriangle size={16} className="text-red-500"  />} label="Interest Issues"  value={totalInterest}    color="#dc2626" />
-      </div>
+ {/* Summary stat cards */}
+ <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+ <StatCard icon={<ClipboardList size={16} className="text-[var(--brand-500)]"/>} label="Teachbacks"value={totalTeachbacks} color="var(--brand)"/>
+ <StatCard icon={<BarChart2 size={16} className="text-blue-500"/>} label="Cluster Meetings"value={totalClusterMtgs} color="#185fa5"/>
+ <StatCard icon={<CheckCircle size={16} className="text-green-500"/>} label="Routine Checks"value={totalRoutine} color="#059669"/>
+ <StatCard icon={<AlertTriangle size={16} className="text-amber-500"/>} label="Transfers Logged"value={totalTransfers} color="#d97706"/>
+ <StatCard icon={<AlertTriangle size={16} className="text-red-500"/>} label="Interest Issues"value={totalInterest} color="#dc2626"/>
+ </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-neutral-100 dark:bg-slate-800/50 p-1 rounded-xl w-fit">
-        {tabs.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              tab === t.id ? 'bg-white dark:bg-[#0f1623] text-orange-600 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
+ {/* Tabs */}
+ <div className="flex gap-1 bg-neutral-100 dark:bg-slate-800/50 p-1 rounded-xl w-fit">
+ {tabs.map(t => (
+ <button key={t.id} onClick={() => setTab(t.id)}
+ className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+ tab === t.id ? 'bg-white dark:bg-[#0f1623] text-[var(--brand-600)] shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
             }`}>
             {t.icon}{t.label}
           </button>
@@ -194,9 +221,14 @@ export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToas
             </div>
 
             <div className="grid grid-cols-2 gap-3">
+              <FSelect label="Country *" value={actForm.country} onChange={e => setActForm(p => ({ ...p, country: e.target.value }))}>
+                <option value="Malawi">Malawi</option>
+                <option value="Kenya">Kenya</option>
+                <option value="Somaliland">Somaliland</option>
+              </FSelect>
               <FSelect label="District *" value={actForm.district} onChange={e => setActForm(p => ({ ...p, district: e.target.value }))}>
                 <option value="">Select district...</option>
-                {DISTRICTS.map(d => <option key={d}>{d}</option>)}
+                {actDistrictOptions.map(d => <option key={d}>{d}</option>)}
               </FSelect>
               <FSelect label="Month *" value={actForm.month} onChange={e => setActForm(p => ({ ...p, month: e.target.value }))}>
                 <option value="">Select month...</option>
@@ -218,7 +250,7 @@ export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToas
                   <input type="number" min="0"
                     value={(actForm as any)[key]}
                     onChange={e => setActForm(p => ({ ...p, [key]: e.target.value }))}
-                    className="w-20 px-2 py-1.5 rounded-lg border border-neutral-200 dark:border-slate-700 bg-white dark:bg-[#0f1623] text-black dark:text-white text-sm focus:outline-none focus:border-orange-400 text-center"
+                    className="w-20 px-2 py-1.5 rounded-lg border border-neutral-200 dark:border-slate-700 bg-white dark:bg-[#0f1623] text-black dark:text-white text-sm focus:outline-none focus:border-[var(--brand-400)] text-center"
                     placeholder="0"
                   />
                 </div>
@@ -250,11 +282,11 @@ export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToas
                       <span className="font-bold text-xs text-black dark:text-white">{a.district}</span>
                       <span className="ml-2 text-[10px] text-slate-400">{a.month}</span>
                     </div>
-                    <Badge text={a.submitted_by_name || 'Unknown'} color="#e85d04" bg="#fff4ec" />
+                    <Badge text={a.submitted_by_name || 'Unknown'} color="var(--brand)" bg="#fff4ec" />
                   </div>
                   <div className="grid grid-cols-5 gap-1 text-center">
                     {[
-                      ['TB', a.teachbacks,       '#e85d04'],
+                      ['TB', a.teachbacks,       'var(--brand)'],
                       ['PEA', a.pea_monitoring,  '#185fa5'],
                       ['CM', a.cluster_meetings, '#059669'],
                       ['IB', a.issue_based,      '#7c3aed'],
@@ -288,9 +320,14 @@ export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToas
             </div>
 
             <div className="grid grid-cols-2 gap-3">
+              <FSelect label="Country *" value={issueForm.country} onChange={e => setIssueForm(p => ({ ...p, country: e.target.value }))}>
+                <option value="Malawi">Malawi</option>
+                <option value="Kenya">Kenya</option>
+                <option value="Somaliland">Somaliland</option>
+              </FSelect>
               <FSelect label="District *" value={issueForm.district} onChange={e => setIssueForm(p => ({ ...p, district: e.target.value }))}>
                 <option value="">Select district...</option>
-                {DISTRICTS.map(d => <option key={d}>{d}</option>)}
+                {issueDistrictOptions.map(d => <option key={d}>{d}</option>)}
               </FSelect>
               <FSelect label="Month *" value={issueForm.month} onChange={e => setIssueForm(p => ({ ...p, month: e.target.value }))}>
                 <option value="">Select month...</option>
@@ -307,12 +344,12 @@ export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToas
                 { key: 'lack_of_admin_support',label: 'Lack of Administration Support' },
                 { key: 'learner_behaviour',    label: 'Learner Behaviour Concerns' },
               ].map(({ key, label }) => (
-                <div key={key} className="flex items-center gap-3">
-                  <label className="text-xs text-slate-700 dark:text-slate-300 w-52 shrink-0">{label}</label>
+                <div key={key} className="flex flex-wrap items-center gap-2 py-1">
+                  <label className="text-xs text-slate-700 dark:text-slate-300 flex-1 min-w-[140px]">{label}</label>
                   <input type="number" min="0"
                     value={(issueForm as any)[key]}
                     onChange={e => setIssueForm(p => ({ ...p, [key]: e.target.value }))}
-                    className="flex-1 px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-slate-700 bg-white dark:bg-[#0f1623] text-black dark:text-white text-sm focus:outline-none focus:border-orange-400"
+                    className="w-20 px-2 py-1.5 rounded-lg border border-neutral-200 dark:border-slate-700 bg-white dark:bg-[#0f1623] text-black dark:text-white text-sm focus:outline-none focus:border-[var(--brand-400)] text-center"
                     placeholder="0"
                   />
                 </div>
@@ -393,7 +430,7 @@ export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToas
                         <tr key={a.id} className="border-b border-neutral-50 dark:border-slate-800/40 hover:bg-neutral-50 dark:hover:bg-slate-800/20">
                           <td className="py-2 px-2 font-semibold text-black dark:text-white">{a.district}</td>
                           <td className="py-2 px-2 text-slate-500">{a.month}</td>
-                          <td className="py-2 px-2 font-bold text-orange-600">{a.teachbacks}</td>
+                          <td className="py-2 px-2 font-bold text-[var(--brand-600)]">{a.teachbacks}</td>
                           <td className="py-2 px-2 font-bold text-blue-600">{a.pea_monitoring}</td>
                           <td className="py-2 px-2 font-bold text-green-600">{a.cluster_meetings}</td>
                           <td className="py-2 px-2 font-bold text-purple-600">{a.issue_based}</td>
@@ -481,7 +518,7 @@ export const DataOfficerPage: React.FC<DataOfficerPageProps> = ({ user, showToas
             <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-3">Column Key</div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
               {[
-                ['TB','Teachbacks / Mentorship','#e85d04'],
+                ['TB','Teachbacks / Mentorship','var(--brand)'],
                 ['PEA','PEA Monitoring','#185fa5'],
                 ['CM','Cluster Meetings','#059669'],
                 ['IB','Issue Based Monitoring','#7c3aed'],

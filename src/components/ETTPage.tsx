@@ -12,9 +12,9 @@ export const ETTPage: React.FC = () => (
 
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
       {[
-        { icon: <Shield className="text-orange-500" size={24} />, title: "Prevent Violence", text: "Provide aged-appropriate safety toolkits explicitly targeted to mitigate school violence." },
-        { icon: <Network className="text-orange-500" size={24} />, title: "Linkage pathways", text: "Construct trusted adult and health pathway loops immediately on GBV disclosure." },
-        { icon: <Compass className="text-orange-500" size={24} />, title: "Cluster Delivery", text: "Consolidate resources under local cluster hubs to ensure rural learners receive instruction." }
+        { icon: <Shield className="text-[var(--brand-500)]" size={24} />, title: "Prevent Violence", text: "Provide aged-appropriate safety toolkits explicitly targeted to mitigate school violence." },
+        { icon: <Network className="text-[var(--brand-500)]" size={24} />, title: "Linkage pathways", text: "Construct trusted adult and health pathway loops immediately on GBV disclosure." },
+        { icon: <Compass className="text-[var(--brand-500)]" size={24} />, title: "Cluster Delivery", text: "Consolidate resources under local cluster hubs to ensure rural learners receive instruction." }
       ].map((item) => (
         <Card key={item.title} className="p-5 space-y-2">
           <div className="h-9 flex items-center">{item.icon}</div>
@@ -36,7 +36,7 @@ export const ETTPage: React.FC = () => (
           ["6", "Field file logging", "Always export reports to the ETT Portal for District Coordinator verification."]
         ].map(([n, title, desc]) => (
           <div key={n} className="flex gap-4 p-3 bg-slate-50/50 dark:bg-slate-950/20 rounded-xl border border-slate-100 dark:border-slate-800">
-            <span className="w-7 h-7 bg-orange-500 text-white rounded-full font-bold text-xs shrink-0 flex items-center justify-center">
+            <span className="w-7 h-7 bg-[var(--brand-500)] text-white rounded-full font-bold text-xs shrink-0 flex items-center justify-center">
               {n}
             </span>
             <div>

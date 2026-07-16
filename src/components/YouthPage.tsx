@@ -54,7 +54,7 @@ export const YouthPage: React.FC = () => {
         </div>
         <button
           onClick={load}
-          className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-orange-600 transition-colors"
+          className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-[var(--brand-600)] transition-colors"
           title="Refresh library"
         >
           <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
@@ -128,7 +128,7 @@ export const YouthPage: React.FC = () => {
                     href={d.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-orange-300 dark:hover:border-orange-700 hover:bg-orange-50/40 dark:hover:bg-orange-950/20 transition-colors"
+                    className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-[var(--brand-300)] dark:hover:border-[var(--brand-700)] hover:bg-[var(--brand-50)]/40 dark:hover:bg-[var(--brand-950)]/20 transition-colors"
                   >
                     <div className="w-9 h-9 rounded-lg bg-red-50 dark:bg-red-950/40 flex items-center justify-center shrink-0">
                       <FileText size={16} className="text-red-500" />

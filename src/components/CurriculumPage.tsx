@@ -3,14 +3,14 @@ import {
   BookOpen, ChevronRight, ChevronLeft, HelpCircle,
   FileText, ExternalLink, X, Maximize2, Layers,
   Shield, Users, Star, ArrowRight, Play, Award, Clock,
-  CheckCircle2, AlertCircle, Zap
-} from 'lucide-react';
+  CheckCircle2, AlertCircle, Zap, AlertTriangle} from 'lucide-react';
 import { Card, Kicker, Btn, FInput, FSelect } from './SubComponents';
 import { Session } from '../types';
 import { HIM_SESSIONS, GESD_SESSIONS } from '../data';
 import { CourseLessonPage } from './CourseLessonPage';
 import { CourseQuizComponent } from './CourseQuizComponent';
 import { CertificateComponent } from './CertificateComponent';
+import { curriculumApi } from '../api';
 
 // ─── GRADES ───────────────────────────────────────────────────────────────────
 const GRADES = [
@@ -31,7 +31,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({ url, title, subtitle, onClose }) 
     <div className="fixed inset-0 z-[99999] bg-black/90 flex flex-col">
       <div className="shrink-0 h-11 flex items-center justify-between px-4 bg-[#0f1623] border-b border-slate-800">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-6 h-6 rounded bg-[#e85d04] flex items-center justify-center shrink-0"><FileText size={12} className="text-white" /></div>
+          <div className="w-6 h-6 rounded bg-[var(--brand)] flex items-center justify-center shrink-0"><FileText size={12} className="text-white" /></div>
           <div className="min-w-0">
             <span className="text-xs font-bold text-white truncate block">{title}</span>
             <span className="text-[10px] text-slate-400 truncate block">{subtitle}</span>
@@ -71,12 +71,12 @@ const HIM_OVERVIEW = {
     "Break the silence and connect peers to referral pathways",
   ],
   modules: [
-    { num:"Topic 1", title:"Needs Assessment – Knowing Myself & My Rights",     dur:"60 min", icon:"🧠" },
-    { num:"Topic 2", title:"My Value System – Life Skills & Personal Awareness", dur:"60 min", icon:"💎" },
-    { num:"Topic 3", title:"Introduction to H.I.M. & Verbal Techniques",        dur:"60 min", icon:"🦁" },
-    { num:"Topic 4", title:"Stepping Up – Intervention Strategies",             dur:"60 min", icon:"🤝" },
-    { num:"Topic 5", title:"Breaking the Silence & Referral Systems",           dur:"60 min", icon:"🔓" },
-    { num:"Topic 6", title:"Boys & Girls Combined – Consent & Gender",          dur:"90 min", icon:"🌍" },
+    { num:"Topic 1", title:"Needs Assessment – Knowing Myself & My Rights",     dur:"60 min", icon:"" },
+    { num:"Topic 2", title:"My Value System – Life Skills & Personal Awareness", dur:"60 min", icon:"" },
+    { num:"Topic 3", title:"Introduction to H.I.M. & Verbal Techniques",        dur:"60 min", icon:"" },
+    { num:"Topic 4", title:"Stepping Up – Intervention Strategies",             dur:"60 min", icon:"" },
+    { num:"Topic 5", title:"Breaking the Silence & Referral Systems",           dur:"60 min", icon:"" },
+    { num:"Topic 6", title:"Boys & Girls Combined – Consent & Gender",          dur:"90 min", icon:"" },
   ],
 };
 
@@ -93,12 +93,12 @@ const GESD_OVERVIEW = {
     "Understand consent, gender, and gender stereotypes",
   ],
   modules: [
-    { num:"Module 1", title:"Getting to Know You & Life Skills",              dur:"60 min", icon:"🌸" },
-    { num:"Module 2", title:"GESD & Attack Progression Scale",                dur:"60 min", icon:"🛡️" },
-    { num:"Module 3", title:"Perpetrator's Progression Pattern & Awareness",  dur:"60 min", icon:"👁️" },
-    { num:"Module 4", title:"Verbal Safety Toolbox & Breaking the Silence",   dur:"60 min", icon:"📢" },
-    { num:"Module 5", title:"Physical Techniques",                            dur:"60 min", icon:"💪" },
-    { num:"Module 6", title:"Combined Class – Consent, Gender & Wrap-Up",     dur:"90 min", icon:"🤝" },
+    { num:"Module 1", title:"Getting to Know You & Life Skills",              dur:"60 min", icon:"" },
+    { num:"Module 2", title:"GESD & Attack Progression Scale",                dur:"60 min", icon:"️" },
+    { num:"Module 3", title:"Perpetrator's Progression Pattern & Awareness",  dur:"60 min", icon:"️" },
+    { num:"Module 4", title:"Verbal Safety Toolbox & Breaking the Silence",   dur:"60 min", icon:"" },
+    { num:"Module 5", title:"Physical Techniques",                            dur:"60 min", icon:"" },
+    { num:"Module 6", title:"Combined Class – Consent, Gender & Wrap-Up",     dur:"90 min", icon:"" },
   ],
 };
 
@@ -122,7 +122,16 @@ export const CurriculumPage: React.FC = () => {
   const [regError, setRegError] = useState('');
 
   const sessions = tab === 'him' ? HIM_SESSIONS : GESD_SESSIONS;
-  const overview = tab === 'him' ? HIM_OVERVIEW : GESD_OVERVIEW;
+
+  // Live curriculum data from database (falls back to hardcoded defaults while loading)
+  const [curriculumData, setCurriculumData] = useState<{ him: typeof HIM_OVERVIEW; gesd: typeof GESD_OVERVIEW } | null>(null);
+  useEffect(() => {
+    curriculumApi.get().then((data: any) => {
+      if (data && data.him && data.gesd) setCurriculumData(data);
+    }).catch((err: any) => console.error('Failed to load curriculum:', err));
+  }, []);
+
+  const overview = curriculumData ? curriculumData[tab] : (tab === 'him' ? HIM_OVERVIEW : GESD_OVERVIEW);
   const isHim    = tab === 'him';
   const accent      = isHim ? '#185fa5' : '#a82563';
   const accentPale  = isHim ? '#dbeafe' : '#fce7f3';
@@ -166,7 +175,7 @@ export const CurriculumPage: React.FC = () => {
       </button>
 
       <div className={`rounded-2xl p-6 text-white text-center mb-6 space-y-1`} style={{ background: `linear-gradient(135deg, ${accent}, ${isHim ? '#0d3b6e' : '#6b0f3a'})` }}>
-        <div className="text-4xl">{isHim ? '🦁' : '🌸'}</div>
+        <div className="text-4xl">{isHim ? '' : ''}</div>
         <h2 className="text-xl font-black">{isHim ? 'Hero In Me (HIM)' : 'Girls Empowerment Self Defense'}</h2>
         <p className="text-sm opacity-80">{isHim ? "Boys' Empowerment Programme" : "Girls' Empowerment Programme"}</p>
       </div>
@@ -189,18 +198,18 @@ export const CurriculumPage: React.FC = () => {
                   onClick={() => !disabled && setRegSex(s)}
                   className={`flex-1 py-2.5 rounded-xl border-2 font-bold text-sm transition-all ${disabled ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}`}
                   style={{ borderColor: regSex === s ? accent : '#e5e7eb', backgroundColor: regSex === s ? accent : 'transparent', color: regSex === s ? 'white' : undefined }}>
-                  {s === 'M' ? '♂ Male' : '♀ Female'}
+                  {s === 'M' ? 'Male' : 'Female'}
                 </button>
               );
             })}
           </div>
-          {tab === 'gesd' && <p className="text-[11px] text-pink-600 mt-1.5">⚠️ The GESD programme is open to female students only.</p>}
+          {tab === 'gesd' && <p className="text-[11px] text-pink-600 mt-1.5">The GESD programme is open to female students only.</p>}
         </div>
 
         <div>
           <label className="block text-[11px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300 mb-1.5">Grade / Form *</label>
           <select value={regGrade} onChange={e => setRegGrade(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border border-neutral-200 dark:border-slate-700 bg-white dark:bg-[#0f1623] text-black dark:text-white text-sm focus:outline-none focus:border-orange-400">
+            className="w-full px-3 py-2 rounded-lg border border-neutral-200 dark:border-slate-700 bg-white dark:bg-[#0f1623] text-black dark:text-white text-sm focus:outline-none focus:border-[var(--brand-400)]">
             <option value="">Select your grade or form...</option>
             <optgroup label="Primary School">
               {GRADES.filter(g => g.startsWith('Grade')).map(g => <option key={g}>{g}</option>)}
@@ -212,7 +221,7 @@ export const CurriculumPage: React.FC = () => {
         </div>
 
         {regError && (
-          <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 rounded-xl p-3 text-xs text-red-700 dark:text-red-400 font-semibold">⚠️ {regError}</div>
+          <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 rounded-xl p-3 text-xs text-red-700 dark:text-red-400 font-semibold">{regError}</div>
         )}
 
         <div className="flex gap-3 pt-1">
@@ -316,7 +325,7 @@ export const CurriculumPage: React.FC = () => {
               <p className="text-[11px] text-white/80 leading-relaxed m-0">{overview.tagline}</p>
             </div>
             <div className="p-3 space-y-2 text-[11px]">
-              {[['👥 Audience', overview.audience],['⏱️ Duration', overview.duration],['🎯 Pass Mark', overview.passmark]].map(([k,v]) => (
+              {[['Audience', overview.audience],['⏱️ Duration', overview.duration],['Pass Mark', overview.passmark]].map(([k,v]) => (
                 <div key={k} className="flex items-center justify-between">
                   <span className="text-slate-500">{k}</span>
                   <span className="font-semibold text-black dark:text-white">{v}</span>
@@ -328,7 +337,7 @@ export const CurriculumPage: React.FC = () => {
           {/* Start Course card */}
           <Card className="overflow-hidden p-0">
             <div className="px-4 py-3 border-b border-neutral-200 dark:border-slate-800 flex items-center gap-2">
-              <Play size={13} className="text-[#e85d04]" />
+              <Play size={13} className="text-[var(--brand)]" />
               <span className="text-xs font-bold text-black dark:text-white">Take Course</span>
               <span className="ml-auto text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ color:accent, backgroundColor:accentPale }}>Interactive</span>
             </div>
@@ -349,7 +358,7 @@ export const CurriculumPage: React.FC = () => {
           {/* PDF card */}
           <Card className="overflow-hidden p-0">
             <div className="px-4 py-3 border-b border-neutral-200 dark:border-slate-800 flex items-center gap-2">
-              <FileText size={13} className="text-[#e85d04]" />
+              <FileText size={13} className="text-[var(--brand)]" />
               <span className="text-xs font-bold text-black dark:text-white">Facilitator Manual</span>
               <span className="ml-auto text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ color:accent, backgroundColor:accentPale }}>PDF</span>
             </div>
@@ -435,19 +444,19 @@ export const CurriculumPage: React.FC = () => {
                 const session = sessions[i];
                 return (
                   <div key={i} onClick={() => session && setSel(session)}
-                    className="group bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg p-3.5 cursor-pointer hover:border-[#e85d04] transition-all hover:shadow-sm">
+                    className="group bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg p-3.5 cursor-pointer hover:border-[var(--brand)] transition-all hover:shadow-sm">
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex items-center gap-2">
                         <span className="text-lg">{m.icon}</span>
                         <div className="text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded" style={{ color:accent, backgroundColor:accentPale }}>{m.num}</div>
                       </div>
-                      <ChevronRight size={13} className="text-slate-300 dark:text-slate-600 group-hover:text-[#e85d04] transition shrink-0 mt-0.5" />
+                      <ChevronRight size={13} className="text-slate-300 dark:text-slate-600 group-hover:text-[var(--brand)] transition shrink-0 mt-0.5" />
                     </div>
                     <h3 className="text-xs font-bold text-black dark:text-white mb-1 leading-snug line-clamp-2">{m.title}</h3>
                     {session && <p className="text-[10.5px] text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">{session.desc}</p>}
                     <div className="mt-2.5 pt-2 border-t border-neutral-100 dark:border-slate-800 flex items-center justify-between">
                       <span className="text-[10px] text-slate-400 font-medium">{m.dur}</span>
-                      <span className="text-[10px] font-bold text-[#e85d04]">View details →</span>
+                      <span className="text-[10px] font-bold text-[var(--brand)]">View details →</span>
                     </div>
                   </div>
                 );

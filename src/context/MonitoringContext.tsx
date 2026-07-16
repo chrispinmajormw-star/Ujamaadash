@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { monitoringApi } from '../api';
+import { useCountry } from './CountryContext';
 
 export interface MonitoringActivity {
   id: number;
@@ -46,7 +47,7 @@ export const MonitoringProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [issues, setIssues] = useState<PrevailingIssue[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  const { activeCountry } = useCountry();
   const refresh = useCallback(async () => {
     // Don't fetch if not logged in — monitoring routes require auth
     const token = localStorage.getItem('token');
@@ -57,9 +58,10 @@ export const MonitoringProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setLoading(true);
     setError(null);
     try {
+      const countryParam = activeCountry && activeCountry !== 'all' ? { country: activeCountry } : undefined;
       const [activitiesData, issuesData] = await Promise.all([
-        monitoringApi.getActivities(),
-        monitoringApi.getIssues(),
+        monitoringApi.getActivities(countryParam),
+        monitoringApi.getIssues(countryParam),
       ]);
       setActivities(Array.isArray(activitiesData) ? activitiesData : []);
       setIssues(Array.isArray(issuesData) ? issuesData : []);
@@ -68,7 +70,7 @@ export const MonitoringProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setError(err.message || 'Failed to load monitoring data');
     }
     setLoading(false);
-  }, []);
+  }, [activeCountry]);
 
   useEffect(() => {
     refresh();

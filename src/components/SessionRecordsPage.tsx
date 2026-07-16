@@ -57,7 +57,7 @@ export const SessionRecordsPage: React.FC<SessionRecordsPageProps> = ({ user, sh
     try {
       const data = await sessionRecordsApi.getAll();
       setRecords(data);
-    } catch { showToast('⚠️ Could not load session records'); }
+    } catch { showToast('️ Could not load session records', 'warning'); }
     finally { setLoading(false); }
   };
 
@@ -67,7 +67,7 @@ export const SessionRecordsPage: React.FC<SessionRecordsPageProps> = ({ user, sh
 
   const handleSave = async () => {
     if (!form.school || !form.district || !form.session_date || !form.facilitator) {
-      showToast('⚠️ School, district, date and facilitator are required'); return;
+      showToast('️ School, district, date and facilitator are required', 'warning'); return;
     }
     setSaving(true);
     try {
@@ -81,19 +81,19 @@ export const SessionRecordsPage: React.FC<SessionRecordsPageProps> = ({ user, sh
         ? await sessionRecordsApi.update(editRecord.id, payload)
         : await sessionRecordsApi.submit(payload);
 
-      if (saved?.error) { showToast(`⚠️ ${saved.error}`); setSaving(false); return; }
+      if (saved?.error) { showToast(`️ ${saved.error}`, 'warning'); setSaving(false); return; }
 
       if (editRecord) {
         setRecords(prev => prev.map(r => r.id === saved.id ? saved : r));
-        showToast('✅ Session record updated');
+        showToast('Session record updated', 'success');
       } else {
         setRecords(prev => [saved, ...prev]);
-        showToast('✅ Session record saved');
+        showToast('Session record saved', 'success');
       }
       setShowForm(false);
       setEditRecord(null);
       setForm({ ...BLANK_FORM });
-    } catch { showToast('⚠️ Failed to save session record'); }
+    } catch { showToast('️ Failed to save session record', 'warning'); }
     setSaving(false);
   };
 
@@ -103,9 +103,9 @@ export const SessionRecordsPage: React.FC<SessionRecordsPageProps> = ({ user, sh
     try {
       await sessionRecordsApi.delete(deleteId);
       setRecords(prev => prev.filter(r => r.id !== deleteId));
-      showToast('🗑️ Session record deleted');
+      showToast('️ Session record deleted', 'success');
       setDeleteId(null);
-    } catch { showToast('⚠️ Failed to delete record'); }
+    } catch { showToast('️ Failed to delete record', 'warning'); }
     setDeleting(false);
   };
 
@@ -148,7 +148,7 @@ export const SessionRecordsPage: React.FC<SessionRecordsPageProps> = ({ user, sh
           </p>
         </div>
         <div className="flex gap-2 shrink-0">
-          <button onClick={load} className="flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-orange-500 transition">
+          <button onClick={load} className="flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-[var(--brand-500)] transition">
             <RefreshCw size={12} className={loading ? 'animate-spin' : ''}/> Refresh
           </button>
           <Btn size="sm" onClick={() => { setForm({ ...BLANK_FORM, district: user?.district || 'Lilongwe' }); setEditRecord(null); setShowForm(true); }}>
@@ -178,7 +178,7 @@ export const SessionRecordsPage: React.FC<SessionRecordsPageProps> = ({ user, sh
         <input
           type="text" placeholder="Search school, district, facilitator…"
           value={searchQ} onChange={e => setSearchQ(e.target.value)}
-          className="flex-1 min-w-48 px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 dark:text-slate-200"
+          className="flex-1 min-w-48 px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)] dark:text-slate-200"
         />
         <select value={filterDistrict} onChange={e => setFilterDistrict(e.target.value)}
           className="px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none dark:text-slate-200">
@@ -208,13 +208,13 @@ export const SessionRecordsPage: React.FC<SessionRecordsPageProps> = ({ user, sh
           {filtered.map(r => (
             <Card key={r.id} className="p-3">
               <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/30 flex items-center justify-center shrink-0">
-                  <BookOpen size={16} className="text-orange-500"/>
+                <div className="w-9 h-9 rounded-lg bg-[var(--brand-50)] dark:bg-[var(--brand-950)]/20 border border-[var(--brand-100)] dark:border-[var(--brand-900)]/30 flex items-center justify-center shrink-0">
+                  <BookOpen size={16} className="text-[var(--brand-500)]"/>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-0.5">
                     <span className="font-bold text-sm text-slate-900 dark:text-white truncate">{r.school}</span>
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-orange-100 text-orange-700 dark:bg-orange-950/30 dark:text-orange-400">
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-[var(--brand-100)] text-[var(--brand-700)] dark:bg-[var(--brand-950)]/30 dark:text-[var(--brand-400)]">
                       {r.curriculum}
                     </span>
                     <span className="text-[10px] text-slate-400">Session {r.session_number}</span>
@@ -230,7 +230,7 @@ export const SessionRecordsPage: React.FC<SessionRecordsPageProps> = ({ user, sh
                 </div>
                 <div className="flex gap-1 shrink-0">
                   <button onClick={() => openEdit(r)}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-950/20 transition">
+                    className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-[var(--brand-500)] hover:bg-[var(--brand-50)] dark:hover:bg-[var(--brand-950)]/20 transition">
                     <Edit2 size={12}/>
                   </button>
                   {canDelete(role) && (

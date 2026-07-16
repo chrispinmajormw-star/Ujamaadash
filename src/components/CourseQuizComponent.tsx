@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Check, X, ChevronRight, ChevronLeft, AlertCircle } from 'lucide-react';
+import { Check, X, ChevronRight, ChevronLeft, AlertCircle, CheckCircle2} from 'lucide-react';
 import { QuizQuestion } from '../types';
 import { HIM_QUIZ_QUESTIONS, GESD_QUIZ_QUESTIONS } from '../data';
 import { Card } from './SubComponents';
@@ -152,7 +152,7 @@ export const CourseQuizComponent: React.FC<CourseQuizComponentProps> = ({
         {isRevealed && (
           <div className={`p-4 rounded-xl border-l-4 ${isCorrect ? 'border-green-500 bg-green-50 dark:bg-green-950/20' : 'border-red-500 bg-red-50 dark:bg-red-950/20'}`}>
             <p className={`text-sm font-bold mb-1 ${isCorrect ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
-              {isCorrect ? '✅ Correct!' : `❌ Incorrect — the correct answer is: "${question.options[question.correctAnswer]}"`}
+              {isCorrect ? 'Correct!' : `Incorrect — the correct answer is: "${question.options[question.correctAnswer]}"`}
             </p>
             <p className="text-sm text-slate-700 dark:text-slate-300">{question.explanation}</p>
           </div>
@@ -237,7 +237,7 @@ const SubmissionResult: React.FC<SubmissionResultProps> = ({
 
         <div className="space-y-1">
           <h1 className="text-2xl font-bold text-black dark:text-white">
-            {passed ? '🎉 Congratulations!' : '📚 Keep Learning'}
+            {passed ? 'Congratulations!' : 'Keep Learning'}
           </h1>
           <p className="text-sm text-slate-600 dark:text-slate-400">
             {passed
@@ -275,7 +275,7 @@ const SubmissionResult: React.FC<SubmissionResultProps> = ({
             {questions.map((q, i) => answers[i] !== q.correctAnswer ? (
               <div key={i} className="p-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30">
                 <div className="text-xs font-bold text-red-700 dark:text-red-400 mb-1">Q{i+1}: {q.question}</div>
-                <div className="text-xs text-green-700 dark:text-green-400">✅ Correct: {q.options[q.correctAnswer]}</div>
+                <div className="text-xs text-green-700 dark:text-green-400">Correct: {q.options[q.correctAnswer]}</div>
                 <div className="text-xs text-slate-500 mt-1 italic">{q.explanation}</div>
               </div>
             ) : null)}

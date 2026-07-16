@@ -20,7 +20,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   const spinner = (
     <div className="flex flex-col items-center justify-center gap-3">
       <div
-        className={`${sizeClasses[size]} border-orange-200 dark:border-orange-900/30 border-t-orange-600 dark:border-t-orange-400 rounded-full animate-spin`}
+        className={`${sizeClasses[size]} border-[var(--brand-200)] dark:border-[var(--brand-900)]/30 border-t-[var(--brand-600)] dark:border-t-[var(--brand-400)] rounded-full animate-spin`}
       />
       {text && (
         <p className="text-sm text-gray-600 dark:text-gray-400">{text}</p>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { gbvCasesApi, caseReferralsApi, sasaReportsApi } from '../api';
+import { gbvCasesApi, caseReferralsApi, sasaReportsApi, monthlyCaseReportsApi } from '../api';
 import { User, Report, CaseReferral, SasaMonthlyReport } from '../types';
 import {
   REFERRAL_AGENCIES, REFERRAL_STATUS_CFG,
@@ -9,6 +9,7 @@ import {
   FInput, FArea, FSelect, Modal,
 } from './SubComponents';
 import { Inbox, ArrowRightCircle, FileBarChart, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { SasaCaseAnalytics } from './SasaCaseAnalytics';
 
 interface SasaPageProps {
   user: User | null;
@@ -18,6 +19,7 @@ interface SasaPageProps {
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
+const MONTH_NAMES_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const TODAY = new Date().toISOString().split('T')[0];
 const CURRENT_MONTH = TODAY.slice(0, 7);
 
@@ -75,12 +77,13 @@ const CaseInbox: React.FC<{
   gbvCases: any[];
   setGbvCases: React.Dispatch<React.SetStateAction<any[]>>;
   referrals: CaseReferral[];
-  onRefer: (report: Report) => void;
+  onRefer: (item: any) => void;
   showToast: (msg: string) => void;
 }> = ({ reports, gbvCases, setGbvCases, referrals, onRefer, showToast }) => {
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Report | null>(null);
+  const [selectedCase, setSelectedCase] = useState<any | null>(null);
 
   const referredIds = new Set(referrals.map(r => r.caseId));
 
@@ -100,15 +103,15 @@ const CaseInbox: React.FC<{
       {/* summary strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
         {[
-          { label: 'Total Cases', value: reports.length, icon: <Inbox size={15} /> },
-          { label: 'Pending Review', value: reports.filter(r => r.status === 'pending').length, icon: <Clock size={15} /> },
-          { label: 'Public Submissions', value: totalPublic, icon: <AlertCircle size={15} /> },
-          { label: 'Referred', value: referredIds.size, icon: <ArrowRightCircle size={15} /> },
+          { label: 'Total Cases', value: gbvCases.length, icon: <Inbox size={15} /> },
+          { label: 'New', value: gbvCases.filter(c => c.status === 'new').length, icon: <Clock size={15} /> },
+          { label: 'In Progress', value: gbvCases.filter(c => c.status === 'in_progress').length, icon: <AlertCircle size={15} /> },
+          { label: 'Resolved', value: gbvCases.filter(c => c.status === 'resolved').length, icon: <ArrowRightCircle size={15} /> },
         ].map((s, i) => (
           <div
             key={i}
             className="p-3 rounded-lg"
-            style={{ background: 'linear-gradient(135deg,#e85d04,#c44d00)', boxShadow: '0 4px 14px rgba(232,93,4,0.22)' }}
+            style={{ background: 'linear-gradient(135deg,var(--brand),#c44d00)', boxShadow: '0 4px 14px rgba(232,93,4,0.22)' }}
           >
             <div className="flex items-center gap-1.5 mb-1 text-white/80 text-[10px] font-semibold uppercase tracking-wide">
               {s.icon}{s.label}
@@ -118,54 +121,6 @@ const CaseInbox: React.FC<{
         ))}
       </div>
 
-      <FilterBar
-        options={[
-          { v: 'all', l: 'All' },
-          { v: 'pending', l: 'Pending' },
-          { v: 'public', l: 'Public' },
-          { v: 'referred', l: 'Referred' },
-        ]}
-        active={filter}
-        onChange={setFilter}
-        search={search}
-        onSearch={setSearch}
-        searchPlaceholder="Search school or district…"
-      />
-
-      <div className="space-y-2">
-        {filtered.length === 0 && (
-          <div className="text-center py-12 text-sm text-black/40 dark:text-white/40">No cases match this filter.</div>
-        )}
-        {filtered.map(r => {
-          const isReferred = referredIds.has(r.id);
-          return (
-            <Card
-              key={r.id}
-              className="p-3 flex flex-wrap items-center gap-3 cursor-pointer hover:border-orange-400 transition-colors"
-              onClick={() => setSelected(r)}
-            >
-              <div className="flex-1 min-w-0">
-                <div className="font-semibold text-sm text-black dark:text-white truncate">{r.school}</div>
-                <div className="text-[11px] text-black/60 dark:text-white/60">{r.district} · {r.session}</div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <Pill s={r.status} />
-                {isReferred && (
-                  <Badge text="Referred" color="#6d28d9" bg="#ede9fe" />
-                )}
-                {r.submitted_role === 'public' && (
-                  <Badge text="Public" color="#1e40af" bg="#dbeafe" />
-                )}
-                {!isReferred && (
-                  <Btn size="sm" variant="orange_ghost" onClick={e => { e.stopPropagation(); onRefer(r); }}>
-                    Refer
-                  </Btn>
-                )}
-              </div>
-            </Card>
-          );
-        })}
-      </div>
       
       {/* GBV Cases from database */}
 {gbvCases.length > 0 && (
@@ -193,7 +148,7 @@ const CaseInbox: React.FC<{
               </div>
               <p className="text-xs text-black/70 dark:text-white/70 line-clamp-2">{c.description}</p>
               {c.contact_method && (
-                <div className="text-[11px] text-orange-600 mt-1">
+                <div className="text-[11px] text-[var(--brand-600)] mt-1">
                   Contact: {c.contact_method} {c.contact_details ? `— ${c.contact_details}` : '(not provided)'}
                 </div>
               )}
@@ -202,9 +157,9 @@ const CaseInbox: React.FC<{
               {c.status === 'new' && (
                 <Btn size="sm" variant="primary" onClick={async () => {
                   const data = await gbvCasesApi.updateStatus(c.id, 'in_progress');
-                  if (data.error) { showToast(`⚠️ ${data.error}`); return; }
+                  if (data.error) { showToast(data.error, 'error'); return; }
                   setGbvCases(prev => prev.map(x => x.id === c.id ? { ...x, status: 'in_progress' } : x));
-                  showToast('Case marked as in progress');
+                  showToast('Case marked as in progress', 'success');
                 }}>
                   Start Case
                 </Btn>
@@ -212,13 +167,35 @@ const CaseInbox: React.FC<{
               {c.status === 'in_progress' && (
                 <Btn size="sm" variant="success" onClick={async () => {
                   const data = await gbvCasesApi.updateStatus(c.id, 'resolved');
-                  if (data.error) { showToast(`⚠️ ${data.error}`); return; }
+                  if (data.error) { showToast(data.error, 'error'); return; }
                   setGbvCases(prev => prev.map(x => x.id === c.id ? { ...x, status: 'resolved' } : x));
-                  showToast('Case marked as resolved');
+                  showToast('Case marked as resolved', 'success');
                 }}>
                   Resolve
                 </Btn>
               )}
+              {referredIds.has(c.id) ? (
+                <Badge text="Referred" color="#6d28d9" bg="#ede9fe" />
+              ) : (
+                <Btn size="sm" variant="orange_ghost" onClick={() => onRefer(c)}>
+                  Refer
+                </Btn>
+              )}
+              <Btn size="sm" variant="secondary" onClick={() => setSelectedCase(c)}>
+                View
+              </Btn>
+              <Btn size="sm" variant="danger" onClick={async () => {
+                if (!window.confirm('Delete this case permanently? This cannot be undone.')) return;
+                try {
+                  await gbvCasesApi.delete(c.id);
+                  setGbvCases(prev => prev.filter(x => x.id !== c.id));
+                  showToast('Case deleted', 'success');
+                } catch {
+                  showToast('Failed to delete case', 'error');
+                }
+              }}>
+                Delete
+              </Btn>
             </div>
           </div>
         </Card>
@@ -226,6 +203,47 @@ const CaseInbox: React.FC<{
     </div>
   </div>
 )}
+      {selectedCase && (
+        <Modal title={`Case — ${selectedCase.gbv_type}`} onClose={() => setSelectedCase(null)} width={520}>
+          <div className="space-y-3 text-sm">
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div><span className="text-black/50 dark:text-white/50">Status:</span> <b className="capitalize">{selectedCase.status.replace('_', ' ')}</b></div>
+              <div><span className="text-black/50 dark:text-white/50">District:</span> <b>{selectedCase.district || '—'}</b></div>
+              <div><span className="text-black/50 dark:text-white/50">Village:</span> <b>{selectedCase.village || '—'}</b></div>
+              <div><span className="text-black/50 dark:text-white/50">Country:</span> <b>{selectedCase.country || '—'}</b></div>
+              <div><span className="text-black/50 dark:text-white/50">Reported by:</span> <b>{selectedCase.reported_by_type || '—'}</b></div>
+              <div><span className="text-black/50 dark:text-white/50">Survivor safe:</span> <b>{selectedCase.survivor_safe || '—'}</b></div>
+              <div><span className="text-black/50 dark:text-white/50">Age group:</span> <b>{selectedCase.survivor_age_group || '—'}</b></div>
+              <div><span className="text-black/50 dark:text-white/50">Incident date:</span> <b>{selectedCase.incident_date ? new Date(selectedCase.incident_date).toLocaleDateString() : '—'}</b></div>
+              <div><span className="text-black/50 dark:text-white/50">Submitted:</span> <b>{new Date(selectedCase.created_at).toLocaleDateString()}</b></div>
+            </div>
+            {selectedCase.immediate_needs && (
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wide text-black/40 dark:text-white/40 mb-1">Immediate Needs</div>
+                <div className="text-xs">{selectedCase.immediate_needs}</div>
+              </div>
+            )}
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-wide text-black/40 dark:text-white/40 mb-1">Description</div>
+              <div className="text-xs bg-neutral-50 dark:bg-slate-900 p-3 rounded-lg border border-neutral-100 dark:border-slate-800">{selectedCase.description}</div>
+            </div>
+            {selectedCase.witness_statement && (
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wide text-black/40 dark:text-white/40 mb-1">Additional Information</div>
+                <div className="text-xs bg-neutral-50 dark:bg-slate-900 p-3 rounded-lg border border-neutral-100 dark:border-slate-800">{selectedCase.witness_statement}</div>
+              </div>
+            )}
+            {selectedCase.contact_method && (
+              <div className="text-xs text-[var(--brand-600)]">
+                Contact: {selectedCase.contact_method} {selectedCase.contact_details ? `— ${selectedCase.contact_details}` : '(not provided)'}
+              </div>
+            )}
+            {selectedCase.full_name && (
+              <div className="text-xs"><span className="text-black/50 dark:text-white/50">Full name:</span> <b>{selectedCase.full_name}</b></div>
+            )}
+          </div>
+        </Modal>
+      )}
 
       {selected && (
         <Modal title={`Case — ${selected.school}`} onClose={() => setSelected(null)} width={560}>
@@ -273,13 +291,13 @@ const ReferralsTab: React.FC<{
   referrals: CaseReferral[];
   setReferrals: React.Dispatch<React.SetStateAction<CaseReferral[]>>;
   showToast: (m: string) => void;
-  referTarget: Report | null;
+  referTarget: any | null;
   clearReferTarget: () => void;
 }> = ({ referrals, setReferrals, showToast, referTarget, clearReferTarget }) => {
   const [filter, setFilter] = useState('all');
   const [editId, setEditId] = useState<number | null>(null);
   const [outcome, setOutcome] = useState('');
-  const [referModal, setReferModal] = useState<Report | null>(referTarget);
+  const [referModal, setReferModal] = useState<any | null>(referTarget);
 
   // keep modal in sync when parent sets a target
   React.useEffect(() => { if (referTarget) setReferModal(referTarget); }, [referTarget]);
@@ -300,20 +318,20 @@ const ReferralsTab: React.FC<{
     try {
       const data = await caseReferralsApi.create({
         caseId: referModal.id,
-        caseSchool: referModal.school,
+        caseSchool: referModal.school || referModal.gbv_type || 'GBV Case',
         caseDistrict: referModal.district,
         agency: agency.id,
         agencyLabel: agency.label,
         notes: newRef.notes,
       });
-      if (data.error) { showToast(`⚠️ ${data.error}`); return; }
+      if (data.error) { showToast(`️ ${data.error}`, 'warning'); return; }
       setReferrals(prev => [mapReferral(data), ...prev]);
       showToast(`Case referred to ${agency.label}`);
       setReferModal(null);
       clearReferTarget();
       setNewRef({ agency: REFERRAL_AGENCIES[0].id, notes: '' });
     } catch {
-      showToast('⚠️ Failed to submit referral');
+      showToast('️ Failed to submit referral', 'warning');
     }
   };
 
@@ -328,13 +346,13 @@ const ReferralsTab: React.FC<{
         outcome: status === 'resolved' ? outcome : ref.outcome,
         notes: ref.notes,
       });
-      if (data.error) { showToast(`⚠️ ${data.error}`); return; }
+      if (data.error) { showToast(`️ ${data.error}`, 'warning'); return; }
       setReferrals(prev => prev.map(r => r.id === id ? mapReferral(data) : r));
       setEditId(null);
       setOutcome('');
       showToast(`Referral marked as ${status}`);
     } catch {
-      showToast('⚠️ Failed to update referral');
+      showToast('️ Failed to update referral', 'warning');
     }
   };
 
@@ -450,7 +468,8 @@ const MonthlyReports: React.FC<{
   referrals: CaseReferral[];
   allCases: Report[];
   showToast: (m: string) => void;
-}> = ({ sasaReports, setSasaReports, referrals, allCases, showToast }) => {
+  districtReports: any[];
+}> = ({ sasaReports, setSasaReports, referrals, allCases, showToast, districtReports }) => {
   const [creating, setCreating] = useState(false);
   const [viewing, setViewing] = useState<SasaMonthlyReport | null>(null);
 
@@ -483,47 +502,55 @@ const MonthlyReports: React.FC<{
         recommendations: form.recommendations,
         status,
       });
-      if (data.error) { showToast(`⚠️ ${data.error}`); return; }
+      if (data.error) { showToast(`️ ${data.error}`, 'warning'); return; }
       setSasaReports(prev => [mapSasaReport(data), ...prev]);
       setCreating(false);
       showToast(asDraft ? 'Report saved as draft' : 'Monthly report submitted');
       setForm({ month: CURRENT_MONTH, highlights: '', challenges: '', recommendations: '' });
     } catch {
-      showToast('⚠️ Failed to save report');
+      showToast('️ Failed to save report', 'warning');
     }
   };
 
   return (
     <div>
-      <div className="flex justify-end mb-4">
-        <Btn size="sm" variant="primary" onClick={() => setCreating(true)}>
-          <FileBarChart size={14} /> New Monthly Report
-        </Btn>
-      </div>
-
-      <div className="space-y-2">
-        {sasaReports.length === 0 && (
-          <div className="text-center py-12 text-sm text-black/40 dark:text-white/40">No reports yet.</div>
-        )}
-        {sasaReports.map(r => (
-          <Card
-            key={r.id}
-            className="p-4 flex flex-wrap items-center gap-3 cursor-pointer hover:border-orange-400 transition-colors"
-            onClick={() => setViewing(r)}
-          >
-            <div className="flex-1">
-              <div className="font-bold text-sm text-black dark:text-white">{formatMonth(r.month)}</div>
-              <div className="text-[11px] text-black/60 dark:text-white/60">
-                {r.totalCases} cases · {r.referrals} referrals · {r.resolvedReferrals} resolved
-              </div>
-            </div>
-            <Badge
-              text={r.status === 'submitted' ? 'Submitted' : 'Draft'}
-              color={r.status === 'submitted' ? '#065f46' : '#92400e'}
-              bg={r.status === 'submitted' ? '#dcfce7' : '#fef9c3'}
-            />
-          </Card>
-        ))}
+      {/* District Monthly Case Reports — submitted by TOTs, Field Officers, District Coordinators */}
+      <div className="mt-8">
+        <div className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">
+          District Monthly Case Reports ({districtReports.length})
+        </div>
+        <div className="overflow-x-auto rounded-xl border border-neutral-100 dark:border-slate-800">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-50 dark:bg-slate-900/40">
+              <tr>
+                <th className="px-3 py-2 font-bold text-slate-500">Month</th>
+                <th className="px-3 py-2 font-bold text-slate-500">Submitted By</th>
+                <th className="px-3 py-2 font-bold text-slate-500">District</th>
+                <th className="px-3 py-2 font-bold text-slate-500">New Cases</th>
+                <th className="px-3 py-2 font-bold text-slate-500">Referred</th>
+                <th className="px-3 py-2 font-bold text-slate-500">Pending</th>
+                <th className="px-3 py-2 font-bold text-slate-500">Submitted On</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-neutral-100 dark:divide-slate-800">
+              {districtReports.length === 0 ? (
+                <tr><td colSpan={7} className="px-3 py-6 text-center text-slate-400">No district reports yet.</td></tr>
+              ) : (
+                districtReports.map((r: any) => (
+                  <tr key={r.id}>
+                    <td className="px-3 py-2 font-semibold text-slate-700 dark:text-slate-200">{MONTH_NAMES_SHORT[r.month - 1]} {r.year}</td>
+                    <td className="px-3 py-2 text-slate-600 dark:text-slate-300">{r.submitted_by_name} <span className="text-slate-400">({r.submitted_by_role})</span></td>
+                    <td className="px-3 py-2 text-slate-500">{r.district || '—'}</td>
+                    <td className="px-3 py-2 font-bold">{r.new_cases_count ?? r.cases_count ?? 0}</td>
+                    <td className="px-3 py-2">{r.referred_count ?? 0}</td>
+                    <td className="px-3 py-2">{r.pending_count ?? 0}</td>
+                    <td className="px-3 py-2 text-slate-400">{new Date(r.submitted_at).toLocaleDateString()}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Create modal */}
@@ -561,8 +588,8 @@ const MonthlyReports: React.FC<{
               { label: 'Referrals', value: viewing.referrals },
               { label: 'Resolved', value: viewing.resolvedReferrals },
             ].map(s => (
-              <div key={s.label} className="p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg text-center">
-                <div className="text-xl font-black text-orange-600 dark:text-orange-400">{s.value}</div>
+              <div key={s.label} className="p-3 bg-[var(--brand-50)] dark:bg-[var(--brand-950)]/20 rounded-lg text-center">
+                <div className="text-xl font-black text-[var(--brand-600)] dark:text-[var(--brand-400)]">{s.value}</div>
                 <div className="text-[10px] font-semibold text-black/60 dark:text-white/60 mt-0.5">{s.label}</div>
               </div>
             ))}
@@ -589,31 +616,34 @@ const MonthlyReports: React.FC<{
 // ─── MAIN SASA PAGE ──────────────────────────────────────────────────────────
 
 export const SasaPage: React.FC<SasaPageProps> = ({ user, reports, showToast }) => {
-  const [tab, setTab] = useState<'inbox' | 'referrals' | 'monthly'>('inbox');
+  const [tab, setTab] = useState<'inbox' | 'analytics' | 'referrals' | 'monthly'>('inbox');
   const [referrals, setReferrals] = useState<CaseReferral[]>([]);
   const [sasaReports, setSasaReports] = useState<SasaMonthlyReport[]>([]);
-  const [referTarget, setReferTarget] = useState<Report | null>(null);
+  const [districtReports, setDistrictReports] = useState<any[]>([]);
+  const [referTarget, setReferTarget] = useState<any | null>(null);
 
-  const canAccess = user && (user.role === 'sasa_officer' || user.role === 'admin');
+  const canAccess = user && (user.role === 'sasa_officer' || user.role === 'program_manager');
   const [gbvCases, setGbvCases] = useState<any[]>([]);
 
   useEffect(() => {
-    if (user?.role === 'sasa_officer' || user?.role === 'admin') {
+    if (user?.role === 'sasa_officer' || user?.role === 'program_manager') {
       gbvCasesApi.getAll().then(setGbvCases);
       caseReferralsApi.getAll().then(data => setReferrals(data.map(mapReferral)));
       sasaReportsApi.getAll().then(data => setSasaReports(data.map(mapSasaReport)));
+      monthlyCaseReportsApi.getAll().then(setDistrictReports).catch(() => {});
     }
   }, [user]);
   if (!canAccess) {
     return (
       <div className="p-12 text-center text-black/40 dark:text-white/40 font-semibold italic">
-        This workspace is restricted to SASA Officers and Admins.
+        This workspace is restricted to SASA Officers and Regional Managers.
       </div>
     );
   }
 
   const TABS = [
     { id: 'inbox', label: 'Case Inbox', icon: <Inbox size={14} /> },
+    { id: 'analytics', label: 'Analytics', icon: <FileBarChart size={14} /> },
     { id: 'referrals', label: 'Referrals', icon: <ArrowRightCircle size={14} /> },
     { id: 'monthly', label: 'Monthly Reports', icon: <FileBarChart size={14} /> },
   ] as const;
@@ -638,7 +668,7 @@ export const SasaPage: React.FC<SasaPageProps> = ({ user, reports, showToast }) 
             onClick={() => setTab(t.id)}
             className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold rounded-t-lg border-b-2 transition-all -mb-px ${
               tab === t.id
-                ? 'border-orange-500 text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/20'
+                ? 'border-[var(--brand-500)] text-[var(--brand-600)] dark:text-[var(--brand-400)] bg-[var(--brand-50)] dark:bg-[var(--brand-950)]/20'
                 : 'border-transparent text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white'
             }`}
           >
@@ -650,6 +680,9 @@ export const SasaPage: React.FC<SasaPageProps> = ({ user, reports, showToast }) 
       {tab === 'inbox' && (
   <CaseInbox reports={reports} gbvCases={gbvCases} setGbvCases={setGbvCases} referrals={referrals} onRefer={handleRefer} showToast={showToast} />
 )}
+      {tab === 'analytics' && (
+        <SasaCaseAnalytics cases={gbvCases} />
+      )}
       {tab === 'referrals' && (
         <ReferralsTab
           referrals={referrals}
@@ -662,6 +695,7 @@ export const SasaPage: React.FC<SasaPageProps> = ({ user, reports, showToast }) 
       {tab === 'monthly' && (
         <MonthlyReports
           sasaReports={sasaReports}
+          districtReports={districtReports}
           setSasaReports={setSasaReports}
           referrals={referrals}
           allCases={reports}

@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import {
   BookOpen, CheckCircle, Clock, Play, Star, ChevronRight,
-  Users, Target, Award, FileText, Layers
-} from 'lucide-react';
+  Users, Target, Award, FileText, Layers, User as UserIcon} from 'lucide-react';
 import { Card, Kicker, Btn, ProgBar, Badge, StatCard, FilterBar } from './SubComponents';
 import { HIM_SESSIONS, GESD_SESSIONS, CLUSTERS } from '../data';
 import { Report, User } from '../types';
@@ -44,7 +43,7 @@ export const ProgramStaffPage: React.FC<Props> = ({ user, reports, setPage }) =>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard icon={<Users size={18} className="text-blue-500" />} label="Students Reached" value={totalStudents.toLocaleString()} />
         <StatCard icon={<CheckCircle size={18} className="text-emerald-500" />} label="Sessions Logged" value={myReports.length} color="#059669" />
-        <StatCard icon={<Layers size={18} className="text-orange-500" />} label="Clusters" value={districtClusters.length} />
+        <StatCard icon={<Layers size={18} className="text-[var(--brand-500)]" />} label="Clusters" value={districtClusters.length} />
         <StatCard icon={<Award size={18} className="text-purple-500" />} label="Approved" value={myReports.filter(r => r.status === 'approved').length} color="#6d28d9" />
       </div>
 
@@ -77,7 +76,7 @@ export const ProgramStaffPage: React.FC<Props> = ({ user, reports, setPage }) =>
                 onClick={() => setCurriculum(c)}
                 className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${
                   curriculum === c
-                    ? 'bg-orange-600 text-white'
+                    ? 'bg-[var(--brand-600)] text-white'
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
                 }`}
               >
@@ -105,7 +104,7 @@ export const ProgramStaffPage: React.FC<Props> = ({ user, reports, setPage }) =>
                   onClick={() => setExpandedSession(isExpanded ? null : session.num)}
                 >
                   <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
-                    isDelivered ? 'bg-emerald-500 text-white' : 'bg-orange-100 dark:bg-orange-900/30 text-orange-600'
+                    isDelivered ? 'bg-emerald-500 text-white' : 'bg-[var(--brand-100)] dark:bg-[var(--brand-900)]/30 text-[var(--brand-600)]'
                   }`}>
                     {isDelivered ? <CheckCircle size={14} /> : idx + 1}
                   </div>
@@ -124,9 +123,9 @@ export const ProgramStaffPage: React.FC<Props> = ({ user, reports, setPage }) =>
                     <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mt-3">{session.desc}</p>
 
                     {session.pledge && (
-                      <div className="bg-orange-50 dark:bg-orange-950/20 rounded-lg p-3 border-l-4 border-orange-500">
-                        <div className="text-[10px] font-bold text-orange-600 uppercase mb-1">Pledge / Chant</div>
-                        <p className="text-xs text-orange-800 dark:text-orange-300 italic whitespace-pre-line leading-relaxed">{session.pledge}</p>
+                      <div className="bg-[var(--brand-50)] dark:bg-[var(--brand-950)]/20 rounded-lg p-3 border-l-4 border-[var(--brand-500)]">
+                        <div className="text-[10px] font-bold text-[var(--brand-600)] uppercase mb-1">Pledge / Chant</div>
+                        <p className="text-xs text-[var(--brand-800)] dark:text-[var(--brand-300)] italic whitespace-pre-line leading-relaxed">{session.pledge}</p>
                       </div>
                     )}
 
@@ -135,7 +134,7 @@ export const ProgramStaffPage: React.FC<Props> = ({ user, reports, setPage }) =>
                       <ul className="space-y-1.5">
                         {session.objectives.map((obj, i) => (
                           <li key={i} className="flex items-start gap-2 text-xs text-black dark:text-white">
-                            <Star size={10} className="text-orange-500 shrink-0 mt-0.5" />
+                            <Star size={10} className="text-[var(--brand-500)] shrink-0 mt-0.5" />
                             {obj}
                           </li>
                         ))}
@@ -168,7 +167,7 @@ export const ProgramStaffPage: React.FC<Props> = ({ user, reports, setPage }) =>
                   <div className="text-xs font-semibold text-black dark:text-white truncate">{r.school}</div>
                   <div className="text-[10px] text-slate-500">{r.curriculum} · {r.session?.split(':')[0]} · {r.submitted_at}</div>
                 </div>
-                <div className="text-[10px] text-slate-500 shrink-0">👦{r.boys} 👧{r.girls}</div>
+                <div className="text-[10px] text-slate-500 shrink-0">{r.boys} {r.girls}</div>
                 <Badge
                   text={r.status}
                   color={r.status === 'approved' ? '#059669' : r.status === 'pending' ? '#d97706' : '#dc2626'}

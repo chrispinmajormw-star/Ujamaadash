@@ -1,11 +1,11 @@
 import { CaseReferral, SasaMonthlyReport, QuizQuestion, Session, User, Report, Cluster, District, Training } from './types';
 
 export const ROLE_CFG = {
-  admin: { label: "National Admin", color: "#991b1b", bg: "#fee2e2", icon: "🛡️" },
-  tot: { label: "Trainer of Trainers", color: "#c44d00", bg: "#fff4ec", icon: "🎓" },
-  data_entry: { label: "Data Officer", color: "#c44d00", bg: "#fff4ec", icon: "📝" },
-  district_coordinator: { label: "District Coordinator", color: "#065f46", bg: "#d1fae5", icon: "🏛️" },
-  viewer: { label: "Viewer", color: "#1e40af", bg: "#dbeafe", icon: "👁️" },
+  admin: { label: "National Admin", color: "#991b1b", bg: "#fee2e2", icon: "️" },
+  tot: { label: "Trainer of Trainers", color: "#c44d00", bg: "#fff4ec", icon: "" },
+  data_entry: { label: "M & E Officer", color: "#c44d00", bg: "#fff4ec", icon: "" },
+  district_coordinator: { label: "District Coordinator", color: "#065f46", bg: "#d1fae5", icon: "️" },
+  viewer: { label: "Viewer", color: "#1e40af", bg: "#dbeafe", icon: "️" },
 };
 
 export const CAN = {
@@ -23,7 +23,7 @@ export const can = (role: string, act: keyof typeof CAN) => {
 export const USERS_INIT: User[] = [
   { id: "1", email: "admin@ujamaa.mw", password: "admin123", role: "admin", name: "Administrator", district: null, avatar: "GK", status: "active" },
   { id: "2", email: "tot@ujamaa.mw", password: "tot123", role: "tot", name: "Trainer of Trainers", district: "Lilongwe", avatar: "TD", status: "active", clusterId: 0 },
-  { id: "3", email: "entry@ujamaa.mw", password: "entry123", role: "data_entry", name: "Data Officer", district: "Lilongwe", avatar: "JB", status: "active" },
+  { id: "3", email: "entry@ujamaa.mw", password: "entry123", role: "data_entry", name: "M & E Officer", district: "Lilongwe", avatar: "JB", status: "active" },
   { id: "4", email: "coord@ujamaa.mw", password: "coord123", role: "district_coordinator", name: "District Coordinator", district: "Blantyre", avatar: "MC", status: "active" },
   { id: "5", email: "viewer@ujamaa.mw", password: "view123", role: "viewer", name: "User 01", district: null, avatar: "TN", status: "active" },
 ];

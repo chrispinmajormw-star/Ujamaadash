@@ -50,7 +50,7 @@ export const ResponsiveTable: React.FC<ResponsiveTableProps> = ({
               return (
                 <tr
                   key={key}
-                  className="border-b border-neutral-200 dark:border-slate-800 hover:bg-orange-50/50 dark:hover:bg-slate-800/50 transition-colors"
+                  className="border-b border-neutral-200 dark:border-slate-800 hover:bg-[var(--brand-50)]/50 dark:hover:bg-slate-800/50 transition-colors"
                 >
                   {row.map((cell, cellIdx) => (
                     <td
@@ -82,7 +82,7 @@ export const ResponsiveTable: React.FC<ResponsiveTableProps> = ({
               {/* Card header - always visible */}
               <button
                 onClick={() => toggleRowExpanded(key)}
-                className="w-full px-4 py-3 flex items-center justify-between hover:bg-orange-50/50 dark:hover:bg-slate-800/50 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-inset"
+                className="w-full px-4 py-3 flex items-center justify-between hover:bg-[var(--brand-50)]/50 dark:hover:bg-slate-800/50 transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)] focus:ring-inset"
                 aria-expanded={isExpanded}
               >
                 <div className="text-left flex-1 min-w-0">

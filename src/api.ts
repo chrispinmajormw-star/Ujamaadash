@@ -1,6 +1,6 @@
 import { unwrapList } from './utils/mapFallback';
 
-const BASE_URL = import.meta.env.VITE_API_URL || '';
+export const BASE_URL = import.meta.env.VITE_API_URL || '';
 
 const getToken = () => localStorage.getItem('token');
 
@@ -65,7 +65,7 @@ async function apiFetch<T = any>(path: string, options: RequestInit = {}): Promi
 // ─── REPORTS ─────────────────────────────────────────────────────────────────
 
 export const reportsApi = {
-  getAll: () => apiGetList('/api/reports', ['reports', 'data', 'items']),
+  getAll: (country?: string) => apiGetList(`/api/reports${country && country !== 'all' ? `?country=${country}` : ''}`, ['reports', 'data', 'items']),
   getById: (id: number) => api.get(`/api/reports/${id}`),
   create: (data: any) => api.post('/api/reports', data),
   update: (id: number, data: any) => api.put(`/api/reports/${id}`, data),
@@ -88,7 +88,7 @@ export const usersApi = {
 // ─── STATS ───────────────────────────────────────────────────────────────────
 
 export const statsApi = {
-  get: () => api.get('/api/stats'),
+  get: (country?: string) => api.get(`/api/stats${country && country !== 'all' ? `?country=${country}` : ''}`),
 };
 
 // ─── DOCUMENT REPORTS ────────────────────────────────────────────────────────
@@ -127,7 +127,8 @@ export const analyticsApi = {
 // ─── DISTRICT MANAGEMENT ─────────────────────────────────────────────────────
 
 export const districtsApi = {
-  getAll: () => apiGetList('/api/districts', ['districts', 'data', 'items']),
+  getAll: (country?: string) => apiGetList(`/api/districts${country && country !== 'all' ? `?country=${country}` : ''}`, ['districts', 'data', 'items']),
+  getCountries: () => api.get('/api/districts/meta/countries'),
   getOne: (id: number) => api.get(`/api/districts/${id}`),
   getReports: (id: number) => apiGetList(`/api/districts/${id}/reports`, ['reports', 'data', 'items']),
   submitReport: (id: number, data: any) => api.post(`/api/districts/${id}/reports`, data),
@@ -136,6 +137,10 @@ export const districtsApi = {
   updateTraining: (id: number, data: any) => api.put(`/api/trainings/${id}`, data),
   deleteTraining: (id: number) => api.delete(`/api/trainings/${id}`),
   assignDC: (name: string, userId: string) => api.put(`/api/districts/${name}/assign-dc`, { userId }),
+  create: (data: any) => api.post('/api/districts', data),
+  update: (name: string, data: any) => api.put(`/api/districts/${encodeURIComponent(name)}`, data),
+  delete: (name: string) => api.delete(`/api/districts/${encodeURIComponent(name)}`),
+  bulkImport: (districts: any[]) => api.post('/api/districts/bulk-import', { districts }),
 };
 // ─── GBV CASES ───────────────────────────────────────────────────────────────
 
@@ -143,6 +148,14 @@ export const gbvCasesApi = {
   getAll: () => apiGetList('/api/gbv-cases', ['cases', 'data', 'items']),
   submit: (data: any) => api.post('/api/gbv-cases', data),
   updateStatus: (id: number, status: string) => api.put(`/api/gbv-cases/${id}/status`, { status }),
+  getStats: () => api.get('/api/gbv-cases/stats/summary'),
+  delete: (id: number) => api.delete(`/api/gbv-cases/${id}`),
+};
+
+export const monthlyCaseReportsApi = {
+  getStatus: () => api.get('/api/monthly-case-reports/status'),
+  getAll: () => apiGetList('/api/monthly-case-reports', ['reports', 'data', 'items']),
+  submit: (data: any) => api.post('/api/monthly-case-reports', data),
 };
 
 // ─── SESSION RECORDS ──────────────────────────────────────────────────────────
@@ -162,10 +175,42 @@ export const notificationsApi = {
   markAllRead: () => api.put('/api/notifications/mark-all-read', {}),
 };
 
+// ─── CURRICULUM ──────────────────────────────────────────────────────────────
+export const dataCompletenessApi = {
+  get: () => api.get('/api/data-completeness'),
+};
+
+export const curriculumApi = {
+  get: () => api.get('/api/curriculum'),
+  updateOverview: (curriculum: string, body: any) => api.put(`/api/curriculum/overview/${curriculum}`, body),
+  createModule: (body: any) => api.post('/api/curriculum/modules', body),
+  updateModule: (id: number, body: any) => api.put(`/api/curriculum/modules/${id}`, body),
+  deleteModule: (id: number) => api.delete(`/api/curriculum/modules/${id}`),
+};
+
+// ─── TEACHER RESOURCES ───────────────────────────────────────────────────────
+export const teacherResourcesApi = {
+  getAll: (curriculum?: string) => api.get(`/api/teacher-resources${curriculum ? `?curriculum=${curriculum}` : ''}`),
+  upload: async (formData: FormData) => {
+    const token = localStorage.getItem('token');
+    const base = import.meta.env.VITE_API_URL || '';
+    const res = await fetch(`${base}/api/teacher-resources`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error(data?.error || 'Upload failed');
+    return data;
+  },
+  update: (id: number, body: any) => api.put(`/api/teacher-resources/${id}`, body),
+  delete: (id: number) => api.delete(`/api/teacher-resources/${id}`),
+};
+
 // ─── IMPACT STORIES ───────────────────────────────────────────────────────────
 
 export const impactStoriesApi = {
-  getAll: () => apiGetList('/api/impact-stories', ['stories', 'data', 'items']),
+  getAll: (country?: string) => apiGetList(`/api/impact-stories${country && country !== 'all' ? `?country=${country}` : ''}`, ['stories', 'data', 'items']),
   getOne: (id: number) => api.get(`/api/impact-stories/${id}`),
   create: (data: any) => api.post('/api/impact-stories', data),
   update: (id: number, data: any) => api.put(`/api/impact-stories/${id}`, data),
@@ -174,7 +219,7 @@ export const impactStoriesApi = {
 // ─── PROGRAMME STATS ─────────────────────────────────────────────────────────
 
 export const programmeStatsApi = {
-  getAll: () => api.get('/api/programme-stats'),
+  getAll: (country?: string) => api.get(`/api/programme-stats${country && country !== 'all' ? `?country=${country}` : ''}`),
   update: (year: string, data: any) => api.put(`/api/programme-stats/${year}`, data),
   create: (data: any) => api.post('/api/programme-stats', data),
   delete: (year: string) => api.delete(`/api/programme-stats/${year}`),
@@ -182,13 +227,13 @@ export const programmeStatsApi = {
 // ─── TRAININGS ────────────────────────────────────────────────────────────────
 
 export const trainingsApi = {
-  getAll: () => apiGetList('/api/trainings', ['trainings', 'data', 'items']),
+  getAll: (country?: string) => apiGetList(`/api/trainings${country && country !== 'all' ? `?country=${country}` : ''}`, ['trainings', 'data', 'items']),
 };
 
 // ─── Monitoring API ───────────────────────────────────────────────────────────
 export const monitoringApi = {
   /** GET /api/monitoring/activities */
-  getActivities: async (params?: { district?: string; month?: string }) => {
+  getActivities: async (params?: { district?: string; month?: string; country?: string }) => {
     const qs = params ? '?' + new URLSearchParams(params as any).toString() : '';
     const data = await apiFetch(`/api/monitoring/activities${qs}`);
     return unwrapList(data, ['activities', 'data', 'items']);
@@ -207,7 +252,7 @@ export const monitoringApi = {
     apiFetch(`/api/monitoring/activities/${id}`, { method: 'DELETE' }),
 
   /** GET /api/monitoring/issues */
-  getIssues: async (params?: { district?: string; month?: string }) => {
+  getIssues: async (params?: { district?: string; month?: string; country?: string }) => {
     const qs = params ? '?' + new URLSearchParams(params as any).toString() : '';
     const data = await apiFetch(`/api/monitoring/issues${qs}`);
     return unwrapList(data, ['issues', 'data', 'items']);
@@ -258,7 +303,7 @@ export const sasaReportsApi = {
 // ─── MAP — CLUSTERS ──────────────────────────────────────────────────────────
 
 export const mapClustersApi = {
-  getAll: async (params?: { region?: string; district?: string }) => {
+  getAll: async (params?: { region?: string; district?: string; country?: string }) => {
     const query = params ? '?' + new URLSearchParams(params as any).toString() : '';
     const data = await api.get(`/api/map/clusters${query}`);
     return unwrapList(data, ['clusters', 'data', 'items', 'results']);

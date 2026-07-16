@@ -3,6 +3,7 @@ import { Star, Plus, Heart, Newspaper, ChevronDown, ChevronUp, MapPin, Calendar,
 import { Card, Kicker, Btn, Modal, FInput, FSelect, FArea, Badge } from './SubComponents';
 import { DISTRICT_LIST } from '../data';
 import { impactStoriesApi } from '../api';
+import { useCountry } from '../context/CountryContext';
 
 interface ImpactPageProps {
   reports: any[];
@@ -15,11 +16,11 @@ const CURRICULUM_COLORS: Record<string, { color: string; pale: string }> = {
   HIM:       { color: '#185fa5', pale: '#dbeafe' },
   ETT:       { color: '#059669', pale: '#d1fae5' },
   Combined:  { color: '#7c3aed', pale: '#ede9fe' },
-  Community: { color: '#e85d04', pale: '#fff1e6' },
+  Community: { color: 'var(--brand)', pale: '#fff1e6' },
 };
 
 const EMOJI_MAP: Record<string, string> = {
-  GESD: '👧', HIM: '👦', ETT: '👩‍🏫', Combined: '🤝', Community: '📣',
+  GESD: '', HIM: '', ETT: '‍', Combined: '', Community: '',
 };
 
 const MILESTONES = [
@@ -52,13 +53,14 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
   });
 
   const canManage = user && (user.role === 'admin' || user.role === 'sasa_officer');
-
+  const { activeCountry } = useCountry();
   useEffect(() => {
-    impactStoriesApi.getAll().then(data => {
-      setStories(data);
+    setLoading(true);
+    impactStoriesApi.getAll(activeCountry).then(data => {
+      setStories(Array.isArray(data) ? data : []);
       setLoading(false);
     });
-  }, []);
+  }, [activeCountry]);
 
   const openEdit = (story: any) => {
     setEditingStory(story);
@@ -76,32 +78,32 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
 
   const submitStory = async () => {
     if (!storyForm.title || !storyForm.content) {
-      showToast('⚠️ Title and content are required');
+      showToast('️ Title and content are required', 'warning');
       return;
     }
     try {
       let data;
       if (editingStory) {
         data = await impactStoriesApi.update(editingStory.id, storyForm);
-        if (data.error) { showToast(`⚠️ ${data.error}`); return; }
+        if (data.error) { showToast(`️ ${data.error}`, 'warning'); return; }
         setStories(prev => prev.map(s => s.id === editingStory.id ? { ...s, ...data } : s));
-        showToast('✅ Story updated');
+        showToast('Story updated', 'success');
       } else {
         data = await impactStoriesApi.create(storyForm);
-        if (data.error) { showToast(`⚠️ ${data.error}`); return; }
+        if (data.error) { showToast(`️ ${data.error}`, 'warning'); return; }
         setStories(prev => [data, ...prev]);
-        showToast('✅ Story published');
+        showToast('Story published', 'success');
       }
       setSubmitted(true);
     } catch {
-      showToast('⚠️ Failed to save story');
+      showToast('️ Failed to save story', 'warning');
     }
   };
 
   const deleteStory = async () => {
     if (!deleteId) return;
     const data = await impactStoriesApi.delete(deleteId);
-    if (data.error) { showToast(`⚠️ ${data.error}`); return; }
+    if (data.error) { showToast(`️ ${data.error}`, 'warning'); return; }
     setStories(prev => prev.filter(s => s.id !== deleteId));
     setDeleteId(null);
     showToast('Story deleted');
@@ -141,8 +143,8 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
         const districts = [...new Set(stories.map(s => s.district_id).filter(Boolean))].length;
         return (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <Card className="p-3 text-center border-l-4 border-l-[#e85d04]">
-              <div className="text-xl font-black text-[#e85d04]">{stories.length}</div>
+            <Card className="p-3 text-center border-l-4 border-l-[var(--brand)]">
+              <div className="text-xl font-black text-[var(--brand)]">{stories.length}</div>
               <div className="text-[10px] text-slate-400 font-medium mt-0.5">Total Stories</div>
             </Card>
             <Card className="p-3 text-center border-l-4 border-l-emerald-500">
@@ -193,11 +195,11 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
           const isExp = expanded === s.id;
           const curr = s.curriculum || 'ETT';
           const colors = CURRICULUM_COLORS[curr] || CURRICULUM_COLORS['ETT'];
-          const emoji = EMOJI_MAP[curr] || '🌟';
+          const emoji = EMOJI_MAP[curr] || '';
           return (
             <div
               key={s.id}
-              className="bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg flex flex-col overflow-hidden hover:border-[#e85d04] dark:hover:border-[#e85d04] transition-all"
+              className="bg-white dark:bg-[#0f1623] border border-neutral-200 dark:border-slate-800 rounded-lg flex flex-col overflow-hidden hover:border-[var(--brand)] dark:hover:border-[var(--brand)] transition-all"
             >
               <div className="h-1 shrink-0" style={{ backgroundColor: colors.color }} />
 
@@ -262,23 +264,23 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <Card className="p-4">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-7 h-7 rounded-lg bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center">
-              <Star size={14} className="text-[#e85d04]" />
+            <div className="w-7 h-7 rounded-lg bg-[var(--brand-50)] dark:bg-[var(--brand-950)]/20 flex items-center justify-center">
+              <Star size={14} className="text-[var(--brand)]" />
             </div>
             <h3 className="text-xs font-bold text-black dark:text-white m-0">ScaleUp Program Milestones</h3>
           </div>
           <div className="relative pl-5 space-y-4">
-            <div className="absolute left-1.5 top-1 bottom-1 w-0.5 bg-orange-100 dark:bg-orange-950/40" />
+            <div className="absolute left-1.5 top-1 bottom-1 w-0.5 bg-[var(--brand-100)] dark:bg-[var(--brand-950)]/40" />
             {MILESTONES.map((m, i) => {
               const isLast = i === MILESTONES.length - 1;
               return (
                 <div key={i} className="relative flex items-start gap-3">
-                  <div className={`absolute -left-[19px] top-1.5 w-2.5 h-2.5 rounded-full border-2 border-[#e85d04] ${isLast ? 'bg-[#e85d04]' : 'bg-white dark:bg-[#0f1623]'}`} />
-                  <div className={`flex-1 p-2.5 rounded-lg border text-xs ${isLast ? 'border-orange-200 dark:border-orange-900/40 bg-orange-50/50 dark:bg-orange-950/10' : 'border-neutral-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/20'}`}>
+                  <div className={`absolute -left-[19px] top-1.5 w-2.5 h-2.5 rounded-full border-2 border-[var(--brand)] ${isLast ? 'bg-[var(--brand)]' : 'bg-white dark:bg-[#0f1623]'}`} />
+                  <div className={`flex-1 p-2.5 rounded-lg border text-xs ${isLast ? 'border-[var(--brand-200)] dark:border-[var(--brand-900)]/40 bg-[var(--brand-50)]/50 dark:bg-[var(--brand-950)]/10' : 'border-neutral-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/20'}`}>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-extrabold text-[#e85d04] text-[10px]">{m.year}</span>
+                      <span className="font-extrabold text-[var(--brand)] text-[10px]">{m.year}</span>
                       <span className="text-black dark:text-white opacity-70 flex-1">{m.event}</span>
-                      {isLast && <span className="text-[8px] font-bold uppercase bg-[#e85d04] text-white px-1.5 py-0.5 rounded shrink-0">Now</span>}
+                      {isLast && <span className="text-[8px] font-bold uppercase bg-[var(--brand)] text-white px-1.5 py-0.5 rounded shrink-0">Now</span>}
                     </div>
                   </div>
                 </div>
@@ -289,15 +291,15 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
 
         <Card className="p-4">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-7 h-7 rounded-lg bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center">
-              <Newspaper size={14} className="text-[#e85d04]" />
+            <div className="w-7 h-7 rounded-lg bg-[var(--brand-50)] dark:bg-[var(--brand-950)]/20 flex items-center justify-center">
+              <Newspaper size={14} className="text-[var(--brand)]" />
             </div>
             <h3 className="text-xs font-bold text-black dark:text-white m-0">Recognition & Press</h3>
           </div>
           <div className="space-y-2.5">
             {PRESS.map((p, i) => (
               <div key={i} className="flex gap-3 items-center p-3 rounded-lg border border-neutral-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/20">
-                <div className="w-8 h-8 rounded-lg bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center shrink-0 text-base">📰</div>
+                <div className="w-8 h-8 rounded-lg bg-[var(--brand-50)] dark:bg-[var(--brand-950)]/20 flex items-center justify-center shrink-0 text-base"><Newspaper size={13} className="text-[var(--brand)]" /></div>
                 <div className="min-w-0 flex-1">
                   <div className="text-xs font-semibold text-black dark:text-white leading-snug truncate">{p.headline}</div>
                   <div className="text-[10px] text-slate-400 mt-0.5 font-medium">{p.outlet} · {p.date}</div>
@@ -316,7 +318,7 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
         >
           {submitted ? (
             <div className="text-center py-6 space-y-3">
-              <span className="text-4xl block">💖</span>
+              <span className="text-4xl block"><Heart size={32} className="text-[var(--brand)] inline-block" /></span>
               <h3 className="text-sm font-bold text-black dark:text-white m-0">Story Saved!</h3>
               <Btn onClick={() => { setShowForm(false); setSubmitted(false); setEditingStory(null); }} size="sm">Close</Btn>
             </div>
@@ -333,7 +335,7 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
                 {DISTRICT_LIST.map(d => <option key={d}>{d}</option>)}
               </FSelect>
               <div className="flex items-center gap-2">
-                <input type="checkbox" checked={storyForm.is_published} onChange={e => setStoryForm(p => ({ ...p, is_published: e.target.checked }))} className="w-4 h-4 rounded text-orange-500" />
+                <input type="checkbox" checked={storyForm.is_published} onChange={e => setStoryForm(p => ({ ...p, is_published: e.target.checked }))} className="w-4 h-4 rounded text-[var(--brand-500)]" />
                 <label className="text-xs text-black dark:text-white">Publish immediately</label>
               </div>
               <div className="flex gap-2 justify-end pt-2">

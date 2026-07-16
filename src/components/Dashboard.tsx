@@ -2,10 +2,11 @@ import { Modal } from './SubComponents';
 import { programmeStatsApi, statsApi, api } from '../api';
 import { getStaticMapClusters } from '../utils/mapFallback';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Shield, FilePlus, GraduationCap, School, TrendingUp, FileText, Clock,BookOpen, CheckSquare, Users, Map, MapPin, Edit2, RefreshCw, Star } from 'lucide-react';
+import { Shield, FilePlus, GraduationCap, School, TrendingUp, FileText, Clock,BookOpen, CheckSquare, Users, Map, MapPin, Edit2, RefreshCw, Star, ArrowRightCircle } from 'lucide-react';
 import { User, Report } from '../types';
 import { ROLE_CFG, can, DISTRICTS, DISTRICT_INFO } from '../data';
 import { Card, PageHeader, Btn, Pill, TrendIndicator } from './SubComponents';
+import { useCountry } from '../context/CountryContext';
 
 interface DashboardProps {
   user: User | null;
@@ -39,14 +40,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
     approvedReports: 0, clusters: 0,
   });
   const [statsLoaded, setStatsLoaded] = useState(false);
-  const [statsOverride, setStatsOverride] = useState<Record<string, number>>({});
-  const [editingKPI, setEditingKPI] = useState(false);
-  const [kpiDraft, setKpiDraft] = useState<Record<string, number>>({});
 
   // Stable user identifiers to prevent loadStats from re-firing on every render
   const userId   = user?.id;
   const userRole = user?.role;
   const userDistrict = user?.district;
+  const { activeCountry } = useCountry();
 
   const loadStats = useCallback(() => {
     // Load global stats — works for both public and logged-in users
@@ -55,11 +54,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
         if (!data.error) { setStats(prev => ({ ...prev, ...data })); setStatsLoaded(true); }
       });
     } else {
-      statsApi.get().then(data => {
+      statsApi.get(activeCountry).then(data => {
         if (!data.error) { setStats(prev => ({ ...prev, ...data })); setStatsLoaded(true); }
       });
     }
-  }, [userRole, userDistrict]);
+  }, [userRole, userDistrict, activeCountry]);
 
   useEffect(() => { loadStats(); }, [loadStats]);
   const [editStats, setEditStats] = useState(false);
@@ -70,17 +69,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
   // Merge live stats with admin overrides.
   // Once loaded, never go back to 0 — keep last known values during reload.
   const displayStats = {
-    learners: statsOverride.learners ?? (statsLoaded ? stats.learners : stats.learners || 0),
-    teachers: statsOverride.teachers ?? (statsLoaded ? stats.teachers : stats.teachers || 0),
-    schools:  statsOverride.schools  ?? (statsLoaded ? stats.schools  : stats.schools  || 0),
-    tots:     statsOverride.tots     ?? (statsLoaded ? stats.tots     : stats.tots     || 0),
-    stots:    statsOverride.stots    ?? (statsLoaded ? stats.stots    : stats.stots    || 0),
+    learners: statsLoaded ? stats.learners : stats.learners || 0,
+    teachers: statsLoaded ? stats.teachers : stats.teachers || 0,
+    schools:  statsLoaded ? stats.schools  : stats.schools  || 0,
+    tots:     statsLoaded ? stats.tots     : stats.tots     || 0,
+    stots:    statsLoaded ? stats.stots    : stats.stots    || 0,
+    casesReferred: statsLoaded ? (stats as any).casesReferred : (stats as any).casesReferred || 0,
   };
 
   const [YEARLY_DATA, setYEARLY_DATA] = useState<any[]>([]);
 
 useEffect(() => {
-  programmeStatsApi.getAll().then(data => {
+  programmeStatsApi.getAll(activeCountry).then(data => {
     if (Array.isArray(data) && data.length > 0) {
       setYEARLY_DATA(data.map((d: any) => ({
         year: d.year,
@@ -94,7 +94,7 @@ useEffect(() => {
       })));
     }
   });
-}, []);
+}, [activeCountry]);
 
   const chartRefs = useRef<Record<string, any>>({});
   const mapRef = useRef<any>(null);
@@ -110,7 +110,9 @@ useEffect(() => {
       }
     };
 
-    const C_ORANGE = "#e85d04";
+    // Canvas/Chart.js cannot resolve CSS var() syntax directly — read the actual
+    // computed color value so charts follow the user's selected theme color.
+    const C_ORANGE = getComputedStyle(document.documentElement).getPropertyValue('--brand').trim() || '#e85d04';
     const C_BLACK = "#0f1623";
     const C_GRID = "rgba(15, 22, 35, 0.06)";
     const C_TICK = "#6b7280";
@@ -207,13 +209,13 @@ useEffect(() => {
   const [dashClusters, setDashClusters] = useState<any[]>([]);
   useEffect(() => {
     import('../api').then(({ mapClustersApi }) => {
-      mapClustersApi.getAll().then((data) => {
+      mapClustersApi.getAll({ country: activeCountry }).then((data) => {
         setDashClusters(data.length > 0 ? data : getStaticMapClusters());
       }).catch(() => {
         setDashClusters(getStaticMapClusters());
       });
     });
-  }, []);
+  }, [activeCountry]);
 
   useEffect(() => {
     const L = (window as any).L;
@@ -221,7 +223,12 @@ useEffect(() => {
     const mapEl = document.getElementById("dashboard-ett-map");
     if (!mapEl) return;
 
-    const map = L.map("dashboard-ett-map", { zoomControl: false, scrollWheelZoom: false }).setView([-13.2, 34.0], 6.5);
+    const map = L.map("dashboard-ett-map", { zoomControl: false, scrollWheelZoom: false }).setView(
+      activeCountry === 'Kenya' ? [-0.5, 37.5] :
+      activeCountry === 'Somaliland' ? [9.5, 46.0] :
+      [-13.2, 34.0],
+      activeCountry === 'Kenya' ? 5.5 : 6.5
+    );
     mapRef.current = map;
 
     L.tileLayer(
@@ -236,7 +243,7 @@ useEffect(() => {
       // Connector lines
       cluster.schools?.forEach((school: any) => {
         L.polyline([[cluster.lat, cluster.lng], [school.lat, school.lng]], {
-          color: "#e85d04", weight: 1.2, opacity: 0.35, dashArray: "4 4"
+          color: "var(--brand)", weight: 1.2, opacity: 0.35, dashArray: "4 4"
         }).addTo(map);
       });
 
@@ -252,49 +259,47 @@ useEffect(() => {
         const icon = L.divIcon({ className: '', html, iconAnchor: [5, 5] });
         L.marker([school.lat, school.lng], { icon, zIndexOffset: 100 })
           .addTo(map)
-          .bindPopup(`
-            <div style="font-family:sans-serif;min-width:160px">
-              <div style="font-weight:800;font-size:12px">${school.name}</div>
-              <div style="font-size:10px;color:${trained ? '#16a34a' : '#d97706'};font-weight:700;margin:2px 0">${trained ? '✓ ETT Trained' : '○ Not Trained'}</div>
-              <div style="font-size:10px;color:#6b7280">${cluster.district}</div>
-              <div style="font-size:10px;color:#6b7280">👥 ${((school.boys_enrolled||0)+(school.girls_enrolled||0)).toLocaleString()} learners</div>
-            </div>`);
+          .bindPopup(`<div style="font-family:sans-serif;min-width:160px">
+ <div style="font-weight:800;font-size:12px">${school.name}</div>
+ <div style="font-size:10px;color:${trained ? '#16a34a': '#d97706'};font-weight:700;margin:2px 0">${trained ? 'ETT Trained': '○ Not Trained'}</div>
+ <div style="font-size:10px;color:#6b7280">${cluster.district}</div>
+ <div style="font-size:10px;color:#6b7280"> ${((school.boys_enrolled||0)+(school.girls_enrolled||0)).toLocaleString()} learners</div>
+ </div>`);
       });
 
       // Cluster centre — dark circle with orange ring + orange name label
       const clusterHtml = `
         <div style="display:flex;flex-direction:column;align-items:center;">
-          <div style="width:14px;height:14px;border-radius:50%;background:${darkMode?'#1e293b':'#0f1623'};border:2px solid #e85d04;box-shadow:0 2px 5px rgba(0,0,0,.4);"></div>
-          <div style="margin-top:2px;background:#e85d04;color:white;font-size:7px;font-weight:800;padding:1px 4px;border-radius:3px;white-space:nowrap;max-width:70px;overflow:hidden;text-overflow:ellipsis;pointer-events:none;">
+          <div style="width:14px;height:14px;border-radius:50%;background:${darkMode?'#1e293b':'#0f1623'};border:2px solid var(--brand);box-shadow:0 2px 5px rgba(0,0,0,.4);"></div>
+          <div style="margin-top:2px;background:var(--brand);color:white;font-size:7px;font-weight:800;padding:1px 4px;border-radius:3px;white-space:nowrap;max-width:70px;overflow:hidden;text-overflow:ellipsis;pointer-events:none;">
             ${cluster.name.length > 14 ? cluster.name.slice(0, 14) + '…' : cluster.name}
           </div>
         </div>`;
       const centerIcon = L.divIcon({ className: '', html: clusterHtml, iconAnchor: [7, 7] });
       L.marker([cluster.lat, cluster.lng], { icon: centerIcon, zIndexOffset: 300 })
         .addTo(map)
-        .bindPopup(`
-          <div style="font-family:sans-serif;min-width:180px">
-            <div style="font-weight:800;font-size:13px">${cluster.name}</div>
-            <div style="font-size:10px;color:#e85d04;font-weight:700;margin-bottom:4px">${cluster.district} · ${cluster.region}</div>
-            <div style="font-size:10px;color:#6b7280">👥 ${cluster.students?.toLocaleString()} learners</div>
-            <div style="font-size:10px;color:#6b7280">🏫 ${cluster.school_count} schools · ${cluster.trained} trained</div>
-            ${cluster.lead ? `<div style="font-size:10px;color:#6b7280">Lead: <b>${cluster.lead}</b></div>` : ''}
+        .bindPopup(`<div style="font-family:sans-serif;min-width:180px">
+ <div style="font-weight:800;font-size:13px">${cluster.name}</div>
+ <div style="font-size:10px;color:var(--brand);font-weight:700;margin-bottom:4px">${cluster.district} · ${cluster.region}</div>
+ <div style="font-size:10px;color:#6b7280"> ${cluster.students?.toLocaleString()} learners</div>
+ <div style="font-size:10px;color:#6b7280"> ${cluster.school_count} schools · ${cluster.trained} trained</div>
+ ${cluster.lead ? `<div style="font-size:10px;color:#6b7280">Lead: <b>${cluster.lead}</b></div>` : ''}
             <div style="background:#f1f5f9;border-radius:3px;height:5px;overflow:hidden;margin-top:5px">
-              <div style="width:${cluster.progress||0}%;height:100%;background:#e85d04;border-radius:3px"></div>
+              <div style="width:${cluster.progress||0}%;height:100%;background:var(--brand);border-radius:3px"></div>
             </div>
             <div style="font-size:9px;color:#9ca3af;text-align:right;margin-top:1px">${cluster.progress||0}% progress</div>
           </div>`);
     });
 
     return () => { map.remove(); mapRef.current = null; };
-  }, [darkMode, dashClusters]);
+  }, [darkMode, dashClusters, activeCountry]);
 
   return (
     <div className="space-y-4">
 
       <PageHeader
         title={
-          <span className="border-l-[4px] border-orange-500 pl-2.5 py-0.5 inline-block">
+          <span className="border-l-[4px] border-[var(--brand-500)] pl-2.5 py-0.5 inline-block">
             {user ? `Welcome, ${currentUser.name}` : "Program overview"}
           </span>
         }
@@ -320,22 +325,16 @@ useEffect(() => {
 
       {/* KPI row */}
       <div className="space-y-2">
-        {/* Admin edit button for KPI cards */}
+        {/* Admin refresh button for KPI cards -- all figures are live, no manual override */}
         {user?.role === 'admin' && (
           <div className="flex justify-end gap-2">
-            <button
-              onClick={() => { setKpiDraft({ ...displayStats }); setEditingKPI(true); }}
-              className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-orange-600 transition-colors"
-            >
-              <Edit2 size={12} /> Edit Stats
-            </button>
-            <button onClick={loadStats} className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-orange-600 transition-colors">
+            <button onClick={loadStats} className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-[var(--brand-600)] transition-colors">
               <RefreshCw size={12} /> Refresh
             </button>
           </div>
         )}
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {!isStaff ? (
             <>
               {[
@@ -344,34 +343,48 @@ useEffect(() => {
                 { icon: <School size={16} />,        label: "Schools Reached",    value: displayStats.schools.toLocaleString(),   key: 'schools'  },
                 { icon: <Shield size={16} />,        label: "TOTs Certified",     value: displayStats.tots.toLocaleString(),      key: 'tots'     },
                 { icon: <Star size={16} />,          label: "Senior TOTs (STOTs)",value: displayStats.stots.toLocaleString(),     key: 'stots'    },
+                { icon: <ArrowRightCircle size={16} />, label: "GBV Cases Referred", value: displayStats.casesReferred.toLocaleString(), key: 'casesReferred' },
               ].map((s, i) => (
-                <div key={i} className="p-3 rounded-lg relative group" style={{ background: "linear-gradient(135deg, #e85d04 0%, #c44d00 100%)", boxShadow: "0 4px 14px rgba(232,93,4,0.25)" }}>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span style={{ filter: "brightness(0) invert(1) opacity(0.85)" }}>{s.icon}</span>
-                    <span className="text-[10px] text-white opacity-85 font-medium leading-tight">{s.label}</span>
+                <div
+                  key={i}
+                  className="p-3.5 rounded-2xl relative group hover-lift animate-fade-in-up stagger-item cursor-default"
+                  style={{
+                    background: "linear-gradient(135deg, var(--brand) 0%, var(--brand-700) 100%)",
+                    boxShadow: "0 6px 20px -4px color-mix(in srgb, var(--brand) 35%, transparent)",
+                    animationDelay: `${i * 60}ms`,
+                  }}
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="p-1 rounded-lg bg-white/15" style={{ filter: "brightness(0) invert(1) opacity(0.9)" }}>{s.icon}</span>
+                    <span className="text-[10px] text-white opacity-85 font-semibold leading-tight tracking-wide">{s.label}</span>
                   </div>
-                  <div className="text-lg font-bold text-white">{s.value}</div>
-                  {statsOverride[s.key] !== undefined && (
-                    <span className="absolute top-1.5 right-1.5 text-[8px] bg-white/20 text-white px-1 rounded">edited</span>
-                  )}
+                  <div className="text-xl font-black text-white tracking-tight">{s.value}</div>
                 </div>
               ))}
             </>
           ) : (
             <>
               {[
-                { icon: <FileText size={16} className="text-orange-600" />,   label: "Total reports", value: my.length,   trend: 12 },
+                { icon: <FileText size={16} className="text-[var(--brand-600)]" />,   label: "Total reports", value: my.length,   trend: 12 },
                 { icon: <Clock size={16} className="text-amber-600" />,        label: "Pending",       value: pending,     trend: -5 },
                 { icon: <CheckSquare size={16} className="text-emerald-600" />,label: "Approved",      value: approved,    trend: 18 },
-                { icon: <Users size={16} className="text-orange-600" />,       label: "Learners",      value: students,    trend: 8  },
-                { icon: <Shield size={16} className="text-orange-600" />,      label: "TOTs",          value: displayStats.tots, trend: 0 },
+                { icon: <Users size={16} className="text-[var(--brand-600)]" />,       label: "Learners",      value: students,    trend: 8  },
+                { icon: <Shield size={16} className="text-[var(--brand-600)]" />,      label: "TOTs",          value: displayStats.tots, trend: 0 },
               ].map((s: any, i) => (
-                <div key={i} className="p-3 rounded-lg" style={{ background: "linear-gradient(135deg, #e85d04 0%, #c44d00 100%)", boxShadow: "0 4px 14px rgba(232,93,4,0.25)" }}>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span style={{ filter: "brightness(0) invert(1) opacity(0.85)" }}>{s.icon}</span>
-                    <span className="text-[10px] text-white opacity-85 font-medium">{s.label}</span>
+                <div
+                  key={i}
+                  className="p-3.5 rounded-2xl hover-lift animate-fade-in-up stagger-item cursor-default"
+                  style={{
+                    background: "linear-gradient(135deg, var(--brand) 0%, var(--brand-700) 100%)",
+                    boxShadow: "0 6px 20px -4px color-mix(in srgb, var(--brand) 35%, transparent)",
+                    animationDelay: `${i * 60}ms`,
+                  }}
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="p-1 rounded-lg bg-white/15" style={{ filter: "brightness(0) invert(1) opacity(0.9)" }}>{s.icon}</span>
+                    <span className="text-[10px] text-white opacity-85 font-semibold">{s.label}</span>
                   </div>
-                  <div className="text-lg font-bold text-white">{s.value}</div>
+                  <div className="text-xl font-black text-white tracking-tight">{s.value}</div>
                   <TrendIndicator value={s.trend} className="mt-1 !text-white/80" />
                 </div>
               ))}
@@ -388,7 +401,7 @@ useEffect(() => {
               {isStaff ? "Recent submissions" : "Program milestones"}
             </h3>
             {isStaff && (
-              <button type="button" onClick={() => setPage(user?.role === "data_entry" ? "my_reports" : "reports")} className="text-[10px] font-semibold text-orange-600 hover:underline">
+              <button type="button" onClick={() => setPage(user?.role === "data_entry" ? "my_reports" : "reports")} className="text-[10px] font-semibold text-[var(--brand-600)] hover:underline">
                 View all
               </button>
             )}
@@ -408,7 +421,7 @@ useEffect(() => {
                     <tr key={r.id} className="border-t border-neutral-200 dark:border-slate-800 text-black dark:text-white">
                       <td className="px-3 py-2 font-medium">{r.school}</td>
                       <td className="px-3 py-2 text-black dark:text-white opacity-80">{r.district}</td>
-                      <td className="px-3 py-2"><span className="text-[10px] font-semibold text-orange-600">{r.curriculum}</span></td>
+                      <td className="px-3 py-2"><span className="text-[10px] font-semibold text-[var(--brand-600)]">{r.curriculum}</span></td>
                       <td className="px-3 py-2">{r.boys + r.girls}</td>
                       <td className="px-3 py-2"><Pill s={r.status} /></td>
                       <td className="px-3 py-2 opacity-60">{r.submitted_at}</td>
@@ -423,10 +436,10 @@ useEffect(() => {
           ) : (
             <div className="p-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
               {YEARLY_DATA.filter(d => !d.planned).map(d => (
-                <div key={d.year} className={`p-2.5 rounded-md border text-xs bg-white dark:bg-[#0f1623] text-black dark:text-white ${d.current ? 'border-orange-400' : 'border-neutral-200 dark:border-slate-800'}`}>
+                <div key={d.year} className={`p-2.5 rounded-md border text-xs bg-white dark:bg-[#0f1623] text-black dark:text-white ${d.current ? 'border-[var(--brand-400)]' : 'border-neutral-200 dark:border-slate-800'}`}>
                   <div className="flex justify-between font-semibold mb-1">
                     <span>{d.year}</span>
-                    {d.current && <span className="text-[9px] text-orange-600">Current</span>}
+                    {d.current && <span className="text-[9px] text-[var(--brand-600)]">Current</span>}
                   </div>
                   <div className="text-sm font-bold">{d.learners > 0 ? d.learners.toLocaleString() : "—"}</div>
                   <div className="text-[10px] opacity-60">learners · {d.schools} schools</div>
@@ -442,7 +455,7 @@ useEffect(() => {
         <Card className="p-0 overflow-hidden">
           <div className="px-4 py-3 border-b border-neutral-200 dark:border-slate-800 flex items-center justify-between">
             <h3 className="text-xs font-semibold m-0">Coverage map</h3>
-            <button type="button" onClick={() => setPage("maps")} className="text-[10px] font-semibold text-orange-600 hover:underline">Expand</button>
+            <button type="button" onClick={() => setPage("maps")} className="text-[10px] font-semibold text-[var(--brand-600)] hover:underline">Expand</button>
           </div>
           <div className="h-56">
             <div id="dashboard-ett-map" className="h-full w-full" />
@@ -475,9 +488,9 @@ useEffect(() => {
               key={p}
               type="button"
               onClick={() => setPage(p)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-black dark:text-white hover:bg-orange-50 dark:hover:bg-slate-800 hover:text-orange-600 border border-neutral-200 dark:border-slate-800 hover:border-orange-200 dark:hover:border-orange-900/40 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-black dark:text-white hover:bg-[var(--brand-50)] dark:hover:bg-slate-800 hover:text-[var(--brand-600)] border border-neutral-200 dark:border-slate-800 hover:border-[var(--brand-200)] dark:hover:border-[var(--brand-900)]/40 transition-colors"
             >
-              <Icon size={14} className="text-orange-600 shrink-0" /> {label}
+              <Icon size={14} className="text-[var(--brand-600)] shrink-0" /> {label}
             </button>
           ))}
         </div>
@@ -519,6 +532,7 @@ useEffect(() => {
                     target_learners: editingYear.targetLearners,
                     is_current: editingYear.current || false,
                     is_planned: editingYear.planned || false,
+                    country: activeCountry,
                   });
                   if (!data.error) {
                     setYEARLY_DATA(prev => prev.map(y => y.year === editingYear.year ? editingYear : y));
@@ -531,13 +545,21 @@ useEffect(() => {
             <div className="flex items-center justify-between">
               <div>
                 <span className="font-bold text-sm text-black dark:text-white">{d.year}</span>
-                {d.current && <span className="ml-2 text-[10px] bg-orange-100 text-orange-700 px-1.5 rounded font-bold">Current</span>}
+                {d.current && <span className="ml-2 text-[10px] bg-[var(--brand-100)] text-[var(--brand-700)] px-1.5 rounded font-bold">Current</span>}
                 {d.planned && <span className="ml-2 text-[10px] bg-slate-100 text-slate-600 px-1.5 rounded font-bold">Planned</span>}
                 <div className="text-[11px] text-black/50 dark:text-white/50 mt-0.5">
                   {d.schools.toLocaleString()} schools · {d.teachers.toLocaleString()} teachers · {d.learners.toLocaleString()} learners
                 </div>
               </div>
-              <Btn size="sm" variant="ghost" onClick={() => setEditingYear({ ...d })}>Edit</Btn>
+              <Btn
+                size="sm"
+                variant="ghost"
+                disabled={activeCountry === 'all'}
+                title={activeCountry === 'all' ? 'Select a specific country to edit its milestones' : undefined}
+                onClick={() => { if (activeCountry !== 'all') setEditingYear({ ...d }); }}
+              >
+                {activeCountry === 'all' ? 'Edit (select a country)' : 'Edit'}
+              </Btn>
             </div>
           )}
         </div>
@@ -545,68 +567,6 @@ useEffect(() => {
     </div>
   </Modal>
 )}
-      {/* ── KPI EDIT MODAL (Admin override) ─────────────────────────────── */}
-      {editingKPI && user?.role === 'admin' && (
-        <Modal title="Edit Dashboard Stats" onClose={() => setEditingKPI(false)}>
-          <p className="text-xs text-slate-500 mb-4 leading-relaxed">
-            These numbers are auto-fetched from the database. You can override them here.
-            Overrides only last until the page is refreshed — to permanently update, edit the
-            database records directly.
-          </p>
-          <div className="space-y-3">
-            {[
-              { key: 'learners', label: 'Learners Reached',   icon: '🎓' },
-              { key: 'teachers', label: 'Teachers Trained',   icon: '👨‍🏫' },
-              { key: 'schools',  label: 'Schools Reached',    icon: '🏫' },
-              { key: 'tots',     label: 'TOTs Certified',     icon: '🛡️' },
-              { key: 'stots',    label: 'Senior TOTs (STOTs)',icon: '⭐' },
-            ].map(({ key, label, icon }) => (
-              <div key={key}>
-                <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
-                  {icon} {label}
-                </label>
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="number"
-                    value={kpiDraft[key] ?? 0}
-                    onChange={e => setKpiDraft(p => ({ ...p, [key]: parseInt(e.target.value) || 0 }))}
-                    className="flex-1 text-sm border border-neutral-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-800 text-black dark:text-white"
-                  />
-                  <span className="text-[10px] text-slate-400">
-                    DB: {(stats as any)[key]?.toLocaleString() ?? 0}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="flex gap-2 justify-end pt-4">
-            <Btn size="sm" variant="ghost" onClick={() => {
-              setStatsOverride({});
-              setEditingKPI(false);
-              loadStats();
-            }}>
-              Reset to DB values
-            </Btn>
-            <Btn size="sm" onClick={async () => {
-              try {
-                const res = await api.put('/api/stats', {
-                  learners: kpiDraft.learners ?? 0,
-                  teachers: kpiDraft.teachers ?? 0,
-                  schools:  kpiDraft.schools  ?? 0,
-                  tots:     kpiDraft.tots     ?? 0,
-                  stots:    kpiDraft.stots    ?? 0,
-                });
-                if (res.error) { alert(`Failed to save: ${res.error}`); return; }
-                setStatsOverride({});
-                setEditingKPI(false);
-                setTimeout(loadStats, 300);
-              } catch { alert('Failed to save stats to database.'); }
-            }}>
-              Save to Database
-            </Btn>
-          </div>
-        </Modal>
-      )}
 
     </div>
   );
