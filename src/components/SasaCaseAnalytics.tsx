@@ -25,6 +25,7 @@ export const SasaCaseAnalytics: React.FC<Props> = ({ cases }) => {
   const typeChartRef = useRef<HTMLCanvasElement>(null);
   const monthChartRef = useRef<HTMLCanvasElement>(null);
   const staffChartRef = useRef<HTMLCanvasElement>(null);
+  const districtChartRef = useRef<HTMLCanvasElement>(null);
   const chartInstances = useRef<any[]>([]);
 
   const isStaffCase = (c: any) => STAFF_TYPES.includes(c.reported_by_type);
@@ -135,6 +136,25 @@ export const SasaCaseAnalytics: React.FC<Props> = ({ cases }) => {
       chartInstances.current.push(chart);
     }
 
+    // By district
+    if (districtChartRef.current) {
+      const byDistrict: Record<string, number> = {};
+      filtered.forEach(c => { if (c.district) byDistrict[c.district] = (byDistrict[c.district] || 0) + 1; });
+      const chart = new Chart(districtChartRef.current, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(byDistrict),
+          datasets: [{ label: 'Cases', data: Object.values(byDistrict), backgroundColor: brand, borderRadius: 5 }],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+        },
+      });
+      chartInstances.current.push(chart);
+    }
+
     return () => { chartInstances.current.forEach(c => c.destroy()); chartInstances.current = []; };
   }, [filtered]);
 
@@ -194,7 +214,7 @@ export const SasaCaseAnalytics: React.FC<Props> = ({ cases }) => {
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
         <Card className="p-3">
           <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1">
             <BarChart3 size={12} /> Cases by Type
@@ -212,6 +232,12 @@ export const SasaCaseAnalytics: React.FC<Props> = ({ cases }) => {
             <PieChart size={12} /> Staff vs Not Staff
           </div>
           <div className="h-40"><canvas ref={staffChartRef} /></div>
+        </Card>
+        <Card className="p-3">
+          <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1">
+            <BarChart3 size={12} /> Cases by District
+          </div>
+          <div className="h-40"><canvas ref={districtChartRef} /></div>
         </Card>
       </div>
 

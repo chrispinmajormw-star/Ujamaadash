@@ -10,6 +10,9 @@ import {
   BarChart2, Users, Check, TrendingUp, Download,
   MapPin, GraduationCap, School, FileText, Filter
 } from 'lucide-react';
+import { RegionalPerformanceCharts } from './RegionalPerformanceCharts';
+import { CasesByDistrictChart } from './CasesByDistrictChart';
+import { sessionMonitoringApi, gbvCasesApi } from '../api';
 import { Report } from '../types';
 import { Card, Kicker, StatCard, ProgBar } from './SubComponents';
 import { useCountry } from '../context/CountryContext';
@@ -122,7 +125,9 @@ const downloadReport = (
   girls: number = 0,
   monActivities: any[] = [],
   monIssues: any[] = [],
-  reportCountry: string = 'all'
+  reportCountry: string = 'all',
+  regionalPerformance: any[] = [],
+  casesByDistrict: any[] = []
 ) => {
   console.log('downloadReport inputs:', { regionalData, top15Districts, clusterData, totalTots, totalSchools, totalStudents, activeDistricts, totalDistricts, byStatus, byCurr, byDist, boys, girls, monActivities, monIssues });
 
@@ -345,6 +350,43 @@ const downloadReport = (
     styles: { fontSize: 7 },
   });
 
+  y = (doc as any).lastAutoTable.finalY + 10;
+  if (y > 220) { doc.addPage(); y = 20; }
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Sira (SASA) — Regional Performance & Case Data', 14, y);
+  y += 6;
+  const safeRegionalPerf = regionalPerformance || [];
+  const safeCasesByDistrict = casesByDistrict || [];
+  doc.setFontSize(11);
+  doc.text(`Regional Performance (${safeRegionalPerf.length} regions)`, 14, y);
+  autoTable(doc, {
+    startY: y + 4,
+    head: [['Region', 'Sessions Monitored', 'Avg Score', 'Officers Tracked', 'Consistency %']],
+    body: safeRegionalPerf.map((r: any) => [
+      r?.region ?? '—',
+      String(r?.sessionsMonitored ?? 0),
+      String(r?.avgScore ?? 0),
+      String(r?.officersTracked ?? 0),
+      r?.consistencyPct !== null && r?.consistencyPct !== undefined ? `${r.consistencyPct}%` : '—',
+    ]),
+    theme: 'grid',
+    headStyles: { fillColor: [232, 93, 4] },
+    styles: { fontSize: 7 },
+  });
+  y = (doc as any).lastAutoTable.finalY + 10;
+  if (y > 220) { doc.addPage(); y = 20; }
+  doc.setFontSize(11);
+  doc.text(`Cases Identified by District (${safeCasesByDistrict.length} districts)`, 14, y);
+  autoTable(doc, {
+    startY: y + 4,
+    head: [['District', 'Cases Identified']],
+    body: safeCasesByDistrict.map((c: any) => [c?.district ?? '—', String(c?.count ?? 0)]),
+    theme: 'grid',
+    headStyles: { fillColor: [124, 58, 237] },
+    styles: { fontSize: 7 },
+  });
+
   const pageCount = doc.internal.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
@@ -363,7 +405,7 @@ interface AnalyticsPageProps { reports: Report[]; }
   export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ reports }) => {
   console.log('AnalyticsPage received reports:', reports);
   const [activeRegion, setActiveRegion] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState<'overview' | 'districts' | 'clusters' | 'reports' | 'monitoring'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'districts' | 'clusters' | 'reports' | 'monitoring' | 'sira'>('overview');
   const [analytics, setAnalytics] = useState<any>({
     reportsByDistrict: [],
     reportsByStatus: [],
@@ -374,6 +416,7 @@ interface AnalyticsPageProps { reports: Report[]; }
   });
   const [districts, setDistricts] = useState<any[]>([]);
   const [clusters, setClusters] = useState<any[]>([]);
+  const [clusterDistrictFilter, setClusterDistrictFilter] = useState<string>('all');
   const { activeCountry } = useCountry();
   useEffect(() => {
     analyticsApi.get().then(data => {
@@ -386,6 +429,22 @@ interface AnalyticsPageProps { reports: Report[]; }
   const REGIONAL_DATA = buildRegionalData(districts);
   const TOP15_DISTRICTS = buildTop15Districts(districts);
   const CLUSTER_DATA = buildClusterData(clusters);
+  const CLUSTER_DISTRICTS = Array.from(new Set(clusters.map((c: any) => c.district).filter(Boolean))).sort();
+  const FILTERED_CLUSTER_DATA = clusterDistrictFilter === 'all'
+    ? CLUSTER_DATA
+    : CLUSTER_DATA.filter(c => c.district === clusterDistrictFilter);
+  // District-level rollup, shown when no specific district is picked -- keeps
+  // the chart readable no matter how many clusters exist system-wide.
+  const CLUSTER_BY_DISTRICT = Object.values(
+    CLUSTER_DATA.reduce((acc: any, c: any) => {
+      const key = c.district || 'Unassigned';
+      if (!acc[key]) acc[key] = { district: key, clusters: 0, students: 0, progressSum: 0 };
+      acc[key].clusters += 1;
+      acc[key].students += c.students;
+      acc[key].progressSum += c.progress;
+      return acc;
+    }, {})
+  ).map((d: any) => ({ ...d, avgProgress: d.clusters ? Math.round(d.progressSum / d.clusters) : 0 }));
 
   // Use monitoring context for real-time data sync
   const { activities: monActivities, issues: monIssues } = useMonitoring();
@@ -417,12 +476,21 @@ interface AnalyticsPageProps { reports: Report[]; }
     ? TOP15_DISTRICTS
     : TOP15_DISTRICTS.filter(d => d.region === activeRegion);
 
+  const [regionalPerformance, setRegionalPerformance] = useState<any[]>([]);
+  const [casesByDistrict, setCasesByDistrict] = useState<any[]>([]);
+
+  useEffect(() => {
+    sessionMonitoringApi.getRegionalPerformance(activeCountry).then(setRegionalPerformance).catch(() => {});
+    gbvCasesApi.getCasesByDistrict(activeCountry).then(setCasesByDistrict).catch(() => {});
+  }, [activeCountry]);
+
   const tabs = [
     { id: 'overview', label: 'Overview' },
     { id: 'districts', label: 'Districts' },
     { id: 'clusters', label: 'Clusters' },
     { id: 'reports', label: 'Reports' },
     { id: 'monitoring', label: 'Monitoring' },
+    { id: 'sira', label: 'Sira (SASA)' },
   ] as const;
 
   return (
@@ -440,7 +508,8 @@ interface AnalyticsPageProps { reports: Report[]; }
   REGIONAL_DATA || [], TOP15_DISTRICTS || [], CLUSTER_DATA || [],
   totalTots || 0, totalSchools || 0, totalStudents || 0, activeDistricts || 0, (districts || []).length,
   byStatus || {}, byCurr || {}, byDist || {}, boys || 0, girls || 0,
-  monActivities || [], monIssues || [], activeCountry
+  monActivities || [], monIssues || [], activeCountry,
+  regionalPerformance || [], casesByDistrict || []
 )}
           className="flex items-center gap-2 px-3 py-2 text-xs font-bold rounded-lg border border-neutral-200 dark:border-slate-700 text-black dark:text-white hover:border-[var(--brand)] hover:text-[var(--brand)] transition shrink-0"
         >
@@ -627,60 +696,109 @@ interface AnalyticsPageProps { reports: Report[]; }
       {/* ── CLUSTERS TAB ── */}
       {activeTab === 'clusters' && (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Students bar */}
-            <Card className="p-4">
-              <h4 className="text-xs font-bold text-black dark:text-white mb-4">Students Reached per Cluster</h4>
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={CLUSTER_DATA} layout="vertical" barCategoryGap="20%">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
-                  <XAxis type="number" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                  <YAxis dataKey="cluster" type="category" tick={{ fontSize: 9 }} width={120} axisLine={false} tickLine={false} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="students" name="Students" fill={OR} radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </Card>
-
-            {/* Progress pie */}
-            <Card className="p-4">
-              <h4 className="text-xs font-bold text-black dark:text-white mb-4">Cluster Progress Distribution</h4>
-              <ResponsiveContainer width="100%" height={260}>
-                <PieChart>
-                  <Pie
-                    data={CLUSTER_DATA}
-                    dataKey="progress"
-                    nameKey="cluster"
-                    cx="50%" cy="50%"
-                    outerRadius={95}
-                    paddingAngle={2}
-                  >
-                    {CLUSTER_DATA.map((_, i) => (
-                      <Cell key={i} fill={['var(--brand)','#185fa5','#059669','#7c3aed','#f59e0b','#0891b2','#dc2626','#64748b'][i]} />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
-                </PieChart>
-              </ResponsiveContainer>
-            </Card>
+          {/* District filter -- keeps this tab readable no matter how many clusters exist */}
+          <div className="flex items-center gap-2">
+            <Filter size={13} className="text-slate-400" />
+            <select
+              value={clusterDistrictFilter}
+              onChange={(e) => setClusterDistrictFilter(e.target.value)}
+              className="text-xs px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-black dark:text-white"
+            >
+              <option value="all">All Districts ({CLUSTER_BY_DISTRICT.length} districts, {CLUSTER_DATA.length} clusters)</option>
+              {CLUSTER_DISTRICTS.map((d: any) => <option key={d} value={d}>{d}</option>)}
+            </select>
           </div>
 
-          {/* Progress bars */}
-          <Card className="p-4">
-            <h4 className="text-xs font-bold text-black dark:text-white mb-4">Cluster Completion Progress</h4>
-            <div className="space-y-3">
-              {CLUSTER_DATA.sort((a, b) => b.progress - a.progress).map(c => (
-                <div key={c.cluster}>
-                  <div className="flex justify-between text-[11px] mb-1">
-                    <span className="font-medium text-black dark:text-white">{c.cluster}</span>
-                    <span className="text-slate-400 font-bold">{c.progress}%</span>
-                  </div>
-                  <ProgBar pct={c.progress} color={c.progress >= 80 ? '#059669' : c.progress >= 60 ? OR : '#f59e0b'} />
+          {clusterDistrictFilter === 'all' ? (
+            <>
+              <Card className="p-4">
+                <h4 className="text-xs font-bold text-black dark:text-white mb-4">Clusters & Students by District</h4>
+                <ResponsiveContainer width="100%" height={Math.max(260, CLUSTER_BY_DISTRICT.length * 28)}>
+                  <BarChart data={CLUSTER_BY_DISTRICT} layout="vertical" barCategoryGap="25%">
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
+                    <XAxis type="number" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                    <YAxis dataKey="district" type="category" tick={{ fontSize: 10 }} width={120} axisLine={false} tickLine={false} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
+                    <Bar dataKey="clusters" name="Clusters" fill="#185fa5" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="students" name="Students" fill={OR} radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Card>
+              <Card className="p-4">
+                <h4 className="text-xs font-bold text-black dark:text-white mb-4">Average Cluster Progress, by District</h4>
+                <div className="space-y-3">
+                  {CLUSTER_BY_DISTRICT.sort((a: any, b: any) => b.avgProgress - a.avgProgress).map((d: any) => (
+                    <div key={d.district}>
+                      <div className="flex justify-between text-[11px] mb-1">
+                        <button
+                          type="button"
+                          onClick={() => setClusterDistrictFilter(d.district)}
+                          className="font-medium text-black dark:text-white hover:text-[var(--brand-600)] hover:underline text-left"
+                        >
+                          {d.district} <span className="text-slate-400 font-normal">({d.clusters} clusters)</span>
+                        </button>
+                        <span className="text-slate-400 font-bold">{d.avgProgress}%</span>
+                      </div>
+                      <ProgBar pct={d.avgProgress} color={d.avgProgress >= 80 ? '#059669' : d.avgProgress >= 60 ? OR : '#f59e0b'} />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </Card>
+              </Card>
+            </>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <Card className="p-4">
+                  <h4 className="text-xs font-bold text-black dark:text-white mb-4">Students Reached per Cluster — {clusterDistrictFilter}</h4>
+                  <ResponsiveContainer width="100%" height={Math.max(260, FILTERED_CLUSTER_DATA.length * 28)}>
+                    <BarChart data={FILTERED_CLUSTER_DATA} layout="vertical" barCategoryGap="20%">
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
+                      <XAxis type="number" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                      <YAxis dataKey="cluster" type="category" tick={{ fontSize: 9 }} width={120} axisLine={false} tickLine={false} />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Bar dataKey="students" name="Students" fill={OR} radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </Card>
+                <Card className="p-4">
+                  <h4 className="text-xs font-bold text-black dark:text-white mb-4">Cluster Progress Distribution — {clusterDistrictFilter}</h4>
+                  <ResponsiveContainer width="100%" height={260}>
+                    <PieChart>
+                      <Pie
+                        data={FILTERED_CLUSTER_DATA}
+                        dataKey="progress"
+                        nameKey="cluster"
+                        cx="50%" cy="50%"
+                        outerRadius={95}
+                        paddingAngle={2}
+                      >
+                        {FILTERED_CLUSTER_DATA.map((_, i) => (
+                          <Cell key={i} fill={['var(--brand)','#185fa5','#059669','#7c3aed','#f59e0b','#0891b2','#dc2626','#64748b'][i % 8]} />
+                        ))}
+                      </Pie>
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </Card>
+              </div>
+              <Card className="p-4">
+                <h4 className="text-xs font-bold text-black dark:text-white mb-4">Cluster Completion Progress — {clusterDistrictFilter}</h4>
+                <div className="space-y-3">
+                  {FILTERED_CLUSTER_DATA.sort((a, b) => b.progress - a.progress).map(c => (
+                    <div key={c.cluster}>
+                      <div className="flex justify-between text-[11px] mb-1">
+                        <span className="font-medium text-black dark:text-white">{c.cluster}</span>
+                        <span className="text-slate-400 font-bold">{c.progress}%</span>
+                      </div>
+                      <ProgBar pct={c.progress} color={c.progress >= 80 ? '#059669' : c.progress >=60 ? OR : '#f59e0b'} />
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </>
+          )}
         </div>
       )}
 
@@ -785,6 +903,13 @@ interface AnalyticsPageProps { reports: Report[]; }
       )}
 
       {/* ── MONITORING TAB ── */}
+      {activeTab === 'sira' && (
+        <div className="space-y-5">
+          <RegionalPerformanceCharts />
+          <CasesByDistrictChart />
+        </div>
+      )}
+
       {activeTab === 'monitoring' && (
         <div className="space-y-5">
           {/* Activity totals by month stacked bar */}

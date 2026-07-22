@@ -20,6 +20,7 @@ import {
   TrendingUp,
   Info,
   Shield,
+  Megaphone,
   ClipboardCheck,
   Star,
   Settings,
@@ -102,6 +103,22 @@ import { AnalyticsPage } from './components/AnalyticsPage';
 import { TasksPage } from './components/TasksPage';
 import { SasaPage } from './components/SasaPage';
 import { QAOfficerPage } from './components/QAOfficerPage';
+import { StaffMentorshipPage } from './components/StaffMentorshipPage';
+import { SessionMonitoringPage } from './components/SessionMonitoringPage';
+import { RegionalViewPage } from './components/RegionalViewPage';
+import { MyClustersPage } from './components/MyClustersPage';
+import { TeacherProgrammesPage } from './components/TeacherProgrammesPage';
+import { TOTConsolePage } from './components/TOTConsolePage';
+import { DCConsolePage } from './components/DCConsolePage';
+import { AdminConsolePage } from './components/AdminConsolePage';
+import { PlanningScheduleForm } from './components/PlanningScheduleForm';
+import { PlanningOfficerConsole } from './components/PlanningOfficerConsole';
+import { ProgramTrackersForm } from './components/ProgramTrackersForm';
+import { AnnualActivitiesPage } from './components/AnnualActivitiesPage';
+import { ThisWeekActivitiesPage } from './components/ThisWeekActivitiesPage';
+import { FollowupConsistencyPage } from './components/FollowupConsistencyPage';
+import { AnnouncementBanner } from './components/AnnouncementBanner';
+import { AnnouncementsPage } from './components/AnnouncementsPage';
 import { SubmitQAReport } from './components/SubmitQAReport';
 import { DocumentReportsPage } from './components/DocumentReportsPage';
 import { StandardsPoliciesPage } from './components/StandardsPoliciesPage';
@@ -150,12 +167,48 @@ const PAGE_LABELS: Record<string, string> = {
   standards: "Standards & Policies",
   document_reports: "Document Reports",
   sasa: "SASA Officer Dashboard",
+  data_officer: "M & E Console",
+  staff_mentorship: "Staff Mentorship & Evaluation",
+  admin_console: "Admin Console",
+  planning_schedule: "Planning & Scheduling",
+  program_trackers: "Program Trackers",
+  annual_activities: "Annual Activity Plan",
+  this_week_activities: "This Week's Activities",
+  planning_console: "Planning & Scheduling Console",
+  dc_console: "DC Console",
+  tot_console: "TOT Console",
+  teacher_programmes: "Teacher Programmes",
+  stot_orientation: "STOT Orientation Training",
+  stot_tracker: "ETT Sessions — STOT Tracker",
+  tot_training: "TOT Training Sessions",
+  cluster_anchors: "Cluster Anchors Sessions",
+  regional_view: "Regional Performance Dashboard",
+  my_clusters: "My Clusters",
+  followup_consistency: "Weekly Follow-up Consistency",
+  announcements: "Announcements",
   qa: "Quality Assurance Dashboard",
   submit_qa: "Submit QA Report",
   session_records: "Session Records",
 };
 
 // ─── APPS MAIN CONTAINER / CORE ENGINE ────────
+function getLandingPageForRole(role: string): string {
+  switch (role) {
+    case "program_manager": return "manager_home";
+    case "field_officer": return "officer_home";
+    case "program_staff": return "staff_home";
+    case "cartographer": return "cartographer_home";
+    case "sasa_officer": return "sasa";
+    case "qa_officer": return "qa";
+    case "data_entry": return "data_officer";
+    case "tot": return "tot_console";
+    case "district_coordinator": return "dc_console";
+    case "admin": return "admin_console";
+    case "planning_officer": return "planning_console";
+    default: return "dashboard";
+  }
+}
+
 export default function App() {
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     const saved = safeStorage.getItem("ett_theme");
@@ -169,7 +222,7 @@ export default function App() {
   });
 
   const [reports, setReports] = useState<Report[]>([]);
-  const { activeCountry, setActiveCountry, setDefaultCountry } = useCountry();
+  const { activeCountry, setActiveCountry, setDefaultCountry, districtTermPlural } = useCountry();
 
   // Default a logged-in user's country selector to their own assigned country,
   // unless they've explicitly picked a different one for this browser already.
@@ -229,6 +282,8 @@ useEffect(() => {
         avatar: u.avatar || u.name?.split(' ').map((x: string) => x[0]).join('').toUpperCase(),
         status: u.status,
         clusterId: u.cluster_id,
+        lastActiveAt: u.last_active_at ?? null,
+        lastLogin: u.last_login ?? null,
       })));
     });
   }
@@ -249,12 +304,23 @@ useEffect(() => {
           avatar: u.avatar || u.name?.split(' ').map((x: string) => x[0]).join('').toUpperCase(),
           status: u.status,
           clusterId: u.cluster_id,
+          lastActiveAt: u.last_active_at ?? null,
+          lastLogin: u.last_login ?? null,
         })));
       });
     }
   }, [user]);
 
-  const [page, setPage] = useState<string>("dashboard");
+  const [page, setPage] = useState<string>(() => {
+    const saved = safeStorage.getItem("ett_curr_user");
+    if (!saved) return "dashboard";
+    try {
+      const restoredUser = JSON.parse(saved);
+      return getLandingPageForRole(restoredUser.role);
+    } catch {
+      return "dashboard";
+    }
+  });
   const [toast, setToast] = useState<{ msg: string; type?: 'success'|'warning'|'error'|'info' } | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mapFocus, setMapFocus] = useState<any>(null);
@@ -301,18 +367,7 @@ useEffect(() => {
   }, [darkMode]);
 
 
-  const getRoleLandingPage = (role: string): string => {
-    switch (role) {
-      case "program_manager": return "manager_home";
-      case "field_officer": return "officer_home";
-      case "program_staff": return "staff_home";
-      case "cartographer": return "cartographer_home";
-      case "sasa_officer": return "sasa";
-      case "qa_officer": return "qa";
-      case "data_entry": return "data_officer";
-      default: return "dashboard";
-    }
-  };
+  const getRoleLandingPage = getLandingPageForRole;
 
   const addReport = async (r: any) => {
   const workflow = getReportRecipient(user?.role || "viewer");
@@ -486,6 +541,52 @@ const pendingCount = (user && can(user.role, "approveReport")
         return <ImpactPage reports={reports} showToast={showToast} user={user} />;
       case 'youth':
         return <YouthPage />;
+      case 'announcements':
+        return user ? <AnnouncementsPage user={user} showToast={showToast} /> : <div className="p-12 text-center text-slate-400 font-semibold italic">Sign in to view Announcements.</div>;
+      case 'staff_mentorship':
+        return <StaffMentorshipPage user={user} showToast={showToast} />;
+      case 'annual_activities':
+        return (user?.role === 'planning_officer' || user?.role === 'admin')
+          ? <AnnualActivitiesPage user={user} showToast={showToast} />
+          : <div className="p-12 text-center text-slate-400 font-semibold italic">Restricted to the Planning & Scheduling Officer.</div>;
+      case 'this_week_activities':
+        return user?.role === 'district_coordinator'
+          ? <ThisWeekActivitiesPage user={user} showToast={showToast} />
+          : <div className="p-12 text-center text-slate-400 font-semibold italic">Restricted to District Coordinators.</div>;
+      case 'program_trackers':
+        return (user?.role === 'field_officer' || user?.role === 'district_coordinator')
+          ? <ProgramTrackersForm user={user} showToast={showToast} />
+          : <div className="p-12 text-center text-slate-400 font-semibold italic">Restricted to Field Officers and District Coordinators.</div>;
+      case 'planning_schedule':
+        return user?.role === 'field_officer'
+          ? <PlanningScheduleForm user={user} showToast={showToast} />
+          : <div className="p-12 text-center text-slate-400 font-semibold italic">Restricted to Field Officers.</div>;
+      case 'planning_console':
+        return user?.role === 'planning_officer'
+          ? <PlanningOfficerConsole user={user} showToast={showToast} />
+          : <div className="p-12 text-center text-slate-400 font-semibold italic">Restricted to the Planning & Scheduling Officer.</div>;
+      case 'admin_console':
+        return <AdminConsolePage user={user} users={users} setUsers={setUsers} showToast={showToast} refreshUsers={refreshUsers} />;
+      case 'dc_console':
+        return <DCConsolePage user={user} showToast={showToast} />;
+      case 'tot_console':
+        return <TOTConsolePage user={user} showToast={showToast} />;
+      case 'teacher_programmes':
+        return <TeacherProgrammesPage user={user} showToast={showToast} />;
+      case 'stot_orientation':
+        return <SessionMonitoringPage user={user} showToast={showToast} recordType="stot_orientation" title="STOT Orientation Training" subtitle="Senior TOT orientation and piloting sessions" plannedLabel="Sessions Planned" conductedLabel="Sessions Conducted" />;
+      case 'stot_tracker':
+        return <SessionMonitoringPage user={user} showToast={showToast} recordType="stot_tracker" title="ETT Sessions — STOT Tracker" subtitle="Senior TOT performance monitoring" plannedLabel="Sessions Planned" conductedLabel="Sessions Conducted" />;
+      case 'tot_training':
+        return <SessionMonitoringPage user={user} showToast={showToast} recordType="tot_training" title="TOT Training Sessions" subtitle="TOT performance monitoring across regions" plannedLabel="Sessions Planned" conductedLabel="Sessions Conducted" />;
+      case 'cluster_anchors':
+        return <SessionMonitoringPage user={user} showToast={showToast} recordType="cluster_anchors" title="Cluster Anchors (PEA) Sessions" subtitle="Cluster anchor allocation and engagement monitoring" plannedLabel="Clusters Allocated" conductedLabel="Clusters Engaged" />;
+      case 'regional_view':
+        return <RegionalViewPage user={user} showToast={showToast} />;
+      case 'my_clusters':
+        return <MyClustersPage user={user} showToast={showToast} />;
+      case 'followup_consistency':
+        return <FollowupConsistencyPage user={user} showToast={showToast} />;
       case 'qa':
         return (user?.role === 'qa_officer' || user?.role === 'admin' || user?.role === 'program_manager')
           ? <QAOfficerPage user={user} showToast={showToast} />
@@ -536,7 +637,7 @@ const pendingCount = (user && can(user.role, "approveReport")
         { id: "document_reports", label: "Submit a Report", icon: Upload, protected: true },
       ]},
       { title: "Program", items: [
-        { id: "districts", label: "Districts", icon: MapPin },
+        { id: "districts", label: districtTermPlural, icon: MapPin },
         { id: "trainings", label: "Trainings", icon: GraduationCap },
         { id: "maps", label: "Clusters Map", icon: Map },
         { id: "impact", label: "Success Stories", icon: Heart },
@@ -545,6 +646,7 @@ const pendingCount = (user && can(user.role, "approveReport")
       { title: "More", items: [
         { id: "calendar", label: "Calendar", icon: Calendar, protected: true },
         { id: "tasks", label: "Tasks", icon: ListTodo, protected: true },
+        { id: "announcements", label: "Announcements", icon: Megaphone },
         { id: "settings", label: "Settings", icon: Settings },
       ]},
     ];
@@ -553,18 +655,25 @@ const pendingCount = (user && can(user.role, "approveReport")
     if (role === 'field_officer') return [
       { title: "My Workspace", items: [
         { id: "officer_home", label: "Field Dashboard", icon: LayoutDashboard, protected: true },
-        { id: "submit", label: "Log Session", icon: FilePlus, protected: true },
+        { id: "submit", label: "Submit a Case", icon: FilePlus, protected: true },
+        { id: "my_clusters", label: "My Clusters", icon: ClipboardCheck, protected: true },
+        { id: "planning_schedule", label: "Planning & Scheduling", icon: ClipboardList, protected: true },
+        { id: "program_trackers", label: "Program Trackers", icon: ClipboardList, protected: true },
         { id: "submit_qa", label: "Submit QA Report", icon: ClipboardCheck, protected: true },
         { id: "document_reports", label: "Submit a Report", icon: Upload, protected: true },
+      ]},
+      { title: "Session Monitoring", items: [
+        { id: "teacher_programmes", label: "Teacher Programmes", icon: GraduationCap, protected: true },
       ]},
       { title: "Reference", items: [
         { id: "curriculum", label: "Curriculum", icon: BookOpen },
         { id: "maps", label: "Clusters Map", icon: Map },
-        { id: "districts", label: "Districts", icon: MapPin },
+        { id: "districts", label: districtTermPlural, icon: MapPin },
       ]},
       { title: "More", items: [
         { id: "calendar", label: "Calendar", icon: Calendar, protected: true },
         { id: "tasks", label: "Tasks", icon: ListTodo, protected: true },
+        { id: "announcements", label: "Announcements", icon: Megaphone },
         { id: "settings", label: "Settings", icon: Settings },
       ]},
     ];
@@ -584,6 +693,7 @@ const pendingCount = (user && can(user.role, "approveReport")
       { title: "More", items: [
         { id: "maps", label: "Clusters Map", icon: Map },
         { id: "calendar", label: "Calendar", icon: Calendar, protected: true },
+        { id: "announcements", label: "Announcements", icon: Megaphone },
         { id: "settings", label: "Settings", icon: Settings },
       ]},
     ];
@@ -593,10 +703,16 @@ const pendingCount = (user && can(user.role, "approveReport")
       { title: "GIS Workspace", items: [
         { id: "cartographer_home", label: "Cartographer Console", icon: Map, protected: true },
         { id: "maps", label: "Live Map View", icon: Navigation },
-        { id: "districts", label: "Districts", icon: MapPin },
+        { id: "districts", label: districtTermPlural, icon: MapPin },
+        { id: "submit", label: "Submit a Case", icon: FilePlus },
         { id: "document_reports", label: "Document Reports", icon: Upload, protected: true },
       ]},
       { title: "More", items: [
+        { id: "analytics", label: "Analytics", icon: BarChart2 },
+        { id: "calendar", label: "Calendar", icon: Calendar, protected: true },
+        { id: "tasks", label: "Tasks", icon: ListTodo, protected: true },
+        { id: "standards", label: "Standards & Policies", icon: Shield, protected: true },
+        { id: "announcements", label: "Announcements", icon: Megaphone },
         { id: "settings", label: "Settings", icon: Settings },
       ]},
     ];
@@ -605,8 +721,17 @@ const pendingCount = (user && can(user.role, "approveReport")
     if (role === 'qa_officer') return [
       { title: "QA Workspace", items: [
         { id: "qa", label: "QA Dashboard", icon: ClipboardCheck, protected: true },
+        { id: "regional_view", label: "Regional View", icon: MapPin, protected: true },
+        { id: "followup_consistency", label: "Follow-up Consistency", icon: Users, protected: true },
+        { id: "staff_mentorship", label: "Staff Mentorship", icon: GraduationCap, protected: true },
+        { id: "submit", label: "Submit a Case", icon: FilePlus },
       ]},
       { title: "More", items: [
+        { id: "analytics", label: "Analytics", icon: BarChart2 },
+        { id: "calendar", label: "Calendar", icon: Calendar, protected: true },
+        { id: "tasks", label: "Tasks", icon: ListTodo, protected: true },
+        { id: "standards", label: "Standards & Policies", icon: Shield, protected: true },
+        { id: "announcements", label: "Announcements", icon: Megaphone },
         { id: "settings", label: "Settings", icon: Settings },
       ]},
     ];
@@ -620,6 +745,9 @@ const pendingCount = (user && can(user.role, "approveReport")
       { title: "More", items: [
         { id: "analytics", label: "Analytics", icon: BarChart2 },
         { id: "calendar", label: "Calendar", icon: Calendar, protected: true },
+        { id: "tasks", label: "Tasks", icon: ListTodo, protected: true },
+        { id: "standards", label: "Standards & Policies", icon: Shield, protected: true },
+        { id: "announcements", label: "Announcements", icon: Megaphone },
         { id: "settings", label: "Settings", icon: Settings },
       ]},
     ];
@@ -627,9 +755,10 @@ const pendingCount = (user && can(user.role, "approveReport")
 // District Coordinator nav
 if (role === 'district_coordinator') return [
   { title: "My District", items: [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "districts", label: "My District", icon: MapPin, protected: true },
-    { id: "trainings", label: "Trainings", icon: GraduationCap, protected: true },
+    { id: "dc_console", label: "DC Console", icon: LayoutDashboard, protected: true },
+    { id: "my_clusters", label: "My Clusters", icon: ClipboardCheck, protected: true },
+    { id: "program_trackers", label: "Program Trackers", icon: ClipboardList, protected: true },
+    { id: "this_week_activities", label: "This Week's Activities", icon: Calendar, protected: true },
     { id: "reports", label: "Reports", icon: FileText, protected: true },
     { id: "document_reports", label: "Submit a Report", icon: Upload, protected: true },
   ]},
@@ -640,20 +769,117 @@ if (role === 'district_coordinator') return [
     { id: "impact", label: "Success Stories", icon: Heart },
     { id: "youth", label: "Ujamaa Youth", icon: Play },
   ]},
+  { title: "Session Monitoring", items: [
+    { id: "teacher_programmes", label: "Teacher Programmes", icon: GraduationCap, protected: true },
+  ]},
   { title: "More", items: [
     { id: "calendar", label: "Calendar", icon: Calendar, protected: true },
     { id: "tasks", label: "Tasks", icon: ListTodo, protected: true },
+    { id: "announcements", label: "Announcements", icon: Megaphone },
     { id: "settings", label: "Settings", icon: Settings },
   ]},
 ];
-    // Default nav (admin, dc, tot, data_entry, viewer, public)
+    // Planning & Scheduling Officer nav
+    if (role === 'planning_officer') return [
+      { title: "My Workspace", items: [
+        { id: "planning_console", label: "Planning Console", icon: ClipboardList, protected: true },
+        { id: "annual_activities", label: "Annual Activity Plan", icon: Calendar, protected: true },
+      ]},
+      { title: "More", items: [
+        { id: "analytics", label: "Analytics", icon: BarChart2 },
+        { id: "calendar", label: "Calendar", icon: Calendar, protected: true },
+        { id: "tasks", label: "Tasks", icon: ListTodo, protected: true },
+        { id: "announcements", label: "Announcements", icon: Megaphone },
+        { id: "settings", label: "Settings", icon: Settings },
+      ]},
+    ];
+    // TOT nav -- their own console, no generic Main Dashboard, no Analytics
+    if (role === 'tot') return [
+      { title: "My Workspace", items: [
+        { id: "tot_console", label: "TOT Console", icon: ClipboardCheck, protected: true },
+        { id: "submit", label: "Submit a Case", icon: FilePlus },
+        { id: "reports", label: "Reports", icon: FileText, protected: true },
+        { id: "document_reports", label: "Submit a Report", icon: Upload, protected: true },
+      ]},
+      { title: "Programme", items: [
+        { id: "curriculum", label: "Curriculum", icon: BookOpen },
+        { id: "impact", label: "Success Stories", icon: Heart },
+        { id: "youth", label: "Ujamaa Youth", icon: Play },
+      ]},
+      { title: "More", items: [
+        { id: "calendar", label: "Calendar", icon: Calendar, protected: true },
+        { id: "tasks", label: "Tasks", icon: ListTodo, protected: true },
+        { id: "standards", label: "Standards & Policies", icon: Shield, protected: true },
+        { id: "announcements", label: "Announcements", icon: Megaphone },
+        { id: "settings", label: "Settings", icon: Settings },
+      ]},
+    ];
+    // M & E Officer nav -- a focused workspace, not the generic default bucket
+    if (role === 'data_entry') return [
+      { title: "My Workspace", items: [
+        { id: "data_officer", label: "M & E Console", icon: ClipboardList, protected: true },
+        { id: "reports", label: "Reports", icon: FileText, protected: true },
+        { id: "submit", label: "Submit a Case", icon: FilePlus },
+        { id: "document_reports", label: "Submit a Report", icon: Upload, protected: true },
+      ]},
+      { title: "More", items: [
+        { id: "analytics", label: "Analytics", icon: BarChart2 },
+        { id: "calendar", label: "Calendar", icon: Calendar, protected: true },
+        { id: "tasks", label: "Tasks", icon: ListTodo, protected: true },
+        { id: "standards", label: "Standards & Policies", icon: Shield, protected: true },
+        { id: "announcements", label: "Announcements", icon: Megaphone },
+        { id: "settings", label: "Settings", icon: Settings },
+      ]},
+    ];
+    // Admin nav -- Admin Console replaces the generic Dashboard as landing page,
+    // everything else Admin already had access to stays exactly the same.
+    if (role === 'admin') return [
+      {
+        title: "Dashboard", items: [
+          { id: "admin_console", label: "Admin Console", icon: LayoutDashboard, protected: true },
+          { id: "maps", label: "Clusters map", icon: Map },
+          { id: "districts", label: districtTermPlural, icon: MapPin },
+          { id: "trainings", label: "Trainings", icon: GraduationCap },
+          { id: "curriculum", label: "Curriculum", icon: BookOpen },
+          { id: "standards", label: "Standards & Policies", icon: Shield, protected: true },
+        ]
+      },
+      {
+        title: "Planning",
+        items: [
+          { id: "calendar", label: "Calendar", icon: Calendar, protected: true },
+          { id: "tasks", label: "Tasks", icon: ListTodo, protected: true }
+        ]
+      },
+      {
+        title: "Reports", items: [
+          { id: "submit", label: "Submit a Case", icon: FilePlus },
+          { id: "reports", label: "Reports", icon: FileText, protected: true },
+          { id: "document_reports", label: "Submit a Report", icon: Upload, protected: true },
+        ]
+      },
+      {
+        title: "More",
+        items: [
+          { id: "analytics", label: "Analytics", icon: BarChart2 },
+          { id: "impact", label: "Success Stories", icon: Heart },
+          { id: "youth", label: "Ujamaa Youth", icon: Play },
+          { id: 'teacher_resources', label: 'Teacher Resources', icon: BookOpen },
+          { id: "admin_districts", label: `${districtTermPlural} & Countries`, icon: Globe, protected: true },
+          { id: "data_completeness", label: "Data Completeness", icon: AlertTriangle, protected: true },
+          { id: "announcements", label: "Announcements", icon: Megaphone },
+          { id: "settings", label: "Settings", icon: Settings }
+        ]
+      }
+    ];
+    // Default nav (dc, tot, viewer, public)
     return [
       {
   title: "Dashboard",
   items: [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "maps", label: "Clusters map", icon: Map },
-    { id: "districts", label: "Districts", icon: MapPin },
+    { id: "districts", label: districtTermPlural, icon: MapPin },
     { id: "trainings", label: "Trainings", icon: GraduationCap },
     { id: "curriculum", label: "Curriculum", icon: BookOpen },
     { id: "standards", label: "Standards & Policies", icon: Shield, protected: true },
@@ -672,6 +898,7 @@ if (role === 'district_coordinator') return [
   items: [
     { id: "submit", label: "Submit a Case", icon: FilePlus },
     { id: "reports", label: "Reports", icon: FileText, protected: true },
+    ...(user?.role === 'tot' ? [{ id: "my_clusters", label: "My Clusters", icon: ClipboardCheck, protected: true }] : []),
     ...(user && user.role !== 'tot' && user.role !== 'viewer' ? [{ id: "document_reports", label: "Submit a Report", icon: Upload, protected: true }] : []),
   ]
 },
@@ -683,8 +910,9 @@ if (role === 'district_coordinator') return [
           { id: "youth", label: "Ujamaa Youth", icon: Play },
           { id: 'teacher_resources', label: 'Teacher Resources', icon: BookOpen },
           ...(user?.role === 'admin' ? [{ id: "users", label: "Staff", icon: Users, protected: true }] : []),
-          ...(user?.role === 'admin' ? [{ id: "admin_districts", label: "Districts & Countries", icon: Globe, protected: true }] : []),
+          ...(user?.role === 'admin' ? [{ id: "admin_districts", label: `${districtTermPlural} & Countries`, icon: Globe, protected: true }] : []),
           ...(user?.role === 'admin' ? [{ id: "data_completeness", label: "Data Completeness", icon: AlertTriangle, protected: true }] : []),
+          { id: "announcements", label: "Announcements", icon: Megaphone },
           { id: "settings", label: "Settings", icon: Settings }
         ]
       }
@@ -829,7 +1057,18 @@ if (role === 'district_coordinator') return [
             </aside>
 
             <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#0f1623]">
-              <header className="h-14 sm:h-12 shrink-0 flex items-center justify-between gap-2 px-2 sm:px-4 border-b border-neutral-200 dark:border-slate-800 bg-white dark:bg-[#0f1623]">
+              <header className="h-14 sm:h-12 shrink-0 relative flex items-center justify-between gap-2 px-2 sm:px-4 border-b border-neutral-200 dark:border-slate-800 bg-white dark:bg-[#0f1623]">
+                {/* Centered Quick Search pill (desktop) */}
+                <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+                  <button
+                    type="button"
+                    onClick={() => setSearchOpen(!searchOpen)}
+                    className="flex items-center gap-2 w-72 h-9 px-3 rounded-full border border-neutral-200 dark:border-slate-700 hover:border-[var(--brand-400)] text-black dark:text-white bg-neutral-50 dark:bg-slate-800/60 focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)]"
+                  >
+                    <Search size={14} className="text-slate-400 shrink-0" />
+                    <span className="text-[12px] text-slate-400 truncate">Quick Search (ctrl + D)</span>
+                  </button>
+                </div>
                 <div className="flex items-center gap-1.5 min-w-0 flex-1">
                   <button
                     type="button"
@@ -848,24 +1087,29 @@ if (role === 'district_coordinator') return [
                     <Sliders size={18} />
                   </button>
                   <h2 className="text-[12px] sm:text-sm font-semibold text-black dark:text-white truncate m-0 min-w-0">
-                    {t(PAGE_LABELS[page] || "ETT ScaleUp Program")}
+                    {page === 'districts' ? districtTermPlural
+                      : page === 'admin_districts' ? `${districtTermPlural} & Countries`
+                      : t(PAGE_LABELS[page] || "ETT ScaleUp Program")}
                   </h2>
                 </div>
 
                 <div className="flex items-center gap-1 sm:gap-2 shrink-0 flex-nowrap">
-                  {/* Global Search Button */}
-                  <div className="relative">
+                  {/* Global Search Button (mobile only -- desktop uses the centered pill) */}
+                  <div className="relative md:hidden">
                     <button
                       type="button"
                       onClick={() => setSearchOpen(!searchOpen)}
-                      className="w-9 h-9 sm:w-8 sm:h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-slate-700 hover:border-[var(--brand-400)] text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)] shrink-0"
+                      className="w-9 h-9 flex items-center justify-center rounded-md border border-neutral-200 dark:border-slate-700 hover:border-[var(--brand-400)] text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)] shrink-0"
                       title="Search"
                       aria-label="Global search"
                     >
                       <Search size={16} />
                     </button>
-                    {searchOpen && (
-                      <div className="fixed left-1/2 top-16 z-[60] w-[min(92vw,22rem)] -translate-x-1/2 rounded-xl border border-neutral-200 bg-white p-3 shadow-2xl dark:border-slate-800 dark:bg-[#0f1623] sm:absolute sm:right-0 sm:left-auto sm:top-10 sm:w-72 sm:translate-x-0">
+                  </div>
+                  {searchOpen && (
+                    <>
+                      <div className="fixed inset-0 z-[59]" onClick={() => setSearchOpen(false)} />
+                      <div className="fixed left-1/2 top-16 z-[60] w-[min(92vw,22rem)] -translate-x-1/2 rounded-xl border border-neutral-200 bg-white p-3 shadow-2xl dark:border-slate-800 dark:bg-[#0f1623]">
                         <input
                           type="text"
                           value={searchQuery}
@@ -891,8 +1135,8 @@ if (role === 'district_coordinator') return [
                           <p className="text-xs text-center py-2 text-slate-400">No results found</p>
                         )}
                       </div>
-                    )}
-                  </div>
+                    </>
+                  )}
 
                   {user && (
                     <div className="relative">
@@ -988,6 +1232,8 @@ if (role === 'district_coordinator') return [
                     {darkMode ? <Sun size={16} /> : <Moon size={16} />}
                   </button>
 
+                  <LanguageSelector />
+
                   <button
                     type="button"
                     onClick={() => setPage("settings")}
@@ -1003,12 +1249,27 @@ if (role === 'district_coordinator') return [
 
                 </div>
               </header>
+              <AnnouncementBanner user={user} />
 
             <main className="flex-1 overflow-y-auto p-4">
               <div className={page === "curriculum" ? "w-full" : "max-w-7xl mx-auto"}>
                 {renderPageContent()}
               </div>
             </main>
+            {!user && (
+              <footer className="shrink-0 border-t border-neutral-200 dark:border-slate-800 px-4 py-3 flex items-center justify-between gap-3 bg-white dark:bg-[#0f1623]">
+                <span className="text-[11px] text-black/50 dark:text-white/50">
+                  © {new Date().getFullYear()} Ujamaa Pamodzi Africa. All rights reserved.
+                </span>
+                  <a
+                  href="#"
+                  onClick={(e) => { e.preventDefault(); showToast('Donation page coming soon!', 'info'); }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold text-white bg-[var(--brand-600)] hover:bg-[var(--brand-700)] transition-colors shrink-0"
+                >
+                  <Heart size={13} /> Donate
+                </a>
+              </footer>
+            )}
             </div>
       </div>
 

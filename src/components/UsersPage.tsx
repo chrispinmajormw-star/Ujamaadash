@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useCountry } from '../context/CountryContext';
 import { districtsApi } from '../api';
+import { usersApi } from '../api';
 import { Plus, Landmark, AlertTriangle, Globe} from 'lucide-react';
 import { User } from '../types';
 import { api } from '../api';
@@ -39,6 +40,7 @@ const ROLE_LOCATION: Record<string, LocationType> = {
   cartographer:         'hq',
   sasa_officer:         'hq',
   qa_officer:           'hq',
+  planning_officer:     'hq',
   viewer:               'hq',
   program_manager:      'region',
   program_staff:        'region',
@@ -255,7 +257,7 @@ export const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers,
           >
             {[
               'all', 'admin', 'tot', 'data_entry', 'district_coordinator',
-              'sasa_officer', 'qa_officer', 'cartographer', 'program_manager', 'field_officer'
+              'sasa_officer', 'qa_officer', 'planning_officer', 'cartographer', 'program_manager', 'field_officer'
             ].map(x => (
               <option key={x} value={x}>
                 {x === 'all' ? 'ALL STAFF' : (ROLE_CFG[x as keyof typeof ROLE_CFG]?.label.toUpperCase() || x.toUpperCase())}
@@ -290,11 +292,11 @@ export const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers,
  {/* ── Users Table ─────────────────────────────────────────────────────── */}
  <div className="overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800/60 w-full">
  <table className="w-full border-collapse text-left text-xs min-w-[800px]">
- <TH cols={['Consultant Details', 'Designation', 'Location', 'Status', 'Actions']} />
+ <TH cols={['Consultant Details', 'Designation', 'Location', 'Status', 'Last Seen', 'Actions']} />
             <tbody>
               {visible.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-slate-400 italic text-xs">
+                  <td colSpan={6} className="p-8 text-center text-slate-400 italic text-xs">
                     No users match the current filters.
                   </td>
                 </tr>
@@ -331,6 +333,23 @@ export const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers,
                         <span className={`w-2 h-2 rounded-full ${u.status === 'active' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
                         {u.status.toUpperCase()}
                       </span>
+                    </td>
+
+                    {/* Last Seen / Online status */}
+                    <td className="p-3">
+                      {(() => {
+                        const lastActive = u.lastActiveAt ? new Date(u.lastActiveAt) : null;
+                        const isOnline = lastActive && (Date.now() - lastActive.getTime()) < 5 * 60 * 1000;
+                        return isOnline ? (
+                          <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-600 dark:text-emerald-400 text-[11px]">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Online
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-slate-400">
+                            {lastActive ? lastActive.toLocaleString() : 'Never logged in'}
+                          </span>
+                        );
+                      })()}
                     </td>
 
                     {/* Action buttons */}
@@ -376,6 +395,7 @@ export const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers,
               <option value="sasa_officer">SASA Officer</option>
         <option value="qa_officer">Quality Assurance Officer</option>
               <option value="qa_officer">Quality Assurance Officer</option>
+              <option value="planning_officer">Planning & Scheduling Officer</option>
               <option value="data_entry">M & E Officer</option>
               <option value="cartographer">Cartographer</option>
               <option value="admin">System Admin</option>
@@ -571,6 +591,56 @@ const ActiveUserActions: React.FC<{
         }}>
         Delete
       </Btn>
+      <Btn size="sm" variant="secondary"
+        className="text-blue-600 bg-blue-50 dark:bg-blue-950/20"
+        onClick={async () => {
+          try {
+            const data = await usersApi.adminResetPassword(u.id);
+            if (data.error) { showToast(data.error, 'warning'); return; }
+            showToast(data.message || `Reset link sent to ${u.email}`, 'success');
+          } catch { showToast('Failed to send reset email', 'warning'); }
+        }}>
+        Reset Password
+      </Btn>
+      <AuditLogButton u={u} />
     </div>
+  );
+};
+
+const AuditLogButton: React.FC<{ u: User }> = ({ u }) => {
+  const [open, setOpen] = useState(false);
+  const [log, setLog] = useState<any[]>([]);
+
+  const openLog = async () => {
+    setOpen(true);
+    try {
+      const data = await usersApi.getAuditLog(u.id);
+      setLog(Array.isArray(data) ? data : []);
+    } catch { setLog([]); }
+  };
+
+  return (
+    <>
+      <Btn size="sm" variant="secondary" onClick={openLog}>Audit Log</Btn>
+      {open && (
+        <Modal title={`Audit Log — ${u.name}`} onClose={() => setOpen(false)} width={480}>
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {log.length === 0 ? (
+              <div className="text-xs text-slate-400 text-center py-6">No audit history yet.</div>
+            ) : (
+              log.map((entry: any) => (
+                <div key={entry.id} className="text-xs border-b border-neutral-100 dark:border-slate-800 pb-2">
+                  <div className="font-bold text-black dark:text-white">{entry.action.replace(/_/g, ' ')}</div>
+                  <div className="text-slate-500">{entry.details}</div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">
+                    {new Date(entry.created_at).toLocaleString()} · by {entry.actor_name || 'System'}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </Modal>
+      )}
+    </>
   );
 };

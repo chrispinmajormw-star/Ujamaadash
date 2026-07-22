@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { qaReportsApi } from '../api';
+import { useCountry } from '../context/CountryContext';
 import { User } from '../types';
 import { Card, PageHeader, Btn, Badge, Modal, FArea } from './SubComponents';
 import { ClipboardCheck, Clock, CheckCircle2, RotateCcw, XCircle, MapPin } from 'lucide-react';
@@ -26,13 +27,15 @@ export const QAOfficerPage: React.FC<QAOfficerPageProps> = ({ user, showToast })
 
   const canAccess = user && (user.role === 'qa_officer' || user.role === 'admin' || user.role === 'program_manager');
 
+  const { activeCountry } = useCountry();
+
   const load = () => {
-    qaReportsApi.getAll().then(setReports).catch(() => {});
-    qaReportsApi.getStats().then(setStats).catch(() => {});
-    qaReportsApi.getCompliance().then(setCompliance).catch(() => {});
+    qaReportsApi.getAll(activeCountry).then(setReports).catch(() => {});
+    qaReportsApi.getStats(activeCountry).then(setStats).catch(() => {});
+    qaReportsApi.getCompliance(activeCountry).then(setCompliance).catch(() => {});
   };
 
-  useEffect(() => { if (canAccess) load(); }, [user]);
+  useEffect(() => { if (canAccess) load(); }, [user, activeCountry]);
 
   if (!canAccess) {
     return (

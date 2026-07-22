@@ -136,8 +136,18 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
     assignedRole: 'data_entry' as TaskItem['assignedRole'],
     dueDate: new Date().toISOString().split('T')[0],
     district: user?.district || 'National',
-    category: 'Data Entry'
+    category: 'Data Entry',
+    assigneeId: '' as string,
   });
+  const [assignableUsers, setAssignableUsers] = useState<{ id: string; name: string; role: string }[]>([]);
+
+  useEffect(() => {
+    if (user) {
+      api.get('/api/tasks/assignable-users').then((data: any) => {
+        if (Array.isArray(data)) setAssignableUsers(data);
+      }).catch(() => {});
+    }
+  }, [user]);
 
   // Load tasks from API
   const loadTasks = useCallback(async () => {
@@ -184,7 +194,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
         district: newTask.district,
         category: newTask.category || 'General Operations',
         status: 'pending',
-        assigned_to: null,
+        assigned_to: newTask.assigneeId || null,
         assigned_by: user?.id || null,
       });
       if (created && !created.error) {
@@ -207,7 +217,8 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
           assignedRole: (user?.role as any) || 'data_entry',
           dueDate: new Date().toISOString().split('T')[0],
           district: user?.district || 'National',
-          category: 'Operations'
+          category: 'Operations',
+          assigneeId: '',
         });
       }
     } catch { }
@@ -425,6 +436,16 @@ export const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
               rows={3}
             />
 
+            <FSelect
+              label="Assign To"
+              value={newTask.assigneeId}
+              onChange={e => setNewTask(p => ({ ...p, assigneeId: e.target.value }))}
+            >
+              <option value="">Myself</option>
+              {assignableUsers.map(u => (
+                <option key={u.id} value={u.id}>{u.name} ({u.role.replace(/_/g, ' ')})</option>
+              ))}
+            </FSelect>
             <div className="grid grid-cols-2 gap-3">
               <FSelect
                 label="Owner Role Delegation"

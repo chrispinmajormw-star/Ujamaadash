@@ -1,5 +1,7 @@
 import { Modal } from './SubComponents';
 import { programmeStatsApi, statsApi, api } from '../api';
+import { TTSGenderChart } from './TTSGenderChart';
+import { BiweeklyReachChart } from './BiweeklyReachChart';
 import { getStaticMapClusters } from '../utils/mapFallback';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Shield, FilePlus, GraduationCap, School, TrendingUp, FileText, Clock,BookOpen, CheckSquare, Users, Map, MapPin, Edit2, RefreshCw, Star, ArrowRightCircle } from 'lucide-react';
@@ -478,6 +480,17 @@ useEffect(() => {
         </div>
       </div>
 
+      {/* Programme reach charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card>
+          <h3 className="text-xs font-semibold mb-2 m-0">Teacher Training Sessions — Girls vs Boys Trained by District</h3>
+          <div className="h-56 relative"><TTSGenderChart /></div>
+        </Card>
+        <Card>
+          <h3 className="text-xs font-semibold mb-2 m-0">Biweekly Plans — Teachers Trained vs Students Reached by District</h3>
+          <div className="h-56 relative"><BiweeklyReachChart /></div>
+        </Card>
+      </div>
       {/* Quick links — always last */}
       <Card>
         <h3 className="text-xs font-semibold text-black dark:text-white mb-3 m-0">Quick links</h3>

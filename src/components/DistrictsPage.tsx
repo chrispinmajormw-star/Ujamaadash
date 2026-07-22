@@ -121,7 +121,7 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
     }
   }, [user]);
 
-  const { activeCountry } = useCountry();
+  const { activeCountry, districtTerm, districtTermPlural, districtTermLower, districtTermPluralLower } = useCountry();
   useEffect(() => {
     setLoading(true);
     districtsApi.getAll(activeCountry).then(data => {
@@ -319,21 +319,21 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
   const locationLabel = isManager
     ? `${user?.region} Region`
     : (isDC || isTOT)
-    ? `${user?.district} District`
+    ? `${user?.district} ${districtTerm}`
     : null;
 
   return (
     <div className="space-y-4 animate-fade-in-up">
       <PageHeader
-        title={locationLabel ? `${locationLabel} — Districts` : "Implementing Districts"}
+        title={locationLabel ? `${locationLabel} — ${districtTermPlural}` : `Implementing ${districtTermPlural}`}
         subtitle={locationLabel
-          ? `Showing districts within your assigned ${isManager ? 'region' : 'district'}`
-          : "All 28 districts of Malawi — active and planned"}
+          ? `Showing ${districtTermPluralLower} within your assigned ${isManager ? 'region' : districtTermLower}`
+          : `All ${visibleDistricts.length} ${districtTermPluralLower} of ${activeCountry === 'all' ? 'your program area' : activeCountry} — active and planned`}
       />
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Districts', value: visibleDistricts.length, icon: <MapPin size={15} /> },
+          { label: districtTermPlural, value: visibleDistricts.length, icon: <MapPin size={15} /> },
           { label: 'Active', value: visibleDistricts.filter(d => d.is_active).length, icon: <CheckCircle size={15} /> },
           { label: 'Total TOTs', value: visibleDistricts.reduce((a, d) => a + (parseInt(d.tots) || 0), 0), icon: <GraduationCap size={15} /> },
           { label: 'Teachers Trained', value: visibleDistricts.reduce((a, d) => a + (parseInt(d.teachers_trained) || 0), 0), icon: <Users size={15} /> },

@@ -6,10 +6,10 @@ import sw from './locales/sw.json';
 import so from './locales/so.json';
 
 export const SUPPORTED_LANGUAGES = [
-  { code: 'en', label: 'English' },
-  { code: 'ny', label: 'Chichewa' },
-  { code: 'sw', label: 'Kiswahili' },
-  { code: 'so', label: 'Somali' },
+  { code: 'en', label: 'English', short: 'EN' },
+  { code: 'ny', label: 'Chichewa', short: 'NY' },
+  { code: 'sw', label: 'Kiswahili', short: 'SW' },
+  { code: 'so', label: 'Somali', short: 'SO' },
 ];
 
 // Maps a selected country to its most relevant default language

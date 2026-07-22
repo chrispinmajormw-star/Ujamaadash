@@ -83,6 +83,8 @@ export const usersApi = {
     api.put(`/api/users/${userId}`, data),
   changePassword: (data: { currentPassword: string; newPassword: string }) =>
     api.post('/api/users/change-password', data),
+  adminResetPassword: (id: string) => api.post(`/api/users/${id}/admin-reset-password`, {}),
+  getAuditLog: (id: string) => apiGetList(`/api/users/${id}/audit-log`, ['log', 'data', 'items']),
 };
 
 // ─── STATS ───────────────────────────────────────────────────────────────────
@@ -104,6 +106,25 @@ export const documentReportsApi = {
   submit: async (formData: FormData) => {
     const token = localStorage.getItem('token');
     const res = await fetch(`${BASE_URL}/api/document-reports`, {
+      method: 'POST',
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: formData,
+    });
+    return res.json();
+  },
+  getDownloadUrl: (filePath: string) => `${BASE_URL}${filePath}`,
+};
+
+export const announcementsApi = {
+  getActive: (country?: string) => apiGetList(`/api/announcements/active${country && country !== 'all' ? `?country=${country}` : ''}`, ['announcements', 'data', 'items']),
+  getAll: (country?: string) => apiGetList(`/api/announcements${country && country !== 'all' ? `?country=${country}` : ''}`, ['announcements', 'data', 'items']),
+  dismiss: (id: number) => api.post(`/api/announcements/${id}/dismiss`, {}),
+  delete: (id: number) => api.delete(`/api/announcements/${id}`),
+  submit: async (formData: FormData) => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${BASE_URL}/api/announcements`, {
       method: 'POST',
       headers: {
         ...(token && { Authorization: `Bearer ${token}` }),
@@ -149,16 +170,141 @@ export const gbvCasesApi = {
   submit: (data: any) => api.post('/api/gbv-cases', data),
   updateStatus: (id: number, status: string) => api.put(`/api/gbv-cases/${id}/status`, { status }),
   getStats: () => api.get('/api/gbv-cases/stats/summary'),
+  getCasesByDistrict: (country?: string) =>
+    api.get(`/api/gbv-cases/stats/by-district${country && country !== 'all' ? `?country=${country}` : ''}`),
   delete: (id: number) => api.delete(`/api/gbv-cases/${id}`),
 };
 
+export const staffMentorshipApi = {
+  getAll: (country?: string) => apiGetList(`/api/staff-mentorship${country && country !== 'all' ? `?country=${country}` : ''}`, ['records', 'data', 'items']),
+  submit: (data: any) => api.post('/api/staff-mentorship', data),
+  update: (id: number, data: any) => api.put(`/api/staff-mentorship/${id}`, data),
+  delete: (id: number) => api.delete(`/api/staff-mentorship/${id}`),
+};
+
+export const clusterFollowupsApi = {
+  getAvailableClusters: (country?: string) =>
+    api.get(`/api/cluster-followups/available-clusters${country && country !== 'all' ? `?country=${country}` : ''}`),
+  getMyClusters: (country?: string) =>
+    api.get(`/api/cluster-followups/my-clusters${country && country !== 'all' ? `?country=${country}` : ''}`),
+  assignCluster: (clusterId: number) => api.post('/api/cluster-followups/my-clusters', { clusterId }),
+  unassignCluster: (clusterId: number) => api.delete(`/api/cluster-followups/my-clusters/${clusterId}`),
+  getThisWeek: (country?: string) =>
+    api.get(`/api/cluster-followups/this-week${country && country !== 'all' ? `?country=${country}` : ''}`),
+  submitFollowup: (data: any) => api.post('/api/cluster-followups/followup', data),
+  getConsistency: (country?: string) => api.get(`/api/cluster-followups/consistency${country && country !== 'all' ? `?country=${country}` : ''}`),
+};
+
+export const districtRosterApi = {
+  getAll: (type: string, district?: string) =>
+    apiGetList(`/api/district-roster?type=${type}${district ? `&district=${district}` : ''}`, ['entries', 'data', 'items']),
+  create: (data: any) => api.post('/api/district-roster', data),
+  update: (id: number, data: any) => api.put(`/api/district-roster/${id}`, data),
+  delete: (id: number) => api.delete(`/api/district-roster/${id}`),
+};
+
+export const districtAssetsApi = {
+  getAll: (district?: string) => apiGetList(`/api/district-assets${district ? `?district=${district}` : ''}`, ['assets', 'data', 'items']),
+  create: (data: any) => api.post('/api/district-assets', data),
+  update: (id: number, data: any) => api.put(`/api/district-assets/${id}`, data),
+  delete: (id: number) => api.delete(`/api/district-assets/${id}`),
+};
+
+export const districtStakeholdersApi = {
+  getAll: (district?: string) => apiGetList(`/api/district-stakeholders${district ? `?district=${district}` : ''}`, ['stakeholders', 'data', 'items']),
+  create: (data: any) => api.post('/api/district-stakeholders', data),
+  update: (id: number, data: any) => api.put(`/api/district-stakeholders/${id}`, data),
+  delete: (id: number) => api.delete(`/api/district-stakeholders/${id}`),
+};
+
+export const planningSchedulesApi = {
+  getAll: (country?: string, district?: string) => {
+    const qs = new URLSearchParams();
+    if (country && country !== 'all') qs.set('country', country);
+    if (district) qs.set('district', district);
+    const q = qs.toString();
+    return apiGetList(`/api/planning-schedules${q ? `?${q}` : ''}`, ['schedules', 'data', 'items']);
+  },
+  getMyThisBiweek: () => api.get('/api/planning-schedules/mine/this-biweek'),
+  submit: (data: any) => api.post('/api/planning-schedules', data),
+  getSummary: (country?: string) => api.get(`/api/planning-schedules/summary${country && country !== 'all' ? `?country=${country}` : ''}`),
+  sendReport: () => api.post('/api/planning-schedules/send-report', {}),
+};
+
+export const clusterTeachbacksApi = {
+  getAll: (country?: string) => apiGetList(`/api/cluster-teachbacks${country && country !== 'all' ? `?country=${country}` : ''}`, ['records', 'data', 'items']),
+  create: (data: any) => api.post('/api/cluster-teachbacks', data),
+  update: (id: number, data: any) => api.put(`/api/cluster-teachbacks/${id}`, data),
+  delete: (id: number) => api.delete(`/api/cluster-teachbacks/${id}`),
+  getSummary: (country?: string) => api.get(`/api/cluster-teachbacks/summary${country && country !== 'all' ? `?country=${country}` : ''}`),
+};
+
+export const ttsRecordsApi = {
+  getAll: (country?: string) => apiGetList(`/api/tts-records${country && country !== 'all' ? `?country=${country}` : ''}`, ['records', 'data', 'items']),
+  create: (data: any) => api.post('/api/tts-records', data),
+  update: (id: number, data: any) => api.put(`/api/tts-records/${id}`, data),
+  delete: (id: number) => api.delete(`/api/tts-records/${id}`),
+  getSummary: (country?: string) => api.get(`/api/tts-records/summary${country && country !== 'all' ? `?country=${country}` : ''}`),
+};
+
+export const trocaireRecordsApi = {
+  getAll: (country?: string) => apiGetList(`/api/trocaire-records${country && country !== 'all' ? `?country=${country}` : ''}`, ['records', 'data', 'items']),
+  create: (data: any) => api.post('/api/trocaire-records', data),
+  update: (id: number, data: any) => api.put(`/api/trocaire-records/${id}`, data),
+  delete: (id: number) => api.delete(`/api/trocaire-records/${id}`),
+  getSummary: (country?: string) => api.get(`/api/trocaire-records/summary${country && country !== 'all' ? `?country=${country}` : ''}`),
+};
+
+export const clusterSchoolSessionsApi = {
+  getMyClusters: () => api.get('/api/cluster-school-sessions/my-clusters'),
+  getSchools: (clusterId: number) => api.get(`/api/cluster-school-sessions/schools?clusterId=${clusterId}`),
+  getMine: (schoolId: number, reportingMonth: string) =>
+    api.get(`/api/cluster-school-sessions/mine?schoolId=${schoolId}&reportingMonth=${reportingMonth}`),
+  getAll: (country?: string) => apiGetList(`/api/cluster-school-sessions${country && country !== 'all' ? `?country=${country}` : ''}`, ['records', 'data', 'items']),
+  submit: (data: any) => api.post('/api/cluster-school-sessions', data),
+  getSummary: (country?: string) => api.get(`/api/cluster-school-sessions/summary${country && country !== 'all' ? `?country=${country}` : ''}`),
+  getConsistency: (country?: string) => api.get(`/api/cluster-school-sessions/consistency${country && country !== 'all' ? `?country=${country}` : ''}`),
+};
+
+export const annualActivitiesApi = {
+  getThisWeek: () => api.get('/api/annual-activities/this-week'),
+  markComplete: (id: number, completionStatus: string, completionComment?: string) =>
+    api.put(`/api/annual-activities/${id}/complete`, { completionStatus, completionComment }),
+  getAll: (country?: string, filters?: { quarter?: string; district?: string; region?: string; completionStatus?: string; search?: string }) => {
+    const qs = new URLSearchParams();
+    if (country && country !== 'all') qs.set('country', country);
+    if (filters?.quarter) qs.set('quarter', filters.quarter);
+    if (filters?.district) qs.set('district', filters.district);
+    if (filters?.region) qs.set('region', filters.region);
+    if (filters?.completionStatus) qs.set('completionStatus', filters.completionStatus);
+    if (filters?.search) qs.set('search', filters.search);
+    const q = qs.toString();
+    return apiGetList(`/api/annual-activities${q ? `?${q}` : ''}`, ['activities', 'data', 'items']);
+  },
+  getSummary: (country?: string) => api.get(`/api/annual-activities/summary${country && country !== 'all' ? `?country=${country}` : ''}`),
+  update: (id: number, data: any) => api.put(`/api/annual-activities/${id}`, data),
+  create: (data: any) => api.post('/api/annual-activities', data),
+};
+
+export const sessionMonitoringApi = {
+  getAll: (type: string, country?: string) =>
+    api.get(`/api/session-monitoring?type=${type}${country && country !== 'all' ? `&country=${country}` : ''}`),
+  submit: (data: any) => api.post('/api/session-monitoring', data),
+  update: (id: number, data: any) => api.put(`/api/session-monitoring/${id}`, data),
+  delete: (id: number) => api.delete(`/api/session-monitoring/${id}`),
+  getRegionalView: (country?: string) =>
+    api.get(`/api/session-monitoring/regional-view${country && country !== 'all' ? `?country=${country}` : ''}`),
+  getRegionalPerformance: (country?: string) =>
+    api.get(`/api/session-monitoring/regional-performance${country && country !== 'all' ? `?country=${country}` : ''}`),
+};
+
 export const qaReportsApi = {
-  getAll: () => apiGetList('/api/qa-reports', ['reports', 'data', 'items']),
+  getAll: (country?: string) => apiGetList(`/api/qa-reports${country && country !== 'all' ? `?country=${country}` : ''}`, ['reports', 'data', 'items']),
   submit: (data: any) => api.post('/api/qa-reports', data),
   review: (id: number, status: string, reviewNotes?: string) =>
     api.put(`/api/qa-reports/${id}/review`, { status, reviewNotes }),
-  getStats: () => api.get('/api/qa-reports/stats/summary'),
-  getCompliance: () => api.get('/api/qa-reports/compliance'),
+  getStats: (country?: string) => api.get(`/api/qa-reports/stats/summary${country && country !== 'all' ? `?country=${country}` : ''}`),
+  getCompliance: (country?: string) => api.get(`/api/qa-reports/compliance${country && country !== 'all' ? `?country=${country}` : ''}`),
 };
 
 export const monthlyCaseReportsApi = {
@@ -236,7 +382,21 @@ export const programmeStatsApi = {
 // ─── TRAININGS ────────────────────────────────────────────────────────────────
 
 export const trainingsApi = {
-  getAll: (country?: string) => apiGetList(`/api/trainings${country && country !== 'all' ? `?country=${country}` : ''}`, ['trainings', 'data', 'items']),
+  getAll: (params?: string | { status?: string; country?: string; district?: string }) => {
+    if (typeof params === 'string' || params === undefined) {
+      const country = params;
+      return apiGetList(`/api/trainings${country && country !== 'all' ? `?country=${country}` : ''}`, ['trainings', 'data', 'items']);
+    }
+    const qs = new URLSearchParams();
+    if (params.status) qs.set('status', params.status);
+    if (params.country) qs.set('country', params.country);
+    if (params.district) qs.set('district', params.district);
+    const q = qs.toString();
+    return apiGetList(`/api/trainings${q ? `?${q}` : ''}`, ['trainings', 'data', 'items']);
+  },
+  create: (data: any) => api.post('/api/trainings', data),
+  update: (id: number, data: any) => api.put(`/api/trainings/${id}`, data),
+  delete: (id: number) => api.delete(`/api/trainings/${id}`),
 };
 
 // ─── Monitoring API ───────────────────────────────────────────────────────────
@@ -347,7 +507,11 @@ export const mapZonesApi = {
 // ─── Map / Clusters API ───────────────────────────────────────────────────────
 export const mapApi = {
   /** GET /api/map/clusters  (or /api/clusters — whichever your server uses) */
-  getClusters: () => apiFetch('/api/map/clusters').catch(() => apiFetch('/api/clusters')),
+  getClusters: (district?: string) => {
+    const q = district ? `?district=${encodeURIComponent(district)}` : '';
+    return apiFetch(`/api/map/clusters${q}`).catch(() => apiFetch(`/api/clusters${q}`));
+  },
+  updateCluster: (id: number, data: any) => api.put(`/api/map/clusters/${id}`, data),
 };
 // ─── YOUTH MEDIA (S3-backed videos & documents) ──────────────────────────────
 

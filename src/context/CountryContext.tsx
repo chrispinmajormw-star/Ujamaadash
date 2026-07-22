@@ -16,7 +16,19 @@ interface CountryContextValue {
   setDefaultCountry: (country: string) => void;
   availableCountries: string[];
   loading: boolean;
+  // Localized administrative-division terminology: Kenya calls them "Counties",
+  // Malawi and Somaliland call them "Districts". Everything else in the app keeps
+  // using "district" as the underlying field name -- this only affects display text.
+  districtTerm: string;
+  districtTermPlural: string;
+  districtTermLower: string;
+  districtTermPluralLower: string;
 }
+// Countries where the administrative division is called something other than "District"
+const DISTRICT_TERM_OVERRIDES: Record<string, { singular: string; plural: string }> = {
+  Kenya: { singular: 'County', plural: 'Counties' },
+};
+const getDistrictTerms = (country: string) => DISTRICT_TERM_OVERRIDES[country] || { singular: 'District', plural: 'Districts' };
 
 const CountryContext = createContext<CountryContextValue | undefined>(undefined);
 
@@ -71,8 +83,16 @@ export const CountryProvider: React.FC<{ children: React.ReactNode }> = ({ child
       });
   }, []);
 
+  const districtTerms = getDistrictTerms(activeCountry);
+
   return (
-    <CountryContext.Provider value={{ activeCountry, setActiveCountry, setDefaultCountry, availableCountries, loading }}>
+    <CountryContext.Provider value={{
+      activeCountry, setActiveCountry, setDefaultCountry, availableCountries, loading,
+      districtTerm: districtTerms.singular,
+      districtTermPlural: districtTerms.plural,
+      districtTermLower: districtTerms.singular.toLowerCase(),
+      districtTermPluralLower: districtTerms.plural.toLowerCase(),
+    }}>
       {children}
     </CountryContext.Provider>
   );

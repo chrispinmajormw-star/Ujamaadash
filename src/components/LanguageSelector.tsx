@@ -38,7 +38,7 @@ export const LanguageSelector: React.FC = () => {
         title="Change language"
       >
         <Languages size={13} className="text-[var(--brand-500)] shrink-0" />
-        <span className="hidden sm:inline">{current.label}</span>
+        <span>{current.short}</span>
         <ChevronDown size={12} className="opacity-60 shrink-0" />
       </button>
 
@@ -51,13 +51,14 @@ export const LanguageSelector: React.FC = () => {
                 key={l.code}
                 type="button"
                 onClick={() => setLanguage(l.code)}
-                className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition ${
+                className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition flex items-center justify-between gap-2 ${
                   i18n.language === l.code
                     ? 'bg-[var(--brand)] text-white'
                     : 'text-slate-600 dark:text-slate-300 hover:bg-neutral-100 dark:hover:bg-slate-800'
                 }`}
               >
-                {l.label}
+                <span>{l.label}</span>
+                <span className="opacity-60">{l.short}</span>
               </button>
             ))}
           </div>

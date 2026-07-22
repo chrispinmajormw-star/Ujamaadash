@@ -23,6 +23,8 @@ export interface User {
   avatar: string;
   status: 'active' | 'pending' | 'inactive';
   clusterId?: number;
+  lastActiveAt?: string | null;
+  lastLogin?: string | null;
 }
 
 export interface Report {

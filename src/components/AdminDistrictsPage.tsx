@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, X, Globe, MapPin, Upload, FileText, CheckCircle2 } from 'lucide-react';
 import { Card, Kicker, PageHeader, Btn, FInput, FSelect } from './SubComponents';
 import { districtsApi } from '../api';
+import { useCountry } from '../context/CountryContext';
+
+// Kenya calls this administrative division a "County"; everyone else calls it a "District".
+const termFor = (country?: string) => country === 'Kenya' ? 'County' : 'District';
 
 interface District {
   id: number;
@@ -23,6 +27,7 @@ const BLANK: Partial<District> = {
 };
 
 export const AdminDistrictsPage: React.FC = () => {
+  const { districtTermPlural } = useCountry();
   const [districts, setDistricts] = useState<District[]>([]);
   const [countries, setCountries] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -208,10 +213,10 @@ export const AdminDistrictsPage: React.FC = () => {
   return (
     <div className="space-y-5 animate-fade-in-up max-w-5xl mx-auto pb-12">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <PageHeader title="Districts & Countries" subtitle="Manage districts, regions, and countries across the system." />
+        <PageHeader title={`${districtTermPlural} & Countries`} subtitle={`Manage ${districtTermPlural.toLowerCase()}, regions, and countries across the system.`} />
         <div className="flex items-center gap-2">
           <Btn variant="secondary" onClick={() => setShowImport(true)}><Upload size={14} /> Bulk Import</Btn>
-          <Btn onClick={openNew}><Plus size={14} /> Add District</Btn>
+          <Btn onClick={openNew}><Plus size={14} /> Add {districtTermPlural.slice(0, -1)}</Btn>
         </div>
       </div>
 
@@ -275,11 +280,11 @@ export const AdminDistrictsPage: React.FC = () => {
         <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-[#0f1623] rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-100 dark:border-slate-800">
-              <h3 className="font-bold text-sm text-black dark:text-white m-0">{isNew ? 'Add District' : `Edit ${editing.name}`}</h3>
+              <h3 className="font-bold text-sm text-black dark:text-white m-0">{isNew ? `Add ${termFor(editing.country)}` : `Edit ${editing.name}`}</h3>
               <button onClick={closeModal} className="text-slate-400 hover:text-black dark:hover:text-white"><X size={18} /></button>
             </div>
             <div className="p-5 space-y-3">
-              <FInput label="District Name *" value={editing.name || ''} onChange={e => setEditing(p => ({ ...p!, name: e.target.value }))} disabled={!isNew} />
+              <FInput label={`${termFor(editing.country)} Name *`} value={editing.name || ''} onChange={e => setEditing(p => ({ ...p!, name: e.target.value }))} disabled={!isNew} />
 
               <div>
                 <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Country *</label>
@@ -365,7 +370,7 @@ export const AdminDistrictsPage: React.FC = () => {
  <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4">
  <div className="bg-white dark:bg-[#0f1623] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
  <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-100 dark:border-slate-800">
- <h3 className="font-bold text-sm text-black dark:text-white m-0">Bulk Import Districts</h3>
+ <h3 className="font-bold text-sm text-black dark:text-white m-0">Bulk Import {districtTermPlural}</h3>
  <button onClick={closeImport} className="text-slate-400 hover:text-black dark:hover:text-white"><X size={18} /></button>
  </div>
  <div className="p-5 space-y-4">
@@ -457,7 +462,7 @@ Example,Central,Uganda,Planned,0,0,0,,0,0"
               <div className="flex justify-end gap-2 px-5 py-4 border-t border-neutral-100 dark:border-slate-800">
                 <Btn variant="secondary" onClick={closeImport}>Cancel</Btn>
                 <Btn onClick={runImport} disabled={importing || importPreview.length === 0}>
-                  {importing ? 'Importing…' : `Import ${importPreview.length} District${importPreview.length === 1 ? '' : 's'}`}
+                  {importing ? 'Importing…' : `Import ${importPreview.length} ${importPreview.length === 1 ? districtTermPlural.slice(0, -1) : districtTermPlural}`}
                 </Btn>
               </div>
             )}
