@@ -8,20 +8,10 @@ import { ROLE_CFG, can } from '../data';
 import { Card, Kicker, FilterBar, TH, Pill, Badge, Btn, Modal, FInput, FSelect, FArea, OR, ConfirmDialog, StatCard, PageHeader } from './SubComponents';
 import { exportReportsToCSV } from '../utils/export';
 
-// REPORT ROUTING WORKFLOW WORKER
-export const REPORT_WORKFLOW = {
-  tot: { sendTo: "district_coordinator", label: "District Coordinator" },
-  field_officer: { sendTo: "district_coordinator", label: "District Coordinator" },
-  viewer: { sendTo: "district_coordinator", label: "District Coordinator" },
-  data_entry: { sendTo: "admin", label: "System Admin" },
-  district_coordinator: { sendTo: "program_manager", label: "Regional Manager" },
-  program_manager: { sendTo: "admin", label: "National Admin" },
-  admin: { sendTo: null as any, label: "Final Recipient" },
-};
-
-export const getReportRecipient = (role: string) => {
-  return (REPORT_WORKFLOW as any)[role] || { sendTo: "admin", label: "National Admin" };
-};
+// Moved to utils/reportRecipient.ts so App.tsx can use this one small
+// function without eagerly bundling this entire page. Re-exported here so
+// nothing importing from this file directly needs to change.
+export { REPORT_WORKFLOW, getReportRecipient } from '../utils/reportRecipient';
 
 interface ReportsPageProps {
   user: User;

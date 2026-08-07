@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { qaReportsApi } from '../api';
 import { useCountry } from '../context/CountryContext';
 import { User } from '../types';
-import { Card, PageHeader, Btn, Badge, Modal, FArea } from './SubComponents';
-import { ClipboardCheck, Clock, CheckCircle2, RotateCcw, XCircle, MapPin } from 'lucide-react';
+import { Card, PageHeader, Btn, Badge, Modal, FArea, FSelect } from './SubComponents';
+import { ClipboardCheck, Clock, CheckCircle2, RotateCcw, XCircle, MapPin, Paperclip, UserCog } from 'lucide-react';
 
 interface QAOfficerPageProps {
   user: User | null;
@@ -24,6 +24,9 @@ export const QAOfficerPage: React.FC<QAOfficerPageProps> = ({ user, showToast })
   const [filter, setFilter] = useState('all');
   const [reviewing, setReviewing] = useState<any | null>(null);
   const [reviewNotes, setReviewNotes] = useState('');
+  const [reassigning, setReassigning] = useState<any | null>(null);
+  const [qaOfficers, setQaOfficers] = useState<any[]>([]);
+  const [reassignTo, setReassignTo] = useState('');
 
   const canAccess = user && (user.role === 'qa_officer' || user.role === 'admin' || user.role === 'program_manager');
 
@@ -36,6 +39,9 @@ export const QAOfficerPage: React.FC<QAOfficerPageProps> = ({ user, showToast })
   };
 
   useEffect(() => { if (canAccess) load(); }, [user, activeCountry]);
+  useEffect(() => {
+    if (user?.role === 'admin') qaReportsApi.getOfficers().then(setQaOfficers).catch(() => {});
+  }, [user]);
 
   if (!canAccess) {
     return (
@@ -57,6 +63,20 @@ export const QAOfficerPage: React.FC<QAOfficerPageProps> = ({ user, showToast })
       load();
     } catch {
       showToast('Failed to submit review', 'error');
+    }
+  };
+
+  const submitReassign = async () => {
+    if (!reassigning || !reassignTo) return;
+    try {
+      const data = await qaReportsApi.reassign(reassigning.id, reassignTo);
+      if (data.error) { showToast(data.error, 'warning'); return; }
+      showToast('Report reassigned', 'success');
+      setReassigning(null);
+      setReassignTo('');
+      load();
+    } catch {
+      showToast('Failed to reassign', 'error');
     }
   };
 
@@ -128,10 +148,23 @@ export const QAOfficerPage: React.FC<QAOfficerPageProps> = ({ user, showToast })
                   <span>{r.attachments_present ? '✓ Attachments' : '✗ Attachments'}</span>
                   <span>{r.register_complete ? '✓ Register' : '✗ Register'}</span>
                 </div>
+                {r.attachment_path && (
+                  <button
+                    onClick={() => window.open(qaReportsApi.getAttachmentUrl(r.id), '_blank')}
+                    className="flex items-center gap-1 text-[10px] font-bold text-[var(--brand-600)] hover:underline shrink-0"
+                  >
+                    <Paperclip size={11} /> File
+                  </button>
+                )}
                 <Badge text={STATUS_CFG[r.status]?.label || r.status} color={STATUS_CFG[r.status]?.color} bg={STATUS_CFG[r.status]?.bg} />
                 {r.status === 'pending' && user?.role === 'qa_officer' && (
                   <Btn size="sm" variant="primary" onClick={() => { setReviewing(r); setReviewNotes(''); }}>
                     Review
+                  </Btn>
+                )}
+                {user?.role === 'admin' && (
+                  <Btn size="sm" variant="secondary" onClick={() => { setReassigning(r); setReassignTo(''); }}>
+                    <UserCog size={12} /> Reassign
                   </Btn>
                 )}
               </div>
@@ -187,6 +220,14 @@ export const QAOfficerPage: React.FC<QAOfficerPageProps> = ({ user, showToast })
               <div>Register complete: <b>{reviewing.register_complete ? 'Yes' : 'No'}</b></div>
               <div>Beneficiary #s correct: <b>{reviewing.beneficiary_numbers_correct ? 'Yes' : 'No'}</b></div>
             </div>
+            {reviewing.attachment_path && (
+              <button
+                onClick={() => window.open(qaReportsApi.getAttachmentUrl(reviewing.id), '_blank')}
+                className="flex items-center gap-1.5 text-xs font-semibold text-[var(--brand-600)] hover:underline"
+              >
+                <Paperclip size={13} /> {reviewing.attachment_filename || 'View attached evidence'}
+              </button>
+            )}
             {reviewing.notes && (
               <div className="text-xs bg-neutral-50 dark:bg-slate-900 p-3 rounded-lg border border-neutral-100 dark:border-slate-800">
                 {reviewing.notes}
@@ -203,6 +244,21 @@ export const QAOfficerPage: React.FC<QAOfficerPageProps> = ({ user, showToast })
               <Btn size="sm" variant="success" onClick={() => submitReview('verified')}>
                 <CheckCircle2 size={13} /> Verify
               </Btn>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {reassigning && (
+        <Modal title={`Reassign — ${reassigning.district}`} onClose={() => setReassigning(null)} width={420}>
+          <div className="space-y-3">
+            <FSelect label="Assign to QA Officer" value={reassignTo} onChange={(e: any) => setReassignTo(e.target.value)}>
+              <option value="">Select an officer...</option>
+              {qaOfficers.map((o: any) => <option key={o.id} value={o.id}>{o.name}</option>)}
+            </FSelect>
+            <div className="flex justify-end gap-2 pt-2">
+              <Btn size="sm" variant="secondary" onClick={() => setReassigning(null)}>Cancel</Btn>
+              <Btn size="sm" onClick={submitReassign} disabled={!reassignTo}>Reassign</Btn>
             </div>
           </div>
         </Modal>

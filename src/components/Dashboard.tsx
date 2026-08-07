@@ -4,7 +4,9 @@ import { TTSGenderChart } from './TTSGenderChart';
 import { BiweeklyReachChart } from './BiweeklyReachChart';
 import { getStaticMapClusters } from '../utils/mapFallback';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Shield, FilePlus, GraduationCap, School, TrendingUp, FileText, Clock,BookOpen, CheckSquare, Users, Map, MapPin, Edit2, RefreshCw, Star, ArrowRightCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Shield, FilePlus, GraduationCap, School, TrendingUp, FileText, Clock,BookOpen, CheckSquare, Users, Map, MapPin, Edit2, RefreshCw, Star, ArrowRightCircle, Heart, ShieldCheck, Play } from 'lucide-react';
+import { DashboardAnnouncementsBanner } from './DashboardAnnouncementsBanner';
 import { User, Report } from '../types';
 import { ROLE_CFG, can, DISTRICTS, DISTRICT_INFO } from '../data';
 import { Card, PageHeader, Btn, Pill, TrendIndicator } from './SubComponents';
@@ -18,6 +20,7 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, darkMode }) => {
+  const { t } = useTranslation();
   const currentUser = user || { role: "viewer" as const, name: "Public Viewer", district: null, region: null };
   const isStaff = user && ["admin", "district_coordinator", "data_entry", "tot", "program_manager", "field_officer"].includes(user.role);
 
@@ -47,6 +50,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
   const userId   = user?.id;
   const userRole = user?.role;
   const userDistrict = user?.district;
+  const userRegion = user?.region;
   const { activeCountry } = useCountry();
 
   const loadStats = useCallback(() => {
@@ -55,15 +59,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, reports, setPage, da
       api.get(`/api/stats/district/${encodeURIComponent(userDistrict)}`).then(data => {
         if (!data.error) { setStats(prev => ({ ...prev, ...data })); setStatsLoaded(true); }
       });
+    } else if (userRole === 'program_manager' && userRegion) {
+      // Program/Regional Managers only see figures for districts in their own region.
+      statsApi.get(activeCountry, userRegion).then(data => {
+        if (!data.error) { setStats(prev => ({ ...prev, ...data })); setStatsLoaded(true); }
+      });
     } else {
       statsApi.get(activeCountry).then(data => {
         if (!data.error) { setStats(prev => ({ ...prev, ...data })); setStatsLoaded(true); }
       });
     }
-  }, [userRole, userDistrict, activeCountry]);
+  }, [userRole, userDistrict, userRegion, activeCountry]);
 
   useEffect(() => { loadStats(); }, [loadStats]);
   const [editStats, setEditStats] = useState(false);
+  const [ownCountryYearlyData, setOwnCountryYearlyData] = useState<any[]>([]);
   const [editingYear, setEditingYear] = useState<any | null>(null);
   const approved = my.filter(r => r.status === "approved").length;
   const students = my.reduce((acc, r) => acc + r.boys + r.girls, 0);
@@ -301,33 +311,35 @@ useEffect(() => {
   }, [darkMode, dashClusters, activeCountry]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
 
       <PageHeader
         title={
           <span className="border-l-[4px] border-[var(--brand-500)] pl-2.5 py-0.5 inline-block">
-            {user ? `Welcome, ${currentUser.name}` : "Program overview"}
+            {user ? t('dashboard.welcome', { name: currentUser.name }) : t('dashboard.program_overview')}
           </span>
         }
-        subtitle={user ? `${ROLE_CFG[user.role]?.label}${user.region ? ` · ${user.region} Region` : ''}${user.district ? ` · ${user.district}` : ''}` : "Ujamaa Dashboard · Ujamaa Pamodzi Africa"}
+        subtitle={user ? `${ROLE_CFG[user.role]?.label}${user.region ? ` · ${user.region} Region` : ''}${user.district ? ` · ${user.district}` : ''}` : `${t('dashboard.ujamaa_dashboard')} · Ujamaa Africa`}
         actions={
           <>
           {user?.role === 'admin' && (
           <Btn size="sm" variant="ghost" onClick={() => setEditStats(true)}>
-            Edit Programme Stats
+            {t('dashboard.edit_programme_stats')}
           </Btn>
           )}
             <Btn size="sm" onClick={() => setPage("submit")}>
-              <FilePlus size={13} /> {user ? "Submit report" : "Report case"}
+              <FilePlus size={13} /> {user ? t('dashboard.submit_report') : t('dashboard.report_case')}
             </Btn>
             {isStaff && can(user!.role, "approveReport") && pending > 0 && (
               <Btn size="sm" variant="secondary" onClick={() => setPage("reports")}>
-                Pending ({pending})
+                {t('dashboard.pending_count', { count: pending })}
               </Btn>
             )}
           </>
         }
       />
+
+      <DashboardAnnouncementsBanner />
 
       {/* KPI row */}
       <div className="space-y-2">
@@ -335,7 +347,7 @@ useEffect(() => {
         {user?.role === 'admin' && (
           <div className="flex justify-end gap-2">
             <button onClick={loadStats} className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-[var(--brand-600)] transition-colors">
-              <RefreshCw size={12} /> Refresh
+              <RefreshCw size={12} /> {t('dashboard.refresh')}
             </button>
           </div>
         )}
@@ -344,55 +356,84 @@ useEffect(() => {
           {!isStaff ? (
             <>
               {[
-                { icon: <GraduationCap size={16} />, label: "Learners Reached",  value: displayStats.learners.toLocaleString(),  key: 'learners' },
-                { icon: <Users size={16} />,         label: "Teachers Trained",   value: displayStats.teachers.toLocaleString(),  key: 'teachers' },
-                { icon: <School size={16} />,        label: "Schools Reached",    value: displayStats.schools.toLocaleString(),   key: 'schools'  },
-                { icon: <Shield size={16} />,        label: "TOTs Certified",     value: displayStats.tots.toLocaleString(),      key: 'tots'     },
-                { icon: <Star size={16} />,          label: "Senior TOTs (STOTs)",value: displayStats.stots.toLocaleString(),     key: 'stots'    },
-                { icon: <ArrowRightCircle size={16} />, label: "GBV Cases Referred", value: displayStats.casesReferred.toLocaleString(), key: 'casesReferred' },
-              ].map((s, i) => (
-                <div
-                  key={i}
-                  className="p-3.5 rounded-2xl relative group hover-lift animate-fade-in-up stagger-item cursor-default"
-                  style={{
-                    background: "linear-gradient(135deg, var(--brand) 0%, var(--brand-700) 100%)",
-                    boxShadow: "0 6px 20px -4px color-mix(in srgb, var(--brand) 35%, transparent)",
-                    animationDelay: `${i * 60}ms`,
-                  }}
-                >
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className="p-1 rounded-lg bg-white/15" style={{ filter: "brightness(0) invert(1) opacity(0.9)" }}>{s.icon}</span>
-                    <span className="text-[10px] text-white opacity-85 font-semibold leading-tight tracking-wide">{s.label}</span>
+                { icon: <GraduationCap size={18} />, label: t('dashboard.learners_reached'),  value: displayStats.learners.toLocaleString(),  key: 'learners', primary: true },
+                { icon: <Users size={16} />,         label: t('dashboard.teachers_trained'),   value: displayStats.teachers.toLocaleString(),  key: 'teachers', color: 'text-sky-600 dark:text-sky-400', bg: 'bg-sky-50 dark:bg-sky-950/30' },
+                { icon: <School size={16} />,        label: t('dashboard.schools_reached'),    value: displayStats.schools.toLocaleString(),   key: 'schools', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-950/30' },
+                { icon: <Shield size={16} />,        label: t('dashboard.tots_certified'),     value: displayStats.tots.toLocaleString(),      key: 'tots', color: 'text-slate-600 dark:text-slate-300', bg: 'bg-slate-100 dark:bg-slate-800/60' },
+                { icon: <Star size={16} />,          label: t('dashboard.senior_stots'),value: displayStats.stots.toLocaleString(),     key: 'stots', color: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-50 dark:bg-violet-950/30' },
+                { icon: <ArrowRightCircle size={16} />, label: t('dashboard.gbv_cases_referred'), value: displayStats.casesReferred.toLocaleString(), key: 'casesReferred', color: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-950/30' },
+              ].map((s: any, i) => (
+                s.primary ? (
+                  <div
+                    key={i}
+                    className="p-4 rounded-2xl relative group hover-lift animate-fade-in-up stagger-item cursor-default"
+                    style={{
+                      background: "linear-gradient(135deg, var(--brand) 0%, var(--brand-700) 100%)",
+                      boxShadow: "0 6px 20px -4px color-mix(in srgb, var(--brand) 35%, transparent)",
+                      animationDelay: `${i * 60}ms`,
+                    }}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="p-1 rounded-lg bg-white/15" style={{ filter: "brightness(0) invert(1) opacity(0.9)" }}>{s.icon}</span>
+                      <span className="text-[10px] text-white opacity-85 font-semibold leading-tight tracking-wide">{s.label}</span>
+                    </div>
+                    <div className="text-3xl font-black text-white tracking-tight">{s.value}</div>
                   </div>
-                  <div className="text-xl font-black text-white tracking-tight">{s.value}</div>
-                </div>
+                ) : (
+                  <div
+                    key={i}
+                    className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-neutral-200 dark:border-slate-800 hover-lift animate-fade-in-up stagger-item cursor-default"
+                    style={{ animationDelay: `${i * 60}ms` }}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={`p-1 rounded-lg ${s.bg} ${s.color}`}>{s.icon}</span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold leading-tight tracking-wide">{s.label}</span>
+                    </div>
+                    <div className="text-xl font-bold text-black dark:text-white tracking-tight">{s.value}</div>
+                  </div>
+                )
               ))}
             </>
           ) : (
             <>
               {[
-                { icon: <FileText size={16} className="text-[var(--brand-600)]" />,   label: "Total reports", value: my.length,   trend: 12 },
-                { icon: <Clock size={16} className="text-amber-600" />,        label: "Pending",       value: pending,     trend: -5 },
-                { icon: <CheckSquare size={16} className="text-emerald-600" />,label: "Approved",      value: approved,    trend: 18 },
-                { icon: <Users size={16} className="text-[var(--brand-600)]" />,       label: "Learners",      value: students,    trend: 8  },
-                { icon: <Shield size={16} className="text-[var(--brand-600)]" />,      label: "TOTs",          value: displayStats.tots, trend: 0 },
+                { icon: <FileText size={18} />, label: t('dashboard.total_reports'), value: my.length,   trend: 12, primary: true },
+                { icon: <Clock size={16} />,        label: t('dashboard.pending'),       value: pending,     trend: -5, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-950/30' },
+                { icon: <CheckSquare size={16} />,label: t('dashboard.approved'),      value: approved,    trend: 18, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-950/30' },
+                { icon: <Users size={16} />,       label: t('dashboard.learners'),      value: students,    trend: 8, color: 'text-sky-600 dark:text-sky-400', bg: 'bg-sky-50 dark:bg-sky-950/30'  },
+                { icon: <Shield size={16} />,      label: t('dashboard.tots'),          value: displayStats.tots, trend: 0, color: 'text-slate-600 dark:text-slate-300', bg: 'bg-slate-100 dark:bg-slate-800/60' },
               ].map((s: any, i) => (
-                <div
-                  key={i}
-                  className="p-3.5 rounded-2xl hover-lift animate-fade-in-up stagger-item cursor-default"
-                  style={{
-                    background: "linear-gradient(135deg, var(--brand) 0%, var(--brand-700) 100%)",
-                    boxShadow: "0 6px 20px -4px color-mix(in srgb, var(--brand) 35%, transparent)",
-                    animationDelay: `${i * 60}ms`,
-                  }}
-                >
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className="p-1 rounded-lg bg-white/15" style={{ filter: "brightness(0) invert(1) opacity(0.9)" }}>{s.icon}</span>
-                    <span className="text-[10px] text-white opacity-85 font-semibold">{s.label}</span>
+                s.primary ? (
+                  <div
+                    key={i}
+                    className="p-4 rounded-2xl hover-lift animate-fade-in-up stagger-item cursor-default"
+                    style={{
+                      background: "linear-gradient(135deg, var(--brand) 0%, var(--brand-700) 100%)",
+                      boxShadow: "0 6px 20px -4px color-mix(in srgb, var(--brand) 35%, transparent)",
+                      animationDelay: `${i * 60}ms`,
+                    }}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="p-1 rounded-lg bg-white/15" style={{ filter: "brightness(0) invert(1) opacity(0.9)" }}>{s.icon}</span>
+                      <span className="text-[10px] text-white opacity-85 font-semibold">{s.label}</span>
+                    </div>
+                    <div className="text-3xl font-black text-white tracking-tight">{s.value}</div>
+                    <TrendIndicator value={s.trend} className="mt-1 !text-white/80" />
                   </div>
-                  <div className="text-xl font-black text-white tracking-tight">{s.value}</div>
-                  <TrendIndicator value={s.trend} className="mt-1 !text-white/80" />
-                </div>
+                ) : (
+                  <div
+                    key={i}
+                    className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-neutral-200 dark:border-slate-800 hover-lift animate-fade-in-up stagger-item cursor-default"
+                    style={{ animationDelay: `${i * 60}ms` }}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={`p-1 rounded-lg ${s.bg} ${s.color}`}>{s.icon}</span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">{s.label}</span>
+                    </div>
+                    <div className="text-xl font-bold text-black dark:text-white tracking-tight">{s.value}</div>
+                    <TrendIndicator value={s.trend} className="mt-1" />
+                  </div>
+                )
               ))}
             </>
           )}
@@ -403,12 +444,12 @@ useEffect(() => {
         {/* Recent submissions / activity */}
         <Card className="p-0 overflow-hidden">
           <div className="px-4 py-3 border-b border-neutral-200 dark:border-slate-800 flex items-center justify-between">
-            <h3 className="text-xs font-semibold text-black dark:text-white m-0">
-              {isStaff ? "Recent submissions" : "Program milestones"}
+            <h3 className="text-sm font-bold text-black dark:text-white m-0">
+              {isStaff ? t('dashboard.recent_submissions') : t('dashboard.program_milestones')}
             </h3>
             {isStaff && (
               <button type="button" onClick={() => setPage(user?.role === "data_entry" ? "my_reports" : "reports")} className="text-[10px] font-semibold text-[var(--brand-600)] hover:underline">
-                View all
+                {t('dashboard.view_all')}
               </button>
             )}
           </div>
@@ -417,7 +458,7 @@ useEffect(() => {
               <table className="w-full border-collapse text-left text-xs">
                 <thead>
                   <tr className="bg-white dark:bg-[#0f1623]">
-                    {["School", "District", "Curriculum", "Learners", "Status", "Date"].map(c => (
+                    {[t('dashboard.th_school'), t('dashboard.th_district'), t('dashboard.th_curriculum'), t('dashboard.learners'), t('dashboard.th_status'), t('dashboard.th_date')].map(c => (
                       <th key={c} className="px-3 py-2 text-[10px] font-semibold text-black dark:text-white uppercase opacity-70">{c}</th>
                     ))}
                   </tr>
@@ -434,7 +475,7 @@ useEffect(() => {
                     </tr>
                   ))}
                   {my.length === 0 && (
-                    <tr><td colSpan={6} className="px-3 py-8 text-center text-black dark:text-white opacity-50">No reports yet.</td></tr>
+                    <tr><td colSpan={6} className="px-3 py-8 text-center text-black dark:text-white opacity-50">{t('dashboard.no_reports_yet')}</td></tr>
                   )}
                 </tbody>
               </table>
@@ -445,7 +486,7 @@ useEffect(() => {
                 <div key={d.year} className={`p-2.5 rounded-md border text-xs bg-white dark:bg-[#0f1623] text-black dark:text-white ${d.current ? 'border-[var(--brand-400)]' : 'border-neutral-200 dark:border-slate-800'}`}>
                   <div className="flex justify-between font-semibold mb-1">
                     <span>{d.year}</span>
-                    {d.current && <span className="text-[9px] text-[var(--brand-600)]">Current</span>}
+                    {d.current && <span className="text-[9px] text-[var(--brand-600)]">{t('dashboard.current')}</span>}
                   </div>
                   <div className="text-sm font-bold">{d.learners > 0 ? d.learners.toLocaleString() : "—"}</div>
                   <div className="text-[10px] opacity-60">learners · {d.schools} schools</div>
@@ -456,50 +497,40 @@ useEffect(() => {
         </Card>
       </div>
 
-      {/* Map + charts row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="p-0 overflow-hidden">
-          <div className="px-4 py-3 border-b border-neutral-200 dark:border-slate-800 flex items-center justify-between">
-            <h3 className="text-xs font-semibold m-0">Coverage map</h3>
-            <button type="button" onClick={() => setPage("maps")} className="text-[10px] font-semibold text-[var(--brand-600)] hover:underline">Expand</button>
+      {/* Map + charts row -- map is the headline visual; the two smaller
+          charts stay deliberately quieter until the viewer wants detail */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
+        <Card className="p-0 overflow-hidden flex flex-col lg:col-span-2">
+          <div className="px-4 py-3 border-b border-neutral-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+            <h3 className="text-base font-bold m-0">{t('dashboard.coverage_map')}</h3>
+            <button type="button" onClick={() => setPage("maps")} className="text-[10px] font-semibold text-[var(--brand-600)] hover:underline">{t('dashboard.expand')}</button>
           </div>
-          <div className="h-56">
+          <div className="flex-1 min-h-[260px]">
             <div id="dashboard-ett-map" className="h-full w-full" />
           </div>
         </Card>
 
         <div className="grid grid-cols-1 gap-4">
-          <Card>
-            <h3 className="text-xs font-semibold mb-2 m-0">Learner growth</h3>
-            <div className="h-36 relative"><canvas id="up-line-learners" /></div>
+          <Card className="opacity-90">
+            <h3 className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-2 m-0 uppercase tracking-wide">{t('dashboard.learner_growth')}</h3>
+            <div className="h-28 relative"><canvas id="up-line-learners" /></div>
           </Card>
-          <Card>
-            <h3 className="text-xs font-semibold mb-2 m-0">Schools & teachers by year</h3>
-            <div className="h-36 relative"><canvas id="up-bar-year" /></div>
+          <Card className="opacity-90">
+            <h3 className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-2 m-0 uppercase tracking-wide">{t('dashboard.schools_teachers_by_year')}</h3>
+            <div className="h-28 relative"><canvas id="up-bar-year" /></div>
           </Card>
         </div>
       </div>
 
-      {/* Programme reach charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card>
-          <h3 className="text-xs font-semibold mb-2 m-0">Teacher Training Sessions — Girls vs Boys Trained by District</h3>
-          <div className="h-56 relative"><TTSGenderChart /></div>
-        </Card>
-        <Card>
-          <h3 className="text-xs font-semibold mb-2 m-0">Biweekly Plans — Teachers Trained vs Students Reached by District</h3>
-          <div className="h-56 relative"><BiweeklyReachChart /></div>
-        </Card>
-      </div>
       {/* Quick links — always last */}
       <Card>
-        <h3 className="text-xs font-semibold text-black dark:text-white mb-3 m-0">Quick links</h3>
+        <h3 className="text-sm font-bold text-black dark:text-white mb-3 m-0">{t('dashboard.quick_links')}</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {[
-            { label: "Clusters map", page: "maps", icon: Map },
-            { label: "Districts", page: "districts", icon: School },
-            { label: "Curriculum", page: "curriculum", icon: BookOpen },
-            { label: "Analytics", page: "analytics", icon: TrendingUp },
+            { label: t('nav.clusters_map'), page: "maps", icon: Map },
+            { label: t('dashboard.districts'), page: "districts", icon: School },
+            { label: t('nav.curriculum'), page: "curriculum", icon: BookOpen },
+            { label: t('dashboard.analytics'), page: "analytics", icon: TrendingUp },
           ].map(({ label, page: p, icon: Icon }) => (
             <button
               key={p}
@@ -513,10 +544,23 @@ useEffect(() => {
         </div>
       </Card>
 
-      {editStats && user?.role === 'admin' && (
+      {editStats && user?.role === 'admin' && (() => {
+        if (ownCountryYearlyData.length === 0) {
+          programmeStatsApi.getAll((user as any)?.country).then((data: any) => {
+            if (Array.isArray(data)) {
+              setOwnCountryYearlyData(data.map((d: any) => ({
+                year: d.year, schools: d.schools, teachers: d.teachers, learners: d.learners,
+                targetSchools: d.target_schools, targetLearners: d.target_learners,
+                current: d.is_current, planned: d.is_planned,
+              })));
+            }
+          }).catch(() => {});
+        }
+        return true;
+      })() && (
   <Modal title="Programme Statistics" onClose={() => { setEditStats(false); setEditingYear(null); }} width={600}>
     <div className="space-y-2 max-h-96 overflow-y-auto">
-      {YEARLY_DATA.map(d => (
+      {ownCountryYearlyData.map(d => (
         <div key={d.year} className="p-3 rounded-lg border border-neutral-200 dark:border-slate-800">
           {editingYear?.year === d.year ? (
             <div className="space-y-2">
@@ -549,7 +593,7 @@ useEffect(() => {
                     target_learners: editingYear.targetLearners,
                     is_current: editingYear.current || false,
                     is_planned: editingYear.planned || false,
-                    country: activeCountry,
+                    country: (user as any)?.country,
                   });
                   if (!data.error) {
                     setYEARLY_DATA(prev => prev.map(y => y.year === editingYear.year ? editingYear : y));

@@ -38,8 +38,9 @@ const ToggleRow = ({ icon, label, sub, value, onChange, border=true }: {
       </div>
     </div>
     <button onClick={onChange}
-      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ml-4 ${value?'bg-[var(--brand-500)]':'bg-gray-200 dark:bg-slate-700'}`}>
-      <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${value?'translate-x-5':'translate-x-0'}`}/>
+      style={{ width: '44px', height: '24px', minWidth: '44px', maxWidth: '44px', minHeight: '24px', maxHeight: '24px' }}
+      className={`relative inline-flex shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ml-4 ${value?'bg-[var(--brand-500)]':'bg-gray-200 dark:bg-slate-700'}`}>
+      <span style={{ width: '20px', height: '20px' }} className={`inline-block transform rounded-full bg-white shadow transition duration-200 ${value?'translate-x-5':'translate-x-0'}`}/>
     </button>
   </div>
 );
@@ -84,14 +85,33 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     if (!user && (activeTab === 'account' || activeTab === 'security' || activeTab === 'system')) {
       setActiveTab('appearance');
     }
+    if (user?.role !== 'admin' && activeTab === 'system') {
+      setActiveTab('appearance');
+    }
   }, [user, activeTab]);
 
-  // ── Notification prefs (localStorage) ────────────────────────────────────
-  const [notifyTraining, setNotifyTraining] = useState(()=>safeStorage.getItem('scaleup_notif_training')!=='false');
-  const [notifyMeetings, setNotifyMeetings] = useState(()=>safeStorage.getItem('scaleup_notif_meetings')!=='false');
+  // ── Notification prefs ───────────────────────────────────────────────────
+  // Training/Meeting/Task alerts are real server-side settings now (they
+  // control whether the backend actually creates those notifications for
+  // you) -- Week Start stays a pure local display preference.
+  const [notifyTraining, setNotifyTraining] = useState(true);
+  const [notifyMeetings, setNotifyMeetings] = useState(true);
   const [weekStartMonday, setWeekStartMonday] = useState(()=>safeStorage.getItem('scaleup_week_monday')==='true');
-  const [taskReminders,  setTaskReminders]  = useState(()=>safeStorage.getItem('scaleup_task_reminders')!=='false');
-
+  const [taskReminders,  setTaskReminders]  = useState(true);
+  useEffect(() => {
+    if (!user) return;
+    usersApi.getMyNotificationPreferences().then((data: any) => {
+      if (data?.error) return;
+      if (typeof data.notify_training === 'boolean') setNotifyTraining(data.notify_training);
+      if (typeof data.notify_meetings === 'boolean') setNotifyMeetings(data.notify_meetings);
+      if (typeof data.notify_tasks === 'boolean') setTaskReminders(data.notify_tasks);
+    }).catch(() => {});
+  }, [user]);
+  const toggleServerPref = (val:boolean, set:(v:boolean)=>void, field:string, msg:(v:boolean)=>string) => {
+    const next=!val; set(next);
+    usersApi.updateMyNotificationPreferences({ [field]: next }).catch(() => {});
+    showToast(msg(next));
+  };
   const toggle = (val:boolean, set:(v:boolean)=>void, key:string, msg:(v:boolean)=>string) => {
     const next=!val; set(next); safeStorage.setItem(key,String(next)); showToast(msg(next));
   };
@@ -186,7 +206,12 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     ...(user ? [
       {id:'account' as const,  label:'Account',  icon:UserIcon},
       {id:'security' as const, label:'Security', icon:Lock},
-      {id:'system' as const,   label:'System',   icon:Monitor},
+    ] : []),
+    // Low-level infrastructure diagnostics (DB status, API latency, exact
+    // backend/hosting stack) -- Admin-only, not useful or appropriate for
+    // general staff to see day-to-day.
+    ...(user?.role === 'admin' ? [
+      {id:'system' as const, label:'System', icon:Monitor},
     ] : []),
   ];
 
@@ -234,18 +259,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               </div>
             </div>
             <button onClick={()=>{setDarkMode(!darkMode);showToast(`Dark mode ${!darkMode?'ON':'OFF'}`, 'success');}}
-              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${darkMode?'bg-[var(--brand-500)]':'bg-gray-200'}`}>
-              <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${darkMode?'translate-x-5':'translate-x-0'}`}/>
+              style={{ width: '44px', height: '24px', minWidth: '44px', maxWidth: '44px', minHeight: '24px', maxHeight: '24px' }}
+              className={`relative inline-flex shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${darkMode?'bg-[var(--brand-500)]':'bg-gray-200'}`}>
+              <span style={{ width: '20px', height: '20px' }} className={`inline-block transform rounded-full bg-white shadow transition duration-200 ${darkMode?'translate-x-5':'translate-x-0'}`}/>
             </button>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            {[{mode:false,label:'Light Mode',Icon:Sun},{mode:true,label:'Dark Mode',Icon:Moon}].map(({mode,label,Icon})=>(
-              <div key={label} onClick={()=>{setDarkMode(mode);showToast(`Switched to ${label}`, 'success');}}
-                className={`flex flex-col items-center justify-center p-5 rounded-xl border-2 cursor-pointer transition-all ${darkMode===mode?'border-[var(--brand-500)] bg-[var(--brand-50)] dark:bg-[var(--brand-950)]/20':'border-neutral-200 dark:border-slate-700 hover:border-[var(--brand-200)] dark:hover:border-[var(--brand-800)]'}`}>
-                <Icon size={24} className={darkMode===mode?'text-[var(--brand-500)]':'text-slate-300 dark:text-slate-600'}/>
-                <span className={`text-xs font-bold mt-2 ${darkMode===mode?'text-[var(--brand-600)] dark:text-[var(--brand-400)]':'text-slate-400'}`}>{label}</span>
-              </div>
-            ))}
           </div>
         </Card>
       )}
@@ -356,13 +373,13 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           </div>
           <div className="h-px bg-neutral-200 dark:bg-slate-800 mb-1"/>
           <ToggleRow icon={<Calendar size={14}/>} label="Training Event Alerts" sub="Get notifications for scheduled TOT and curriculum sessions."
-            value={notifyTraining} onChange={()=>toggle(notifyTraining,setNotifyTraining,'scaleup_notif_training',v=>`Training alerts ${v?'ON':'OFF'}`)}/>
+            value={notifyTraining} onChange={()=>toggleServerPref(notifyTraining,setNotifyTraining,'notify_training',v=>`Training alerts ${v?'ON':'OFF'}`)}/>
           <ToggleRow icon={<Clock size={14}/>} label="Meeting Alerts" sub="Receive reminders for regional officer coordinate syncs."
-            value={notifyMeetings} onChange={()=>toggle(notifyMeetings,setNotifyMeetings,'scaleup_notif_meetings',v=>`Meeting alerts ${v?'ON':'OFF'}`)}/>
+            value={notifyMeetings} onChange={()=>toggleServerPref(notifyMeetings,setNotifyMeetings,'notify_meetings',v=>`Meeting alerts ${v?'ON':'OFF'}`)}/>
           <ToggleRow icon={<Calendar size={14}/>} label="Week starts on Monday" sub="Arrange the Operations Calendar with Monday as first day."
             value={weekStartMonday} onChange={()=>toggle(weekStartMonday,setWeekStartMonday,'scaleup_week_monday',v=>`Week start set to ${v?'Monday':'Sunday'}`)}/>
           <ToggleRow icon={<ListTodo size={14}/>} label="Task Reminders" sub="Sync dashboard badges for pending operations list actions."
-            value={taskReminders} onChange={()=>toggle(taskReminders,setTaskReminders,'scaleup_task_reminders',v=>`⏰ Task reminders ${v?'ON':'OFF'}`)} border={false}/>
+            value={taskReminders} onChange={()=>toggleServerPref(taskReminders,setTaskReminders,'notify_tasks',v=>`Task reminders ${v?'ON':'OFF'}`)} border={false}/>
         </Card>
       )}
 

@@ -76,6 +76,8 @@ export const reportsApi = {
 // ─── USERS ───────────────────────────────────────────────────────────────────
 
 export const usersApi = {
+  getMyNotificationPreferences: () => api.get('/api/users/me/notification-preferences'),
+  updateMyNotificationPreferences: (prefs: any) => api.put('/api/users/me/notification-preferences', prefs),
   getAll: () => apiGetList('/api/users', ['users', 'data', 'items']),
   login: (email: string, password: string) => api.post('/api/users/login', { email, password }),
   forgotPassword: (email: string) => api.post('/api/users/forgot-password', { email }),
@@ -90,7 +92,13 @@ export const usersApi = {
 // ─── STATS ───────────────────────────────────────────────────────────────────
 
 export const statsApi = {
-  get: (country?: string) => api.get(`/api/stats${country && country !== 'all' ? `?country=${country}` : ''}`),
+  get: (country?: string, region?: string) => {
+    const params = new URLSearchParams();
+    if (country && country !== 'all') params.set('country', country);
+    if (region && region !== 'all') params.set('region', region);
+    const qs = params.toString();
+    return api.get(`/api/stats${qs ? `?${qs}` : ''}`);
+  },
 };
 
 // ─── DOCUMENT REPORTS ────────────────────────────────────────────────────────
@@ -122,6 +130,15 @@ export const announcementsApi = {
   getAll: (country?: string) => apiGetList(`/api/announcements${country && country !== 'all' ? `?country=${country}` : ''}`, ['announcements', 'data', 'items']),
   dismiss: (id: number) => api.post(`/api/announcements/${id}/dismiss`, {}),
   delete: (id: number) => api.delete(`/api/announcements/${id}`),
+  update: async (id: number, formData: FormData) => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${BASE_URL}/api/announcements/${id}`, {
+      method: 'PUT',
+      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+      body: formData,
+    });
+    return res.json();
+  },
   submit: async (formData: FormData) => {
     const token = localStorage.getItem('token');
     const res = await fetch(`${BASE_URL}/api/announcements`, {
@@ -134,6 +151,7 @@ export const announcementsApi = {
     return res.json();
   },
   getDownloadUrl: (filePath: string) => `${BASE_URL}${filePath}`,
+  getDashboardVisible: (country?: string) => apiGetList(`/api/announcements/dashboard-visible${country && country !== 'all' ? `?country=${country}` : ''}`, ['announcements', 'data', 'items']),
 };
 
 // ─── Analytics API ────────────────────────────────────────────────────────────
@@ -169,6 +187,8 @@ export const gbvCasesApi = {
   getAll: () => apiGetList('/api/gbv-cases', ['cases', 'data', 'items']),
   submit: (data: any) => api.post('/api/gbv-cases', data),
   updateStatus: (id: number, status: string) => api.put(`/api/gbv-cases/${id}/status`, { status }),
+  getKanban: () => apiGetList('/api/gbv-cases/kanban', ['cases', 'data', 'items']),
+  moveStage: (id: number, stage: string) => api.put(`/api/gbv-cases/${id}/stage`, { stage }),
   getStats: () => api.get('/api/gbv-cases/stats/summary'),
   getCasesByDistrict: (country?: string) =>
     api.get(`/api/gbv-cases/stats/by-district${country && country !== 'all' ? `?country=${country}` : ''}`),
@@ -193,6 +213,11 @@ export const clusterFollowupsApi = {
     api.get(`/api/cluster-followups/this-week${country && country !== 'all' ? `?country=${country}` : ''}`),
   submitFollowup: (data: any) => api.post('/api/cluster-followups/followup', data),
   getConsistency: (country?: string) => api.get(`/api/cluster-followups/consistency${country && country !== 'all' ? `?country=${country}` : ''}`),
+  // District Coordinator -- assigning clusters to their own staff
+  getDistrictStaff: () => api.get('/api/cluster-followups/district-staff'),
+  getDistrictClusters: () => api.get('/api/cluster-followups/district-clusters'),
+  assignToStaff: (userId: string, clusterId: number) => api.post('/api/cluster-followups/assign', { userId, clusterId }),
+  unassignFromStaff: (userId: string, clusterId: number) => api.delete(`/api/cluster-followups/assign/${userId}/${clusterId}`),
 };
 
 export const districtRosterApi = {
@@ -201,6 +226,17 @@ export const districtRosterApi = {
   create: (data: any) => api.post('/api/district-roster', data),
   update: (id: number, data: any) => api.put(`/api/district-roster/${id}`, data),
   delete: (id: number) => api.delete(`/api/district-roster/${id}`),
+  bulkImportTeachers: async (file: File) => {
+    const token = localStorage.getItem('token');
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch(`${BASE_URL}/api/district-roster/bulk-import`, {
+      method: 'POST',
+      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+      body: formData,
+    });
+    return res.json();
+  },
 };
 
 export const districtAssetsApi = {
@@ -215,6 +251,17 @@ export const districtStakeholdersApi = {
   create: (data: any) => api.post('/api/district-stakeholders', data),
   update: (id: number, data: any) => api.put(`/api/district-stakeholders/${id}`, data),
   delete: (id: number) => api.delete(`/api/district-stakeholders/${id}`),
+};
+
+export const weeklyPlanningApi = {
+  getTable: (biweekStart?: string) => api.get(`/api/weekly-planning${biweekStart ? `?biweekStart=${biweekStart}` : ''}`),
+  submit: (activities: any[], biweekStart?: string) => api.post('/api/weekly-planning/submit', { activities, biweekStart }),
+  updateActivity: (id: number, data: any) => api.put(`/api/weekly-planning/${id}`, data),
+  deleteActivity: (id: number) => api.delete(`/api/weekly-planning/${id}`),
+  getStats: (biweekStart?: string) => api.get(`/api/weekly-planning/stats${biweekStart ? `?biweekStart=${biweekStart}` : ''}`),
+  generateReport: (biweekStart?: string) => api.post('/api/weekly-planning/generate-report', biweekStart ? { biweekStart } : {}),
+  getReport: (id: number | string) => api.get(`/api/weekly-planning/report/${id}`),
+  listReports: () => api.get('/api/weekly-planning/reports'),
 };
 
 export const planningSchedulesApi = {
@@ -286,6 +333,22 @@ export const annualActivitiesApi = {
   create: (data: any) => api.post('/api/annual-activities', data),
 };
 
+export const monthlyDcReportsApi = {
+  getAll: (country?: string) => apiGetList(`/api/monthly-dc-reports${country && country !== 'all' ? `?country=${country}` : ''}`, ['reports', 'data', 'items']),
+  getOne: (id: number) => api.get(`/api/monthly-dc-reports/${id}`),
+  getLatestSummary: (country?: string) => apiGetList(`/api/monthly-dc-reports/summary/latest${country && country !== 'all' ? `?country=${country}` : ''}`, ['reports', 'data', 'items']),
+  getDownloadUrl: (id: number) => `${BASE_URL}/api/monthly-dc-reports/${id}/download`,
+  submit: async (formData: FormData) => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${BASE_URL}/api/monthly-dc-reports`, {
+      method: 'POST',
+      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+      body: formData,
+    });
+    return res.json();
+  },
+};
+
 export const sessionMonitoringApi = {
   getAll: (type: string, country?: string) =>
     api.get(`/api/session-monitoring?type=${type}${country && country !== 'all' ? `&country=${country}` : ''}`),
@@ -300,17 +363,30 @@ export const sessionMonitoringApi = {
 
 export const qaReportsApi = {
   getAll: (country?: string) => apiGetList(`/api/qa-reports${country && country !== 'all' ? `?country=${country}` : ''}`, ['reports', 'data', 'items']),
-  submit: (data: any) => api.post('/api/qa-reports', data),
+  submit: async (formData: FormData) => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${BASE_URL}/api/qa-reports`, {
+      method: 'POST',
+      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+      body: formData,
+    });
+    return res.json();
+  },
   review: (id: number, status: string, reviewNotes?: string) =>
     api.put(`/api/qa-reports/${id}/review`, { status, reviewNotes }),
   getStats: (country?: string) => api.get(`/api/qa-reports/stats/summary${country && country !== 'all' ? `?country=${country}` : ''}`),
   getCompliance: (country?: string) => api.get(`/api/qa-reports/compliance${country && country !== 'all' ? `?country=${country}` : ''}`),
+  getAttachmentUrl: (id: number) => `${BASE_URL}/api/qa-reports/${id}/attachment`,
+  reassign: (id: number, assignedTo: string) => api.put(`/api/qa-reports/${id}/reassign`, { assignedTo }),
+  getOfficers: () => apiGetList('/api/qa-reports/officers', ['officers', 'data', 'items']),
 };
 
 export const monthlyCaseReportsApi = {
   getStatus: () => api.get('/api/monthly-case-reports/status'),
   getAll: () => apiGetList('/api/monthly-case-reports', ['reports', 'data', 'items']),
   submit: (data: any) => api.post('/api/monthly-case-reports', data),
+  getPendingReview: () => apiGetList('/api/monthly-case-reports/pending-review', ['reports', 'data', 'items']),
+  approve: (id: number) => api.put(`/api/monthly-case-reports/${id}/approve`, {}),
 };
 
 // ─── SESSION RECORDS ──────────────────────────────────────────────────────────
@@ -464,7 +540,16 @@ export const sasaReportsApi = {
     return apiGetList(`/api/sasa-reports${query}`, ['reports', 'sasa_reports', 'data', 'items']);
   },
   getById: (id: number) => api.get(`/api/sasa-reports/${id}`),
-  create: (data: any) => api.post('/api/sasa-reports', data),
+  getAttachmentUrl: (id: number) => `${BASE_URL}/api/sasa-reports/${id}/attachment`,
+  create: async (formData: FormData) => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${BASE_URL}/api/sasa-reports`, {
+      method: 'POST',
+      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+      body: formData,
+    });
+    return res.json();
+  },
   update: (id: number, data: any) => api.put(`/api/sasa-reports/${id}`, data),
   delete: (id: number) => api.delete(`/api/sasa-reports/${id}`),
 };
@@ -495,6 +580,18 @@ export const mapSchoolsApi = {
   create:    (data: any)  => api.post('/api/map/schools', data),
   update:    (id: number, data: any) => api.put(`/api/map/schools/${id}`, data),
   logVisit:  (id: number, data: any) => api.post(`/api/map/schools/${id}/visits`, data),
+  bulkImport: async (file: File, country: string) => {
+    const token = localStorage.getItem('token');
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('country', country);
+    const res = await fetch(`${BASE_URL}/api/map/schools/bulk-import`, {
+      method: 'POST',
+      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+      body: formData,
+    });
+    return res.json();
+  },
 };
 
 export const mapZonesApi = {

@@ -63,7 +63,7 @@ export const CertificateComponent: React.FC<CertificateComponentProps> = ({
       try {
         const img = new Image();
         img.crossOrigin = 'anonymous';
-        img.src = '/africalogo.svg';
+        img.src = '/africalogogo.svg';
         await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
         const canvas = document.createElement('canvas');
         canvas.width = 200; canvas.height = 200;
@@ -204,7 +204,7 @@ export const CertificateComponent: React.FC<CertificateComponentProps> = ({
 
               {/* Logo + org name */}
               <div className="flex flex-col items-center gap-2">
-                <img src="/africalogo.svg" alt="Ujamaa Africa" className="w-14 h-14 object-contain"
+                <img src="/africalogogo.svg" alt="Ujamaa Africa" className="w-14 h-14 object-contain"
                   onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                 <span className="text-xs font-bold uppercase tracking-widest" style={{ color: accentColor }}>Ujamaa Africa</span>
               </div>

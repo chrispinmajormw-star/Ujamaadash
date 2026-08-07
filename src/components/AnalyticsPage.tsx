@@ -151,7 +151,7 @@ const downloadReport = (
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(100);
-  doc.text('Ujamaa Pamodzi Africa | Empowerment & Transformation Training', 14, 24);
+  doc.text('Ujamaa Africa | Empowerment & Transformation Training', 14, 24);
   doc.text(`Generated: ${today}`, pageWidth - 14, 24, { align: 'right' });
   doc.setTextColor(0);
 
@@ -392,7 +392,7 @@ const downloadReport = (
     doc.setPage(i);
     doc.setFontSize(8);
     doc.setTextColor(150);
-    doc.text(`Ujamaa Pamodzi Africa | ETT Malawi Program`, 14, doc.internal.pageSize.getHeight() - 10);
+    doc.text(`Ujamaa Africa | ETT Malawi Program`, 14, doc.internal.pageSize.getHeight() - 10);
     doc.text(`Page ${i} of ${pageCount}`, pageWidth - 14, doc.internal.pageSize.getHeight() - 10, { align: 'right' });
   }
 

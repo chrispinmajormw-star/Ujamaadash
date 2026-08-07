@@ -75,7 +75,7 @@ const POLICIES: Policy[] = [
     color: '#7c3aed',
     bg: '#ede9fe',
     badge: 'Zero Tolerance',
-    summary: 'Ujamaa Pamodzi Africa has zero tolerance for sexual exploitation and abuse. All staff, associates, contractors and volunteers are expected to uphold the highest standards of personal and professional conduct at all times.',
+    summary: 'Ujamaa Africa has zero tolerance for sexual exploitation and abuse. All staff, associates, contractors and volunteers are expected to uphold the highest standards of personal and professional conduct at all times.',
     sections: [
       {
         heading: '1. Definitions',
@@ -145,15 +145,15 @@ const POLICIES: Policy[] = [
     color: '#0369a1',
     bg: '#e0f2fe',
     badge: 'Confidential',
-    summary: 'Ujamaa Pamodzi Africa requires all directors, officers and employees to observe high standards of business and personal ethics. This policy enables employees to raise serious concerns internally without fear of retaliation.',
+    summary: 'Ujamaa Africa requires all directors, officers and employees to observe high standards of business and personal ethics. This policy enables employees to raise serious concerns internally without fear of retaliation.',
     sections: [
       {
         heading: '1. Reporting Responsibility',
-        content: `It is the responsibility of all board members, officers, employees and volunteers to report concerns about:\n• Violations of Ujamaa Pamodzi Africa's code of ethics.\n• Suspected violations of law or regulations governing operations.\n• Suspected fraud, discrimination, or other unethical conduct.\n\nFirst, share concerns with your supervisor. If not comfortable or not satisfied with the response, escalate to the management committee, then the board.`
+        content: `It is the responsibility of all board members, officers, employees and volunteers to report concerns about:\n• Violations of Ujamaa Africa's code of ethics.\n• Suspected violations of law or regulations governing operations.\n• Suspected fraud, discrimination, or other unethical conduct.\n\nFirst, share concerns with your supervisor. If not comfortable or not satisfied with the response, escalate to the management committee, then the board.`
       },
       {
         heading: '2. No Retaliation',
-        content: `It is contrary to the values of Ujamaa Pamodzi Africa for anyone to retaliate against any board member, officer, employee, or volunteer who in good faith reports:\n• An ethics violation.\n• A suspected violation of law.\n• A complaint of discrimination.\n• Suspected fraud.\n• Any suspected violation of regulations governing Ujamaa operations.\n\nAn employee who retaliates against someone who has reported a violation in good faith is subject to discipline up to and including termination of employment.`
+        content: `It is contrary to the values of Ujamaa Africa for anyone to retaliate against any board member, officer, employee, or volunteer who in good faith reports:\n• An ethics violation.\n• A suspected violation of law.\n• A complaint of discrimination.\n• Suspected fraud.\n• Any suspected violation of regulations governing Ujamaa operations.\n\nAn employee who retaliates against someone who has reported a violation in good faith is subject to discipline up to and including termination of employment.`
       },
       {
         heading: '3. Reporting Procedure',
@@ -348,7 +348,7 @@ export const StandardsPoliciesPage: React.FC = () => {
         <Kicker text="Governance & Compliance" />
         <h1 className="text-base font-bold text-black dark:text-white m-0">Standards & Policies</h1>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 m-0">
-          Ujamaa Pamodzi Africa's official policies, procedures and ETT programme standards. All staff must read and comply.
+          Ujamaa Africa's official policies, procedures and ETT programme standards. All staff must read and comply.
  </p>
  </div>
 
@@ -356,7 +356,7 @@ export const StandardsPoliciesPage: React.FC = () => {
  <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 rounded-xl p-3">
  <Lock size={15} className="text-amber-600 shrink-0 mt-0.5"/>
  <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed m-0">
- <span className="font-bold">Staff Restricted.</span> This page is only accessible to authenticated staff members. All policies are confidential to Ujamaa Pamodzi Africa personnel.
+ <span className="font-bold">Staff Restricted.</span> This page is only accessible to authenticated staff members. All policies are confidential to Ujamaa Africa personnel.
  </p>
  </div>
 
@@ -413,7 +413,7 @@ export const StandardsPoliciesPage: React.FC = () => {
         <div className="flex items-start gap-3">
           <Info size={15} className="text-[var(--brand-600)] shrink-0 mt-0.5" />
           <div className="text-[11.5px] text-[var(--brand-800)] dark:text-[var(--brand-300)] leading-relaxed">
-            <span className="font-bold">Compliance Declaration.</span> By being associated with Ujamaa Pamodzi Africa in any capacity — full time, contract, part time, volunteer, or internship — you acknowledge that you have read and agree to uphold all policies on this page. Non-compliance may result in disciplinary action up to and including termination and referral to law enforcement.
+            <span className="font-bold">Compliance Declaration.</span> By being associated with Ujamaa Africa in any capacity — full time, contract, part time, volunteer, or internship — you acknowledge that you have read and agree to uphold all policies on this page. Non-compliance may result in disciplinary action up to and including termination and referral to law enforcement.
           </div>
         </div>
       </Card>

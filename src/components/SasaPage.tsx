@@ -56,6 +56,8 @@ const mapSasaReport = (r: any): SasaMonthlyReport => ({
   challenges: r.challenges || '',
   recommendations: r.recommendations || '',
   status: r.status,
+  hasAttachment: !!r.attachment_filename,
+  attachmentFilename: r.attachment_filename || undefined,
 });
 
 const StatusDot: React.FC<{ status: CaseReferral['status'] }> = ({ status }) => {
@@ -479,6 +481,7 @@ const MonthlyReports: React.FC<{
     challenges: '',
     recommendations: '',
   });
+  const [attachment, setAttachment] = useState<File | null>(null);
 
   const sf = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm(p => ({ ...p, [k]: e.target.value }));
@@ -491,22 +494,24 @@ const MonthlyReports: React.FC<{
     const status = asDraft ? 'draft' : 'submitted';
 
     try {
-      const data = await sasaReportsApi.create({
-        month: form.month,
-        totalCases: monthCases,
-        publicCases,
-        referrals: monthRefs,
-        resolvedReferrals: resolved,
-        highlights: form.highlights,
-        challenges: form.challenges,
-        recommendations: form.recommendations,
-        status,
-      });
+      const fd = new FormData();
+      fd.append('month', form.month);
+      fd.append('totalCases', String(monthCases));
+      fd.append('publicCases', String(publicCases));
+      fd.append('referrals', String(monthRefs));
+      fd.append('resolvedReferrals', String(resolved));
+      fd.append('highlights', form.highlights);
+      fd.append('challenges', form.challenges);
+      fd.append('recommendations', form.recommendations);
+      fd.append('status', status);
+      if (attachment) fd.append('attachment', attachment);
+      const data = await sasaReportsApi.create(fd);
       if (data.error) { showToast(`️ ${data.error}`, 'warning'); return; }
       setSasaReports(prev => [mapSasaReport(data), ...prev]);
       setCreating(false);
       showToast(asDraft ? 'Report saved as draft' : 'Monthly report submitted');
       setForm({ month: CURRENT_MONTH, highlights: '', challenges: '', recommendations: '' });
+      setAttachment(null);
     } catch {
       showToast('️ Failed to save report', 'warning');
     }
@@ -570,6 +575,17 @@ const MonthlyReports: React.FC<{
           <FArea label="Highlights *" value={form.highlights} onChange={sf('highlights')} rows={3} placeholder="Key achievements this month…" />
           <FArea label="Challenges" value={form.challenges} onChange={sf('challenges')} rows={2} placeholder="Issues encountered…" />
           <FArea label="Recommendations" value={form.recommendations} onChange={sf('recommendations')} rows={2} placeholder="Suggested improvements…" />
+          <div>
+            <label className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-1.5 block">Supporting Document (PDF or Word)</label>
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx"
+              onChange={e => setAttachment(e.target.files?.[0] || null)}
+              className="w-full text-xs border border-neutral-200 dark:border-slate-700 rounded-lg px-2 py-2 bg-white dark:bg-slate-800 text-black dark:text-white"
+            />
+            {attachment && <p className="text-[10px] text-slate-500 mt-1">{attachment.name}</p>}
+            <p className="text-[10px] text-slate-400 mt-1">Visible to your District Coordinator and to you.</p>
+          </div>
           <div className="flex gap-2 justify-end mt-3">
             <Btn size="sm" variant="ghost" onClick={() => setCreating(false)}>Cancel</Btn>
             <Btn size="sm" variant="secondary" onClick={() => submit(true)}>Save Draft</Btn>
@@ -594,6 +610,19 @@ const MonthlyReports: React.FC<{
               </div>
             ))}
           </div>
+          {viewing.hasAttachment && (
+            <div className="mb-3">
+              <div className="text-[10px] font-bold uppercase tracking-wide text-black/50 dark:text-white/50 mb-1">Supporting Document</div>
+              <a
+                href={sasaReportsApi.getAttachmentUrl(viewing.id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-[var(--brand-600)] font-semibold hover:underline"
+              >
+                {viewing.attachmentFilename || 'Download document'}
+              </a>
+            </div>
+          )}
           {[
             ['Highlights', viewing.highlights],
             ['Challenges', viewing.challenges],

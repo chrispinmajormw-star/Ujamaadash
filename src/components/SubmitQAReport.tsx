@@ -12,6 +12,7 @@ interface SubmitQAReportProps {
 export const SubmitQAReport: React.FC<SubmitQAReportProps> = ({ user, showToast }) => {
   const [districtOptions, setDistrictOptions] = useState<string[]>([]);
   const [done, setDone] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
   const [form, setForm] = useState({
     district: user?.district || '',
     school: '',
@@ -39,7 +40,10 @@ export const SubmitQAReport: React.FC<SubmitQAReportProps> = ({ user, showToast 
       return;
     }
     try {
-      const data = await qaReportsApi.submit(form);
+      const fd = new FormData();
+      Object.entries(form).forEach(([k, v]) => fd.append(k, String(v)));
+      if (file) fd.append('attachment', file);
+      const data = await qaReportsApi.submit(fd);
       if (data.error) { showToast(data.error, 'error'); return; }
       setDone(true);
       showToast('QA report submitted', 'success');
@@ -105,6 +109,17 @@ export const SubmitQAReport: React.FC<SubmitQAReportProps> = ({ user, showToast 
         </div>
 
         <FArea label="Notes (optional)" placeholder="Any additional context for the QA Officer..." value={form.notes} onChange={sc('notes')} rows={3} />
+
+        <div>
+          <label className="text-xs font-semibold mb-1.5 block text-black dark:text-white">Attachment / Photo Evidence (optional)</label>
+          <input
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+            onChange={e => setFile(e.target.files?.[0] || null)}
+            className="w-full text-xs border border-neutral-200 dark:border-slate-700 rounded-lg px-3 py-2.5 bg-white dark:bg-slate-800 text-black dark:text-white"
+          />
+          {file && <p className="text-[11px] text-slate-500 mt-1">{file.name}</p>}
+        </div>
 
         <div className="flex justify-end pt-2">
           <Btn onClick={submit}>Submit QA Report</Btn>

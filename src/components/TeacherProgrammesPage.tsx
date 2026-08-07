@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { User } from '../types';
 import { SessionMonitoringPage } from './SessionMonitoringPage';
 import { ClusterSchoolSessionForm } from './ClusterSchoolSessionForm';
+import { ClusterSchoolSessionsTable } from './ClusterSchoolSessionsTable';
 import { GraduationCap } from 'lucide-react';
 
 interface TeacherProgrammesPageProps {
@@ -33,8 +34,15 @@ const TABS = [
 ] as const;
 
 export const TeacherProgrammesPage: React.FC<TeacherProgrammesPageProps> = ({ user, showToast }) => {
-  const [activeTab, setActiveTab] = useState<string>(TABS[0].id);
-  const current = TABS.find(t => t.id === activeTab) || TABS[0];
+  // TOTs only ever work with clusters they're assigned to -- STOT Orientation,
+  // STOT Sessions, and TOT Training aren't relevant to them, so hide those tabs.
+  const visibleTabs = user?.role === 'tot' ? TABS.filter(t => t.id === 'cluster_anchors') : TABS;
+  // Field Officers, TOTs, and DCs are the ones who actually fill this data in --
+  // everyone else (QA, Planning, Admin, PM) is reviewing/overseeing it, so they
+  // should see a table of what's been submitted, not the entry form itself.
+  const canSubmitClusterAnchors = ['tot', 'district_coordinator', 'field_officer'].includes(user?.role || '');
+  const [activeTab, setActiveTab] = useState<string>(visibleTabs[0].id);
+  const current = visibleTabs.find(t => t.id === activeTab) || visibleTabs[0];
 
   return (
     <div>
@@ -43,8 +51,9 @@ export const TeacherProgrammesPage: React.FC<TeacherProgrammesPageProps> = ({ us
           <GraduationCap size={18} className="text-[var(--brand-600)]" />
           <h1 className="text-base font-bold text-black dark:text-white m-0">Teacher Programmes</h1>
         </div>
+        {visibleTabs.length > 1 && (
         <div className="flex gap-1 border-b border-neutral-200 dark:border-slate-800 pb-0 overflow-x-auto">
-          {TABS.map(t => (
+          {visibleTabs.map(t => (
             <button
               key={t.id}
               onClick={() => setActiveTab(t.id)}
@@ -58,10 +67,13 @@ export const TeacherProgrammesPage: React.FC<TeacherProgrammesPageProps> = ({ us
             </button>
           ))}
         </div>
+        )}
       </div>
 
       {activeTab === 'cluster_anchors' ? (
-        <ClusterSchoolSessionForm user={user} showToast={showToast} />
+        canSubmitClusterAnchors
+          ? <ClusterSchoolSessionForm user={user} showToast={showToast} />
+          : <ClusterSchoolSessionsTable user={user} />
       ) : (
         <SessionMonitoringPage
           key={current.id}

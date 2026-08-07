@@ -189,4 +189,6 @@ export interface SasaMonthlyReport {
   challenges: string;
   recommendations: string;
   status: 'draft' | 'submitted';
+  hasAttachment?: boolean;
+  attachmentFilename?: string;
 }

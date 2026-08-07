@@ -3,21 +3,121 @@ import { clusterFollowupsApi } from '../api';
 import { useCountry } from '../context/CountryContext';
 import { User } from '../types';
 import { Card, PageHeader, Btn, Badge, Modal, FInput, FSelect } from './SubComponents';
-import { Plus, Trash2, CheckCircle2, Clock } from 'lucide-react';
+import { Plus, Trash2, CheckCircle2, Clock, Users } from 'lucide-react';
 
 interface MyClustersPageProps {
   user: User | null;
   showToast: (msg: string, type?: 'success' | 'warning' | 'error' | 'info') => void;
+  setPage?: (p: string) => void;
 }
 
 const MAX_CLUSTERS = 10;
 
-export const MyClustersPage: React.FC<MyClustersPageProps> = ({ user, showToast }) => {
-  const [myClusters, setMyClusters] = useState<any[]>([]);
-  const [available, setAvailable] = useState<any[]>([]);
-  const [weekData, setWeekData] = useState<{ weekStart: string; clusters: any[] }>({ weekStart: '', clusters: [] });
-  const [adding, setAdding] = useState(false);
+// District Coordinators no longer self-assign -- they assign clusters to
+// their own Field Officers and TOTs instead. Everyone else just sees a
+// read-only list of whatever's been assigned to them.
+const DistrictAssignmentPanel: React.FC<{ showToast: MyClustersPageProps['showToast'] }> = ({ showToast }) => {
+  const [staff, setStaff] = useState<any[]>([]);
+  const [clusters, setClusters] = useState<any[]>([]);
+  const [assigning, setAssigning] = useState<any | null>(null);
   const [pickClusterId, setPickClusterId] = useState('');
+
+  const load = () => {
+    clusterFollowupsApi.getDistrictStaff().then(setStaff).catch(() => {});
+    clusterFollowupsApi.getDistrictClusters().then(setClusters).catch(() => {});
+  };
+  useEffect(() => { load(); }, []);
+
+  const clustersFor = (userId: string) => clusters.filter(c => c.assignees.some((a: any) => a.userId === userId));
+  const availableFor = (userId: string) => clusters.filter(c => !c.assignees.some((a: any) => a.userId === userId));
+
+  const assign = async () => {
+    if (!assigning || !pickClusterId) { showToast('Select a cluster first', 'warning'); return; }
+    try {
+      const data = await clusterFollowupsApi.assignToStaff(assigning.id, parseInt(pickClusterId));
+      if (data.error) { showToast(data.error, 'error'); return; }
+      showToast(`Cluster assigned to ${assigning.name}`, 'success');
+      setAssigning(null);
+      setPickClusterId('');
+      load();
+    } catch {
+      showToast('Failed to assign cluster', 'error');
+    }
+  };
+
+  const unassign = async (userId: string, clusterId: number, name: string) => {
+    if (!window.confirm(`Remove this cluster from ${name}?`)) return;
+    try {
+      await clusterFollowupsApi.unassignFromStaff(userId, clusterId);
+      showToast('Cluster unassigned', 'success');
+      load();
+    } catch {
+      showToast('Failed to unassign cluster', 'error');
+    }
+  };
+
+  return (
+    <div className="mb-6">
+      <div className="flex items-center gap-2 mb-3">
+        <Users size={15} className="text-[var(--brand-600)]" />
+        <h2 className="text-sm font-bold text-black dark:text-white m-0">Assign Clusters to Your Staff</h2>
+      </div>
+      {staff.length === 0 ? (
+        <p className="text-xs text-slate-400 italic py-2">No active Field Officers or TOTs found in your district yet.</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {staff.map(s => {
+            const assigned = clustersFor(s.id);
+            return (
+              <Card key={s.id} className="p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <div className="font-bold text-sm text-black dark:text-white">{s.name}</div>
+                    <div className="text-[10px] text-slate-400 capitalize">{s.role.replace('_', ' ')}</div>
+                  </div>
+                  <Btn size="sm" variant="secondary" onClick={() => setAssigning(s)}><Plus size={12} /></Btn>
+                </div>
+                {assigned.length === 0 ? (
+                  <p className="text-[11px] text-slate-400 italic">No clusters assigned yet.</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {assigned.map(c => (
+                      <div key={c.id} className="flex items-center justify-between text-xs bg-slate-50 dark:bg-slate-800 rounded-lg px-2.5 py-1.5">
+                        <span className="text-black dark:text-white">{c.name}</span>
+                        <button onClick={() => unassign(s.id, c.id, s.name)} className="text-slate-400 hover:text-red-500">
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {assigning && (
+        <Modal title={`Assign a Cluster to ${assigning.name}`} onClose={() => setAssigning(null)} width={420}>
+          <div className="space-y-3">
+            <FSelect label="Select Cluster" value={pickClusterId} onChange={(e: any) => setPickClusterId(e.target.value)}>
+              <option value="">— Select —</option>
+              {availableFor(assigning.id).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </FSelect>
+            <div className="flex justify-end gap-2 pt-2">
+              <Btn size="sm" variant="secondary" onClick={() => setAssigning(null)}>Cancel</Btn>
+              <Btn size="sm" onClick={assign}>Assign</Btn>
+            </div>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+};
+
+export const MyClustersPage: React.FC<MyClustersPageProps> = ({ user, showToast, setPage }) => {
+  const [myClusters, setMyClusters] = useState<any[]>([]);
+  const [weekData, setWeekData] = useState<{ weekStart: string; clusters: any[] }>({ weekStart: '', clusters: [] });
   const [logging, setLogging] = useState<any | null>(null);
   const [form, setForm] = useState({
     cohort: '',
@@ -26,6 +126,7 @@ export const MyClustersPage: React.FC<MyClustersPageProps> = ({ user, showToast 
   });
 
   const { activeCountry } = useCountry();
+  const isDC = user?.role === 'district_coordinator';
 
   const load = () => {
     clusterFollowupsApi.getMyClusters(activeCountry).then(setMyClusters).catch(() => {});
@@ -33,39 +134,8 @@ export const MyClustersPage: React.FC<MyClustersPageProps> = ({ user, showToast 
   };
 
   useEffect(() => {
-    if (user) {
-      load();
-      clusterFollowupsApi.getAvailableClusters(activeCountry).then(setAvailable).catch(() => {});
-    }
+    if (user) load();
   }, [user, activeCountry]);
-
-  const assignedIds = new Set(myClusters.map(c => c.id));
-  const pickable = available.filter(c => !assignedIds.has(c.id));
-
-  const addCluster = async () => {
-    if (!pickClusterId) { showToast('Select a cluster first', 'warning'); return; }
-    try {
-      const data = await clusterFollowupsApi.assignCluster(parseInt(pickClusterId));
-      if (data.error) { showToast(data.error, 'error'); return; }
-      showToast('Cluster added', 'success');
-      setAdding(false);
-      setPickClusterId('');
-      load();
-    } catch {
-      showToast('Failed to add cluster', 'error');
-    }
-  };
-
-  const removeCluster = async (clusterId: number) => {
-    if (!window.confirm('Stop managing this cluster?')) return;
-    try {
-      await clusterFollowupsApi.unassignCluster(clusterId);
-      showToast('Cluster removed', 'success');
-      load();
-    } catch {
-      showToast('Failed to remove cluster', 'error');
-    }
-  };
 
   const openLog = (c: any) => {
     setForm({
@@ -98,13 +168,12 @@ export const MyClustersPage: React.FC<MyClustersPageProps> = ({ user, showToast 
     <div>
       <PageHeader
         title="My Clusters"
-        subtitle={`Manage up to ${MAX_CLUSTERS} clusters and log your weekly follow-up`}
-        actions={myClusters.length < MAX_CLUSTERS && (
-          <Btn size="sm" variant="primary" onClick={() => setAdding(true)}>
-            <Plus size={14} /> Add Cluster
-          </Btn>
-        )}
+        subtitle={isDC
+          ? "Assign clusters to your Field Officers and TOTs"
+          : "Clusters assigned to you and your weekly follow-up"}
       />
+
+      {isDC && <DistrictAssignmentPanel showToast={showToast} />}
 
       {weekData.weekStart && (
         <div className="mb-4 text-[11px] text-slate-500 font-semibold">
@@ -115,7 +184,7 @@ export const MyClustersPage: React.FC<MyClustersPageProps> = ({ user, showToast 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {weekData.clusters.length === 0 ? (
           <div className="col-span-full text-center py-12 text-sm text-black/40 dark:text-white/40">
-            No clusters assigned yet. Click "Add Cluster" to get started.
+            No clusters assigned yet. Your District Coordinator will assign you one.
           </div>
         ) : (
           weekData.clusters.map(c => (
@@ -140,32 +209,29 @@ export const MyClustersPage: React.FC<MyClustersPageProps> = ({ user, showToast 
               ) : (
                 <div className="text-xs text-amber-600 mb-3">This week's follow-up not logged yet.</div>
               )}
-              <div className="flex gap-2">
-                <Btn size="sm" variant={c.followup_id ? 'secondary' : 'primary'} onClick={() => openLog(c)}>
-                  {c.followup_id ? 'Update' : 'Log This Week'}
-                </Btn>
-                <Btn size="sm" variant="danger" onClick={() => removeCluster(c.id)}><Trash2 size={12} /></Btn>
-              </div>
+              <Btn
+                size="sm"
+                variant={c.followup_id ? 'secondary' : 'primary'}
+                onClick={() => {
+                  if (c.followup_id) {
+                    openLog(c);
+                  } else if (setPage) {
+                    // Weekly reporting now happens through Cluster Anchors --
+                    // stash which cluster to preselect, since you're reporting
+                    // specifically about this one.
+                    sessionStorage.setItem('cluster_anchors_preselect_cluster', String(c.id));
+                    setPage('teacher_programmes');
+                  } else {
+                    openLog(c);
+                  }
+                }}
+              >
+                {c.followup_id ? 'Update' : 'Log This Week'}
+              </Btn>
             </Card>
           ))
         )}
       </div>
-
-      {adding && (
-        <Modal title="Add a Cluster to Manage" onClose={() => setAdding(false)} width={420}>
-          <div className="space-y-3">
-            <FSelect label="Select Cluster" value={pickClusterId} onChange={(e: any) => setPickClusterId(e.target.value)}>
-              <option value="">— Select —</option>
-              {pickable.map(c => <option key={c.id} value={c.id}>{c.name} ({c.district})</option>)}
-            </FSelect>
-            <p className="text-[11px] text-slate-400">{myClusters.length}/{MAX_CLUSTERS} clusters assigned</p>
-            <div className="flex justify-end gap-2 pt-2">
-              <Btn size="sm" variant="secondary" onClick={() => setAdding(false)}>Cancel</Btn>
-              <Btn size="sm" onClick={addCluster}>Add</Btn>
-            </div>
-          </div>
-        </Modal>
-      )}
 
       {logging && (
         <Modal title={`Log Follow-up — ${logging.name}`} onClose={() => setLogging(null)} width={460}>

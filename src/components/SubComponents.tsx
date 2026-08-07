@@ -75,7 +75,7 @@ interface PageHeaderProps {
 export const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, actions }) => (
   <div className="flex flex-wrap items-start justify-between gap-3 mb-4 pb-3 border-b border-neutral-200 dark:border-slate-800">
     <div>
-      <h1 className="text-base font-bold text-black dark:text-white m-0">{title}</h1>
+      <h1 className="text-base font-bold text-black dark:text-white m-0" style={{ fontFamily: "var(--font-heading)" }}>{title}</h1>
       {subtitle && <p className="text-xs text-black dark:text-white mt-0.5 m-0 opacity-80">{subtitle}</p>}
     </div>
     {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}

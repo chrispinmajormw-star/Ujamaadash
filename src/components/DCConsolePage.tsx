@@ -21,7 +21,7 @@ const TABS = [
   { id: 'peas', label: 'PEAs', icon: UserCheck },
   { id: 'clusters', label: 'District Clusters', icon: Route },
   { id: 'tas', label: 'TAs', icon: ClipboardList },
-  { id: 'tots', label: 'TOTs', icon: School },
+  { id: 'tots', label: 'Teachers', icon: School },
 ] as const;
 
 const ASSET_BLANK = { name: '', assetTag: '', colour: '#e85d04', description: '' };
@@ -119,7 +119,7 @@ export const DCConsolePage: React.FC<DCConsolePageProps> = ({ user, showToast })
         <div>
           <PageHeader
             title="District Assets"
-            subtitle="Ujamaa Pamodzi Africa properties in your district"
+            subtitle="Ujamaa Africa properties in your district"
             actions={<Btn size="sm" onClick={() => { setAssetForm({ ...ASSET_BLANK }); setEditingAsset({ isNew: true }); }}><Plus size={14} /> New Asset</Btn>}
           />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -219,8 +219,8 @@ export const DCConsolePage: React.FC<DCConsolePageProps> = ({ user, showToast })
       {activeTab === 'tots' && (
         <DistrictRosterPanel
           type="tot"
-          title="TOTs"
-          subtitle="TOT roster for your district"
+          title="Teachers"
+          subtitle="Teacher roster for your district (TOT, STOT, and Teacher Champion)"
           fields={[{ key: 'name', label: 'Name' }, { key: 'phone', label: 'Phone Number' }, { key: 'cluster', label: 'Cluster' }, { key: 'school', label: 'School' }, { key: 'location', label: 'Location' }]}
           showToast={showToast}
           canManage={true}

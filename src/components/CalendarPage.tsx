@@ -168,7 +168,9 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
 
   // Generate Month Days grid
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstDayIndex = new Date(year, month, 1).getDay(); // Weekday of first day of the month
+  const rawFirstDay = new Date(year, month, 1).getDay(); // 0=Sun...6=Sat
+  const weekStartsMonday = safeStorage.getItem('scaleup_week_monday') === 'true';
+  const firstDayIndex = weekStartsMonday ? (rawFirstDay + 6) % 7 : rawFirstDay;
 
   const blanks = Array(firstDayIndex).fill(null);
   const monthDays = Array.from({ length: daysInMonth }, (_, i) => i + 1);
@@ -321,13 +323,10 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
 
           {/* Weekday Labels Header */}
           <div className="grid grid-cols-7 gap-1 text-center font-bold text-[11px] uppercase tracking-widest text-slate-400 mb-2">
-            <div>Sun</div>
-            <div>Mon</div>
-            <div>Tue</div>
-            <div>Wed</div>
-            <div>Thu</div>
-            <div>Fri</div>
-            <div>Sat</div>
+            {(weekStartsMonday
+              ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+              : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+            ).map(d => <div key={d}>{d}</div>)}
           </div>
 
           {/* Monthly grid cell matrix */}

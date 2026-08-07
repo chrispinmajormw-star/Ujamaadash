@@ -1,24 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Languages, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { SUPPORTED_LANGUAGES, COUNTRY_LANGUAGE_MAP } from '../i18n';
-import { useCountry } from '../context/CountryContext';
+import { SUPPORTED_LANGUAGES } from '../i18n';
 
 export const LanguageSelector: React.FC = () => {
   const { i18n } = useTranslation();
-  const { activeCountry } = useCountry();
   const [open, setOpen] = useState(false);
-
-  // Auto-suggest language when the selected country changes, unless the user has manually chosen one
-  useEffect(() => {
-    const userSet = localStorage.getItem('app_language_user_set');
-    if (userSet) return; // respect explicit choice
-    const suggested = COUNTRY_LANGUAGE_MAP[activeCountry];
-    if (suggested && suggested !== i18n.language) {
-      i18n.changeLanguage(suggested);
-      localStorage.setItem('app_language', suggested);
-    }
-  }, [activeCountry]);
+  // Language defaults to English everywhere and only ever changes when the
+  // person explicitly picks one below -- no auto-switching based on country.
 
   const setLanguage = (code: string) => {
     i18n.changeLanguage(code);

@@ -243,7 +243,7 @@ export const CourseLessonPage: React.FC<CourseLessonPageProps> = ({
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto animate-fade-in-up pb-12">
+    <div className="space-y-6 w-full animate-fade-in-up pb-12">
       {/* Header */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">

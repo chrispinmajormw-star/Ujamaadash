@@ -19,10 +19,6 @@ const CURRICULUM_COLORS: Record<string, { color: string; pale: string }> = {
   Community: { color: 'var(--brand)', pale: '#fff1e6' },
 };
 
-const EMOJI_MAP: Record<string, string> = {
-  GESD: '', HIM: '', ETT: '‍', Combined: '', Community: '',
-};
-
 const MILESTONES = [
   { year: '2023', event: 'ETT Country wide ScaleUp introduction' },
   { year: '2024', event: 'Scaled Up in 4 more districts' },
@@ -52,7 +48,7 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
     curriculum: 'GESD',
   });
 
-  const canManage = user && (user.role === 'admin' || user.role === 'sasa_officer');
+  const canManage = user && (user.role === 'admin' || user.role === 'sasa_officer' || user.role === 'qa_officer');
   const { activeCountry } = useCountry();
   useEffect(() => {
     setLoading(true);
@@ -195,7 +191,6 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
           const isExp = expanded === s.id;
           const curr = s.curriculum || 'ETT';
           const colors = CURRICULUM_COLORS[curr] || CURRICULUM_COLORS['ETT'];
-          const emoji = EMOJI_MAP[curr] || '';
           return (
             <div
               key={s.id}
@@ -204,10 +199,7 @@ export const ImpactPage: React.FC<ImpactPageProps> = ({ reports, showToast, user
               <div className="h-1 shrink-0" style={{ backgroundColor: colors.color }} />
 
               <div className="p-4 flex-1 flex flex-col">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="w-9 h-9 rounded-lg flex items-center justify-center text-lg shrink-0" style={{ backgroundColor: colors.pale }}>
-                    {emoji}
-                  </div>
+                <div className="flex items-start justify-end mb-3">
                   <div className="flex items-center gap-1">
                     <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full" style={{ color: colors.color, backgroundColor: colors.pale }}>
                       {curr}

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useCountry } from '../context/CountryContext';
 import { districtsApi } from '../api';
 import { usersApi } from '../api';
-import { Plus, Landmark, AlertTriangle, Globe} from 'lucide-react';
+import { Plus, Landmark, AlertTriangle, Globe, MoreVertical } from 'lucide-react';
 import { User } from '../types';
 import { api } from '../api';
 import { ROLE_CFG } from '../data';
@@ -91,15 +91,18 @@ export const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers,
   // Regions for the Add User form adapt to whichever country is selected *in that form*,
   // which may differ from the globally active country.
   const [formRegions, setFormRegions] = useState<string[]>([]);
+  const [formDistrictList, setFormDistrictList] = useState<any[]>([]);
   useEffect(() => {
     if (!nf.country) {
       setFormRegions([]);
+      setFormDistrictList([]);
       return;
     }
     districtsApi.getAll(nf.country).then((res: any) => {
       const list = Array.isArray(res) ? res : [];
       setFormRegions(Array.from(new Set(list.map((d: any) => d.region).filter(Boolean))).sort());
-    }).catch(() => setFormRegions([]));
+      setFormDistrictList(list);
+    }).catch(() => { setFormRegions([]); setFormDistrictList([]); });
   }, [nf.country]);
 
   if (cu.role !== 'admin') {
@@ -124,7 +127,7 @@ export const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers,
   };
 
   const locationType: LocationType = ROLE_LOCATION[nf.role] || 'hq';
-  const availableDistricts = nf.region ? (DISTRICTS_BY_REGION[nf.region] || []) : [];
+  const availableDistricts = nf.region ? formDistrictList.filter((d: any) => d.region === nf.region).map((d: any) => d.name).sort() : [];
 
   // ─── ADD USER (Admin creates directly — status active) ─────────────────────
   const addUser = async () => {
@@ -169,6 +172,8 @@ export const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers,
 
   // ─── FILTER USERS ──────────────────────────────────────────────────────────
   const visible = users.filter(u => {
+    // The backend already only ever returns this Admin's own country's users
+    // (pending and active alike), so no extra pending-specific override is needed here.
     if (activeCountry && activeCountry !== 'all' && (u as any).country !== activeCountry) return false;
     if (filt !== 'all' && u.role !== filt) return false;
     if (regionFilt !== 'all') {
@@ -330,7 +335,7 @@ export const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers,
                     {/* Status */}
                     <td className="p-3">
                       <span className="inline-flex items-center gap-1.5 font-semibold text-xs">
-                        <span className={`w-2 h-2 rounded-full ${u.status === 'active' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                        <span className={`w-2 h-2 rounded-full ${u.status === 'active' ? 'bg-emerald-500' : u.status === 'inactive' ? 'bg-slate-400' : 'bg-amber-500'}`} />
                         {u.status.toUpperCase()}
                       </span>
                     </td>
@@ -362,6 +367,21 @@ export const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers,
                         )}
 
                         {/* ── ACTIVE users: Change role / suspend / delete ── */}
+                        {u.status === 'inactive' && u.id !== cu.id && (
+                          <Btn size="sm" variant="secondary" className="text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20" onClick={async () => {
+                            try {
+                              await api.put(`/api/users/${u.id}`, {
+                                name: u.name, district: u.district, region: u.region,
+                                avatar: u.avatar, status: 'active', clusterId: u.clusterId, role: u.role,
+                              });
+                              setUsers(prev => prev.map(x => x.id === u.id ? { ...x, status: 'active' as const } : x));
+                              showToast(`Reactivated ${u.name}`, 'success');
+                              refreshUsers?.();
+                            } catch { showToast('Failed to reactivate user', 'warning'); }
+                          }}>
+                            Reactivate
+                          </Btn>
+                        )}
                         {u.status === 'active' && u.id !== cu.id && (
                           <ActiveUserActions u={u} setUsers={setUsers} showToast={showToast} refreshUsers={refreshUsers} />
                         )}
@@ -393,13 +413,11 @@ export const UsersPage: React.FC<UsersPageProps> = ({ user: cu, users, setUsers,
               <option value="program_manager">Regional / Program Manager</option>
               <option value="field_officer">Field Officer</option>
               <option value="sasa_officer">SASA Officer</option>
-        <option value="qa_officer">Quality Assurance Officer</option>
               <option value="qa_officer">Quality Assurance Officer</option>
               <option value="planning_officer">Planning & Scheduling Officer</option>
               <option value="data_entry">M & E Officer</option>
               <option value="cartographer">Cartographer</option>
               <option value="admin">System Admin</option>
-              <option value="viewer">Basic Viewer</option>
             </FSelect>
             {/* Country */}
             <FSelect label="Country *" value={nf.country} onChange={sn('country')}>
@@ -467,12 +485,26 @@ const PendingUserActions: React.FC<{
   cu: User;
   refreshUsers?: () => void;
 }> = ({ u, setUsers, showToast, refreshUsers }) => {
-  const [selectedRole, setSelectedRole] = useState(u.role);
+  const [selectedRole, setSelectedRole] = useState(u.role === 'viewer' ? '' : u.role);
   const [selectedRegion, setSelectedRegion] = useState(u.region || '');
   const [selectedDistrict, setSelectedDistrict] = useState(u.district || '');
+  const [countryRegions, setCountryRegions] = useState<string[]>([]);
+  const [countryDistricts, setCountryDistricts] = useState<any[]>([]);
+
+  // Regions/districts must match the PENDING USER'S OWN country -- not whatever
+  // country the Admin currently has selected on the dashboard.
+  useEffect(() => {
+    districtsApi.getAll((u as any).country).then((res: any) => {
+      const list = Array.isArray(res) ? res : [];
+      setCountryDistricts(list);
+      setCountryRegions(Array.from(new Set(list.map((d: any) => d.region).filter(Boolean))).sort());
+    }).catch(() => {});
+  }, [(u as any).country]);
 
   const locationType: LocationType = ROLE_LOCATION[selectedRole] || 'hq';
-  const districts = selectedRegion ? (DISTRICTS_BY_REGION[selectedRegion] || []) : [];
+  const districts = selectedRegion
+    ? countryDistricts.filter((d: any) => d.region === selectedRegion).map((d: any) => d.name)
+    : [];
 
   const activate = async () => {
     if (locationType === 'region' && !selectedRegion) {
@@ -520,9 +552,10 @@ const PendingUserActions: React.FC<{
         <option value="program_manager">Program Manager</option>
         <option value="field_officer">Field Officer</option>
         <option value="sasa_officer">SASA Officer</option>
+        <option value="qa_officer">Quality Assurance Officer</option>
+        <option value="planning_officer">Planning & Scheduling Officer</option>
         <option value="data_entry">M & E Officer</option>
         <option value="cartographer">Cartographer</option>
-        <option value="viewer">Viewer</option>
         <option value="admin">Admin</option>
       </select>
 
@@ -534,7 +567,7 @@ const PendingUserActions: React.FC<{
           onChange={e => { setSelectedRegion(e.target.value); setSelectedDistrict(''); }}
         >
           <option value="">— Region —</option>
-          {['Northern', 'Central', 'Southern'].map(r => <option key={r} value={r}>{r}</option>)}
+          {countryRegions.map(r => <option key={r} value={r}>{r}</option>)}
           <option value="HQ">HQ</option>
         </select>
       )}
@@ -563,72 +596,101 @@ const ActiveUserActions: React.FC<{
   showToast: (msg: string) => void;
   refreshUsers?: () => void;
 }> = ({ u, setUsers, showToast, refreshUsers }) => {
-  return (
-    <div className="flex gap-1.5 flex-wrap">
-      <Btn size="sm" variant="secondary"
-        className="text-amber-600 bg-amber-50 dark:bg-amber-950/20"
-        onClick={async () => {
-          try {
-            await api.put(`/api/users/${u.id}`, {
-              name: u.name, district: u.district, region: u.region,
-              avatar: u.avatar, status: 'pending', clusterId: u.clusterId, role: u.role,
-            });
-            setUsers(prev => prev.map(x => x.id === u.id ? { ...x, status: 'pending' as const } : x));
-            showToast(`Suspended ${u.name}`);
-            refreshUsers?.();
-          } catch { showToast('Failed to suspend user', 'warning'); }
- }}>
- Suspend
- </Btn>
- <Btn size="sm"variant="secondary"className="text-red-600 bg-red-50 dark:bg-red-950/20"onClick={async () => {
- if (!confirm(`Delete ${u.name}? This cannot be undone.`)) return;
- try {
- await api.delete(`/api/users/${u.id}`);
- setUsers(prev => prev.filter(x => x.id !== u.id));
- showToast(`️ ${u.name} deleted`, 'success');
- refreshUsers?.();
- } catch { showToast('Failed to delete user', 'warning'); }
-        }}>
-        Delete
-      </Btn>
-      <Btn size="sm" variant="secondary"
-        className="text-blue-600 bg-blue-50 dark:bg-blue-950/20"
-        onClick={async () => {
-          try {
-            const data = await usersApi.adminResetPassword(u.id);
-            if (data.error) { showToast(data.error, 'warning'); return; }
-            showToast(data.message || `Reset link sent to ${u.email}`, 'success');
-          } catch { showToast('Failed to send reset email', 'warning'); }
-        }}>
-        Reset Password
-      </Btn>
-      <AuditLogButton u={u} />
-    </div>
-  );
-};
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [auditOpen, setAuditOpen] = useState(false);
+  const [auditLog, setAuditLog] = useState<any[]>([]);
 
-const AuditLogButton: React.FC<{ u: User }> = ({ u }) => {
-  const [open, setOpen] = useState(false);
-  const [log, setLog] = useState<any[]>([]);
-
-  const openLog = async () => {
-    setOpen(true);
+  const suspend = async () => {
     try {
-      const data = await usersApi.getAuditLog(u.id);
-      setLog(Array.isArray(data) ? data : []);
-    } catch { setLog([]); }
+      await api.put(`/api/users/${u.id}`, {
+        name: u.name, district: u.district, region: u.region,
+        avatar: u.avatar, status: 'pending', clusterId: u.clusterId, role: u.role,
+      });
+      setUsers(prev => prev.map(x => x.id === u.id ? { ...x, status: 'pending' as const } : x));
+      showToast(`Suspended ${u.name}`);
+      refreshUsers?.();
+    } catch { showToast('Failed to suspend user', 'warning'); }
   };
 
+  const deactivate = async () => {
+    if (!confirm(`Deactivate ${u.name}? They will lose access immediately. If they're a District Coordinator, their district(s) will be freed up to assign to someone else -- all of their historical reports and trainings stay exactly as they are.`)) return;
+    try {
+      await api.put(`/api/users/${u.id}`, {
+        name: u.name, district: u.district, region: u.region,
+        avatar: u.avatar, status: 'inactive', clusterId: u.clusterId, role: u.role,
+      });
+      setUsers(prev => prev.map(x => x.id === u.id ? { ...x, status: 'inactive' as const } : x));
+      showToast(`Deactivated ${u.name}`, 'success');
+      refreshUsers?.();
+    } catch { showToast('Failed to deactivate user', 'warning'); }
+  };
+
+  const remove = async () => {
+    if (!confirm(`Delete ${u.name}? This cannot be undone.`)) return;
+    try {
+      await api.delete(`/api/users/${u.id}`);
+      setUsers(prev => prev.filter(x => x.id !== u.id));
+      showToast(`${u.name} deleted`, 'success');
+      refreshUsers?.();
+    } catch { showToast('Failed to delete user', 'warning'); }
+  };
+
+  const resetPassword = async () => {
+    try {
+      const data = await usersApi.adminResetPassword(u.id);
+      if (data.error) { showToast(data.error, 'warning'); return; }
+      showToast(data.message || `Reset link sent to ${u.email}`, 'success');
+    } catch { showToast('Failed to send reset email', 'warning'); }
+  };
+
+  const openAuditLog = async () => {
+    setMenuOpen(false);
+    setAuditOpen(true);
+    try {
+      const data = await usersApi.getAuditLog(u.id);
+      setAuditLog(Array.isArray(data) ? data : []);
+    } catch { setAuditLog([]); }
+  };
+
+  const menuItem = (label: string, onClick: () => void, colorClass: string) => (
+    <button
+      onClick={() => { setMenuOpen(false); onClick(); }}
+      className={`w-full text-left px-3 py-2 text-xs font-semibold rounded-md hover:bg-neutral-100 dark:hover:bg-slate-800 transition-colors ${colorClass}`}
+    >
+      {label}
+    </button>
+  );
+
   return (
-    <>
-      <Btn size="sm" variant="secondary" onClick={openLog}>Audit Log</Btn>
-      {open && (
-        <Modal title={`Audit Log — ${u.name}`} onClose={() => setOpen(false)} width={480}>
+    <div className="relative inline-block">
+      <button
+        type="button"
+        onClick={() => setMenuOpen(v => !v)}
+        className="w-8 h-8 flex items-center justify-center rounded-md border border-neutral-200 dark:border-slate-700 text-slate-500 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-slate-800 transition-colors"
+        aria-label="User actions"
+      >
+        <MoreVertical size={16} />
+      </button>
+      {menuOpen && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+          <div className="absolute right-0 top-9 z-50 w-44 rounded-xl border border-neutral-200 dark:border-slate-700 bg-white dark:bg-[#0f1623] shadow-xl p-1.5 space-y-0.5">
+            {menuItem('Suspend', suspend, 'text-amber-600')}
+            {menuItem('Deactivate', deactivate, 'text-slate-600 dark:text-slate-300')}
+            {menuItem('Reset Password', resetPassword, 'text-blue-600')}
+            {menuItem('Audit Log', openAuditLog, 'text-black dark:text-white')}
+            <div className="border-t border-neutral-100 dark:border-slate-800 my-1" />
+            {menuItem('Delete', remove, 'text-red-600')}
+          </div>
+        </>
+      )}
+      {auditOpen && (
+        <Modal title={`Audit Log — ${u.name}`} onClose={() => setAuditOpen(false)} width={480}>
           <div className="space-y-2 max-h-96 overflow-y-auto">
-            {log.length === 0 ? (
+            {auditLog.length === 0 ? (
               <div className="text-xs text-slate-400 text-center py-6">No audit history yet.</div>
             ) : (
-              log.map((entry: any) => (
+              auditLog.map((entry: any) => (
                 <div key={entry.id} className="text-xs border-b border-neutral-100 dark:border-slate-800 pb-2">
                   <div className="font-bold text-black dark:text-white">{entry.action.replace(/_/g, ' ')}</div>
                   <div className="text-slate-500">{entry.details}</div>
@@ -641,6 +703,6 @@ const AuditLogButton: React.FC<{ u: User }> = ({ u }) => {
           </div>
         </Modal>
       )}
-    </>
+    </div>
   );
 };

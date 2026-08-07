@@ -3,7 +3,7 @@ import { announcementsApi, usersApi } from '../api';
 import { useCountry } from '../context/CountryContext';
 import { User } from '../types';
 import { Card, PageHeader, Btn, Badge, Modal, FInput, FArea, FSelect } from './SubComponents';
-import { Megaphone, Download, Trash2, Plus, FileText } from 'lucide-react';
+import { Megaphone, Download, Trash2, Plus, FileText, Edit2 } from 'lucide-react';
 
 interface AnnouncementsPageProps {
   user: User | null;
@@ -15,12 +15,14 @@ const COUNTRIES = ['Malawi', 'Kenya', 'Somaliland'];
 export const AnnouncementsPage: React.FC<AnnouncementsPageProps> = ({ user, showToast }) => {
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [creating, setCreating] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [form, setForm] = useState({
     title: '', body: '', country: (user as any)?.country || 'Malawi',
     targetType: 'all' as 'all' | 'selected',
     selectedUserIds: [] as string[],
     file: null as File | null,
+    showOnDashboard: false,
   });
 
   const isAdmin = user?.role === 'admin';
@@ -44,6 +46,17 @@ export const AnnouncementsPage: React.FC<AnnouncementsPageProps> = ({ user, show
     }));
   };
 
+  const openEdit = (a: any) => {
+    setForm({
+      title: a.title || '', body: a.body || '', country: a.country || 'Malawi',
+      targetType: (a.target_type === 'selected' ? 'selected' : 'all'),
+      selectedUserIds: [], file: null,
+      showOnDashboard: !!a.show_on_dashboard,
+    });
+    setEditingId(a.id);
+    setCreating(true);
+  };
+
   const submit = async () => {
     if (!form.title.trim()) { showToast('Title is required', 'warning'); return; }
     if (form.targetType === 'selected' && form.selectedUserIds.length === 0) {
@@ -55,17 +68,21 @@ export const AnnouncementsPage: React.FC<AnnouncementsPageProps> = ({ user, show
     fd.append('country', form.country);
     fd.append('targetType', form.targetType);
     if (form.targetType === 'selected') fd.append('userIds', JSON.stringify(form.selectedUserIds));
+    fd.append('showOnDashboard', String(form.showOnDashboard));
     if (form.file) fd.append('file', form.file);
 
     try {
-      const data = await announcementsApi.submit(fd);
+      const data = editingId
+        ? await announcementsApi.update(editingId, fd)
+        : await announcementsApi.submit(fd);
       if (data.error) { showToast(data.error, 'error'); return; }
-      showToast('Announcement published', 'success');
+      showToast(editingId ? 'Announcement updated' : 'Announcement published', 'success');
       setCreating(false);
-      setForm({ title: '', body: '', country: (user as any)?.country || 'Malawi', targetType: 'all', selectedUserIds: [], file: null });
+      setEditingId(null);
+      setForm({ title: '', body: '', country: (user as any)?.country || 'Malawi', targetType: 'all', selectedUserIds: [], file: null, showOnDashboard: false });
       load();
     } catch {
-      showToast('Failed to publish announcement', 'error');
+      showToast(editingId ? 'Failed to update announcement' : 'Failed to publish announcement', 'error');
     }
   };
 
@@ -122,16 +139,21 @@ export const AnnouncementsPage: React.FC<AnnouncementsPageProps> = ({ user, show
               )}
             </div>
             {isAdmin && (
-              <Btn size="sm" variant="danger" onClick={() => remove(a.id)}>
-                <Trash2 size={13} />
-              </Btn>
+              <div className="flex gap-1.5 shrink-0">
+                <Btn size="sm" variant="secondary" onClick={() => openEdit(a)}>
+                  <Edit2 size={13} />
+                </Btn>
+                <Btn size="sm" variant="danger" onClick={() => remove(a.id)}>
+                  <Trash2 size={13} />
+                </Btn>
+              </div>
             )}
           </Card>
         ))}
       </div>
 
       {creating && (
-        <Modal title="New Announcement" onClose={() => setCreating(false)} width={560}>
+        <Modal title={editingId ? "Edit Announcement" : "New Announcement"} onClose={() => { setCreating(false); setEditingId(null); }} width={560}>
           <div className="space-y-3">
             <FInput label="Title *" value={form.title} onChange={(e: any) => setForm(p => ({ ...p, title: e.target.value }))} />
             <FArea label="Message (optional)" value={form.body} onChange={(e: any) => setForm(p => ({ ...p, body: e.target.value }))} rows={4} placeholder="Write the announcement, or leave blank if attaching a document..." />
@@ -173,10 +195,21 @@ export const AnnouncementsPage: React.FC<AnnouncementsPageProps> = ({ user, show
                 )}
               </div>
             )}
+            {isAdmin && (
+              <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-200 p-2 rounded-lg border border-neutral-200 dark:border-slate-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.showOnDashboard}
+                  onChange={(e) => setForm(p => ({ ...p, showOnDashboard: e.target.checked }))}
+                  className="accent-[var(--brand)]"
+                />
+                Show on Main Dashboard — visible to everyone, including logged-out visitors
+              </label>
+            )}
 
             <div className="flex justify-end gap-2 pt-2">
-              <Btn size="sm" variant="secondary" onClick={() => setCreating(false)}>Cancel</Btn>
-              <Btn size="sm" onClick={submit}>Publish Announcement</Btn>
+              <Btn size="sm" variant="secondary" onClick={() => { setCreating(false); setEditingId(null); }}>Cancel</Btn>
+              <Btn size="sm" onClick={submit}>{editingId ? 'Save Changes' : 'Publish Announcement'}</Btn>
             </div>
           </div>
         </Modal>

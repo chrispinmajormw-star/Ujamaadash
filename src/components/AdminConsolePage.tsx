@@ -4,7 +4,6 @@ import { UsersPage } from './UsersPage';
 import { RegionalViewPage } from './RegionalViewPage';
 import { FollowupConsistencyPage } from './FollowupConsistencyPage';
 import { CasesByDistrictChart } from './CasesByDistrictChart';
-import { DataCompletenessPage } from './DataCompletenessPage';
 import { Users, LayoutGrid } from 'lucide-react';
 
 interface AdminConsolePageProps {
@@ -53,7 +52,6 @@ export const AdminConsolePage: React.FC<AdminConsolePageProps> = ({ user, users,
           <RegionalViewPage user={user} showToast={showToast} />
           <FollowupConsistencyPage user={user} showToast={showToast} />
           <CasesByDistrictChart />
-          <DataCompletenessPage />
         </div>
       )}
     </div>

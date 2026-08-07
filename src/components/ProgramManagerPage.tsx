@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  TrendingUp, Users, MapPin, BarChart2, CheckCircle, Clock,
-  AlertTriangle, Download, Target, Award, ArrowUpRight, ArrowDownRight,
-  Globe, BookOpen, Zap, FileText
+  Users, MapPin, BarChart2, CheckCircle, Clock,
+  Download, Target, Award, ArrowUpRight, ArrowDownRight,
+  Globe, BookOpen, FileText
 } from 'lucide-react';
-import { Card, Kicker, Btn, StatCard, ProgBar, FilterBar, Badge } from './SubComponents';
-import { DISTRICTS, CLUSTERS } from '../data';
+import { Card, Kicker, Btn, ProgBar, FilterBar, Badge } from './SubComponents';
+import { districtsApi, statsApi } from '../api';
+import { useCountry } from '../context/CountryContext';
 import { Report } from '../types';
 
 interface Props {
@@ -45,21 +46,43 @@ const KPICard: React.FC<{
 
 export const ProgramManagerPage: React.FC<Props> = ({ reports, user, setPage }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'districts' | 'pipeline'>('overview');
+  const [allDistricts, setAllDistricts] = useState<any[]>([]);
+  const [liveStats, setLiveStats] = useState({ learners: 0, teachers: 0, tots: 0, schools: 0 });
+  const { activeCountry } = useCountry();
 
-  const approved = reports.filter(r => r.status === 'approved').length;
-  const pending = reports.filter(r => r.status === 'pending').length;
-  const totalStudents = CLUSTERS.reduce((a, c) => a + c.students, 0);
-  const activeDistricts = DISTRICTS.filter(d => d.s === 'Active').length;
-  const totalTOTs = DISTRICTS.reduce((a, d) => a + d.tots, 0);
-  const totalTeachers = DISTRICTS.reduce((a, d) => a + d.teachersTrained, 0);
-  const totalSchools = DISTRICTS.reduce((a, d) => a + d.schools, 0);
-  const coveredSchools = DISTRICTS.reduce((a, d) => a + d.cov, 0);
-  const coveragePct = Math.round((coveredSchools / totalSchools) * 100);
+  const myRegion = user?.region;
 
-  const districtPerf = DISTRICTS.filter(d => d.s === 'Active').map(d => ({
+  useEffect(() => {
+    districtsApi.getAll(activeCountry).then((res: any) => {
+      setAllDistricts(Array.isArray(res) ? res : []);
+    }).catch(() => {});
+    statsApi.get(activeCountry, myRegion).then((data: any) => {
+      if (!data.error) setLiveStats(data);
+    }).catch(() => {});
+  }, [activeCountry, myRegion]);
+
+  // Program Managers only ever see districts in their own assigned region --
+  // this page used to run on static demo data with no region scoping at all.
+  const districts = myRegion ? allDistricts.filter(d => d.region === myRegion) : allDistricts;
+  const regionReports = myRegion
+    ? reports.filter(r => districts.some(d => d.name === r.district))
+    : reports;
+
+  const approved = regionReports.filter(r => r.status === 'approved').length;
+  const pending = regionReports.filter(r => r.status === 'pending').length;
+  const activeDistrictsCount = districts.filter(d => d.status === 'Active').length;
+  const totalTOTs = liveStats.tots;
+  const totalTeachers = liveStats.teachers;
+  const totalStudents = liveStats.learners;
+  const totalSchools = districts.reduce((a, d) => a + (d.schools || 0), 0);
+  const avgCoveragePct = districts.length > 0
+    ? Math.round(districts.reduce((a, d) => a + (Number(d.coverage) || 0), 0) / districts.length)
+    : 0;
+
+  const districtPerf = districts.filter(d => d.status === 'Active').map(d => ({
     ...d,
-    pct: d.schools > 0 ? Math.round((d.cov / d.schools) * 100) : 0,
-    rptCount: reports.filter(r => r.district === d.name).length,
+    pct: Math.round(Number(d.coverage) || 0),
+    rptCount: regionReports.filter(r => r.district === d.name).length,
   })).sort((a, b) => b.pct - a.pct);
 
   return (
@@ -67,10 +90,12 @@ export const ProgramManagerPage: React.FC<Props> = ({ reports, user, setPage }) 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <Kicker text="Program Management Office" />
-          <h1 className="text-lg font-bold text-black dark:text-white m-0">Strategic Overview</h1>
+          <Kicker text={myRegion ? `${myRegion} Region Program Office` : "Program Management Office"} />
+          <h1 className="text-lg font-bold text-black dark:text-white m-0">
+            {myRegion ? `${myRegion} Region Overview` : "Strategic Overview"}
+          </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 m-0">
-            Welcome back, <span className="font-semibold text-[var(--brand-600)]">{user?.name}</span> — here's your national program pulse.
+            Welcome back, <span className="font-semibold text-[var(--brand-600)]">{user?.name}</span> — here's your {myRegion ? `${myRegion} Region` : 'national'} program pulse.
           </p>
         </div>
         <div className="flex gap-2">
@@ -85,17 +110,17 @@ export const ProgramManagerPage: React.FC<Props> = ({ reports, user, setPage }) 
 
       {/* KPI Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <KPICard label="Active Districts" value={activeDistricts} sub="of 28 total" trend="up" trendVal="+2 this Q" icon={<MapPin size={18} />} color="var(--brand)" />
-        <KPICard label="Students Reached" value={totalStudents.toLocaleString()} sub="across all clusters" trend="up" trendVal="+12%" icon={<Users size={18} />} color="#0e7490" />
-        <KPICard label="Certified TOTs" value={totalTOTs} sub="national trainers" trend="up" trendVal="+45" icon={<Award size={18} />} color="#6d28d9" />
-        <KPICard label="School Coverage" value={`${coveragePct}%`} sub={`${coveredSchools} of ${totalSchools} schools`} trend="up" trendVal="+4%" icon={<Target size={18} />} color="#065f46" />
+        <KPICard label="Active Districts" value={activeDistrictsCount} sub={`of ${districts.length} in region`} icon={<MapPin size={18} />} color="var(--brand)" />
+        <KPICard label="Students Reached" value={totalStudents.toLocaleString()} sub="across your region" icon={<Users size={18} />} color="#0e7490" />
+        <KPICard label="Certified TOTs" value={totalTOTs} sub="in your region" icon={<Award size={18} />} color="#6d28d9" />
+        <KPICard label="School Coverage" value={`${avgCoveragePct}%`} sub={`avg. across ${districts.length} districts`} icon={<Target size={18} />} color="#065f46" />
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <KPICard label="Teachers Trained" value={totalTeachers.toLocaleString()} icon={<BookOpen size={18} />} color="#92400e" trend="up" trendVal="+128" />
-        <KPICard label="Reports Submitted" value={reports.length} sub={`${pending} pending review`} icon={<FileText size={18} />} color="#c44d00" />
-        <KPICard label="Approved Sessions" value={approved} sub={`${Math.round((approved / reports.length) * 100)}% approval rate`} icon={<CheckCircle size={18} />} color="#059669" trend="up" trendVal="+8%" />
-        <KPICard label="Active Clusters" value={CLUSTERS.length} sub="training hubs" icon={<Globe size={18} />} color="#3730a3" />
+        <KPICard label="Teachers Trained" value={totalTeachers.toLocaleString()} icon={<BookOpen size={18} />} color="#92400e" />
+        <KPICard label="Reports Submitted" value={regionReports.length} sub={`${pending} pending review`} icon={<FileText size={18} />} color="#c44d00" />
+        <KPICard label="Approved Sessions" value={approved} sub={regionReports.length > 0 ? `${Math.round((approved / regionReports.length) * 100)}% approval rate` : 'No reports yet'} icon={<CheckCircle size={18} />} color="#059669" />
+        <KPICard label="Total Schools" value={totalSchools} sub="in your region" icon={<Globe size={18} />} color="#3730a3" />
       </div>
 
       {/* Tabs */}
@@ -111,26 +136,23 @@ export const ProgramManagerPage: React.FC<Props> = ({ reports, user, setPage }) 
 
       {activeTab === 'overview' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Coverage by region */}
+          {/* Coverage by district (within the manager's own region) */}
           <Card>
-            <h3 className="text-sm font-bold text-black dark:text-white mb-4">Coverage by Region</h3>
+            <h3 className="text-sm font-bold text-black dark:text-white mb-4">Coverage by District</h3>
             <div className="space-y-4">
-              {['Northern', 'Central', 'Southern'].map(region => {
-                const ds = DISTRICTS.filter(d => d.r === region);
-                const cov = ds.reduce((a, d) => a + d.cov, 0);
-                const total = ds.reduce((a, d) => a + d.schools, 0);
-                const pct = total > 0 ? Math.round((cov / total) * 100) : 0;
-                const active = ds.filter(d => d.s === 'Active').length;
-                return (
-                  <div key={region}>
+              {districts.length === 0 ? (
+                <p className="text-xs text-slate-400 italic">No districts found for your region.</p>
+              ) : (
+                districts.map(d => (
+                  <div key={d.name}>
                     <div className="flex justify-between text-xs mb-1.5">
-                      <span className="font-semibold text-black dark:text-white">{region} Region</span>
-                      <span className="text-slate-500">{active} active districts · {pct}%</span>
+                      <span className="font-semibold text-black dark:text-white">{d.name}</span>
+                      <span className="text-slate-500">{d.status} · {Math.round(Number(d.coverage) || 0)}%</span>
                     </div>
-                    <ProgBar pct={pct} />
+                    <ProgBar pct={Math.round(Number(d.coverage) || 0)} />
                   </div>
-                );
-              })}
+                ))
+              )}
             </div>
           </Card>
 
@@ -139,11 +161,11 @@ export const ProgramManagerPage: React.FC<Props> = ({ reports, user, setPage }) 
             <h3 className="text-sm font-bold text-black dark:text-white mb-4">Curriculum Delivery Split</h3>
             <div className="space-y-3">
               {[
-                { label: 'HIM — Hero In Me (Boys)', count: reports.filter(r => r.curriculum === 'HIM').length, color: '#3b82f6' },
-                { label: 'GESD — Girls Empowerment', count: reports.filter(r => r.curriculum === 'GESD').length, color: '#a855f7' },
-                { label: 'Combined Sessions', count: reports.filter(r => r.curriculum === 'Combined').length, color: '#f59e0b' },
+                { label: 'HIM — Hero In Me (Boys)', count: regionReports.filter(r => r.curriculum === 'HIM').length, color: '#3b82f6' },
+                { label: 'GESD — Girls Empowerment', count: regionReports.filter(r => r.curriculum === 'GESD').length, color: '#a855f7' },
+                { label: 'Combined Sessions', count: regionReports.filter(r => r.curriculum === 'Combined').length, color: '#f59e0b' },
               ].map(item => {
-                const pct = reports.length > 0 ? Math.round((item.count / reports.length) * 100) : 0;
+                const pct = regionReports.length > 0 ? Math.round((item.count / regionReports.length) * 100) : 0;
                 return (
                   <div key={item.label}>
                     <div className="flex justify-between text-xs mb-1.5">
@@ -151,7 +173,7 @@ export const ProgramManagerPage: React.FC<Props> = ({ reports, user, setPage }) 
                       <span className="text-slate-500">{item.count} reports ({pct}%)</span>
                     </div>
                     <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                      <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: item.color }} />
+                      <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: item.color }}/>
                     </div>
                   </div>
                 );
@@ -164,10 +186,10 @@ export const ProgramManagerPage: React.FC<Props> = ({ reports, user, setPage }) 
             <h3 className="text-sm font-bold text-black dark:text-white mb-4">Approval Pipeline Status</h3>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: 'Approved', count: reports.filter(r => r.status === 'approved').length, color: '#059669', bg: '#d1fae5' },
-                { label: 'Pending', count: reports.filter(r => r.status === 'pending').length, color: '#d97706', bg: '#fef3c7' },
-                { label: 'Rejected', count: reports.filter(r => r.status === 'rejected').length, color: '#dc2626', bg: '#fee2e2' },
-                { label: 'Forwarded', count: reports.filter(r => r.status === 'forwarded').length, color: '#6d28d9', bg: '#ede9fe' },
+                { label: 'Approved', count: regionReports.filter(r => r.status === 'approved').length, color: '#059669', bg: '#d1fae5' },
+                { label: 'Pending', count: regionReports.filter(r => r.status === 'pending').length, color: '#d97706', bg: '#fef3c7' },
+                { label: 'Rejected', count: regionReports.filter(r => r.status === 'rejected').length, color: '#dc2626', bg: '#fee2e2' },
+                { label: 'Forwarded', count: regionReports.filter(r => r.status === 'forwarded').length, color: '#6d28d9', bg: '#ede9fe' },
               ].map(item => (
                 <div key={item.label} className="rounded-xl p-3 flex items-center gap-3" style={{ backgroundColor: item.bg }}>
                   <div className="text-2xl font-extrabold" style={{ color: item.color }}>{item.count}</div>
@@ -228,9 +250,9 @@ export const ProgramManagerPage: React.FC<Props> = ({ reports, user, setPage }) 
                         <span className="font-semibold text-black dark:text-white">{d.name}</span>
                       </div>
                     </td>
-                    <td className="p-2.5 text-slate-500">{d.r}</td>
+                    <td className="p-2.5 text-slate-500">{d.region}</td>
                     <td className="p-2.5 font-semibold text-black dark:text-white">{d.tots}</td>
-                    <td className="p-2.5 font-semibold text-black dark:text-white">{d.teachersTrained}</td>
+                    <td className="p-2.5 font-semibold text-black dark:text-white">{d.teachers_trained}</td>
                     <td className="p-2.5">
                       <div className="flex items-center gap-2 min-w-[80px]">
                         <ProgBar pct={d.pct} />
@@ -255,10 +277,10 @@ export const ProgramManagerPage: React.FC<Props> = ({ reports, user, setPage }) 
 
       {activeTab === 'pipeline' && (
         <div className="space-y-3">
-          {reports.length === 0 ? (
+          {regionReports.length === 0 ? (
             <Card><p className="text-center text-slate-400 text-sm py-8">No reports in the system yet.</p></Card>
           ) : (
-            reports.slice(0, 15).map(r => (
+            regionReports.slice(0, 15).map(r => (
               <div key={r.id} className="bg-white dark:bg-[#0f1623] rounded-xl border border-neutral-200 dark:border-slate-800 p-3 flex items-center gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm text-black dark:text-white truncate">{r.school}</div>

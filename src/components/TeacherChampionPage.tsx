@@ -113,7 +113,7 @@ export const TeacherChampionPage: React.FC<TeacherChampionPageProps> = ({ user }
           <div>
             <div className="text-xs font-extrabold uppercase tracking-widest text-amber-700 dark:text-amber-400 mb-1">Safeguarding Commitment</div>
             <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed italic">
-              "Ujamaa Pamodzi Africa is committed to promoting the welfare and protection of children, adults and vulnerable groups in all our activities. We adhere to statutory responsibilities, Malawi government guidance, and international best practices to ensure the highest standards of safeguarding are maintained. Our staff and volunteers are trained in safeguarding and understand their responsibility to report any concerns or incidents of abuse or harm to our designated safeguarding officer, as we have zero tolerance for any form of abuse, neglect, exploitation, or harm."
+              "Ujamaa Africa is committed to promoting the welfare and protection of children, adults and vulnerable groups in all our activities. We adhere to statutory responsibilities, Malawi government guidance, and international best practices to ensure the highest standards of safeguarding are maintained. Our staff and volunteers are trained in safeguarding and understand their responsibility to report any concerns or incidents of abuse or harm to our designated safeguarding officer, as we have zero tolerance for any form of abuse, neglect, exploitation, or harm."
             </p>
           </div>
         </div>
@@ -394,7 +394,7 @@ export const TeacherChampionPage: React.FC<TeacherChampionPageProps> = ({ user }
             <Kicker text="Policy" />
             <h2 className="font-bold text-sm text-black dark:text-white mb-3">Ujamaa Safeguarding Statement</h2>
             <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 text-xs text-amber-900 dark:text-amber-200 leading-relaxed italic">
-              "Ujamaa Pamodzi Africa is committed to promoting the welfare and protection of children, adults and vulnerable groups in all our activities. We adhere to statutory responsibilities, Malawi government guidance, and international best practices to ensure the highest standards of safeguarding are maintained. Our staff and volunteers are trained in safeguarding and understand their responsibility to report any concerns or incidents of abuse or harm to our designated safeguarding officer, as we have zero tolerance for any form of abuse, neglect, exploitation, or harm."
+              "Ujamaa Africa is committed to promoting the welfare and protection of children, adults and vulnerable groups in all our activities. We adhere to statutory responsibilities, Malawi government guidance, and international best practices to ensure the highest standards of safeguarding are maintained. Our staff and volunteers are trained in safeguarding and understand their responsibility to report any concerns or incidents of abuse or harm to our designated safeguarding officer, as we have zero tolerance for any form of abuse, neglect, exploitation, or harm."
             </div>
           </Card>
 

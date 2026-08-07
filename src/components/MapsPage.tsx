@@ -24,7 +24,11 @@ interface MapCluster {
 }
 interface VisitLog { id: number; visit_date: string; purpose: string; findings?: string; visitor_name?: string; }
 
-type LayerKey = 'clusters'|'trainedSchools'|'untrainedSchools'|'connectors'|'heatmap'|'unassigned';
+type LayerKey = 'clusters'|'trainedSchools'|'untrainedSchools'|'connectors'|'heatmap'|'unassigned'|'districtLabels';
+// Basic layers stay visible to everyone, including logged-out visitors.
+// Heatmap and Unassigned Schools are more technical / less finished data views,
+// so they're tucked away for logged-in staff only.
+const BASIC_LAYER_KEYS: LayerKey[] = ['clusters', 'trainedSchools', 'untrainedSchools', 'connectors', 'districtLabels'];
 const LAYERS: {key:LayerKey;label:string;activeClass:string}[] = [
   {key:'clusters',         label:'Cluster Centres',   activeClass:'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'},
   {key:'trainedSchools',   label:'Trained Schools',   activeClass:'bg-emerald-600 text-white'},
@@ -32,6 +36,7 @@ const LAYERS: {key:LayerKey;label:string;activeClass:string}[] = [
   {key:'unassigned',       label:'Unassigned Schools',activeClass:'bg-blue-600 text-white'},
   {key:'connectors',       label:'Connectors',         activeClass:'bg-[var(--brand-500)] text-white'},
   {key:'heatmap',          label:'Heat Map',        activeClass:'bg-red-600 text-white'},
+  {key:'districtLabels',   label:'District Names',  activeClass:'bg-slate-700 text-white'},
 ];
 
 const StatTile = ({label,value,sub}:{label:string;value:string|number;sub?:string}) => (
@@ -66,8 +71,16 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
   const [sidebarTab, setSidebarTab] = useState<'clusters'|'schools'>('clusters');
 
   const [searchQuery, setSearchQuery]         = useState('');
-  const [layers, setLayers] = useState<Record<LayerKey,boolean>>({clusters:true,trainedSchools:true,untrainedSchools:true,connectors:true,heatmap:false,unassigned:true});
-  const toggleLayer = (key:LayerKey) => setLayers(prev=>({...prev,[key]:!prev[key]}));
+  const [layers, setLayers] = useState<Record<LayerKey,boolean>>({clusters:true,trainedSchools:true,untrainedSchools:true,connectors:true,heatmap:false,unassigned:true,districtLabels:false});
+  // Clicking a layer isolates it (turns everything else off) rather than
+  // just flipping that one on top of whatever else is already showing.
+  const soloLayer = (key:LayerKey) => setLayers(() => {
+    const next = { clusters:false, trainedSchools:false, untrainedSchools:false, connectors:false, heatmap:false, unassigned:false, districtLabels:false } as Record<LayerKey,boolean>;
+    next[key] = true;
+    return next;
+  });
+  const showAllLayers = () => setLayers({ clusters:true, trainedSchools:true, untrainedSchools:true, connectors:true, heatmap:false, unassigned:true, districtLabels:false });
+  const allLayersActive = (Object.keys(layers) as LayerKey[]).filter(k => k !== 'heatmap' && k !== 'districtLabels').every(k => layers[k]);
   const [selectedCluster, setSelectedCluster] = useState<MapCluster|null>(null);
   const [selectedSchool,  setSelectedSchool]  = useState<MapSchool|null>(null);
   const [schoolDetail,    setSchoolDetail]    = useState<MapSchool|null>(null);
@@ -82,7 +95,7 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
 
   const { activeCountry } = useCountry();
   const [liveRegions, setLiveRegions] = useState<string[]>([]);
-
+  const [districtCoords, setDistrictCoords] = useState<Record<string, { lat: number; lng: number }>>({});
   // Regions shown in the filter adapt to whichever country is currently selected
   useEffect(() => {
     if (!activeCountry || activeCountry === 'all') {
@@ -92,6 +105,13 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
     districtsApi.getAll(activeCountry).then((res: any) => {
       const list = Array.isArray(res) ? res : [];
       setLiveRegions(Array.from(new Set(list.map((d: any) => d.region).filter(Boolean))).sort());
+      const coords: Record<string, { lat: number; lng: number }> = {};
+      list.forEach((d: any) => {
+        const lat = Number(d.lat);
+        const lng = Number(d.lng);
+        if (Number.isFinite(lat) && Number.isFinite(lng)) coords[d.name] = { lat, lng };
+      });
+      setDistrictCoords(coords);
     }).catch(() => setLiveRegions([]));
     setSelectedRegion('All');
   }, [activeCountry]);
@@ -143,10 +163,25 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
     finally { setLoadingSchool(false); }
   };
 
-  const filteredClusters = clusters.filter(c => {
+  // Memoized so unrelated re-renders (e.g. opening a school's detail panel,
+  // which chains several state updates) don't create a new array reference
+  // every time -- that reference feeds the map-building effect below, and a
+  // fresh one on every render was tearing down and rebuilding the whole map
+  // (and any open popup) mid-interaction.
+  const filteredClusters = useMemo(() => clusters.filter(c => {
     const q = searchQuery.toLowerCase();
     return !q || c.name.toLowerCase().includes(q) || c.district.toLowerCase().includes(q);
-  });
+  }), [clusters, searchQuery]);
+  // School markers were only ever loaded lazily when someone clicked a
+  // cluster's own marker -- but that marker doesn't exist at all once the
+  // "Clusters" layer is turned off, so soloing e.g. "Trained Schools" had
+  // nothing left to trigger loading any schools with. Load every filtered
+  // cluster's schools proactively instead, regardless of which layers are
+  // currently toggled on (loadClusterSchools already skips ones already
+  // loaded, so this stays cheap after the first pass).
+  useEffect(() => {
+    filteredClusters.forEach(c => loadClusterSchools(c));
+  }, [filteredClusters, loadClusterSchools]);
 
   // Combined list of every school currently visible on the map, for the Schools sidebar tab
   const sidebarSchools = useMemo(() => {
@@ -174,17 +209,38 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
     if (!L || loading || error) return;
     if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
 
+    // Land on the viewer's own district (or region) if we know it, instead of
+    // the whole-country view -- much less overwhelming on first load. Falls
+    // back to the country-wide default for logged-out visitors or HQ roles.
+    const countryDefault: [number, number] =
+      activeCountry === 'Kenya' ? [-0.5, 37.5] :
+      activeCountry === 'Somaliland' ? [9.5, 46.0] :
+      [-13.2, 34.0];
+    const countryDefaultZoom = activeCountry === 'Kenya' ? 6 : 7;
+
+    let initialCenter: [number, number] = countryDefault;
+    let initialZoom = countryDefaultZoom;
+    const ownDistrictClusters = user?.district ? clusters.filter(c => c.district === user.district) : [];
+    const ownRegionClusters = user?.region ? clusters.filter(c => c.region === user.region) : [];
+    const focusSet = ownDistrictClusters.length ? ownDistrictClusters : ownRegionClusters;
+    // lat/lng come back from Postgres as strings (numeric(9,6) columns) --
+    // must coerce to Number before summing, or this silently produces NaN
+    // via string concatenation and crashes Leaflet's setView.
+    const validFocusSet = focusSet.filter(c => Number.isFinite(Number(c.lat)) && Number.isFinite(Number(c.lng)));
+    if (validFocusSet.length) {
+      initialCenter = [
+        validFocusSet.reduce((sum, c) => sum + Number(c.lat), 0) / validFocusSet.length,
+        validFocusSet.reduce((sum, c) => sum + Number(c.lng), 0) / validFocusSet.length,
+      ];
+      initialZoom = ownDistrictClusters.length ? 11 : 8.5;
+    }
+
     // Full-screen map, no auto-zoom-on-resize
     const map = L.map('ett-map', {
       zoomControl: false,
       scrollWheelZoom: true,
       zoomSnap: 0.5,
-    }).setView(
-      activeCountry === 'Kenya' ? [-0.5, 37.5] :
-      activeCountry === 'Somaliland' ? [9.5, 46.0] :
-      [-13.2, 34.0],
-      activeCountry === 'Kenya' ? 6 : 7
-    );
+    }).setView(initialCenter, initialZoom);
     L.control.zoom({ position: 'bottomleft'}).addTo(map);
     mapRef.current = map;
 
@@ -198,6 +254,7 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
       { attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 19 }
     ).addTo(map);
     L.control.scale({ imperial: false }).addTo(map);
+
 
     // Heat rings
     if (layers.heatmap) {
@@ -261,8 +318,25 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
         const curricula = [school.him_running&&'HIM', school.gesd_running&&'GESD'].filter(Boolean).join('+') || 'None';
         const totalL = (school.boys_enrolled||0)+(school.girls_enrolled||0);
 
+        // Plain-language popup right above the pin -- district, headteacher,
+        // learners, and training/session progress.
+        const schoolPopupHtml = `
+          <div style="min-width:220px;max-width:260px;font-family:inherit;">
+            <div style="font-weight:800;font-size:14px;color:#0f172a;margin-bottom:6px;">${school.name}</div>
+            <div style="font-size:12px;color:#475569;margin-bottom:3px;">
+              📍 District: <strong>${school.district}</strong>${school.headteacher ? ` · Head: <strong>${school.headteacher}</strong>` : ''}
+            </div>
+            <div style="font-size:12px;color:#475569;margin-bottom:3px;">
+              👥 Learners: <strong>${totalL.toLocaleString()}</strong> · Curriculum: <strong>${curricula}</strong>
+            </div>
+            <div style="font-size:12px;color:${trained ? '#059669' : '#d97706'};font-weight:700;margin-bottom:6px;">
+              ${trained ? '✓ ETT Trained' : '○ Not Yet Trained'} · Sessions: ${school.sessions_completed || 0}/${school.sessions_planned || 0}
+            </div>
+          </div>`;
+
         L.marker([school.lat,school.lng],{icon,zIndexOffset:200})
           .addTo(map)
+          .bindPopup(schoolPopupHtml, { maxWidth: 280, className: 'ujamaa-cluster-popup' })
           .on('click',()=>openSchool(school));
       });
 
@@ -296,11 +370,79 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
 
       const centerIcon = L.divIcon({className:'',html:clusterHtml,iconAnchor:[9,9]});
       const marker = L.marker([cluster.lat,cluster.lng],{icon:centerIcon,zIndexOffset:500}).addTo(map);
+
+      // Plain-language popup right above the pin -- district, lead, learners,
+      // training progress, and the schools connected to this cluster.
+      const schoolsList = cluster.schools.slice(0, 8).map(s =>
+        `<li style="display:flex;align-items:center;gap:6px;padding:3px 0;font-size:12px;color:#334155;border-bottom:1px solid #f1f5f9;">
+           <span style="width:6px;height:6px;border-radius:50%;background:var(--brand);flex-shrink:0;"></span>${s.name}
+         </li>`
+      ).join('');
+      const moreCount = cluster.schools.length > 8 ? cluster.schools.length - 8 : 0;
+      const popupHtml = `
+        <div style="min-width:240px;max-width:280px;font-family:inherit;">
+          <div style="font-weight:800;font-size:14px;color:#0f172a;margin-bottom:6px;">${cluster.name}</div>
+          <div style="font-size:12px;color:#475569;margin-bottom:3px;">
+            📍 District: <strong>${cluster.district}</strong>${cluster.lead ? ` · Lead: <strong>${cluster.lead}</strong>` : ''}
+          </div>
+          <div style="font-size:12px;color:#475569;margin-bottom:8px;">
+            👥 Learners: <strong>${cluster.students.toLocaleString()}</strong> · Trained: <strong>${cluster.trained}/${cluster.school_count}</strong>
+          </div>
+          ${cluster.schools.length ? `
+            <div style="font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Schools Connected</div>
+            <ul style="list-style:none;margin:0;padding:0;">${schoolsList}</ul>
+            ${moreCount ? `<div style="font-size:11px;color:#94a3b8;margin-top:4px;">+${moreCount} more</div>` : ''}
+          ` : ''}
+        </div>`;
+      marker.bindPopup(popupHtml, { maxWidth: 300, className: 'ujamaa-cluster-popup' });
+
       marker.on('click',()=>{
         flyToCluster(cluster);
         setSelectedCluster(cluster);
       });
     });
+
+    // District name labels -- plain text only, no dot/pin, positioned at the
+    // average location of everything geo-tagged in that district (clusters,
+    // plus unassigned/planned schools) so districts with no clusters yet
+    // still get a label as long as any school in them has coordinates.
+    const districtCenters: Record<string, { latSum: number; lngSum: number; count: number }> = {};
+    const addToDistrictCenter = (districtName: string | undefined, lat: any, lng: any) => {
+      if (!districtName) return;
+      const nLat = Number(lat);
+      const nLng = Number(lng);
+      if (!Number.isFinite(nLat) || !Number.isFinite(nLng)) return;
+      if (!districtCenters[districtName]) districtCenters[districtName] = { latSum: 0, lngSum: 0, count: 0 };
+      districtCenters[districtName].latSum += nLat;
+      districtCenters[districtName].lngSum += nLng;
+      districtCenters[districtName].count += 1;
+    };
+    filteredClusters.forEach(c => addToDistrictCenter(c.district, c.lat, c.lng));
+    unassignedSchools.forEach(s => addToDistrictCenter(s.district, s.lat, s.lng));
+    plannedSchools.forEach(s => addToDistrictCenter(s.district, s.lat, s.lng));
+    // Real district coordinates take priority (now that every Malawi district
+    // has one on file) -- the computed cluster/school centroid is only used
+    // as a fallback for districts that don't have a coordinate yet.
+    const allDistrictNames = layers.districtLabels
+      ? new Set([...Object.keys(districtCoords), ...Object.keys(districtCenters)])
+      : new Set<string>();
+    allDistrictNames.forEach(districtName => {
+      const known = districtCoords[districtName];
+      const computed = districtCenters[districtName];
+      const lat = known ? known.lat : (computed ? computed.latSum / computed.count : null);
+      const lng = known ? known.lng : (computed ? computed.lngSum / computed.count : null);
+      if (lat === null || lng === null) return;
+      const labelHtml = `
+        <div style="
+          font-size:10px;font-weight:800;letter-spacing:0.02em;
+          color:#000000;
+          text-shadow:0 1px 2px ${darkMode ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.8)'};
+          white-space:nowrap;pointer-events:none;text-transform:uppercase;
+        ">${districtName}</div>`;
+      const icon = L.divIcon({ className: '', html: labelHtml, iconAnchor: [0, 0] });
+      L.marker([lat, lng], { icon, zIndexOffset: 50, interactive: false }).addTo(map);
+    });
+
 
     // Planned schools — hollow purple diamond markers (no cluster)
     plannedSchools.forEach(school => {
@@ -364,7 +506,7 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
     }
 
     return () => { map.remove(); mapRef.current = null; };
-  }, [filteredClusters, plannedSchools, darkMode, layers, loading, error, loadClusterSchools, activeCountry]);
+  }, [filteredClusters, plannedSchools, darkMode, layers, loading, error, loadClusterSchools, activeCountry, districtCoords]);
 
   const allSchools      = clusters.flatMap(c=>c.schools);
   const totalLearners   = clusters.reduce((a,c)=>a+c.students,0);
@@ -443,6 +585,14 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
         </button>
       </div>
 
+      {/* ── ALWAYS-VISIBLE MINI LEGEND — plain-language key, no need to open a panel ── */}
+      <div className="absolute bottom-4 right-3 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg px-3 py-2 flex flex-wrap items-center gap-3 text-[10.5px] font-semibold text-slate-600 dark:text-slate-300">
+        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-600 shrink-0"/> Trained school</span>
+        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"/> Not yet trained</span>
+        <span className="flex items-center gap-1.5"><span className="w-3.5 h-3.5 rounded-full border-2 border-[var(--brand-500)] bg-slate-900 shrink-0"/> Cluster</span>
+        <span className="flex items-center gap-1.5"><span className="w-4 h-0 border-t-2 border-dashed border-[var(--brand-500)] shrink-0"/> Connection</span>
+      </div>
+
       {/* ── STATS PANEL — floating, toggled ────────────────────────── */}
       {panelOpen && (
         <div className="absolute top-16 left-3 right-3 sm:right-auto sm:w-[500px] z-20 bg-white/97 dark:bg-slate-900/97 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl p-3 animate-fade-in-up">
@@ -463,8 +613,12 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
               <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1 mr-1">
                 <Layers size={11}/> Layers:
               </span>
-              {LAYERS.map(layer => (
-                <button key={layer.key} onClick={() => toggleLayer(layer.key)}
+              <button onClick={showAllLayers}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10.5px] font-bold transition-all border ${allLayersActive ? 'bg-[var(--brand-600)] text-white border-transparent shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 opacity-50'}`}>
+                <Eye size={10}/> All
+              </button>
+              {LAYERS.filter(layer => user || BASIC_LAYER_KEYS.includes(layer.key)).map(layer => (
+                <button key={layer.key} onClick={() => soloLayer(layer.key)}
                   className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10.5px] font-bold transition-all border ${layers[layer.key] ? `${layer.activeClass} border-transparent shadow-sm` : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 opacity-50'}`}>
                   {layers[layer.key] ? <Eye size={10}/> : <EyeOff size={10}/>} {layer.label}
                 </button>
@@ -477,27 +631,20 @@ export const MapsPage: React.FC<MapsPageProps> = ({ setPage, user, darkMode }) =
       {/* ── SIDEBAR PANEL — floating left, toggled ─────────────────── */}
       {sidebarOpen && (
         <div className="absolute top-16 bottom-4 left-3 z-20 w-64 bg-white/97 dark:bg-slate-900/97 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl flex flex-col overflow-hidden animate-fade-in-up">
-          <div className="p-3 border-b border-slate-100 dark:border-slate-800 shrink-0 space-y-2.5">
-            <div>
-              <div className="text-[9.5px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1">
-                <Sliders size={11}/> Region
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {['All', ...liveRegions].map(r => (
-                  <button key={r} onClick={() => setSelectedRegion(r)}
-                    className={`px-2 py-1 rounded-full text-[10px] font-bold cursor-pointer transition-all ${selectedRegion===r?'bg-slate-900 text-white dark:bg-[var(--brand-600)]':'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'}`}>
-                    {r}
-                  </button>
-                ))}
-              </div>
+          <div className="p-3 border-b border-slate-100 dark:border-slate-800 shrink-0 space-y-2">
+            <div className="text-[9.5px] font-extrabold text-slate-400 uppercase tracking-widest mb-0.5 flex items-center gap-1">
+              <MapPin size={11}/> Find a school or cluster
             </div>
-            <div>
-              <div className="text-[9.5px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1">
-                <MapPin size={11}/> Search
-              </div>
-              <input type="text" placeholder="Cluster or district…" value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="w-full px-2 py-1.5 text-[11px] bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)] dark:text-slate-200"/>
+            <input type="text" placeholder="Type a cluster or district name…" value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="w-full px-2 py-1.5 text-[11px] bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)] dark:text-slate-200"/>
+            <div className="flex flex-wrap gap-1 pt-0.5">
+              {['All', ...liveRegions].map(r => (
+                <button key={r} onClick={() => setSelectedRegion(r)}
+                  className={`px-2 py-1 rounded-full text-[10px] font-bold cursor-pointer transition-all ${selectedRegion===r?'bg-slate-900 text-white dark:bg-[var(--brand-600)]':'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'}`}>
+                  {r}
+                </button>
+              ))}
             </div>
           </div>
           <div className="flex-1 overflow-y-auto p-2 space-y-1.5">

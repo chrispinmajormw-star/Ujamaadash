@@ -32,7 +32,19 @@ export const ClusterSchoolSessionForm: React.FC<ClusterSchoolSessionFormProps> =
   const reportingMonth = currentMonthISO();
 
   useEffect(() => {
-    clusterSchoolSessionsApi.getMyClusters().then((res: any) => setClusters(Array.isArray(res) ? res : [])).catch(() => {});
+    clusterSchoolSessionsApi.getMyClusters().then((res: any) => {
+      const list = Array.isArray(res) ? res : [];
+      setClusters(list);
+      // If we arrived here from "Log This Week" on My Clusters, preselect
+      // that specific cluster since that's the one being reported on.
+      const preselect = sessionStorage.getItem('cluster_anchors_preselect_cluster');
+      if (preselect) {
+        sessionStorage.removeItem('cluster_anchors_preselect_cluster');
+        if (list.some((c: any) => String(c.id) === preselect)) {
+          setClusterId(preselect);
+        }
+      }
+    }).catch(() => {});
   }, [user]);
 
   useEffect(() => {

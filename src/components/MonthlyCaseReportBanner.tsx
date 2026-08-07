@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, CheckCircle2, ClipboardList } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ClipboardList, X } from 'lucide-react';
+import { safeStorage } from '../utils/storage';
 import { Btn, FSelect, FArea, Modal, FInput } from './SubComponents';
 import { monthlyCaseReportsApi } from '../api';
 import { useCountry } from '../context/CountryContext';
 import { User } from '../types';
 
-const EXEMPT_ROLES = ['admin', 'sasa_officer', 'program_manager'];
+// Only Field Officers are required to submit this monthly report.
+const REQUIRED_ROLE = 'field_officer';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -16,6 +18,9 @@ export const MonthlyCaseReportBanner: React.FC<{ user: User | null; showToast: (
   const { activeCountry } = useCountry();
   const [status, setStatus] = useState<{ required: boolean; submitted?: boolean; month?: number; year?: number } | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const todayStr = () => new Date().toISOString().slice(0, 10);
+  const dismissKey = 'scaleup_monthly_report_dismissed_date';
+  const [dismissed, setDismissed] = useState(() => safeStorage.getItem(dismissKey) === todayStr());
   const [submitting, setSubmitting] = useState(false);
 
   // Section B: Case Summary
@@ -37,14 +42,14 @@ export const MonthlyCaseReportBanner: React.FC<{ user: User | null; showToast: (
   const [recommendations, setRecommendations] = useState('');
 
   useEffect(() => {
-    if (!user || EXEMPT_ROLES.includes(user.role)) {
+    if (!user || user.role !== REQUIRED_ROLE) {
       setStatus({ required: false });
       return;
     }
     monthlyCaseReportsApi.getStatus().then((res: any) => setStatus(res)).catch(() => setStatus(null));
   }, [user]);
 
-  if (!user || !status || !status.required || status.submitted) return null;
+  if (!user || !status || !status.required || status.submitted || dismissed) return null;
 
   const monthLabel = status.month ? `${MONTH_NAMES[status.month - 1]} ${status.year}` : '';
 
@@ -95,6 +100,15 @@ export const MonthlyCaseReportBanner: React.FC<{ user: User | null; showToast: (
         <Btn size="sm" onClick={() => setShowForm(true)}>
           <ClipboardList size={13} /> Submit Now
         </Btn>
+        <button
+          type="button"
+          onClick={() => { safeStorage.setItem(dismissKey, todayStr()); setDismissed(true); }}
+          className="shrink-0 p-1 rounded-md text-amber-500 hover:bg-amber-100 dark:hover:bg-amber-900/40 hover:text-amber-700 dark:hover:text-amber-300"
+          title="Dismiss for now"
+          aria-label="Dismiss"
+        >
+          <X size={14} />
+        </button>
       </div>
 
       {showForm && (

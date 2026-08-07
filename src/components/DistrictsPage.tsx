@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { districtsApi, usersApi, mapClustersApi } from '../api';
+import { DistrictLocationMap } from './DistrictLocationMap';
 import { useCountry } from '../context/CountryContext';
 import {
   Card, PageHeader, Btn, ProgBar, Badge, FInput, FArea, FSelect, Modal, FilterBar
@@ -14,45 +15,10 @@ interface DistrictsPageProps {
   showToast: (msg: string) => void;
 }
 
-const REGION_COLORS: Record<string, { color: string; bg: string }> = {
-  Northern: { color: '#1e40af', bg: '#dbeafe' },
-  Central:  { color: '#c44d00', bg: '#fff1e6' },
-  Southern: { color: '#065f46', bg: '#d1fae5' },
-};
-
-const REGION_THEME: Record<string, {
-  dot: string;
-  panelBg: string;
-  panelBorder: string;
-  cardBg: string;
-  chipBg: string;
-  chipText: string;
-}> = {
-  Northern: {
-    dot: '#f97316',
-    panelBg: '#fffaf6',
-    panelBorder: '#fed7aa',
-    cardBg: '#ffffff',
-    chipBg: '#fff7ed',
-    chipText: '#c44d00',
-  },
-  Central: {
-    dot: '#0f766e',
-    panelBg: '#fafdfd',
-    panelBorder: '#c7ece7',
-    cardBg: '#ffffff',
-    chipBg: '#ecfdf5',
-    chipText: '#0f766e',
-  },
-  Southern: {
-    dot: '#2563eb',
-    panelBg: '#f7faff',
-    panelBorder: '#c7d2fe',
-    cardBg: '#ffffff',
-    chipBg: '#eff6ff',
-    chipText: '#1e40af',
-  },
-};
+// Regions used to each get a different hardcoded rainbow color -- that never
+// matched the app's actual selected theme color, and only recognized Malawi's
+// 3 region names (Kenya/Somaliland districts fell back to a bland gray).
+// Every region now shares one consistent theme, built from the real brand color.
 
 const TODAY = new Date().toISOString().split('T')[0];
 
@@ -83,6 +49,8 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
   const [loading, setLoading] = useState(true);
   const [region, setRegion] = useState('all');
   const [expanded, setExpanded] = useState<number | null>(null);
+  const [showAllClusters, setShowAllClusters] = useState<Record<number, boolean>>({});
+  const [selectedDistrict, setSelectedDistrict] = useState<any | null>(null);
   const [districtData, setDistrictData] = useState<Record<number, { reports: any[]; trainings: any[]; clusters: any[] }>>({});
 
   // Modals
@@ -356,16 +324,15 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
         />
       )}
 
+      <div className="lg:flex lg:gap-4 lg:items-start">
+        <div className="flex-1 min-w-0 space-y-4 lg:max-h-[calc(100vh-260px)] lg:overflow-y-auto lg:pr-1">
+
       {loading && <div className="text-center py-12 text-sm text-black/40 dark:text-white/40">Loading districts…</div>}
 
       {regionNames.map(reg => {
         const dists = grouped[reg] || [];
         if (dists.length === 0) return null;
         const summary = regionSummary(reg);
-        const theme = REGION_THEME[reg] || {
-          dot: '#64748b', panelBg: '#f8fafc', panelBorder: '#e2e8f0',
-          cardBg: '#ffffff', chipBg: '#f1f5f9', chipText: '#475569',
-        };
         return (
           <section
             key={reg}
@@ -375,13 +342,12 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
               className="px-4 sm:px-6 py-4 sm:py-5 flex flex-wrap items-center gap-4"
             >
               <div className="flex items-center gap-3">
-                <span className="w-5 h-5 rounded-full shrink-0" style={{ background: theme.dot }} />
+                <span className="w-5 h-5 rounded-full shrink-0 bg-[var(--brand)]" />
                 <h3 className="text-2xl font-semibold text-slate-950 dark:text-white m-0">{reg} Region</h3>
               </div>
               <div className="ml-auto flex items-center gap-5 text-sm">
                 <span
-                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border font-medium"
-                  style={{ background: theme.chipBg, color: theme.chipText, borderColor: theme.panelBorder }}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border font-medium bg-[var(--brand-50)] text-[var(--brand-700)] dark:bg-[var(--brand-950)]/30 dark:text-[var(--brand-300)] border-[var(--brand-200)] dark:border-[var(--brand-900)]"
                 >
                   {summary.activePct}% Coverage
                 </span>
@@ -421,12 +387,12 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
                       className={`shadow-none p-3.5 sm:p-4 transition-all cursor-pointer hover:border-[var(--brand-400)] dark:hover:border-[var(--brand-500)] ${
                         isExpanded ? 'ring-2 ring-offset-2 ring-[var(--brand-500)] border-[var(--brand-500)]' : ''
                       }`}
-                      onClick={() => toggleExpand(d.id)}
+                      onClick={() => { toggleExpand(d.id); setSelectedDistrict(d); }}
                     >
                       <div className="flex items-start justify-between gap-3 mb-3.5">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <CheckCircle size={20} style={{ color: d.is_active ? '#16a34a' : theme.chipText }} className="shrink-0" />
+                            <CheckCircle size={20} className={`shrink-0 ${d.is_active ? 'text-[var(--brand-600)]' : 'text-slate-400'}`} />
                             <h4 className="text-lg font-semibold text-slate-950 dark:text-white m-0 truncate">{d.name}</h4>
                           </div>
                           <div className="mt-1 flex flex-wrap gap-2 text-[11px] text-slate-500 dark:text-slate-400">
@@ -478,14 +444,26 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
                       {isExpanded && (
                         <div className="mt-3.5 pt-3.5 border-t border-transparent" onClick={e => e.stopPropagation()}>
                           <div className="mb-4">
-                            <div className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2">Clusters in district</div>
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500">Clusters in district ({clusters.length})</div>
+                              {clusters.length > 8 && (
+                                <button
+                                  onClick={() => setShowAllClusters(p => ({ ...p, [d.id]: !p[d.id] }))}
+                                  className="text-[10px] font-bold text-[var(--brand-600)] hover:underline"
+                                >
+                                  {showAllClusters[d.id] ? 'Show less' : `Show all (${clusters.length})`}
+                                </button>
+                              )}
+                            </div>
                             {clusters.length > 0 ? (
-                              <div className="flex flex-wrap gap-2">
-                                {clusters.map((cluster, idx) => (
+                              <div className={showAllClusters[d.id] ? 'max-h-40 overflow-y-auto pr-1' : ''}>
+                                <div className="flex flex-wrap gap-2">
+                                  {(showAllClusters[d.id] ? clusters : clusters.slice(0, 8)).map((cluster, idx) => (
                                     <span key={cluster.id || cluster.cluster_id || idx} className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300">
                                       {cluster.name || cluster.cluster_name || `Cluster ${idx + 1}`}
                                     </span>
                                   ))}
+                                </div>
                               </div>
                             ) : (
                               <div className="text-xs text-slate-500">No clusters recorded yet.</div>
@@ -521,6 +499,13 @@ export const DistrictsPage: React.FC<DistrictsPageProps> = ({ user, showToast })
           </section>
         );
       })}
+        </div>
+        {activeCountry === 'Malawi' && (
+          <div className="hidden lg:block lg:w-[420px] lg:shrink-0 lg:sticky lg:top-4 lg:h-[calc(100vh-260px)]">
+            <DistrictLocationMap districts={visibleDistricts} selected={selectedDistrict} />
+          </div>
+        )}
+      </div>
 
       {/* ── MODALS — all outside the map loop ── */}
 
